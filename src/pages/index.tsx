@@ -24,6 +24,7 @@ export default function Home() {
           {session?.user?.name ? (
             <>
               <h3 className='text-slate-400 text-2xl mt-6 mb-12'>Welcome, {session?.user?.name}</h3>
+              <p>testing vercel deploylemt...</p>
               <button onClick={() => router.push("/new-request")} className="border-1 text-xl hover:bg-orange-600 bg-orange-500 rounded-sm py-6 px-12">
                 New Request
               </button>

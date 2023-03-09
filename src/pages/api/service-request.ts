@@ -10,9 +10,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-
   const body = req.body as { text: string, messages: ChatCompletionRequestMessage[] }
   const { text, messages } = body
+
 
   const config = new Configuration({
     apiKey: process.env.OPEN_AI_API_KEY
@@ -48,10 +48,10 @@ export default async function handler(
   })
 
   const aiResponse = response.data.choices[0].message?.content
+
   if (!aiResponse) {
     return res.status(400).json({ response: "Error getting message from chatbot" })
   } else {
     return res.json({ response: aiResponse })
   }
-
 }
