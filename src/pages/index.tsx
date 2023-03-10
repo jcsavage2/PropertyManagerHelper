@@ -2,12 +2,18 @@ import Head from 'next/head'
 import { Inter } from 'next/font/google'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
+import { useCallback } from 'react'
+import axios from 'axios'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
   const { data: session } = useSession()
   const router = useRouter()
+
+  const handleClick = useCallback(async () => {
+    await axios.post("/api/send-email", {}, { headers: { "Content-Type": "application/json", } })
+  }, [])
 
 
   return (
@@ -39,6 +45,8 @@ export default function Home() {
           )}
 
         </div>
+        <h2 className='m-4'>Email Test...</h2>
+        <button className='m-4' onClick={handleClick}>Click ME</button>
       </main>
     </>
   )
