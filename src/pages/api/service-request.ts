@@ -1,6 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai'
+import { client } from "../../sanity-client"
 
 type Data = {
   response: string
@@ -13,6 +14,8 @@ export default async function handler(
   const body = req.body as { text: string, messages: ChatCompletionRequestMessage[] }
   const { text, messages } = body
 
+  const workOrderDocument: Record<string, any> = await client.fetch(`*[_type == "workOrder"]`)
+  const { workOrderFields } = workOrderDocument?.[0] ?? []
 
   const config = new Configuration({
     apiKey: process.env.OPEN_AI_API_KEY
@@ -26,7 +29,7 @@ export default async function handler(
   {
     role: "system",
     content: `You're a helpful property management chatbot, the user is a tenant requesting a service for their property. \
-        Your goal is to clarify service requests, and ultimately return a standardized request form. Use this step-by-step process: \
+        Your goal is to clarify service requests, and return a request form in JSON format using these work order fields: ${workOrderFields}. Use this step-by-step process: \
         1) If a request isn't related to a service request, cheerfully instruct them to try again. \
         2) Classify their service request into ONE of these Issue Type: ${issueType} and one Issue Category: ${issueCategory}. \
         3) Indicate your chosen issue category classification in your response. For example 'Issue Category: Toilet<br>'. \
@@ -34,7 +37,7 @@ export default async function handler(
         determine if the toilet is clogged, leaking, or not flushing. The goal is to identify the root problem \
         and generate a standardized report. \
         5) Summarize and include that root problem in your response like so: 'Issue Type: clogged toilet<br>'.Your responses \
-        should be understandable by a 5th grade student. Once you have clarified the root problem, end the conversation by \
+        should be understandable by a 5th grade student. Once you have information for all of the work order fields, end the conversation by \
         including 'Resquest Complete' in your response and tell the user you will report this issue to maintenance team`
   }
 
