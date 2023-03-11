@@ -7,10 +7,21 @@ type ApiRequest = {
   messages: ChatCompletionRequestMessage[]
 }
 
+type AiJSONResponse = {
+  issueCategory: string,
+  subCategory: string,
+  locationOfIssue: string,
+  additionalInfo: string,
+  aiMessage: string
+  issueFound: boolean
+}
+
 
 const NewRequest = () => {
   const [text, setText] = useState("")
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([])
+  const [issue, setIssue] = useState("")
+  const [subIssue, setSubIssue] = useState("")
   const [isResponding, setIsResponding] = useState(false)
 
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
@@ -24,9 +35,13 @@ const NewRequest = () => {
     setText("")
     const body: ApiRequest = { text, messages }
     const res = await axios.post("/api/service-request", body)
-    const aiResposne = res?.data.response as string
+    const jsonResponse = res?.data.response
+    const parsed = JSON.parse(jsonResponse) as AiJSONResponse
+
     setIsResponding(false)
-    setMessages([...messages, { role: "user", content: text }, { role: "assistant", content: aiResposne }])
+    setMessages([...messages, { role: "user", content: text }, { role: "assistant", content: parsed.aiMessage }])
+    setIssue(parsed.issueCategory ?? "")
+    setSubIssue(parsed.subCategory ?? "")
   }
 
   return (
@@ -42,11 +57,18 @@ const NewRequest = () => {
 
           </div>
           {messages.length && messages.map((message, index) => {
+            const isEven = !(index % 2)
             return (
               <div key={`${message.content[0]}-${index}`} className="even:text-right even:mr-2 odd:text-left odd:ml-2 mt-2">
-                <p className={`text-slate-100 w-3/4 rounded ${index % 2 ? "bg-slate-700" : "bg-amber-700"}  text-center py-2 inline-block`}>
-                  {message.content}
-                </p>
+
+                <div className={`text-slate-100 w-3/4 rounded ${index % 2 ? "bg-slate-700" : "bg-amber-700"}  text-center py-2 inline-block`}>
+                  {issue && subIssue && !isEven && (
+                    <>
+                      <h3>{issue}</h3>
+                      <h5>{subIssue}</h5>
+                    </>)}
+                  <p>{message.content}</p>
+                </div>
               </div>
             )
           })}
