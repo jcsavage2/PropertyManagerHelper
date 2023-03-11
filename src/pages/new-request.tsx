@@ -33,14 +33,14 @@ const NewRequest = () => {
     var element = document.getElementById("chatbox");
 
     if (element) {
-        element.scrollTop = element.scrollHeight;
+      element.scrollTop = element.scrollHeight;
     }
   }, [messages]);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
-    if(text.length === 0){
-        return
+    if (text.length === 0) {
+      return
     }
     setMessages([...messages, { role: "user", content: text }])
     setIsResponding(true)
@@ -72,13 +72,12 @@ const NewRequest = () => {
             const isEven = !(index % 2)
             return (
               <div key={`${message.content[0]}-${index}`} className="even:text-right even:mr-2 odd:text-left odd:ml-2 mt-2">
-
                 <div className={`text-slate-100 w-3/4 rounded ${index % 2 ? "bg-slate-700" : "bg-amber-700"}  text-center py-2 inline-block`}>
                   {issue && subIssue && !isEven && (
-                    <>
-                      <h3>{issue}</h3>
-                      <h5>{subIssue}</h5>
-                    </>)}
+                    <div className="text-left ml-3 mb-1 text-slate-300">
+                      <h3 className="font-semibold">Issue Type: {issue}</h3>
+                      <h5 className="font-semibold">Issue Category: {subIssue}</h5>
+                    </div>)}
                   <p>{message.content}</p>
                 </div>
               </div>
