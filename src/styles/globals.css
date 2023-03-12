@@ -21,6 +21,19 @@ a {
   text-decoration: none;
 }
 
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+}
+
+.dot {
+  @apply w-2 h-2 my-2 mx-1 bg-gray-400 rounded-full;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
