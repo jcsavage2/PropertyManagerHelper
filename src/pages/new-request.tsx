@@ -12,6 +12,7 @@ export type AiJSONResponse = {
   issueCategory: string
   subCategory: string
   aiMessage: string
+  additionalDetails: string
   issueFound: boolean
 }
 
@@ -92,6 +93,7 @@ const NewRequest = () => {
         ...workOrder,
         serviceRequest: parsed.issueFound ? parsed.issueCategory + "; " + parsed.subCategory : "",
       })
+      setIssueCategory(parsed.issueCategory ?? '')
       newMessage = parsed.aiMessage
     }
 
