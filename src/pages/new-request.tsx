@@ -42,8 +42,8 @@ const NewRequest = () => {
   })
 
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-      setText(e.currentTarget.value)
-    }, [setText])
+    setText(e.currentTarget.value)
+  }, [setText])
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -71,7 +71,7 @@ const NewRequest = () => {
       const aiResponse = res?.data.response
       const jsonStart = aiResponse.indexOf("{")
       const jsonEnd = aiResponse.lastIndexOf("}")
-    //   If the json is included in the output then we have the complete work order, else we want to retry to get remaining fields
+      //   If the json is included in the output then we have the complete work order, else we want to retry to get remaining fields
       if (jsonStart !== -1 && jsonEnd !== -1) {
         const jsonResponse = JSON.parse(aiResponse.substring(jsonStart, jsonEnd + 1)) as WorkOrder
         setWorkOrder({
@@ -88,7 +88,6 @@ const NewRequest = () => {
       const res = await axios.post("/api/service-request", body)
       const jsonResponse = res?.data.response
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse
-
       setWorkOrder({
         ...workOrder,
         serviceRequest: parsed.issueFound ? parsed.issueCategory + "; " + parsed.subCategory : "",
@@ -115,7 +114,7 @@ const NewRequest = () => {
           className="border-solid border-2 border-slate-400 bg-slate-100 rounded w-8/12 mx-auto overflow-scroll">
           <div id="chatbox-header">
             <p className="text-slate-200 w-3/4 rounded bg-slate-700 mt-6 ml-2 py-2">
-              Tell us your issue below so we can assist you.
+              {`Tell us broadly what the issue is about. For example: "Toilet", or "Dishwasher".`}
             </p>
           </div>
           {messages.length &&
@@ -126,9 +125,8 @@ const NewRequest = () => {
                   key={`${message.content[0]}-${index}`}
                   className="even:text-right even:mr-2 odd:text-left odd:ml-2 mt-2">
                   <div
-                    className={`text-slate-100 w-3/4 rounded ${
-                      index % 2 ? "bg-slate-700" : "bg-amber-700"
-                    }  text-center p-2 inline-block`}>
+                    className={`text-slate-100 w-3/4 rounded ${index % 2 ? "bg-slate-700" : "bg-amber-700"
+                      }  text-center p-2 inline-block`}>
                     {workOrder.serviceRequest && !isEven && index === messages.length - 1 && (
                       <div className="text-left ml-3 mb-1 text-slate-300">
                         <h3 className="font-semibold">Service Request: {workOrder.serviceRequest}</h3>
@@ -155,7 +153,7 @@ const NewRequest = () => {
               value={text}
               className="p-3 mr-3 w-96"
               type="text"
-              placeholder='eg. "My toilet is clogged"'
+              placeholder={messages.length ? "" : 'eg. "My toilet is clogged"'}
               onChange={handleChange}
             />
             <button type="submit" className="bg-slate-600 p-3 disabled:opacity-25" disabled={isResponding}>
