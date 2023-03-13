@@ -16,8 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     apiKey: process.env.OPEN_AI_API_KEY,
   })
   const openai = new OpenAIApi(config)
-  const workOrderDocument: Record<string, any> = await client.fetch(`*[_type == "workOrder"]`)
-  const { workOrderFields } = workOrderDocument?.[0] ?? []
 
 
   const sample = {
