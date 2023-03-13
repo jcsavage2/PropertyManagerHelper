@@ -14,6 +14,7 @@ export type AiJSONResponse = {
   aiMessage: string
   additionalDetails: string
   issueFound: boolean
+  issueLocation: string
 }
 
 export type FinishFormRequest = {
@@ -27,6 +28,7 @@ type WorkOrder = {
   address: string
   permissionToEnter: string
   serviceRequest: string
+  issueLocation: string | null
 }
 
 const NewRequest = () => {
@@ -39,6 +41,7 @@ const NewRequest = () => {
     address: "",
     permissionToEnter: "",
     serviceRequest: "",
+    issueLocation: null
   })
 
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
@@ -65,7 +68,7 @@ const NewRequest = () => {
 
     let newMessage: string = ""
 
-    if (workOrder.serviceRequest) {
+    if (workOrder.serviceRequest && workOrder.issueLocation) {
       const body: FinishFormRequest = { text, messages, workOrder }
       const res = await axios.post("/api/finish-form", body)
       const aiResponse = res?.data.response
