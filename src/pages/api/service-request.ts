@@ -33,10 +33,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     "Dishwasher": ["Won't Run", "Overflowing", "Not Cleaning The Dishes"],
     "Stove": ["Won't Turn On", "Not Getting Hot"],
     "Oven": ["Oven won't turn on", "Not Getting Hot"],
-    "General Leak": ["Leak from ceiling", "Leak in basement"],
-    "Electrical Problem": ["Light bulb out", "Heating not working", "AC not working"],
+    "Leak": ["Ceiling", "Basement", "Walls"],
+    "Electrical": ["Light bulb out", "Heating not working", "AC not working"],
     "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
     "Pests": ["Mice/Rats", "Termites", "Roaches", "Ants", "Fruit Flies"],
+    "Roof": ["Dilapidated", "Missing Sections", "Crack", "Snow Pile-up"],
     "Other": [""],
   } as any
 
