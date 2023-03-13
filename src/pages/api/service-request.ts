@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     role: "system",
     content: `You're a property management chatbot. The user is a tenant requesting a work order for their property. Think like a property manager who needs to get information from the user and diagnose what their issue is.
       They will tell you broadly what the issue is their having.
-      Your responsibility is to categorize their issue into one of these categories: ${Object.keys(issueCategoryToTypes)}. If you cannot match their issue to any of these, respond with "other".
+      Your responsibility is to categorize their issue into one of these categories: ${Object.keys(issueCategoryToTypes)}. If you cannot match their issue to any of these, respond with "Other".
       Your answer to this question should only be the category, no additional text.`
   }
 
