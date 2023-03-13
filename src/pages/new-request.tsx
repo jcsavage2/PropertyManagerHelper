@@ -14,6 +14,7 @@ export type AiJSONResponse = {
   aiMessage: string
   additionalDetails: string
   issueFound: boolean
+  issueLocation: string
 }
 
 export type FinishFormRequest = {
@@ -27,6 +28,7 @@ type WorkOrder = {
   address: string
   permissionToEnter: string
   serviceRequest: string
+  issueLocation: string | null
 }
 
 const NewRequest = () => {
@@ -39,6 +41,7 @@ const NewRequest = () => {
     address: "",
     permissionToEnter: "",
     serviceRequest: "",
+    issueLocation: null
   })
 
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
@@ -65,7 +68,7 @@ const NewRequest = () => {
 
     let newMessage: string = ""
 
-    if (workOrder.serviceRequest) {
+    if (workOrder.serviceRequest && workOrder.issueLocation) {
       const body: FinishFormRequest = { text, messages, workOrder }
       const res = await axios.post("/api/finish-form", body)
       const aiResponse = res?.data.response
@@ -114,7 +117,7 @@ const NewRequest = () => {
           className="border-solid border-2 border-slate-400 bg-slate-100 rounded w-8/12 mx-auto overflow-scroll">
           <div id="chatbox-header">
             <p className="text-slate-200 w-3/4 rounded bg-slate-700 mt-6 ml-2 py-2">
-              {`Tell us broadly what the issue is about. For example: "Toilet", or "Dishwasher".`}
+              {`Tell us briefly what the issue is about. For example: "Light bulb is out" or "Toilet is clogged".`}
             </p>
           </div>
           {messages.length &&
