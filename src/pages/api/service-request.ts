@@ -12,13 +12,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const body = req.body as ApiRequest
   const { text, messages, issueCategory } = body
 
-  const workOrderDocument: Record<string, any> = await client.fetch(`*[_type == "workOrder"]`)
-  const { workOrderFields } = workOrderDocument?.[0] ?? []
-
   const config = new Configuration({
     apiKey: process.env.OPEN_AI_API_KEY,
   })
   const openai = new OpenAIApi(config)
+  const workOrderDocument: Record<string, any> = await client.fetch(`*[_type == "workOrder"]`)
+  const { workOrderFields } = workOrderDocument?.[0] ?? []
+
 
   const sample = {
     issueCategory: "Toilet",
@@ -29,15 +29,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } as AiJSONResponse
 
   const issueCategoryToTypes = {
-    "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged"],
-    "Faucet": ["Leaking", "Won't turn on"],
-    "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking"],
-    "Dishwasher": ["Won't run", "overflowing"],
-    "Stove": ["Burner won't turn on", "Burner not getting hot", "Oven won't turn on", "Oven not getting hot"],
+    "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged", "Does not Fill", "Cracked", "Weak Flush"],
+    "Faucet": ["Leaking", "Won't turn on", "Drain Clogged", "Low Pressure", "Rusty"],
+    "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Broken", "Filter Needs Replacement"],
+    "Dishwasher": ["Won't Run", "Overflowing", "Not Cleaning The Dishes"],
+    "Stove": ["Won't Turn On", "Not Getting Hot"],
+    "Oven": ["Oven won't turn on", "Not Getting Hot"],
     "General Leak": ["Leak from ceiling", "Leak in basement"],
     "Electrical Problem": ["Light bulb out", "Heating not working", "AC not working"],
+    "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
+    "Pests": ["Mice/Rats", "Termites", "Roaches", "Ants", "Fruit Flies"],
     "Other": [""],
   } as any
+
+  const initialPrompt: ChatCompletionRequestMessage = {
+    role: "system",
+    content: `You're a property management chatbot. The user is a tenant requesting a work order for their property. Think like a property manager who needs to get information from the user and diagnose what their issue is.
+      They will tell you broadly what the issue is their having.
+      Your responsibility is to categorize their issue into one of these categories: ${Object.keys(issueCategoryToTypes)}. If you cannot match their issue to any of these, respond with "other".
+      Your answer to this question should only be the category, no additional text.`
+  }
 
   const prompt: ChatCompletionRequestMessage = {
     role: "system",
@@ -55,17 +66,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     Your job is to guide the user to the root issue in detail and record any additional information about the duration, location, or specifics\
     of the issue under: "additionalDetails".
     When you have identified the value for keys "issueCategory" and "subCategory", mark the value for the key "issueFound" as "true".
+    Also, don't apologize.
   `}
 
   const response = await openai.createChatCompletion({
     max_tokens: 500,
     model: "gpt-3.5-turbo",
-    messages: [prompt, ...messages, { role: "user", content: text }],
+    messages: [messages.length > 1 ? prompt : initialPrompt, ...messages, { role: "user", content: text }],
     temperature: 0,
   })
 
   const aiResponse = response.data.choices[0].message?.content
-
+  console.log({ aiResponse })
   let newResponse: any = null
   if (aiResponse && !aiResponse?.startsWith("{")) {
     newResponse = await openai.createChatCompletion({
