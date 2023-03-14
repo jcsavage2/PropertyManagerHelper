@@ -15,8 +15,9 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
             <Image src="/2.png" alt='1' width={40} height={0}></Image>
           </div>
           <div className='my-auto flex space-x-4'>
-            <Link className='' href={"/"}>Home</Link>
-            <Link className='' href={"/about"}>About</Link>
+            <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>
+            <Link className='hover:text-gray-500 text-lg' href={"/about"}>About</Link>
+            <Link className='hover:text-gray-500 text-lg' href={"/login"}>Login</Link>
           </div>
         </div>
       </nav>
