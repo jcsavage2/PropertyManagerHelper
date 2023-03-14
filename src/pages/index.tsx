@@ -110,8 +110,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Property Manager Helper</title>
-        <meta name="description" content="App to help property managers deal with service requests" />
+        <title>Pillar</title>
+        <meta name="description" content="App to help property managers deal with Work Orders" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
