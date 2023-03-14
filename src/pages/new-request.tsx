@@ -12,9 +12,8 @@ export type AiJSONResponse = {
   issueCategory: string
   subCategory: string
   aiMessage: string
-  additionalDetails: string
-  issueFound: boolean
   issueLocation: string
+  issueFound: boolean
 }
 
 export type FinishFormRequest = {
