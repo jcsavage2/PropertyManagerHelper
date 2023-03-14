@@ -40,6 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
     "Pests": ["Mice/Rats", "Termites", "Roaches", "Ants", "Fruit Flies"],
     "Roof": ["Dilapidated", "Missing Sections", "Crack", "Snow Pile-up"],
+    "Mold": ["Mold"]
   } as any
 
 
