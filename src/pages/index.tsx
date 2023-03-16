@@ -120,14 +120,14 @@ export default function Home() {
           <div>
             <div
               id="container"
-              className="w-11/12 md:w-6/12  mt-4 mx-auto lg:w-1/3">
+              className="w-11/12 sm:w-6/12 mt-2 sm:mt-4 mx-auto lg:w-1/3">
               <div id="header" className="text-center">
-                <h1 className='text-left pl-0 text-2xl lg:text-5xl'>Submitting Work Orders...</h1>
-                <h3 className='text-right my-3 pr-0 text-2xl lg:text-3xl text-gray-400'>...Now as easy as texting</h3>
+                <h1 className='text-left pl-0 text-xl sm:text-2xl lg:text-5xl'>Submitting Work Orders...</h1>
+                <h3 className='text-right my:1 md:my-3 pr-0 sm:text-2xl lg:text-3xl text-gray-400'>...Now as easy as texting</h3>
               </div>
               <div className='shadow-xl rounded'>
-                <div id="chatbox-header" className='text-left h-16 bg-blue-200 rounded'>
-                  <h3 className='my-auto text-xl pl-4 py-5 text-gray-500'>PILLAR Chat</h3>
+                <div id="chatbox-header" className='text-left h-10 lg:h-16 bg-blue-200 rounded'>
+                  <h3 className='my-auto text-xl pl-4 py-2 lg:py-5 text-gray-500'>PILLAR Chat</h3>
                 </div>
                 <div
                   id="chatbox"
