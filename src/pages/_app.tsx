@@ -3,7 +3,8 @@ import type { AppProps } from 'next/app'
 import { SessionProvider, SessionProviderProps } from "next-auth/react"
 import Link from 'next/link'
 import Image from 'next/image'
-import Logo from "../static/1.png"
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"] }) {
   return (
@@ -21,6 +22,7 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
           </div>
         </div>
       </nav>
+      <ToastContainer />
       <Component {...pageProps} />
     </SessionProvider >
   )
