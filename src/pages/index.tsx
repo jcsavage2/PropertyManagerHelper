@@ -76,18 +76,6 @@ export default function Home() {
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setText(e.currentTarget.value)
   }, [setText])
-  const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setName(e.currentTarget.value)
-  }, [setName])
-  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setEmail(e.currentTarget.value)
-  }, [setEmail])
-  const handleProperyManagerEmail: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setPropertyManagerEmail(e.currentTarget.value)
-  }, [setPropertyManagerEmail])
-  const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setAddress(e.currentTarget.value)
-  }, [setAddress])
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
@@ -168,10 +156,10 @@ export default function Home() {
                 </div>
                 <div
                   id="chatbox"
-                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll h-80 lg:h-96"
+                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll h-96 lg:h-96"
                 >
                   <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-6 mb-3 py-2 px-4 text-left">
-                    {`Tell us briefly about the issue you are experiencing.`}
+                    {`Tell us about the issue you are experiencing.`}
                   </p>
                   {!!messages?.length &&
                     messages.map((message, index) => (
@@ -186,6 +174,15 @@ export default function Home() {
                               <h3 className="text-left font-semibold">Service Request: {" "}
                                 <span className="font-normal">
                                   {workOrder.serviceRequest}
+                                </span>
+                              </h3>
+                            </div>
+                          )}
+                          {workOrder.issueLocation && !!(index % 2) && index === messages.length - 1 && (
+                            <div className="text-left mb-4 text-gray-700">
+                              <h3 className="text-left font-semibold">Issue Location: {" "}
+                                <span className="font-normal">
+                                  {workOrder.issueLocation}
                                 </span>
                               </h3>
                             </div>
@@ -205,59 +202,21 @@ export default function Home() {
                 </div>
                 <div id="chatbox-footer" className="py-4 bg-gray-100">
                   <form onSubmit={handleSubmit}>
-                    {readyToSubmitUserInfo && (
-                      <>
-                        <input
-                          value={name}
-                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
-                          type="text"
-                          placeholder={'John Doe'}
-                          onChange={handleNameChange}
-                        />
-                        <input
-                          value={email}
-                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
-                          type="email"
-                          placeholder={'your-email@gmail.com'}
-                          onChange={handleEmailChange}
-                        />
-                        <input
-                          value={address}
-                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
-                          type="text"
-                          placeholder={'123 waverly st APT 106 Boca Raton, FL 33487'}
-                          onChange={handleAddressChange}
-                        />
-                        <input
-                          value={properyManagerEmail}
-                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
-                          type="email"
-                          placeholder={'property-manager@agent.com'}
-                          onChange={handleProperyManagerEmail}
-                        />
-                      </>
-                    )}
-                    {!readyToSubmitUserInfo && (<input
+                    <input
                       value={text}
                       className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
                       type="text"
-                      placeholder={messages.length ? "" : 'eg. "My toilet is clogged"'}
+                      placeholder={messages.length ? readyToSubmitUserInfo ? "John; 123 St Apt 1400, Boca, FL; yes" : "" : 'eg. "My toilet is clogged"'}
                       onChange={handleChange}
-                    />)}
-                    {!readyToSubmitUserInfo && (<button
+                    />
+                    <button
                       type="submit"
                       className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 mt-2 rounded disabled:opacity-25"
                       disabled={isResponding}
                     >
                       Send Response
-                    </button>)}
-                    {readyToSubmitUserInfo && (<button
-                      type="submit"
-                      className="bg-blue-200 block p-3 text-gray-600 hover:bg-blue-300 mx-auto mt-3 rounded disabled:opacity-25"
-                      disabled={!name || !email || !properyManagerEmail || !address}
-                    >
-                      Submit Work Order
-                    </button>)}
+                    </button>
+
                   </form>
                 </div>
               </div>
