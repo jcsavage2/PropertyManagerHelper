@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react'
 import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { ChatCompletionRequestMessage } from 'openai'
+import { ToastContainer, toast } from 'react-toastify'
 
 
 export type ApiRequest = {
@@ -97,7 +98,9 @@ export default function Home() {
        * Clear everything.
        * Tell the customer to confirm their email.
        */
-      alert("DONE")
+      toast.success("Successfully Submitted!", {
+        position: toast.POSITION.TOP_CENTER
+      });
       return
     }
 
@@ -257,7 +260,7 @@ export default function Home() {
                       className="bg-blue-200 block p-3 text-gray-600 hover:bg-blue-300 mx-auto mt-3 rounded disabled:opacity-25"
                       disabled={!name || !email || !properyManagerEmail || !address}
                     >
-                      Send Work Order
+                      Submit Work Order
                     </button>)}
                   </form>
                 </div>
