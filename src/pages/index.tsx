@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { signIn, signOut, useSession } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { ChatCompletionRequestMessage } from 'openai'
@@ -210,28 +210,28 @@ export default function Home() {
                       <>
                         <input
                           value={name}
-                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
                           type="text"
                           placeholder={'John Doe'}
                           onChange={handleNameChange}
                         />
                         <input
                           value={email}
-                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
                           type="email"
                           placeholder={'your-email@gmail.com'}
                           onChange={handleEmailChange}
                         />
                         <input
                           value={address}
-                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
                           type="text"
                           placeholder={'123 waverly st APT 106 Boca Raton, FL 33487'}
                           onChange={handleAddressChange}
                         />
                         <input
                           value={properyManagerEmail}
-                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
                           type="email"
                           placeholder={'property-manager@agent.com'}
                           onChange={handleProperyManagerEmail}
