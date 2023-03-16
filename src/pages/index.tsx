@@ -97,7 +97,7 @@ export default function Home() {
        * Clear everything.
        * Tell the customer to confirm their email.
        */
-      console.log("DONE")
+      alert("DONE")
       return
     }
 
