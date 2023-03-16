@@ -36,6 +36,13 @@ type WorkOrder = {
 export default function Home() {
   const { data: session } = useSession()
   const [text, setText] = useState("")
+
+  const [name, setName] = useState(session?.user?.name ?? "")
+  const [email, setEmail] = useState(session?.user?.email ?? "")
+  const [address, setAddress] = useState("")
+  const [properyManagerEmail, setPropertyManagerEmail] = useState("")
+
+
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([])
   const [isResponding, setIsResponding] = useState(false)
   const [issueCategory, setIssueCategory] = useState("")
@@ -47,9 +54,14 @@ export default function Home() {
     issueLocation: null
   })
 
-  const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setText(e.currentTarget.value)
-  }, [setText])
+
+  // Update the user when the session is populated
+  useEffect(() => {
+    if (session?.user) {
+      setName(session.user.name ?? "")
+      setEmail(session.user.email ?? "")
+    }
+  }, [session])
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -60,11 +72,35 @@ export default function Home() {
     }
   }, [messages])
 
+  const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setText(e.currentTarget.value)
+  }, [setText])
+  const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setName(e.currentTarget.value)
+  }, [setName])
+  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setEmail(e.currentTarget.value)
+  }, [setEmail])
+  const handleProperyManagerEmail: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setPropertyManagerEmail(e.currentTarget.value)
+  }, [setPropertyManagerEmail])
+  const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setAddress(e.currentTarget.value)
+  }, [setAddress])
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
-    if (text.length === 0) {
+
+    if (name && email && properyManagerEmail && address) {
+      /**
+       * Send email.
+       * Clear everything.
+       * Tell the customer to confirm their email.
+       */
+      console.log("DONE")
       return
     }
+
     setMessages([...messages, { role: "user", content: text }])
     setIsResponding(true)
     setText("")
@@ -97,6 +133,7 @@ export default function Home() {
       setWorkOrder({
         ...workOrder,
         serviceRequest: parsed.issueFound ? parsed.issueCategory + "; " + parsed.subCategory : "",
+        issueLocation: parsed.issueLocation
       })
       setIssueCategory(parsed.issueCategory ?? '')
       newMessage = parsed.aiMessage
@@ -106,6 +143,7 @@ export default function Home() {
     setMessages([...messages, { role: "user", content: text }, { role: "assistant", content: newMessage }])
   }
 
+  const readyToSubmitUserInfo = !!workOrder.serviceRequest && workOrder.issueLocation
 
   return (
     <>
@@ -170,19 +208,59 @@ export default function Home() {
                 </div>
                 <div id="chatbox-footer" className="py-4 bg-gray-100">
                   <form onSubmit={handleSubmit}>
-                    <input
+                    {readyToSubmitUserInfo && (
+                      <>
+                        <input
+                          value={name}
+                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          type="text"
+                          placeholder={'John Doe'}
+                          onChange={handleNameChange}
+                        />
+                        <input
+                          value={email}
+                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          type="email"
+                          placeholder={'your-email@gmail.com'}
+                          onChange={handleEmailChange}
+                        />
+                        <input
+                          value={address}
+                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          type="text"
+                          placeholder={'123 waverly st APT 106 Boca Raton, FL 33487'}
+                          onChange={handleAddressChange}
+                        />
+                        <input
+                          value={properyManagerEmail}
+                          className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                          type="email"
+                          placeholder={'property-manager@agent.com'}
+                          onChange={handleProperyManagerEmail}
+                        />
+                      </>
+                    )}
+                    {!readyToSubmitUserInfo && (<input
                       value={text}
                       className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
                       type="text"
                       placeholder={messages.length ? "" : 'eg. "My toilet is clogged"'}
                       onChange={handleChange}
-                    />
-                    <button
+                    />)}
+                    {!readyToSubmitUserInfo && (<button
                       type="submit"
-                      className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" disabled={isResponding}
+                      className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                      disabled={isResponding || !text}
                     >
                       Send Response
-                    </button>
+                    </button>)}
+                    {readyToSubmitUserInfo && (<button
+                      type="submit"
+                      className="bg-blue-200 block p-3 text-gray-600 hover:bg-blue-300 mx-auto mt-3 rounded disabled:opacity-25"
+                      disabled={!name || !email || !properyManagerEmail || !address}
+                    >
+                      Send Work Order
+                    </button>)}
                   </form>
                 </div>
               </div>
