@@ -120,20 +120,18 @@ export default function Home() {
           <div>
             <div
               id="container"
-              style={{ width: "600px" }}
-              className="w-10/12 mt-6 mx-auto">
+              className="w-11/12 md:w-6/12  mt-4 mx-auto lg:w-1/3">
               <div id="header" className="text-center">
-                <h1 className='text-left pl-0 text-5xl'>Submitting Work Orders...</h1>
-                <h3 className='text-right my-3 pr-0 text-3xl text-gray-400'>...Now as easy as texting</h3>
+                <h1 className='text-left pl-0 text-2xl lg:text-5xl'>Submitting Work Orders...</h1>
+                <h3 className='text-right my-3 pr-0 text-2xl lg:text-3xl text-gray-400'>...Now as easy as texting</h3>
               </div>
-              <div className='shadow-xl'>
-                <div id="chatbox-header" className='text-left h-16 bg-blue-200'>
+              <div className='shadow-xl rounded'>
+                <div id="chatbox-header" className='text-left h-16 bg-blue-200 rounded'>
                   <h3 className='my-auto text-xl pl-4 py-5 text-gray-500'>PILLAR Chat</h3>
                 </div>
                 <div
                   id="chatbox"
-                  style={{ height: "45vh", width: "600px" }}
-                  className="shadow-gray-400 md:filter-none w-8/12 mx-auto overflow-scroll"
+                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll h-80 lg:h-96"
                 >
                   <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-6 mb-3 py-2 px-4 text-left">
                     {`Tell us briefly about the issue you are experiencing.`}
@@ -161,7 +159,7 @@ export default function Home() {
                     )
                     )}
                   {isResponding && (
-                    <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-6 mb-3 py-2 px-4 text-left">
+                    <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-2 mb-3 py-2 px-4 text-left">
                       <div className="dot animate-loader"></div>
                       <div className="dot animate-loader animation-delay-200"></div>
                       <div className="dot animate-loader animation-delay-400"></div>
@@ -172,14 +170,14 @@ export default function Home() {
                   <form onSubmit={handleSubmit}>
                     <input
                       value={text}
-                      className="p-3 mr-3 w-8/12 border-solid border-2 border-gray-200 rounded"
+                      className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
                       type="text"
                       placeholder={messages.length ? "" : 'eg. "My toilet is clogged"'}
                       onChange={handleChange}
                     />
                     <button
                       type="submit"
-                      className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" disabled={isResponding}
+                      className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 mt-2 rounded disabled:opacity-25" disabled={isResponding}
                     >
                       Send Response
                     </button>
