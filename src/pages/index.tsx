@@ -147,14 +147,23 @@ export default function Home() {
       <main className="text-center">
         <div>
           <div>
-            <div id="container" className="w-11/12 sm:w-6/12 mt-2 sm:mt-4 mx-auto lg:w-1/3">
-              <div className="shadow-xl rounded">
-                <div id="chatbox-header" className="text-left h-10 lg:h-16 bg-blue-200 rounded">
-                  <h3 className="my-auto text-xl pl-4 py-2 lg:py-5 text-gray-500">PILLAR Chat</h3>
+            <div
+              id="container"
+              className="w-11/12 sm:w-6/12 lg:w-1/3 mx-auto">
+              <div
+                className="shadow-xl rounded">
+                <div id="chatbox-header"
+                  style={{ height: "5dvh" }}
+                  className="text-left bg-blue-200 rounded">
+                  <h3 className="my-auto text-xl pl-4 py-2 text-gray-500">PILLAR Chat</h3>
                 </div>
                 <div
                   id="chatbox"
-                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll h-96 lg:h-96">
+                  style={{
+                    height: "70dvh",
+                    boxSizing: "border-box"
+                  }}
+                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll ">
                   <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-6 mb-3 py-2 px-4 text-left">
                     {`Tell us about the issue you are experiencing.`}
                   </p>
@@ -202,7 +211,11 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <div id="chatbox-footer" className="py-4 bg-gray-100">
+                <div
+                  id="chatbox-footer"
+                  className="py-4 bg-gray-100"
+                  style={{ "height": "18dvh" }}
+                >
                   <form onSubmit={handleSubmit}>
                     <input
                       value={text}

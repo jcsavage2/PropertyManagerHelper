@@ -9,7 +9,9 @@ import 'react-toastify/dist/ReactToastify.css';
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"] }) {
   return (
     <SessionProvider session={session}>
-      <nav className='flex bg-slate-100 border-3 border-solid border-black py-2 sm:py-5 space-x-62'>
+      <nav
+        style={{ height: "7dvh" }}
+        className='flex bg-slate-100 border-3 border-solid border-black py-2 sm:py-5 space-x-62'>
         <div className="flex space-x-5 text-center">
           <div className='flex'>
             <p className='pl-4 text-xl my-auto font-sans'>PILLAR</p>
