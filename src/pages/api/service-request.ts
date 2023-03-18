@@ -20,11 +20,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
 
     const sample = {
-      issueCategory: "Toilet",
-      subCategory: "Leaking from Base",
       aiMessage: "Ok thank you for reporting the issue... ",
-      issueRoom: "First bedroom on the right on 2nd floor",
+      issueCategory: "Toilet",
       issueFound: false,
+      issueLocation: "First bedroom on the right on 2nd floor",
+      issueRoom: "First bedroom on the right on 2nd floor",
+      subCategory: "Leaking from Base",
     } as AiJSONResponse
 
     const issueCategoryToTypes = {
@@ -68,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const response = await openai.createChatCompletion({
       max_tokens: 500,
       model: "gpt-3.5-turbo",
-      messages: [prompt, ...messages, { role: "user", content: text + `Please respond to my messages in this format: ${JSON.stringify(sample)} and include no additional text.`  }],
+      messages: [prompt, ...messages, { role: "user", content: text + `Please respond to my messages in this format: ${JSON.stringify(sample)} and include no additional text.` }],
       temperature: 0,
     })
 
