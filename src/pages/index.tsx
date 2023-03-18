@@ -27,7 +27,9 @@ export type FinishFormRequest = {
 };
 
 type WorkOrder = {
+  email: string | null;
   name: string | null;
+  properyManagerEmail: string | null;
   address: string | null;
   permissionToEnter: string | null;
   serviceRequest: string | null;
@@ -37,15 +39,14 @@ export default function Home() {
   const { data: session } = useSession();
   const [text, setText] = useState('');
 
-  const [name, setName] = useState(session?.user?.name ?? '');
-  const [email, setEmail] = useState(session?.user?.email ?? '');
-  const [address, setAddress] = useState('');
   const [properyManagerEmail, setPropertyManagerEmail] = useState('');
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [issueCategory, setIssueCategory] = useState('');
   const [workOrder, setWorkOrder] = useState<WorkOrder>({
+    properyManagerEmail: null,
+    email: null,
     name: null,
     address: null,
     permissionToEnter: null,
@@ -56,8 +57,7 @@ export default function Home() {
   // Update the user when the session is populated
   useEffect(() => {
     if (session?.user) {
-      setName(session.user.name ?? '');
-      setEmail(session.user.email ?? '');
+      setWorkOrder({ ...workOrder, name: session.user.name ?? '', email: session.user.email ?? "" });
     }
   }, [session]);
 
@@ -80,7 +80,7 @@ export default function Home() {
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
 
-    if (name && email && properyManagerEmail && address) {
+    if (workOrder.name && workOrder.email && workOrder.address && workOrder.properyManagerEmail) {
       /**
        * Send email.
        * Clear everything.
@@ -230,7 +230,7 @@ export default function Home() {
                           ? readyToSubmitUserInfo
                             ? 'John; 123 St Apt 1400, Boca, FL; yes'
                             : ''
-                          : 'eg. Master bathroom toilet is clogged'
+                          : 'Master bathroom toilet is clogged'
                       }
                       onChange={handleChange}
                     />
