@@ -230,7 +230,7 @@ export default function Home() {
                           ? readyToSubmitUserInfo
                             ? 'John; 123 St Apt 1400, Boca, FL; yes'
                             : ''
-                          : 'eg. "My toilet is clogged"'
+                          : 'eg. Master bathroom toilet is clogged'
                       }
                       onChange={handleChange}
                     />
