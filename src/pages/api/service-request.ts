@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import { ChatCompletionRequestMessage, Configuration, CreateChatCompletionResponse, OpenAIApi } from "openai"
 import { client } from "../../sanity-client"
-import { AiJSONResponse, ApiRequest } from "../new-request"
+import { AiJSONResponse, ApiRequest } from "../index"
 
 type Data = {
   response: string
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       issueCategory: "Toilet",
       subCategory: "Leaking from Base",
       aiMessage: "Ok thank you for reporting the issue... ",
-      issueLocation: "First bedroom on the right on 2nd floor",
+      issueRoom: "First bedroom on the right on 2nd floor",
       issueFound: false,
     } as AiJSONResponse
 
@@ -49,8 +49,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(sample)}
       and should contain all of the keys: ${Object.keys(sample)}, even if there are no values. Here is an example structure: ${sample}. 
       The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes)}.
-      You must identify the location of the issue, the location of the issue will go in "issueLocation". \
-      If the user doesn't know the location of the issue, set "issueLocation" to "Tenant is not sure".
+      You must identify the "issueRoom", which is the room or rooms where the issue is occuring. \
+      If the user doesn't provide an "issueRoom", set the value of "issueRoom" to "".
+      The user may specify multiple rooms, in which case you should record all of them in the "issueRoom" value. The user may also specify\
+      that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueRoom" value.
+      Once you have identified the "issueRoom", don't ask the user about the "issueRoom" again.
       If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.
       ${issueCategory && issueCategory !== "Other" && `When you find the "issueCategory", ask the user to clarify the root issue. \
       The root issue will ALWAYS be one of ${issueCategoryToTypes[issueCategory]} and this value will be the "subCategory". If their root\
@@ -60,7 +63,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       Once you have found their root issue, mark "issueFound" as true.`}  
       The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key and "issueFound" key.
       When you have identified the value for keys "issueCategory" and "subCategory", mark the value for the key "issueFound" as "true".
-      Don't apologize.
     `}
 
     const response = await openai.createChatCompletion({
@@ -111,6 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const finalResponse = processAiResponse(newResponse ?? aiResponse)
+    console.log({ finalResponse })
 
     if (!aiResponse) {
       return res.status(400).json({ response: "Error getting message from chatbot" })
@@ -125,7 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 const processAiResponse = (response: string): string => {
   let parsedResponse = JSON.parse(response) as AiJSONResponse
 
-  let message = parsedResponse.issueFound && parsedResponse.issueLocation ? 'I am sorry you are dealing with this, we will try and help you as soon as possible. \
+  let message = parsedResponse.issueFound && parsedResponse.issueRoom ? 'I am sorry you are dealing with this, we will try and help you as soon as possible. \
     To finalize your service request, please give us your name, address, and whether or not we have permission to enter(y/n)'
     : parsedResponse.aiMessage
   parsedResponse.aiMessage = message
