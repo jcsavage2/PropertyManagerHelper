@@ -70,7 +70,7 @@ export default function Home() {
     }
   }, [messages]);
 
-  const handleChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
       setText(e.currentTarget.value);
     },
@@ -144,26 +144,29 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="text-center">
+      <main
+        style={{ height: "92dvh" }}
+        className="text-center">
         <div>
           <div>
             <div
               id="container"
+              style={{ margin: "1dvh auto 0 auto " }}
               className="w-11/12 sm:w-6/12 lg:w-1/3 mx-auto">
               <div
                 className="shadow-xl rounded">
                 <div id="chatbox-header"
-                  style={{ height: "5dvh" }}
+                  style={{ padding: "0.5dvh 0" }}
                   className="text-left bg-blue-200 rounded">
-                  <h3 className="my-auto text-xl pl-4 py-2 text-gray-500">PILLAR Chat</h3>
+                  <h3 className="text-xl my-auto text-gray-500 text-center">PILLAR Chat</h3>
                 </div>
                 <div
                   id="chatbox"
                   style={{
-                    height: "70dvh",
+                    height: "73dvh",
                     boxSizing: "border-box"
                   }}
-                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll ">
+                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll rounded">
                   <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-6 mb-3 py-2 px-4 text-left">
                     {`Tell us about the issue you are experiencing.`}
                   </p>
@@ -213,14 +216,15 @@ export default function Home() {
                 </div>
                 <div
                   id="chatbox-footer"
-                  className="py-4 bg-gray-100"
-                  style={{ "height": "18dvh" }}
+                  className="py-3 bg-gray-100"
+                  style={{ "height": "12dvh" }}
                 >
-                  <form onSubmit={handleSubmit}>
-                    <input
+                  <form onSubmit={handleSubmit}
+                    style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
+                  >
+                    <textarea
                       value={text}
-                      className="p-3 mr-3 w-11/12 border-solid border-2 border-gray-200 rounded"
-                      type="text"
+                      className="p-2 w-10/12 w-full border-solid border-2 border-gray-200 rounded-md"
                       placeholder={
                         messages.length
                           ? readyToSubmitUserInfo
@@ -232,9 +236,9 @@ export default function Home() {
                     />
                     <button
                       type="submit"
-                      className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 mt-2 rounded disabled:opacity-25"
+                      className="text-blue-500 px-1 font-bold hover:text-blue-900 rounded disabled:opacity-25"
                       disabled={isResponding}>
-                      Send Response
+                      Send
                     </button>
                   </form>
                 </div>
