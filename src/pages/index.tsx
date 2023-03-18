@@ -6,53 +6,58 @@ import { ChatCompletionRequestMessage } from 'openai'
 import { toast } from 'react-toastify'
 
 
-export type ApiRequest = {
-  text: string;
+export type ApiRequest = WorkOrder & {
+  userMessage: string;
   messages: ChatCompletionRequestMessage[];
-  issueCategory?: string;
 };
 
 export type AiJSONResponse = {
   aiMessage: string;
   issueCategory: string;
-  issueFound: boolean;
+  issueSubCategory: string;
   issueRoom: string;
-  subCategory: string;
+  issueFound: boolean;
 };
 
-export type FinishFormRequest = {
-  text: string;
+export type FinishFormRequest = IssueInformation & {
+  userMessage: string;
   messages: ChatCompletionRequestMessage[];
-  workOrder: WorkOrder;
 };
 
-type WorkOrder = {
+type UserInfo = {
+  address: string | null;
   email: string | null;
   name: string | null;
-  properyManagerEmail: string | null;
-  address: string | null;
   permissionToEnter: string | null;
-  serviceRequest: string | null;
+  properyManagerEmail: string | null;
+}
+
+export type IssueInformation = {
   issueRoom: string | null;
-};
+  issueCategory: string | null;
+  issueSubcategory: string | null;
+}
+
+type WorkOrder = UserInfo & IssueInformation
+
 export default function Home() {
   const { data: session } = useSession();
-  const [text, setText] = useState('');
-
-  const [properyManagerEmail, setPropertyManagerEmail] = useState('');
+  const [userMessage, setUserMessage] = useState('');
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
-  const [issueCategory, setIssueCategory] = useState('');
   const [workOrder, setWorkOrder] = useState<WorkOrder>({
-    properyManagerEmail: null,
-    email: null,
-    name: null,
     address: null,
-    permissionToEnter: null,
-    serviceRequest: null,
+    email: null,
+    issueCategory: null,
     issueRoom: null,
+    issueSubcategory: null,
+    name: null,
+    permissionToEnter: null,
+    properyManagerEmail: null,
   });
+
+  console.log({ workOrder })
 
   // Update the user when the session is populated
   useEffect(() => {
@@ -72,9 +77,9 @@ export default function Home() {
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
-      setText(e.currentTarget.value);
+      setUserMessage(e.currentTarget.value);
     },
-    [setText]
+    [setUserMessage]
   );
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
@@ -92,14 +97,20 @@ export default function Home() {
       return;
     }
 
-    setMessages([...messages, { role: 'user', content: text }]);
+    setMessages([...messages, { role: 'user', content: userMessage }]);
     setIsResponding(true);
-    setText('');
+    setUserMessage('');
 
     let newMessage: string = '';
 
-    if (workOrder.serviceRequest && workOrder.issueRoom) {
-      const body: FinishFormRequest = { text, messages, workOrder };
+    if (workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueRoom) {
+      const body: FinishFormRequest = {
+        userMessage,
+        messages,
+        issueCategory: workOrder.issueCategory,
+        issueSubcategory: workOrder.issueSubcategory,
+        issueRoom: workOrder.issueRoom
+      };
       const res = await axios.post('/api/finish-form', body);
       const aiResponse = res?.data.response;
       const jsonStart = aiResponse.indexOf('{');
@@ -117,24 +128,24 @@ export default function Home() {
 
       newMessage = aiResponse;
     } else {
-      const body: ApiRequest = { text, messages, issueCategory };
+      const body: ApiRequest = { userMessage, messages, ...workOrder };
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
       setWorkOrder({
         ...workOrder,
-        serviceRequest: parsed.issueFound ? parsed.issueCategory + '; ' + parsed.subCategory : '',
+        issueCategory: parsed.issueCategory,
+        issueSubcategory: parsed.issueSubCategory,
         issueRoom: parsed.issueRoom,
       });
-      setIssueCategory(parsed.issueCategory ?? '');
       newMessage = parsed.aiMessage;
     }
 
     setIsResponding(false);
-    setMessages([...messages, { role: 'user', content: text }, { role: 'assistant', content: newMessage }]);
+    setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
   };
 
-  const readyToSubmitUserInfo = !!workOrder.serviceRequest && workOrder.issueRoom;
+  const readyToSubmitUserInfo = workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueRoom;
 
   return (
     <>
@@ -167,7 +178,7 @@ export default function Home() {
                     boxSizing: "border-box"
                   }}
                   className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll rounded">
-                  <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-6 mb-3 py-2 px-4 text-left">
+                  <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
                     {`Tell us about the issue you are experiencing.`}
                   </p>
                   {!!messages?.length &&
@@ -178,14 +189,14 @@ export default function Home() {
                             ? 'bg-gray-200 text-left'
                             : 'bg-blue-100 text-right'
                             }`}>
-                          {workOrder.serviceRequest &&
+                          {workOrder.issueCategory &&
                             !!(index % 2) &&
                             index === messages.length - 1 && (
                               <div className="text-left mb-1 text-gray-700">
                                 <h3 className="text-left font-semibold">
                                   Service Request:{' '}
                                   <span className="font-normal">
-                                    {workOrder.serviceRequest}
+                                    {`${workOrder.issueCategory}` + `; ${workOrder.issueSubcategory ?? ""}`}
                                   </span>
                                 </h3>
                               </div>
@@ -223,14 +234,14 @@ export default function Home() {
                     style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
                   >
                     <textarea
-                      value={text}
+                      value={userMessage}
                       className="p-2 w-10/12 w-full border-solid border-2 border-gray-200 rounded-md"
                       placeholder={
                         messages.length
                           ? readyToSubmitUserInfo
                             ? 'John; 123 St Apt 1400, Boca, FL; yes'
                             : ''
-                          : 'Master bathroom toilet is clogged'
+                          : 'Toilet in the master bathroom is clogged.'
                       }
                       onChange={handleChange}
                     />
