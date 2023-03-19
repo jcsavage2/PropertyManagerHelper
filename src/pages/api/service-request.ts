@@ -21,20 +21,22 @@ const sample = {
 } as AiJSONResponse
 
 const issueCategoryToTypes = {
-  "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged", "Does not Fill", "Cracked", "Weak Flush"],
-  "Faucet": ["Leaking", "Won't turn on", "Drain Clogged", "Low Pressure", "Rusty"],
-  "Shower": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty"],
-  "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Broken", "Filter Needs Replacement"],
+  "Chandalier": ["Fallen", "Won't Turn On"],
   "Dishwasher": ["Won't Run", "Overflowing", "Not Cleaning The Dishes"],
-  "Stove": ["Won't Turn On", "Not Getting Hot"],
-  "TV": ["Won't Turn On", "Nothing Displays When On", "Can't Connect to Internet"],
-  "Oven": ["Oven won't turn on", "Not Getting Hot"],
-  "Leak": ["Ceiling", "Basement", "Walls", "Floor"],
   "Electrical": ["Light bulb out", "Heating not working", "AC not working"],
+  "Faucet": ["Leaking", "Won't turn on", "Drain Clogged", "Low Pressure", "Rusty"],
+  "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Broken", "Filter Needs Replacement"],
+  "Hazard": ["Mold", "Asbestos", "Gas Leak", "Fire", "Flood"],
   "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
+  "Leak": ["Ceiling", "Basement", "Walls", "Floor"],
+  "Microwave": ["Won't Turn On"],
+  "Oven": ["Oven won't turn on", "Not Getting Hot"],
   "Pests": ["Mice/Rats", "Termites", "Roaches", "Ants", "Fruit Flies"],
   "Roof": ["Dilapidated", "Missing Sections", "Crack", "Snow Pile-up"],
-  "Hazard": ["Mold", "Asbestos", "Gas Leak", "Fire", "Flood"]
+  "Shower": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty"],
+  "Stove": ["Won't Turn On", "Not Getting Hot"],
+  "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged", "Does not Fill", "Cracked", "Weak Flush"],
+  "TV": ["Won't Turn On", "Nothing Displays When On", "Can't Connect to Internet"]
 } as any
 
 /**
@@ -94,7 +96,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const finalResponse = processAiResponse(newResponse ?? aiResponse)
-    console.log({ finalResponse })
 
     if (!aiResponse) {
       return res.status(400).json({ response: "Error getting message from chatbot" })
@@ -108,7 +109,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
 const processAiResponse = (response: string): string => {
   let parsedResponse = JSON.parse(response) as AiJSONResponse
-
   let message = parsedResponse.issueFound && parsedResponse.issueRoom ? 'I am sorry you are dealing with this, we will try and help you as soon as possible. \
     To finalize your service request, please give us your name, address, and whether or not we have permission to enter(y/n)'
     : parsedResponse.aiMessage
