@@ -19,8 +19,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const prompt: ChatCompletionRequestMessage = {
     "role": "system", "content": `CONTEXT: examine this JSON: ${JSON.stringify(workOrder)}
   As a property management chatbot provided with an issue from the user, your job is to update the JSON fields based on the users \
-  input and RETURN the updated JSON back in a readable form. For example, User: "Dylan apt12c. Yes." \
-  You: "Name: Dylan, Address: Apt 12c, Permission to enter(y/n): Yes, Service Request: Toilet; Clogged." If the user's input is totally \
+  input. In every message, include the state of the form like this: "\nName: Dylan\n Address: Apt 12c\n \
+  Permission to enter(y/n): Yes\n Service Request: Toilet; Clogged\n" If the user's input is totally \
   unrelated to a service request, cheerfully instruct them to try again. The user does not understand what JSON is, so refer to the JSON as \
   "the form".`}
 

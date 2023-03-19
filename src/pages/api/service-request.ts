@@ -110,7 +110,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 const processAiResponse = (response: string): string => {
   let parsedResponse = JSON.parse(response) as AiJSONResponse
   let message = parsedResponse.issueFound && parsedResponse.issueRoom ? 'I am sorry you are dealing with this, we will try and help you as soon as possible. \
-    To finalize your service request, please give us your name, address, and whether or not we have permission to enter(y/n)'
+    To finalize your service request, please give us the following information:\n\n Name: \n Address: \n Permission to Enter: \n\n \
+    Once you provide this information, we will be able to schedule a service request for you.'
     : parsedResponse.aiMessage
   parsedResponse.aiMessage = message
 

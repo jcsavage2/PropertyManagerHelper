@@ -75,15 +75,14 @@ export default function Home() {
     }
   }, [messages]);
 
-  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
-    (e) => {
+  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
       setUserMessage(e.currentTarget.value);
-    },
-    [setUserMessage]
-  );
+    },[setUserMessage]);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
+
+    if(userMessage === '') return
 
     if (workOrder.name && workOrder.email && workOrder.address && workOrder.properyManagerEmail) {
       /**
@@ -163,12 +162,12 @@ export default function Home() {
             <div
               id="container"
               style={{ margin: "1dvh auto 0 auto " }}
-              className="w-11/12 sm:w-6/12 lg:w-1/3 mx-auto">
+              className="w-11/12 sm:w-6/12 mx-auto">
               <div
-                className="shadow-xl rounded">
+                className="shadow-xl rounded-lg">
                 <div id="chatbox-header"
                   style={{ padding: "0.5dvh 0" }}
-                  className="text-left bg-blue-200 rounded">
+                  className="text-left bg-blue-200 rounded-t-lg">
                   <h3 className="text-xl my-auto text-gray-500 text-center">PILLAR Chat</h3>
                 </div>
                 <div
@@ -177,13 +176,13 @@ export default function Home() {
                     height: "73dvh",
                     boxSizing: "border-box"
                   }}
-                  className="shadow-gray-400 md:filter-none w-11/12 mx-auto overflow-scroll rounded">
+                  className="shadow-gray-400 md:filter-none m-0 p-3 overflow-scroll">
                   <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
                     {`Tell us about the issue you are experiencing.`}
                   </p>
                   {!!messages?.length &&
                     messages.map((message, index) => (
-                      <div key={`${message.content[0]}-${index}`} className="mb-3">
+                      <div key={`${message.content[0]}-${index}`} className="mb-3 break-all">
                         <div
                           className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2)
                             ? 'bg-gray-200 text-left'
@@ -213,7 +212,7 @@ export default function Home() {
                                 </h3>
                               </div>
                             )}
-                          <p>{message.content}</p>
+                          <p className='whitespace-pre-line break-keep'>{message.content}</p>
                         </div>
                       </div>
                     ))}
@@ -227,15 +226,22 @@ export default function Home() {
                 </div>
                 <div
                   id="chatbox-footer"
-                  className="py-3 bg-gray-100"
+                  className="p-3 bg-gray-100 rounded-b-lg flex items-center justify-center"
                   style={{ "height": "12dvh" }}
                 >
                   <form onSubmit={handleSubmit}
                     style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
+                    onKeyDown={(e) => {
+                        //Users can press enter to submit the form, enter + shift to add a new line
+                        if(e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSubmit(e);
+                        }
+                    }}
                   >
                     <textarea
                       value={userMessage}
-                      className="p-2 w-10/12 w-full border-solid border-2 border-gray-200 rounded-md"
+                      className="p-2 w-full border-solid border-2 border-gray-200 rounded-md"
                       placeholder={
                         messages.length
                           ? readyToSubmitUserInfo
@@ -247,7 +253,7 @@ export default function Home() {
                     />
                     <button
                       type="submit"
-                      className="text-blue-500 px-1 font-bold hover:text-blue-900 rounded disabled:opacity-25"
+                      className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:opacity-25 "
                       disabled={isResponding}>
                       Send
                     </button>
