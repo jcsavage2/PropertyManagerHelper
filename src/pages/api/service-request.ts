@@ -79,9 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       processedResponse = processAiResponse(newAiResponse)
 
       //If it still doesn't work, return the original aiMessage with other WO data taken from request body
-      //NOTE: this is still an error case, if this happens we are making no progress with the user this message, but this will not error
       if(!processedResponse){
-        console.log("ERROR: Second GPT request also returned invalid JSON. Returning unchanged WO data.")
         let incompleteResponse: AiJSONResponse = {
             issueCategory: workOrderData.issueCategory ?? "",
             issueSubCategory: workOrderData.issueSubCategory ?? "",
@@ -110,7 +108,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
 const processAiResponse = (response: string): string | null => {
-  let jsonResponse: AiJSONResponse | null = null
   let returnString = null
   const jsonStart = response.indexOf("{")
   const jsonEnd = response.lastIndexOf("}")
@@ -119,7 +116,7 @@ const processAiResponse = (response: string): string | null => {
     const regex = /&quot;/g
     const substr = response.substring(jsonStart, jsonEnd + 1)
     const cleanedString = substr.replace(regex, '"').replace("True", "true").replace("False", "false").replace("undefined", '""')
-    jsonResponse = JSON.parse(cleanedString) as AiJSONResponse
+    let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse
 
     jsonResponse.aiMessage = jsonResponse.issueFound && jsonResponse.issueRoom ? 'I am sorry you are dealing with this, we will try and help you as soon as possible. \
     To finalize your service request, please give us the following information:\n\n Name: \n Address: \n Permission to Enter: \n\n \
