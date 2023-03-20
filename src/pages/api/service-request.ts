@@ -110,8 +110,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
 const processAiResponse = (response: string): string | null => {
-  console.log("Processing AI response: ", response)
-  
   let jsonResponse: AiJSONResponse | null = null
   let returnString = null
   const jsonStart = response.indexOf("{")
@@ -131,7 +129,6 @@ const processAiResponse = (response: string): string | null => {
     returnString = JSON.stringify(jsonResponse)
   }
 
-  console.log("Finished with: ", returnString)
   return returnString
 }
 
