@@ -29,7 +29,7 @@ const issueCategoryToTypes = {
   "Electrical": ["Light bulb out", "Heating not working", "AC not working"],
   "Faucet": ["Leaking", "Won't turn on", "Drain Clogged", "Low Pressure", "Rusty"],
   "Floor": ["Needs Cleaning", "Missing"],
-  "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Broken", "Filter Needs Replacement"],
+  "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Out", "Filter Needs Replacement"],
   "Hazard": ["Mold", "Asbestos", "Gas Leak", "Fire", "Flood"],
   "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
   "Microwave": ["Won't Turn On"],
