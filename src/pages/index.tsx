@@ -213,7 +213,7 @@ export default function Home() {
                                 </h3>
                               </div>
                             )}
-                          <p className='whitespace-pre-line break-keep'>{message.content}</p>
+                          <p data-testid={`response-${index}`} className='whitespace-pre-line break-keep'>{message.content}</p>
                         </div>
                       </div>
                     ))}
@@ -242,6 +242,7 @@ export default function Home() {
                   >
                     <textarea
                       value={userMessage}
+                      data-testid="userMessageInput"
                       className="p-2 w-full border-solid border-2 border-gray-200 rounded-md"
                       placeholder={
                         messages.length
@@ -253,9 +254,10 @@ export default function Home() {
                       onChange={handleChange}
                     />
                     <button
+                      data-testid="send"
                       type="submit"
-                      className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:opacity-25 "
-                      disabled={isResponding}>
+                      className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
+                      disabled={isResponding || !userMessage}>
                       Send
                     </button>
                   </form>
