@@ -15,7 +15,7 @@ export type AiJSONResponse = {
   aiMessage: string;
   issueCategory: string;
   issueSubCategory: string;
-  issueRoom: string;
+  issueLocation: string;
   issueFound: boolean;
 };
 
@@ -33,7 +33,7 @@ type UserInfo = {
 }
 
 export type IssueInformation = {
-  issueRoom: string | null;
+  issueLocation: string | null;
   issueCategory: string | null;
   issueSubcategory: string | null;
 }
@@ -50,14 +50,12 @@ export default function Home() {
     address: null,
     email: null,
     issueCategory: null,
-    issueRoom: null,
+    issueLocation: null,
     issueSubcategory: null,
     name: null,
     permissionToEnter: null,
     properyManagerEmail: null,
   });
-
-  console.log({ workOrder })
 
   // Update the user when the session is populated
   useEffect(() => {
@@ -76,13 +74,13 @@ export default function Home() {
   }, [messages]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
-      setUserMessage(e.currentTarget.value);
-    },[setUserMessage]);
+    setUserMessage(e.currentTarget.value);
+  }, [setUserMessage]);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
 
-    if(userMessage === '') return
+    if (userMessage === '') return
 
     if (workOrder.name && workOrder.email && workOrder.address && workOrder.properyManagerEmail) {
       /**
@@ -102,13 +100,13 @@ export default function Home() {
 
     let newMessage: string = '';
 
-    if (workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueRoom) {
+    if (workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueLocation) {
       const body: FinishFormRequest = {
         userMessage,
         messages,
         issueCategory: workOrder.issueCategory,
         issueSubcategory: workOrder.issueSubcategory,
-        issueRoom: workOrder.issueRoom
+        issueLocation: workOrder.issueLocation
       };
       const res = await axios.post('/api/finish-form', body);
       const aiResponse = res?.data.response;
@@ -135,7 +133,7 @@ export default function Home() {
         ...workOrder,
         issueCategory: parsed.issueCategory,
         issueSubcategory: parsed.issueSubCategory,
-        issueRoom: parsed.issueRoom,
+        issueLocation: parsed.issueLocation,
       });
       newMessage = parsed.aiMessage;
     }
@@ -144,7 +142,7 @@ export default function Home() {
     setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
   };
 
-  const readyToSubmitUserInfo = workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueRoom;
+  const readyToSubmitUserInfo = workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueLocation;
 
   return (
     <>
@@ -178,7 +176,10 @@ export default function Home() {
                   }}
                   className="shadow-gray-400 md:filter-none m-0 p-3 overflow-scroll">
                   <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
-                    {`Tell us about the issue you are experiencing.`}
+                    {`Tell me about the issue you are experiencing and I'll generate a work order.`}
+                    <br />
+                    <br />
+                    {` For example: "Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right."`}
                   </p>
                   {!!messages?.length &&
                     messages.map((message, index) => (
@@ -200,14 +201,14 @@ export default function Home() {
                                 </h3>
                               </div>
                             )}
-                          {workOrder.issueRoom &&
+                          {workOrder.issueLocation &&
                             !!(index % 2) &&
                             index === messages.length - 1 && (
                               <div className="text-left mb-4 text-gray-700">
                                 <h3 className="text-left font-semibold">
                                   Issue Location:{' '}
                                   <span className="font-normal">
-                                    {workOrder.issueRoom}
+                                    {workOrder.issueLocation}
                                   </span>
                                 </h3>
                               </div>
@@ -232,11 +233,11 @@ export default function Home() {
                   <form onSubmit={handleSubmit}
                     style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
                     onKeyDown={(e) => {
-                        //Users can press enter to submit the form, enter + shift to add a new line
-                        if(e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSubmit(e);
-                        }
+                      //Users can press enter to submit the form, enter + shift to add a new line
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
                     }}
                   >
                     <textarea
