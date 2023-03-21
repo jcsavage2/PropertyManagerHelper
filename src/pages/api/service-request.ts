@@ -135,7 +135,8 @@ const processAiResponse = (response: string): string => {
 const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessage => {
   return {
     role: "system",
-    content: `You're a property management chatbot. The user is a tenant. Work with them to diagnose what their issue is and how to locate their issue. \
+    content:
+      `You're a property management chatbot. The user is a tenant. Work with them to diagnose what their issue is and how to locate their issue. \
     You should only respond in JSON.
     All of your responses should be stringified JSON like this: ${JSON.stringify(sample)}.
     and should contain all of the keys: ${Object.keys(sample)} even if there are no values.
@@ -161,8 +162,7 @@ const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessa
 
     ${issueInfo.issueCategory && issueInfo.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
 
-    ${issueInfo.issueCategory && issueInfo.issueSubcategory && issueInfo.issueLocation && 'mark "issueFound" as true.'} 
     The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key and "issueFound" key.
-    When you have identified the value for keys "issueCategory" and "issueSubCategory", mark the value for the key "issueFound" as "true".
+    When you have identified values for "issueCategory", "issueSubCategory", and "issueLocation", mark the value for the key "issueFound" as "true".
   `}
 }
