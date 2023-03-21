@@ -167,8 +167,8 @@ const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessa
     Once you have identified the "issueLocation", don't ask the user about the "issueLocation" again.
     If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.
     ${issueInfo.issueCategory && issueInfo.issueCategory !== "Other" && `When you find the "issueCategory", ask the user to clarify the root issue. \
-    The root issue will ALWAYS be one of ${issueCategoryToTypes[issueInfo.issueCategory]} and this value will be the "issueSubCategory". If their root\
-    issue doesn't match one of: ${issueCategoryToTypes[issueInfo.issueCategory]}, then record what they tell you as their "issueSubCategory".\
+    The root issue will probably be one of ${issueCategoryToTypes[issueInfo.issueCategory].join(", ")} and this value will be the "issueSubCategory". If their root\
+    issue doesn't match one of: ${issueCategoryToTypes[issueInfo.issueCategory].join(", ")}, then record what they tell you as their "issueSubCategory".\
     Once you have found their "issueSubCategory", mark "issueFound" as true.`}
 
     ${issueInfo.issueCategory && issueInfo.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
