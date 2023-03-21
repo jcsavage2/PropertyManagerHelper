@@ -35,7 +35,7 @@ type UserInfo = {
 export type IssueInformation = {
   issueLocation: string | null;
   issueCategory: string | null;
-  issueSubcategory: string | null;
+  issueSubCategory: string | null;
 }
 
 type WorkOrder = UserInfo & IssueInformation
@@ -51,7 +51,7 @@ export default function Home() {
     email: null,
     issueCategory: null,
     issueLocation: null,
-    issueSubcategory: null,
+    issueSubCategory: null,
     name: null,
     permissionToEnter: null,
     properyManagerEmail: null,
@@ -100,12 +100,12 @@ export default function Home() {
 
     let newMessage: string = '';
 
-    if (workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueLocation) {
+    if (workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation) {
       const body: FinishFormRequest = {
         userMessage,
         messages,
         issueCategory: workOrder.issueCategory,
-        issueSubcategory: workOrder.issueSubcategory,
+        issueSubCategory: workOrder.issueSubCategory,
         issueLocation: workOrder.issueLocation
       };
       const res = await axios.post('/api/finish-form', body);
@@ -132,7 +132,7 @@ export default function Home() {
       setWorkOrder({
         ...workOrder,
         issueCategory: parsed.issueCategory,
-        issueSubcategory: parsed.issueSubCategory,
+        issueSubCategory: parsed.issueSubCategory,
         issueLocation: parsed.issueLocation,
       });
       newMessage = parsed.aiMessage;
@@ -142,7 +142,7 @@ export default function Home() {
     setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
   };
 
-  const readyToSubmitUserInfo = workOrder.issueCategory && workOrder.issueSubcategory && workOrder.issueLocation;
+  const readyToSubmitUserInfo = workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation;
 
   return (
     <>
@@ -196,7 +196,7 @@ export default function Home() {
                                 <h3 className="text-left font-semibold">
                                   Service Request:{' '}
                                   <span className="font-normal">
-                                    {`${workOrder.issueCategory}` + `; ${workOrder.issueSubcategory ?? ""}`}
+                                    {`${workOrder.issueCategory}` + `; ${workOrder.issueSubCategory ?? ""}`}
                                   </span>
                                 </h3>
                               </div>
