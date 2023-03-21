@@ -34,7 +34,7 @@ const issueCategoryToTypes = {
   "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
   "Microwave": ["Won't Turn On"],
   "Oven": ["Oven won't turn on", "Not Getting Hot"],
-  "Pests": ["Mice/Rats", "Termites", "Roaches", "Ants", "Fruit Flies"],
+  "Pests": ["Mice/Rats", "Termites", "Roaches/Cockroaches", "Ants", "Fruit Flies"],
   "Roof": ["Dilapidated", "Missing Sections", "Crack", "Snow Pile-up"],
   "Shower": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty"],
   "Sliding Door/Screen": ["Off the Track", "Ripped"],
@@ -59,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const response = await openai.createChatCompletion({
       max_tokens: 500,
       model: "gpt-3.5-turbo",
-      messages: [prompt, ...messages, { role: "user", content: userMessage + `\nPlease respond to my messages in this format: ${JSON.stringify(sample)} and include no additional text.` }],
+      messages: [prompt, ...messages, { role: "user", content: userMessage + `\nPlease respond to my messages in this format: ${JSON.stringify(sample)} and include no additional text. Also don't ask me to confirm info I give you the first time.` }],
       temperature: 0,
     })
 
@@ -135,34 +135,23 @@ const processAiResponse = (response: string): string => {
 const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessage => {
   return {
     role: "system",
-    content:
-      `You're a property management chatbot. The user is a tenant. Work with them to diagnose what their issue is and how to locate their issue. \
-    You should only respond in JSON.
-    All of your responses should be stringified JSON like this: ${JSON.stringify(sample)}.
-    and should contain all of the keys: ${Object.keys(sample)} even if there are no values.
+    content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is.
+    All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(sample)}
+    and should contain all of the keys: ${Object.keys(sample)}, even if there are no values. Here is an example structure: ${sample}. 
     The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes)}.
-
-    ${!issueInfo.issueLocation && 'You must work with the user to identify the "issueLocation", which are the instructions to locate the issue. \
-    Attempt to identify the location based on the users message. \
-    When asking for the "issueLocation" tell the user that this information will help the service worker locate the issue. \
-    If the user gives you an issueLocation, use that as the "issueLocation" and don\'t ask them to confirm.'}\
-
-    If the user doesn't provide "issueLocation", set the value of "issueLocation" to "".
-    The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value.The user may also specify\
-    that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
-    
-    ${issueInfo.issueLocation && `Don't ask the user about the "issueLocation" again.`}
-
+    You must identify the "issueRoom", which is the room or rooms where the issue is occuring. \
+    If the user doesn't provide an "issueRoom", set the value of "issueRoom" to "".
+    The user may specify multiple rooms, in which case you should record all of them in the "issueRoom" value. The user may also specify\
+    that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueRoom" value.
+    Once you have identified the "issueRoom", don't ask the user about the "issueRoom" again.
     If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.
-    
     ${issueInfo.issueCategory && issueInfo.issueCategory !== "Other" && `When you find the "issueCategory", ask the user to clarify the root issue. \
-    The root issue will most likely be one of ${issueCategoryToTypes[issueInfo.issueCategory].join(", ")} and this value will be the "issueSubCategory". If their root\
-    issue doesn't match one of: ${issueCategoryToTypes[issueInfo.issueCategory]}, then record what they tell you as their "issueSubCategory".\
-    Once you have found their "issueSubCategory", mark "issueFound" as true.`}
-
-    ${issueInfo.issueCategory && issueInfo.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
-
+    The root issue will ALWAYS be one of ${issueCategoryToTypes[issueInfo.issueCategory]} and this value will be the "subCategory". If their root\
+    issue doesn't match one of: ${issueCategoryToTypes[issueInfo.issueCategory]}, then record what they tell you as their "subCategory"\
+    Once you have found their "subCategory", mark "issueFound" as true.`}
+    ${issueInfo.issueCategory && issueInfo.issueCategory === "Other" && `Ask the user to clarify the root issue. Record their root issue as the "subCategory" \
+    Once you have found their root issue, mark "issueFound" as true.`}  
     The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key and "issueFound" key.
-    When you have identified values for "issueCategory", "issueSubCategory", and "issueLocation", mark the value for the key "issueFound" as "true".
-  `}
+    When you have identified the value for keys "issueCategory" and "subCategory", mark the value for the key "issueFound" as "true".`
+  }
 }
