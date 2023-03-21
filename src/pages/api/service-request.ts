@@ -40,7 +40,7 @@ const issueCategoryToTypes = {
   "Shower": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty", "No Hot Water"],
   "Sliding Door/Screen": ["Off the Track", "Ripped"],
   "Stove": ["Won't Turn On", "Not Getting Hot"],
-  "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged", "Does not Fill", "Cracked", "Weak Flush"],
+  "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged", "Weak Flush"],
   "Transition Strip": ["Broken"],
   "TV": ["Won't Turn On", "Nothing Displays When On", "Can't Connect to Internet"],
   "Walls": ["Leaking", "Hole"],
