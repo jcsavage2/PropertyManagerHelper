@@ -21,22 +21,29 @@ const sample = {
 } as AiJSONResponse
 
 const issueCategoryToTypes = {
+  "Basement": ["Leaking", "Humid"],
+  "Ceiling": ["Leaking", "Cracked"],
   "Chandalier": ["Fallen", "Won't Turn On"],
   "Dishwasher": ["Won't Run", "Overflowing", "Not Cleaning The Dishes"],
+  "Door": ["Off the Rail", "Won't Open/Close", "Won't Lock", "Can't get in"],
   "Electrical": ["Light bulb out", "Heating not working", "AC not working"],
   "Faucet": ["Leaking", "Won't turn on", "Drain Clogged", "Low Pressure", "Rusty"],
+  "Floor": ["Needs Cleaning", "Missing"],
   "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Broken", "Filter Needs Replacement"],
   "Hazard": ["Mold", "Asbestos", "Gas Leak", "Fire", "Flood"],
   "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
-  "Leak": ["Ceiling", "Basement", "Walls", "Floor"],
   "Microwave": ["Won't Turn On"],
   "Oven": ["Oven won't turn on", "Not Getting Hot"],
   "Pests": ["Mice/Rats", "Termites", "Roaches", "Ants", "Fruit Flies"],
   "Roof": ["Dilapidated", "Missing Sections", "Crack", "Snow Pile-up"],
   "Shower": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty"],
+  "Sliding Door/Screen": ["Off the Track", "Ripped"],
   "Stove": ["Won't Turn On", "Not Getting Hot"],
   "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged", "Does not Fill", "Cracked", "Weak Flush"],
-  "TV": ["Won't Turn On", "Nothing Displays When On", "Can't Connect to Internet"]
+  "Transition Strip": ["Broken"],
+  "TV": ["Won't Turn On", "Nothing Displays When On", "Can't Connect to Internet"],
+  "Walls": ["Leaking", "Hole"],
+  "Window": ["Shattered", "Cracked", "Won't Open", "Won't Close"],
 } as Record<string, string[]>
 
 /**
@@ -115,6 +122,8 @@ const processAiResponse = (response: string): string => {
     : parsedResponse.aiMessage
   parsedResponse.aiMessage = message
 
+  console.log({ parsedResponse })
+
   return JSON.stringify(parsedResponse)
 }
 
@@ -124,7 +133,6 @@ const processAiResponse = (response: string): string => {
  * @returns An initial prompt which is dynamically generated based on the information we already have.
  */
 const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessage => {
-  console.log({ issueInfo })
   return {
     role: "system",
     content: `You're a property management chatbot. The user is a tenant. Work with them to diagnose what their issue is and how to locate their issue. \
@@ -132,6 +140,9 @@ const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessa
     All of your responses should be stringified JSON like this: ${JSON.stringify(sample)}.
     and should contain all of the keys: ${Object.keys(sample)} even if there are no values.
     The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes)}.
+    Don't ask the user to confirm the "issueCategory" if you are confident you already have it.
+
+    The current JSON looks like this: ${JSON.stringify(issueInfo)}. Keep asking the user questions until you have values for all keys.
 
     ${!issueInfo.issueLocation && 'You must work with the user to identify the "issueLocation", which are the instructions to locate the issue. \
     Attempt to identify the location based on the users message. \
