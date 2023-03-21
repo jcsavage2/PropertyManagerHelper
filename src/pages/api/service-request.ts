@@ -140,13 +140,11 @@ const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessa
     All of your responses should be stringified JSON like this: ${JSON.stringify(sample)}.
     and should contain all of the keys: ${Object.keys(sample)} even if there are no values.
     The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes)}.
-    Don't ask the user to confirm the "issueCategory" if you are confident you already have it.
-
-    The current JSON looks like this: ${JSON.stringify(issueInfo)}. Keep asking the user questions until you have values for all keys.
 
     ${!issueInfo.issueLocation && 'You must work with the user to identify the "issueLocation", which are the instructions to locate the issue. \
     Attempt to identify the location based on the users message. \
-    When asking for the "issueLocation" tell the user that this information will help the service worker locate the issue.'}\
+    When asking for the "issueLocation" tell the user that this information will help the service worker locate the issue. \
+    If the user gives you an issueLocation, use that as the "issueLocation" and don\'t ask them to confirm.'}\
 
     If the user doesn't provide "issueLocation", set the value of "issueLocation" to "".
     The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value.The user may also specify\
