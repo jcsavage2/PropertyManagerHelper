@@ -58,7 +58,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const response = await openai.createChatCompletion({
       max_tokens: 500,
       model: "gpt-3.5-turbo",
-      messages: [prompt, ...messages, { role: "user", content: userMessage + `\nPlease respond to my messages in this format: ${JSON.stringify(sample)} and include no additional text. Also don't ask me to confirm info I give you the first time.` }],
+      messages: [
+        prompt,
+        ...messages,
+        {
+          role: "user",
+          content: userMessage + `\n
+          Please respond to my messages in this format: ${JSON.stringify(sample)} and include no additional text. \
+          Don't ask me to confirm info I've already told you.
+          If my issue is vague, eg I say something is "broken", ask for more details.`
+        }
+      ],
       temperature: 0,
     })
 
