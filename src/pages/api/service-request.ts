@@ -46,7 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const body = req.body as ApiRequest
     const { userMessage, messages, ...workOrderData } = body
-
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData)
 
     const response = await openai.createChatCompletion({
@@ -56,11 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       temperature: 0,
     })
 
-    const aiResponse = response.data.choices[0].message?.content
+    const aiResponse = response.data.choices[0].message?.content ?? ""
+    let processedResponse : string | null = processAiResponse(aiResponse)
 
-    let newResponse: any = null
-    if (aiResponse && !aiResponse?.startsWith("{")) {
-      newResponse = await openai.createChatCompletion({
+    if (!processedResponse) {
+      const newResponse = await openai.createChatCompletion({
         max_tokens: 500,
         model: "gpt-3.5-turbo",
         messages: [
@@ -71,51 +70,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           {
             role: "system",
             content: `Your answer should only be JSON formatted like this: ${JSON.stringify(sample)}, with no additional text.`,
-          },
+          }
         ],
         temperature: 0,
       })
-    }
 
-    newResponse = newResponse?.data?.choices?.[0].message?.content
+      const newAiResponse = newResponse.data.choices[0].message?.content ?? ""
+      processedResponse = processAiResponse(newAiResponse)
 
-    //The second response may still contain some extraneous text; get the json from it to prevent error
-    if (newResponse) {
-      const regex = /&quot;/g
-      const jsonStart = newResponse.indexOf("{")
-      const jsonEnd = newResponse.lastIndexOf("}")
-      const substr = newResponse.substring(jsonStart, jsonEnd + 1)
-      const cleanedString = substr.replace(regex, '"').replace("True", "true").replace("False", "false").replace("undefined", '""')
-      let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse
+      //If it still doesn't work, return the original aiMessage with other WO data taken from request body
+      if(!processedResponse){
+        let incompleteResponse: AiJSONResponse = {
+            issueCategory: workOrderData.issueCategory ?? "",
+            issueSubCategory: workOrderData.issueSubCategory ?? "",
+            issueRoom: workOrderData.issueRoom ?? "",
+            issueFound: workOrderData.issueCategory && workOrderData.issueSubCategory && workOrderData.issueRoom ? true : false,
+            aiMessage: aiResponse
+        }
 
-      // Solves an issue where the aiMessage could be blank
-      if (!jsonResponse.aiMessage || jsonResponse.aiMessage === '') {
-        jsonResponse.aiMessage = aiResponse ?? 'Sorry, please clarify your issue one more time.' //Never seen it go to the second string here; added to solve typescript issue
+        processedResponse = JSON.stringify(incompleteResponse)
       }
-      newResponse = JSON.stringify(jsonResponse)
     }
-
-    const finalResponse = processAiResponse(newResponse ?? aiResponse)
 
     if (!aiResponse) {
       return res.status(400).json({ response: "Error getting message from chatbot" })
     } else {
-      return res.json({ response: finalResponse })
+      return res.json({ response: processedResponse })
     }
   } catch (err) {
     return res.status(400).json({ response: JSON.stringify(err) ?? "Error returning message..." })
   }
 }
 
-const processAiResponse = (response: string): string => {
-  let parsedResponse = JSON.parse(response) as AiJSONResponse
-  let message = parsedResponse.issueFound && parsedResponse.issueRoom ? 'I am sorry you are dealing with this, we will try and help you as soon as possible. \
+/**
+ * 
+ * @param response string response from GPT; no format requirements
+ * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
+ */
+const processAiResponse = (response: string): string | null => {
+  let returnString = null
+  const jsonStart = response.indexOf("{")
+  const jsonEnd = response.lastIndexOf("}")
+
+  if((jsonStart !== -1 && jsonEnd !== -1)){
+    const regex = /&quot;/g
+    const substr = response.substring(jsonStart, jsonEnd + 1)
+    const cleanedString = substr.replace(regex, '"').replace("True", "true").replace("False", "false").replace("undefined", '""')
+    let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse
+
+    jsonResponse.aiMessage = jsonResponse.issueFound && jsonResponse.issueRoom ? 'I am sorry you are dealing with this, we will try and help you as soon as possible. \
     To finalize your service request, please give us the following information:\n\n Name: \n Address: \n Permission to Enter: \n\n \
     Once you provide this information, we will be able to schedule a service request for you.'
-    : parsedResponse.aiMessage
-  parsedResponse.aiMessage = message
+    : jsonResponse.aiMessage
 
-  return JSON.stringify(parsedResponse)
+    returnString = JSON.stringify(jsonResponse)
+  }
+
+  return returnString
 }
 
 /**
@@ -149,7 +160,7 @@ const generatePrompt = (issueInfo: IssueInformation): ChatCompletionRequestMessa
 
     ${issueInfo.issueCategory && issueInfo.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
 
-    ${issueInfo.issueCategory && issueInfo.issueSubcategory && issueInfo.issueRoom && 'mark "issueFound" as true.'} 
+    ${issueInfo.issueCategory && issueInfo.issueSubCategory && issueInfo.issueRoom && 'mark "issueFound" as true.'} 
     The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key and "issueFound" key.
     When you have identified the value for keys "issueCategory" and "issueSubCategory", mark the value for the key "issueFound" as "true".
   `}
