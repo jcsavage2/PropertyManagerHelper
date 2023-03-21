@@ -65,8 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           role: "user",
           content: userMessage + `\n
           Please respond to my messages in this format: ${JSON.stringify(sample)} and include no additional text. \
-          Don't ask me to confirm info I've already told you.
-          If my issue is vague, eg I say something is "broken", ask for more details.`
+          Don't make me to confirm info I've already told you.
+          If I say something is "broken", "not working", or anything vague, ask me for more details until you identify an issueSubCategory.`
         }
       ],
       temperature: 0,
