@@ -78,68 +78,74 @@ export default function Home() {
   }, [setUserMessage]);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
+    try {
+      e.preventDefault();
 
-    if (userMessage === '') return
+      if (userMessage === '') return
 
-    if (workOrder.name && workOrder.email && workOrder.address && workOrder.properyManagerEmail) {
-      /**
-       * Send email.
-       * Clear everything.
-       * Tell the customer to confirm their email.
-       */
-      toast.success('Successfully Submitted!', {
-        position: toast.POSITION.TOP_CENTER,
-      });
-      return;
-    }
-
-    setMessages([...messages, { role: 'user', content: userMessage }]);
-    setIsResponding(true);
-    setUserMessage('');
-
-    let newMessage: string = '';
-
-    if (workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation) {
-      const body: FinishFormRequest = {
-        userMessage,
-        messages,
-        issueCategory: workOrder.issueCategory,
-        issueSubCategory: workOrder.issueSubCategory,
-        issueLocation: workOrder.issueLocation
-      };
-      const res = await axios.post('/api/finish-form', body);
-      const aiResponse = res?.data.response;
-      const jsonStart = aiResponse.indexOf('{');
-      const jsonEnd = aiResponse.lastIndexOf('}');
-      //   If the json is included in the output then we have the complete work order, else we want to retry to get remaining fields
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        const jsonResponse = JSON.parse(aiResponse.substring(jsonStart, jsonEnd + 1)) as WorkOrder;
-        setWorkOrder({
-          ...workOrder,
-          name: jsonResponse.name ?? '',
-          address: jsonResponse.address ?? '',
-          permissionToEnter: jsonResponse.permissionToEnter ?? '',
+      if (workOrder.name && workOrder.email && workOrder.address && workOrder.properyManagerEmail) {
+        /**
+         * Send email.
+         * Clear everything.
+         * Tell the customer to confirm their email.
+         */
+        toast.success('Successfully Submitted!', {
+          position: toast.POSITION.TOP_CENTER,
         });
+        return;
       }
 
-      newMessage = aiResponse;
-    } else {
-      const body: ApiRequest = { userMessage, messages, ...workOrder };
-      const res = await axios.post('/api/service-request', body);
-      const jsonResponse = res?.data.response;
-      const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
-      setWorkOrder({
-        ...workOrder,
-        issueCategory: parsed.issueCategory,
-        issueSubCategory: parsed.issueSubCategory,
-        issueLocation: parsed.issueLocation,
-      });
-      newMessage = parsed.aiMessage;
-    }
+      setMessages([...messages, { role: 'user', content: userMessage }]);
+      setIsResponding(true);
+      setUserMessage('');
 
-    setIsResponding(false);
-    setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
+      let newMessage: string = '';
+
+      if (workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation) {
+        const body: FinishFormRequest = {
+          userMessage,
+          messages,
+          issueCategory: workOrder.issueCategory,
+          issueSubCategory: workOrder.issueSubCategory,
+          issueLocation: workOrder.issueLocation
+        };
+
+        const res = await axios.post('/api/finish-form', body);
+        const aiResponse = res?.data.response;
+        const jsonStart = aiResponse.indexOf('{');
+        const jsonEnd = aiResponse.lastIndexOf('}');
+        //   If the json is included in the output then we have the complete work order, else we want to retry to get remaining fields
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          const jsonResponse = JSON.parse(aiResponse.substring(jsonStart, jsonEnd + 1)) as WorkOrder;
+          setWorkOrder({
+            ...workOrder,
+            name: jsonResponse.name ?? '',
+            address: jsonResponse.address ?? '',
+            permissionToEnter: jsonResponse.permissionToEnter ?? '',
+          });
+        }
+        newMessage = aiResponse;
+
+      } else {
+        const body: ApiRequest = { userMessage, messages, ...workOrder };
+        const res = await axios.post('/api/service-request', body);
+        const jsonResponse = res?.data.response;
+        const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
+        setWorkOrder({
+          ...workOrder,
+          issueCategory: parsed.issueCategory,
+          issueSubCategory: parsed.issueSubCategory,
+          issueLocation: parsed.issueLocation,
+        });
+        newMessage = parsed.aiMessage;
+      }
+
+      setIsResponding(false);
+      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
+
+    } catch (err) {
+      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: "Sorry - I had a hiccup on my end. Could you please try again?" }]);
+    }
   };
 
   const readyToSubmitUserInfo = workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation;
