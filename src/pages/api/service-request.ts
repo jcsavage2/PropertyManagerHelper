@@ -74,7 +74,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           issueCategory: workOrderData.issueCategory ?? "",
           issueSubCategory: workOrderData.issueSubCategory ?? "",
           issueLocation: workOrderData.issueLocation ?? "",
-          issueFound: !!(workOrderData.issueCategory) && !!workOrderData.issueSubCategory && !!workOrderData.issueLocation,
           aiMessage: aiResponse
         }
         processedResponse = JSON.stringify(incompleteResponse)

@@ -12,12 +12,8 @@ export type ApiRequest = WorkOrder & {
   messages: ChatCompletionRequestMessage[];
 };
 
-export type AiJSONResponse = Partial<UserInfo> & {
+export type AiJSONResponse = Partial<UserInfo> & IssueInformation & {
   aiMessage: string;
-  issueCategory: string;
-  issueSubCategory: string;
-  issueLocation: string;
-  issueFound: boolean;
 };
 
 export type FinishFormRequest = IssueInformation & {
@@ -111,7 +107,6 @@ export default function Home() {
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
       setWorkOrder({
-        ...workOrder,
         address: parsed.address || workOrder.address,
         email: parsed.email || workOrder.email,
         name: parsed.name || workOrder.email,

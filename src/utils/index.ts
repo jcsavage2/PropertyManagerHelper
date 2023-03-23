@@ -6,6 +6,17 @@ export const hasAllIssueInfo = (workOrder: WorkOrder) => {
   return !!workOrder.issueCategory && !!workOrder.issueSubCategory && !!workOrder.issueLocation
 }
 
+/** WORK IN PROGRESS */
+export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse }) => {
+  const merged: AiJSONResponse = aiResponse
+
+  for (const key of Object.keys(workOrder)) {
+    const value = workOrder[key as keyof WorkOrder]
+
+  }
+  return merged
+}
+
 /** Checks if we have all the info we need to submit the work order */
 export const hasAllInfo = (workOrder: WorkOrder) => {
   return Object.values(workOrder).every(value => !!value) // this works because we need permission to enter to be true.
@@ -98,13 +109,18 @@ export const processAiResponse = (response: string, workOrderData: WorkOrder): s
     const cleanedString = substr.replace(regex, '"').replace("True", "true").replace("False", "false").replace("undefined", '""')
     let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse
 
-    jsonResponse.aiMessage = jsonResponse.issueCategory && jsonResponse.issueSubCategory && jsonResponse.issueLocation ? `I am sorry you are dealing with this, we will try and help you as soon as possible. \
+    // WORK IN PROGRESS
+    const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse })
+
+    jsonResponse.aiMessage =
+      jsonResponse.issueCategory && jsonResponse.issueSubCategory && jsonResponse.issueLocation ? `I am sorry you are dealing with this, we will try and help you as soon as possible. \
       To finalize your service request, please tell me the following information so I can finalize your work order:\n \
       ${!workOrderData.name && !jsonResponse.name ? `\n Name: ` : ""} \
+      ${!workOrderData.email && !jsonResponse.email ? `\n Email Address: ` : ""} \
       ${!workOrderData.address && !jsonResponse.address ? `\n Address: ` : ""} \
       ${!workOrderData.permissionToEnter && !jsonResponse.permissionToEnter ? `\n Permission to Enter: ` : ""} \
       ${!workOrderData.properyManagerEmail && !jsonResponse.properyManagerEmail ? `\n Property Manager Email: ` : ""}`
-      : jsonResponse.aiMessage
+        : jsonResponse.aiMessage
 
     returnValue = JSON.stringify(jsonResponse)
   }
