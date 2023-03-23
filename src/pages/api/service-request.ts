@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       ],
       temperature: 0,
     })
-
+    console.log("Finished Initial Request...")
 
     const aiResponse = response.data.choices[0].message?.content ?? ""
     console.log({ aiResponse })

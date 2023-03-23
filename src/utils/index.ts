@@ -30,7 +30,6 @@ export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
       Don't make me to confirm info I've already told you.
       Keep asking me questions based on Data that is missing in ${JSON.stringify(workOrder)} until you have all values filled.
       Only ask for values from the user in plain text, not JSON, and store your conversational question in "aiMessage".
-
       `
   }
 }
@@ -50,19 +49,20 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(findIssueSample)}
         and should contain all of the keys: ${Object.keys(findIssueSample)}, even if there are no values. Here is an example structure: ${findIssueSample}. 
         The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes)}.
-        You must identify the "issueLocation", which is the room or rooms where the issue is occuring. \
+        You must identify the "issueLocation", which is the directions to the room or rooms where the issue is occuring. \
         If the user doesn't provide an "issueLocation", set the value of "issueLocation" to "".
         The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify\
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
         Once you have identified the "issueLocation", don't ask the user about the "issueLocation" again.
         If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.
+        
         ${workOrder.issueCategory && workOrder.issueCategory !== "Other" && `When you find the "issueCategory", ask the user to clarify the root issue. \
         The root issue will probably be one of ${issueCategoryToTypes[workOrder.issueCategory].join(", ")} and this value will be the "issueSubCategory". If their root\
         issue doesn't match one of: ${issueCategoryToTypes[workOrder.issueCategory].join(", ")}, then record what they tell you as their "issueSubCategory".`}
     
         ${workOrder.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
   
-        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key`
+        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.`
       }
     case true:
       return {

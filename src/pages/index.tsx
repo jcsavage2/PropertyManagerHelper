@@ -47,7 +47,6 @@ export default function Home() {
 
   const { data: session } = useSession();
   const [userMessage, setUserMessage] = useState('');
-  const [showSubmitWorkOrderButton, setShowSubmitWorkOrderButton] = useState(false)
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
@@ -92,7 +91,6 @@ export default function Home() {
       position: toast.POSITION.TOP_CENTER,
     });
     setMessages([])
-    setShowSubmitWorkOrderButton(false)
     setWorkOrder(initialWorkOrderState)
     return;
   }
@@ -120,18 +118,14 @@ export default function Home() {
         properyManagerEmail: parsed.properyManagerEmail || workOrder.properyManagerEmail,
         permissionToEnter: parsed.permissionToEnter || workOrder.permissionToEnter,
 
-        issueCategory: parsed.issueCategory,
-        issueSubCategory: parsed.issueSubCategory,
-        issueLocation: parsed.issueLocation,
+        issueCategory: parsed.issueCategory || workOrder.issueCategory,
+        issueSubCategory: parsed.issueSubCategory || workOrder.issueSubCategory,
+        issueLocation: parsed.issueLocation || workOrder.issueSubCategory,
       });
       const newMessage = parsed.aiMessage;
 
       setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
-      if (newMessage.includes("Please confirm the above looks correct and submit the work order")) {
-        setShowSubmitWorkOrderButton(true)
-      }
-
     } catch (err) {
       setIsResponding(false)
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: "Sorry - I had a hiccup on my end. Could you please try again?" }]);
