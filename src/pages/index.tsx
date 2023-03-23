@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { ChatCompletionRequestMessage } from 'openai'
 import { toast } from 'react-toastify'
+import { hasAllInfo, hasAllIssueInfo } from '@/utils'
 
 
 export type ApiRequest = WorkOrder & {
@@ -11,7 +12,7 @@ export type ApiRequest = WorkOrder & {
   messages: ChatCompletionRequestMessage[];
 };
 
-export type AiJSONResponse = {
+export type AiJSONResponse = Partial<UserInfo> & {
   aiMessage: string;
   issueCategory: string;
   issueSubCategory: string;
@@ -28,7 +29,7 @@ type UserInfo = {
   address: string | null;
   email: string | null;
   name: string | null;
-  permissionToEnter: string | null;
+  permissionToEnter: boolean | null;
   properyManagerEmail: string | null;
 }
 
@@ -38,24 +39,32 @@ export type IssueInformation = {
   issueSubCategory: string | null;
 }
 
-type WorkOrder = UserInfo & IssueInformation
+export type WorkOrder = UserInfo & IssueInformation
+
+
 
 export default function Home() {
+
   const { data: session } = useSession();
   const [userMessage, setUserMessage] = useState('');
+  const [showSubmitWorkOrderButton, setShowSubmitWorkOrderButton] = useState(false)
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
-  const [workOrder, setWorkOrder] = useState<WorkOrder>({
+  const initialWorkOrderState: WorkOrder = {
+    /** User Information */
     address: null,
-    email: null,
+    email: session?.user?.email ?? null,
+    name: session?.user?.name ?? null,
+    properyManagerEmail: null,
+    permissionToEnter: null,
+
+    /** Issue Information */
     issueCategory: null,
     issueLocation: null,
     issueSubCategory: null,
-    name: null,
-    permissionToEnter: null,
-    properyManagerEmail: null,
-  });
+  }
+  const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
 
   // Update the user when the session is populated
   useEffect(() => {
@@ -77,78 +86,59 @@ export default function Home() {
     setUserMessage(e.currentTarget.value);
   }, [setUserMessage]);
 
+
+  const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = () => {
+    toast.success('Successfully Submitted Work Order!', {
+      position: toast.POSITION.TOP_CENTER,
+    });
+    setMessages([])
+    setShowSubmitWorkOrderButton(false)
+    setWorkOrder(initialWorkOrderState)
+    return;
+  }
+  console.log({ workOrder })
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     try {
       e.preventDefault();
 
       if (userMessage === '') return
 
-      if (workOrder.name && workOrder.email && workOrder.address && workOrder.properyManagerEmail) {
-        /**
-         * Send email.
-         * Clear everything.
-         * Tell the customer to confirm their email.
-         */
-        toast.success('Successfully Submitted!', {
-          position: toast.POSITION.TOP_CENTER,
-        });
-        return;
-      }
-
       setMessages([...messages, { role: 'user', content: userMessage }]);
       setIsResponding(true);
       setUserMessage('');
 
-      let newMessage: string = '';
+      const body: ApiRequest = { userMessage, messages, ...workOrder };
+      const res = await axios.post('/api/service-request', body);
+      const jsonResponse = res?.data.response;
+      const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
+      setWorkOrder({
+        ...workOrder,
+        address: parsed.address || workOrder.address,
+        email: parsed.email || workOrder.email,
+        name: parsed.name || workOrder.email,
+        properyManagerEmail: parsed.properyManagerEmail || workOrder.properyManagerEmail,
+        permissionToEnter: parsed.permissionToEnter || workOrder.permissionToEnter,
 
-      if (workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation) {
-        const body: FinishFormRequest = {
-          userMessage,
-          messages,
-          issueCategory: workOrder.issueCategory,
-          issueSubCategory: workOrder.issueSubCategory,
-          issueLocation: workOrder.issueLocation
-        };
-
-        const res = await axios.post('/api/finish-form', body);
-        const aiResponse = res?.data.response;
-        const jsonStart = aiResponse.indexOf('{');
-        const jsonEnd = aiResponse.lastIndexOf('}');
-        //   If the json is included in the output then we have the complete work order, else we want to retry to get remaining fields
-        if (jsonStart !== -1 && jsonEnd !== -1) {
-          const jsonResponse = JSON.parse(aiResponse.substring(jsonStart, jsonEnd + 1)) as WorkOrder;
-          setWorkOrder({
-            ...workOrder,
-            name: jsonResponse.name ?? '',
-            address: jsonResponse.address ?? '',
-            permissionToEnter: jsonResponse.permissionToEnter ?? '',
-          });
-        }
-        newMessage = aiResponse;
-
-      } else {
-        const body: ApiRequest = { userMessage, messages, ...workOrder };
-        const res = await axios.post('/api/service-request', body);
-        const jsonResponse = res?.data.response;
-        const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
-        setWorkOrder({
-          ...workOrder,
-          issueCategory: parsed.issueCategory,
-          issueSubCategory: parsed.issueSubCategory,
-          issueLocation: parsed.issueLocation,
-        });
-        newMessage = parsed.aiMessage;
-      }
+        issueCategory: parsed.issueCategory,
+        issueSubCategory: parsed.issueSubCategory,
+        issueLocation: parsed.issueLocation,
+      });
+      const newMessage = parsed.aiMessage;
 
       setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
+      if (newMessage.includes("Please confirm the above looks correct and submit the work order")) {
+        setShowSubmitWorkOrderButton(true)
+      }
 
     } catch (err) {
+      setIsResponding(false)
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: "Sorry - I had a hiccup on my end. Could you please try again?" }]);
     }
   };
 
-  const readyToSubmitUserInfo = workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation;
+  console.log({ workOrder })
 
   return (
     <>
@@ -230,6 +220,13 @@ export default function Home() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
+                  {hasAllInfo(workOrder) && (
+                    <button
+                      onClick={handleSubmitWorkOrder}
+                      className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-400'>
+                      Submit Work Order
+                    </button>
+                  )}
                 </div>
                 <div
                   id="chatbox-footer"
@@ -240,7 +237,7 @@ export default function Home() {
                     style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
                     onKeyDown={(e) => {
                       //Users can press enter to submit the form, enter + shift to add a new line
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === 'Enter' && !e.shiftKey && !isResponding) {
                         e.preventDefault();
                         handleSubmit(e);
                       }
@@ -252,10 +249,10 @@ export default function Home() {
                       className="p-2 w-full border-solid border-2 border-gray-200 rounded-md"
                       placeholder={
                         messages.length
-                          ? readyToSubmitUserInfo
+                          ? hasAllIssueInfo(workOrder)
                             ? 'John; 123 St Apt 1400, Boca, FL; yes'
                             : ''
-                          : 'Toilet in the master bathroom is clogged.'
+                          : 'The toilet in the master bathroom is clogged - it\'s upstairs at the end of the hall to the right.'
                       }
                       onChange={handleChange}
                     />

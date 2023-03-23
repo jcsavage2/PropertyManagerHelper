@@ -1,0 +1,46 @@
+import { AiJSONResponse } from "@/pages"
+
+export const findIssueSample: AiJSONResponse = {
+  aiMessage: "Ok thank you for reporting the issue... ",
+  issueCategory: "Toilet",
+  issueFound: false,
+  issueLocation: "First bedroom on the right on 2nd floor",
+  issueSubCategory: "Leaking from Base",
+}
+
+export const findUserInfoSample: AiJSONResponse = {
+  ...findIssueSample,
+  address: "123 Fake Street Miami, Fl 33131",
+  name: "Some Name",
+  email: "SomeEmail@email.com",
+  permissionToEnter: true,
+  properyManagerEmail: "SomeOtherEmail@email.com"
+}
+
+export const issueCategoryToTypes = {
+  "Basement": ["Leaking", "Humid"],
+  "Ceiling": ["Leaking", "Cracked"],
+  "Chandalier": ["Fallen", "Won't Turn On"],
+  "Dishwasher": ["Won't Run", "Overflowing", "Not Cleaning The Dishes"],
+  "Door": ["Off the Rail", "Won't Open/Close", "Won't Lock", "Can't get in"],
+  "Dryer": ["Doesn't Dry", "Takes Multiple Runs", "Won't Start"],
+  "Electrical": ["Light bulb out", "Heating not working", "AC not working"],
+  "Faucet": ["Leaking", "Won't turn on", "Drain Clogged", "Low Pressure", "Rusty", "No Hot Water"],
+  "Floor": ["Needs Cleaning", "Missing"],
+  "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Out", "Filter Needs Replacement"],
+  "Hazard": ["Mold", "Asbestos", "Gas Leak", "Fire", "Flood"],
+  "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
+  "Microwave": ["Won't Turn On"],
+  "Oven": ["Oven won't turn on", "Not Getting Hot"],
+  "Pests": ["Mice/Rats", "Termites", "Roaches/Cockroaches", "Ants", "Fruit Flies"],
+  "Roof": ["Dilapidated", "Missing Sections", "Crack", "Snow Pile-up"],
+  "Shower": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty", "No Hot Water"],
+  "Sliding Door/Screen": ["Off the Track", "Ripped"],
+  "Stove": ["Won't Turn On", "Not Getting Hot"],
+  "Toilet": ["Leaking from Base", "Leaking from Tank", "Not flushing", "Clogged", "Weak Flush"],
+  "Transition Strip": ["Broken"],
+  "TV": ["Won't Turn On", "Nothing Displays When On", "Can't Connect to Internet"],
+  "Walls": ["Leaking", "Hole"],
+  "Washer": ["No Water", "No Hot Water", "Won't Start"],
+  "Window": ["Shattered", "Cracked", "Won't Open", "Won't Close"],
+} as Record<string, string[]>
