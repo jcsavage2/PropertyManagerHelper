@@ -30,6 +30,7 @@ export const issueCategoryToTypes = {
   "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Out", "Filter Needs Replacement"],
   "Hazard": ["Mold", "Asbestos", "Gas Leak", "Fire", "Flood"],
   "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
+  "Lightbulb": ["Won't Turn On", "Flickering"],
   "Microwave": ["Won't Turn On"],
   "Oven": ["Oven won't turn on", "Not Getting Hot"],
   "Pests": ["Mice/Rats", "Termites", "Roaches/Cockroaches", "Ants", "Fruit Flies"],
