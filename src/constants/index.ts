@@ -2,19 +2,19 @@ import { AiJSONResponse } from "@/types"
 
 
 export const findIssueSample: AiJSONResponse = {
-  aiMessage: "Ok thank you for reporting the issue... ",
-  issueCategory: "Toilet",
-  issueLocation: "First bedroom on the right on 2nd floor",
-  issueSubCategory: "Leaking from Base",
+  aiMessage: "<your AI generated conversational response>",
+  issueCategory: "<value of the issueCategory>",
+  issueLocation: "<value of issueLocation>",
+  issueSubCategory: "<value of issueSubCategory>",
 }
 
-export const findUserInfoSample: AiJSONResponse = {
-  ...findIssueSample,
-  address: "123 Fake Street Miami, Fl 33131",
-  name: "Some Name",
-  email: "SomeEmail@email.com",
-  permissionToEnter: true,
-  propertyManagerEmail: "SomeOtherEmail@email.com"
+export const findUserInfoSample: Partial<AiJSONResponse> = {
+  // ...findIssueSample,
+  aiMessage: findIssueSample.aiMessage,
+  address: "<user's answer for address>",
+  name: "<user's answer for name>",
+  email: "<user's answer for email>",
+  permissionToEnter: "<user's answer for permission to enter>",
 }
 
 export const issueCategoryToTypes = {
