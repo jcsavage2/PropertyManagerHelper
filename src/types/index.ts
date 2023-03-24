@@ -19,8 +19,7 @@ type UserInfo = {
   address: string | null;
   email: string | null;
   name: string | null;
-  permissionToEnter: boolean | null;
-  propertyManagerEmail: string | null;
+  permissionToEnter: boolean | string | null;
 }
 
 export type IssueInformation = {
