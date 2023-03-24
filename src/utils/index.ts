@@ -16,7 +16,7 @@ export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrd
     const aiValue = aiResponse?.[workOrderKey as keyof WorkOrder]
     if (aiValue) {
       //@ts-ignore
-      merged?.[workOrderKey as keyof WorkOrder] = aiValue
+      merged[workOrderKey as keyof WorkOrder] = aiValue
     }
   }
   return merged
@@ -38,14 +38,22 @@ export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
   switch (hasAllIssueInfo(workOrder)) {
     case false:
       return `\n \
-        Don't make me to confirm info I've already told you.
+        Don't make me confirm information I've already told you.
         If I say something is "broken", "not working", or anything vague, ask me for more details until you identify an issueSubCategory.
-        Please always respond to my messages in this JSON format: ${JSON.stringify(findIssueSample)} and include no additional text. `
+        If you have an issueSubCategory with details about the issue, store it in "issueSubCategory".
+        Assume the user will only ever see the value of the "aiMessage" field. Don't reference the other fields. 
+        Please respond in JSON format like this: ${JSON.stringify(findIssueSample)}.`
     case true:
-      return `\n Please respond to my messages in this format: ${JSON.stringify(findUserInfoSample)} and include no additional text.
-      Don't make me to confirm info I've already told you.
-      Keep asking me questions based on Data that is missing in ${JSON.stringify(workOrder)} until you have all values filled.
-      Only ask for values from the user in plain text, not JSON, and store your conversational question in "aiMessage".
+      return `\n 
+      Don't make me confirm information I've already told you.
+      Keep asking me for missing information until all of the missing information in this work order is filled out: ${JSON.stringify(workOrder)}.
+      If I tell you my email, store that under "email".
+      If I tell you my name, store that under "name".
+      If I tell you the address of the property, store it under "address".
+      If I give you permission to enter, store it under "permissionToEnter".
+      Assume I will only see the value of the "aiMessage" field. Don't reference the other fields. 
+      Keep asking me questions until you have all of the information you need.
+      Please respond to all of my messages in this format: ${JSON.stringify(findUserInfoSample)} and include no additional text.
       `
   }
 }
@@ -66,6 +74,7 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         and should contain all of the keys: ${Object.keys(findIssueSample)}, even if there are no values. Here is an example structure: ${findIssueSample}. 
         The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes)}.
         You must identify the "issueLocation", which is the directions to the room or rooms where the issue is occuring. \
+        When you ask the user for the issueLocation, remind them this will help the service worker find the issue. 
         If the user doesn't provide an "issueLocation", set the value of "issueLocation" to "".
         The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify\
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
@@ -83,16 +92,14 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
     case true:
       return {
         role: "system",
-        content: `CONTEXT: examine this JSON: ${JSON.stringify(findUserInfoSample)}
+        content: `CONTEXT: examine this JSON: ${JSON.stringify(findUserInfoSample)}.
         As a property management chatbot provided with an issue from the user, your job is to update the JSON fields based on the users \
         input. All of your messages should be in JSON. You should ask the user for any missing information.
-        The current state of the work order is ${JSON.stringify(workOrder)}, and the user has sent new text.
+        The current state of the work order is ${JSON.stringify(workOrder)}, and the user will send you a new message with more information.
         If the user's input is totally unrelated to a service request, cheerfully instruct them to try again. 
-        The user does not understand what JSON is, so refer to the JSON as "the form".
-        If the user has given you all of the information, end the message with: \
-        "Please confirm the above looks correct and click below to submit the work order. 
-        You and your Property Manager will receive an email with the details."
-        While your response will only ever be JSON, your conversational response should go in a key called "aiMessage".
+        
+        All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(findUserInfoSample)}
+        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
       `}
   }
 }
@@ -123,18 +130,11 @@ export const processAiResponse = ({ response, workOrderData, flow }: { response:
     if (hasAllInfo(merged)) {
       jsonResponse.aiMessage = `Please click the button below to submit your Service Request.`
     } else if (hasAllIssueInfo(merged) && flow === "issueFlow") {
-      jsonResponse.aiMessage = `To finalize your service request, please tell me the following information so I can finalize your work order:\n \
-        ${!workOrderData.name && !jsonResponse.name ? `\n Name: ` : ""} \
-        ${!workOrderData.email && !jsonResponse.email ? `\n Email Address: ` : ""} \
-        ${!workOrderData.address && !jsonResponse.address ? `\n Address: ` : ""} \
-        ${!workOrderData.permissionToEnter && !jsonResponse.permissionToEnter ? `\n Permission to Enter: ` : ""} \
-        ${!workOrderData.propertyManagerEmail && !jsonResponse.propertyManagerEmail ? `\n Property Manager Email: ` : ""}`
-
+      jsonResponse.aiMessage = `To finalize your service request, please tell me the following information so I can finalize your work order:`
       updatedFlow = "userFlow"
     }
 
     returnValue = JSON.stringify(jsonResponse)
   }
-
   return { returnValue: returnValue, flow: updatedFlow }
 }

@@ -74,17 +74,19 @@ export default function Home() {
       const body: ApiRequest = { userMessage, messages, ...workOrder, flow };
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
+      const flowResponse = res.data.flow
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
+      setFlow(flowResponse)
       setWorkOrder({
-        address: parsed.address || workOrder.address,
-        email: parsed.email || workOrder.email,
-        name: parsed.name || workOrder.email,
-        propertyManagerEmail: parsed.propertyManagerEmail || workOrder.propertyManagerEmail,
-        permissionToEnter: parsed.permissionToEnter || workOrder.permissionToEnter,
+        address: parsed.address ?? workOrder.address,
+        email: parsed.email ?? workOrder.email,
+        name: parsed.name ?? workOrder.email,
+        propertyManagerEmail: parsed.propertyManagerEmail ?? workOrder.propertyManagerEmail,
+        permissionToEnter: parsed.permissionToEnter ?? workOrder.permissionToEnter,
 
-        issueCategory: parsed.issueCategory || workOrder.issueCategory,
-        issueSubCategory: parsed.issueSubCategory || workOrder.issueSubCategory,
-        issueLocation: parsed.issueLocation || workOrder.issueSubCategory,
+        issueCategory: parsed.issueCategory ?? workOrder.issueCategory,
+        issueSubCategory: parsed.issueSubCategory ?? workOrder.issueSubCategory,
+        issueLocation: parsed.issueLocation ?? workOrder.issueSubCategory,
       });
       const newMessage = parsed.aiMessage;
 
@@ -93,10 +95,25 @@ export default function Home() {
     } catch (err) {
       setIsResponding(false)
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: "Sorry - I had a hiccup on my end. Could you please try again?" }]);
+      setUserMessage(messages?.[messages.length - 2]?.content ?? "")
     }
   };
 
-  console.log({ workOrder })
+
+  const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1)
+
+  const WorkOrderTable = Object.keys(workOrder).reduce((acc: any[], key) => {
+    if (!key.startsWith("issue")) {
+      const jsx = (
+        <p key={key}>
+          <span className='font-bold'>{key}</span>: {workOrder[key as keyof typeof workOrder]?.toString() ?? ""}
+        </p>
+      )
+      return [...acc, jsx]
+    }
+    return acc
+  }, [])
+
 
   return (
     <>
@@ -137,37 +154,39 @@ export default function Home() {
                   </p>
                   {!!messages?.length &&
                     messages.map((message, index) => (
-                      <div key={`${message.content[0]}-${index}`} className="mb-3 break-all">
+                      <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
                         <div
                           className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2)
                             ? 'bg-gray-200 text-left'
                             : 'bg-blue-100 text-right'
                             }`}>
-                          {workOrder.issueCategory &&
-                            !!(index % 2) &&
-                            index === messages.length - 1 && (
-                              <div className="text-left mb-1 text-gray-700">
-                                <h3 className="text-left font-semibold">
-                                  Service Request:{' '}
-                                  <span className="font-normal">
-                                    {`${workOrder.issueCategory}` + `; ${workOrder.issueSubCategory ?? ""}`}
-                                  </span>
-                                </h3>
-                              </div>
-                            )}
-                          {workOrder.issueLocation &&
-                            !!(index % 2) &&
-                            index === messages.length - 1 && (
-                              <div className="text-left mb-4 text-gray-700">
-                                <h3 className="text-left font-semibold">
-                                  Issue Location:{' '}
-                                  <span className="font-normal">
-                                    {workOrder.issueLocation}
-                                  </span>
-                                </h3>
-                              </div>
-                            )}
+                          {workOrder.issueCategory && index === lastSystemMessageIndex && (
+                            <div className="text-left mb-1 text-gray-700">
+                              <h3 className="text-left font-semibold">
+                                Issue:{' '}
+                                <span className="font-normal">
+                                  {`${workOrder.issueCategory}` + `; ${workOrder.issueSubCategory ?? ""}`}
+                                </span>
+                              </h3>
+                            </div>
+                          )}
+                          {workOrder.issueLocation && index === lastSystemMessageIndex && (
+                            <div className="text-left mb-4 text-gray-700">
+                              <h3 className="text-left font-semibold">
+                                Issue Location:{' '}
+                                <span className="font-normal">
+                                  {workOrder.issueLocation}
+                                </span>
+                              </h3>
+                            </div>
+                          )}
                           <p data-testid={`response-${index}`} className='whitespace-pre-line break-keep'>{message.content}</p>
+                          {hasAllIssueInfo(workOrder) && index === lastSystemMessageIndex && (
+                            <>
+                              <br />
+                              {WorkOrderTable}
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
