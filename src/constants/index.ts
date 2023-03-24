@@ -1,9 +1,9 @@
-import { AiJSONResponse } from "@/pages"
+import { AiJSONResponse } from "@/types"
+
 
 export const findIssueSample: AiJSONResponse = {
   aiMessage: "Ok thank you for reporting the issue... ",
   issueCategory: "Toilet",
-  issueFound: false,
   issueLocation: "First bedroom on the right on 2nd floor",
   issueSubCategory: "Leaking from Base",
 }
@@ -14,7 +14,7 @@ export const findUserInfoSample: AiJSONResponse = {
   name: "Some Name",
   email: "SomeEmail@email.com",
   permissionToEnter: true,
-  properyManagerEmail: "SomeOtherEmail@email.com"
+  propertyManagerEmail: "SomeOtherEmail@email.com"
 }
 
 export const issueCategoryToTypes = {
