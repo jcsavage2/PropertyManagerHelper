@@ -7,21 +7,18 @@ export const hasAllIssueInfo = (workOrder: WorkOrder) => {
 }
 
 export const hasNoFinishFormInfo = (workOrder: WorkOrder) => {
-    return !workOrder.address && !workOrder.email && !workOrder.name && !workOrder.permissionToEnter && !workOrder.propertyManagerEmail
+  return !workOrder.address && !workOrder.email && !workOrder.name && !workOrder.permissionToEnter && !workOrder.propertyManagerEmail
 }
 
 export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse }) => {
   const merged: WorkOrder = workOrder
-
-  for (const key of Object.keys(workOrder)) {
-    const aiValue = aiResponse[key as keyof AiJSONResponse]
-    console.log("AiValue: ", aiValue, " key: ", key)
-    if(aiValue !== null){
-        merged[key as keyof WorkOrder] = aiValue
+  for (const workOrderKey of Object.keys(workOrder)) {
+    const aiValue = aiResponse?.[workOrderKey as keyof WorkOrder]
+    if (aiValue) {
+      //@ts-ignore
+      merged?.[workOrderKey as keyof WorkOrder] = aiValue
     }
-    console.log("Merged key: ", key, " value: ", merged[key as keyof WorkOrder])
   }
-
   return merged
 }
 
@@ -106,7 +103,7 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
  * @param response string response from GPT; no format requirements
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
-export const processAiResponse = ({response, workOrderData, flow}:{response: string, workOrderData: WorkOrder, flow: string}): {returnValue: string | null, flow: string} => {
+export const processAiResponse = ({ response, workOrderData, flow }: { response: string, workOrderData: WorkOrder, flow: string }): { returnValue: string | null, flow: string } => {
   let returnValue: string | null = null
   let updatedFlow = flow
   const jsonStart = response.indexOf("{")
@@ -123,21 +120,21 @@ export const processAiResponse = ({response, workOrderData, flow}:{response: str
     const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse })
 
     //Error: This will continue to be called while hasAllIssueInfo is true and we will always replace the aiMessage
-    if (hasAllInfo(merged)){
-        jsonResponse.aiMessage = `Please click the button below to submit your Service Request.`
-    } else if(hasAllIssueInfo(merged) && flow === "issueFlow"){
-        jsonResponse.aiMessage = `To finalize your service request, please tell me the following information so I can finalize your work order:\n \
+    if (hasAllInfo(merged)) {
+      jsonResponse.aiMessage = `Please click the button below to submit your Service Request.`
+    } else if (hasAllIssueInfo(merged) && flow === "issueFlow") {
+      jsonResponse.aiMessage = `To finalize your service request, please tell me the following information so I can finalize your work order:\n \
         ${!workOrderData.name && !jsonResponse.name ? `\n Name: ` : ""} \
         ${!workOrderData.email && !jsonResponse.email ? `\n Email Address: ` : ""} \
         ${!workOrderData.address && !jsonResponse.address ? `\n Address: ` : ""} \
         ${!workOrderData.permissionToEnter && !jsonResponse.permissionToEnter ? `\n Permission to Enter: ` : ""} \
         ${!workOrderData.propertyManagerEmail && !jsonResponse.propertyManagerEmail ? `\n Property Manager Email: ` : ""}`
 
-        updatedFlow = "userFlow"
+      updatedFlow = "userFlow"
     }
 
     returnValue = JSON.stringify(jsonResponse)
   }
 
-  return {returnValue: returnValue, flow: updatedFlow }
+  return { returnValue: returnValue, flow: updatedFlow }
 }
