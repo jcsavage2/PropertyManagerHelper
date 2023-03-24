@@ -3,7 +3,7 @@ import { findIssueSample } from "@/constants"
 import { generateAdditionalUserContext, generatePrompt, processAiResponse } from "@/utils"
 import type { NextApiRequest, NextApiResponse } from "next"
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai"
-import { AiJSONResponse, ApiRequest, WorkOrder } from "../index"
+import { AiJSONResponse, ApiRequest, WorkOrder } from "@/types"
 
 const config = new Configuration({
   apiKey: process.env.OPEN_AI_API_KEY,
@@ -12,6 +12,7 @@ const openai = new OpenAIApi(config)
 
 type Data = {
   response: string
+  flow: string
 }
 
 /**
@@ -19,9 +20,10 @@ type Data = {
  * We have two flows we need to handle: gather issue info, then gather user info.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  try {
     const body = req.body as ApiRequest
-    const { userMessage, messages, ...workOrderData } = body
+    const { userMessage, messages, flow, ...workOrderData } = body
+  try {
+    
 
     console.log({ userMessage })
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData)
@@ -45,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const aiResponse = response.data.choices[0].message?.content ?? ""
     console.log({ aiResponse })
-    let processedResponse: string | null = processAiResponse(aiResponse, workOrderData)
+    let processedResponse: {returnValue: string | null, flow: string} = processAiResponse({response: aiResponse, workOrderData: workOrderData, flow})
 
     if (!processedResponse) {
       console.log("Making Second Request...")
@@ -66,29 +68,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       })
       const newAiResponse = newResponse.data.choices[0].message?.content ?? ""
 
-      processedResponse = processAiResponse(newAiResponse, workOrderData)
+      processedResponse = processAiResponse({response: newAiResponse, workOrderData: workOrderData, flow})
 
       //If it still doesn't work, return the original aiMessage with other WO data taken from request body
-      if (!processedResponse) {
+      if (!processedResponse.returnValue) {
         let incompleteResponse: AiJSONResponse = {
           issueCategory: workOrderData.issueCategory ?? "",
           issueSubCategory: workOrderData.issueSubCategory ?? "",
           issueLocation: workOrderData.issueLocation ?? "",
           aiMessage: aiResponse
         }
-        processedResponse = JSON.stringify(incompleteResponse)
+        processedResponse.returnValue = JSON.stringify(incompleteResponse)
       }
     }
 
 
     if (!processedResponse) {
-      return res.status(400).json({ response: "Error getting message from chatbot" })
+      return res.status(400).json({ response: "Error getting message from chatbot", flow: flow })
     } else {
       console.log({ processedResponse })
-      return res.status(200).json({ response: processedResponse })
+      return res.status(200).json({ response: processedResponse.returnValue ?? "", flow: processedResponse.flow })
     }
   } catch (err) {
-    return res.status(400).json({ response: JSON.stringify(err) ?? "Error returning message..." })
+    return res.status(400).json({ response: 'service-request error', flow: flow })
   }
 }
 

@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next"
 import { ChatCompletionRequestMessage, Configuration, CreateChatCompletionResponse, OpenAIApi } from "openai"
-import { FinishFormRequest } from "../"
+import { FinishFormRequest } from "@/types"
 
 type Data = {
   response: string

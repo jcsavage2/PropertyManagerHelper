@@ -1,19 +1,27 @@
 import { findIssueSample, findUserInfoSample, issueCategoryToTypes } from "@/constants"
-import { AiJSONResponse, WorkOrder } from "@/pages"
 import { ChatCompletionRequestMessage } from "openai"
+import { AiJSONResponse, WorkOrder } from "@/types"
 
 export const hasAllIssueInfo = (workOrder: WorkOrder) => {
   return !!workOrder.issueCategory && !!workOrder.issueSubCategory && !!workOrder.issueLocation
 }
 
-/** WORK IN PROGRESS */
+export const hasNoFinishFormInfo = (workOrder: WorkOrder) => {
+    return !workOrder.address && !workOrder.email && !workOrder.name && !workOrder.permissionToEnter && !workOrder.propertyManagerEmail
+}
+
 export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse }) => {
-  const merged: AiJSONResponse = aiResponse
+  const merged: WorkOrder = workOrder
 
   for (const key of Object.keys(workOrder)) {
-    const value = workOrder[key as keyof WorkOrder]
-
+    const aiValue = aiResponse[key as keyof AiJSONResponse]
+    console.log("AiValue: ", aiValue, " key: ", key)
+    if(aiValue !== null){
+        merged[key as keyof WorkOrder] = aiValue
+    }
+    console.log("Merged key: ", key, " value: ", merged[key as keyof WorkOrder])
   }
+
   return merged
 }
 
@@ -98,10 +106,12 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
  * @param response string response from GPT; no format requirements
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
-export const processAiResponse = (response: string, workOrderData: WorkOrder): string | null => {
+export const processAiResponse = ({response, workOrderData, flow}:{response: string, workOrderData: WorkOrder, flow: string}): {returnValue: string | null, flow: string} => {
   let returnValue: string | null = null
+  let updatedFlow = flow
   const jsonStart = response.indexOf("{")
   const jsonEnd = response.lastIndexOf("}")
+
 
   if ((jsonStart !== -1 && jsonEnd !== -1)) {
     const regex = /&quot;/g
@@ -112,18 +122,22 @@ export const processAiResponse = (response: string, workOrderData: WorkOrder): s
     // WORK IN PROGRESS
     const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse })
 
-    jsonResponse.aiMessage =
-      jsonResponse.issueCategory && jsonResponse.issueSubCategory && jsonResponse.issueLocation ? `I am sorry you are dealing with this, we will try and help you as soon as possible. \
-      To finalize your service request, please tell me the following information so I can finalize your work order:\n \
-      ${!workOrderData.name && !jsonResponse.name ? `\n Name: ` : ""} \
-      ${!workOrderData.email && !jsonResponse.email ? `\n Email Address: ` : ""} \
-      ${!workOrderData.address && !jsonResponse.address ? `\n Address: ` : ""} \
-      ${!workOrderData.permissionToEnter && !jsonResponse.permissionToEnter ? `\n Permission to Enter: ` : ""} \
-      ${!workOrderData.properyManagerEmail && !jsonResponse.properyManagerEmail ? `\n Property Manager Email: ` : ""}`
-        : jsonResponse.aiMessage
+    //Error: This will continue to be called while hasAllIssueInfo is true and we will always replace the aiMessage
+    if (hasAllInfo(merged)){
+        jsonResponse.aiMessage = `Please click the button below to submit your Service Request.`
+    } else if(hasAllIssueInfo(merged) && flow === "issueFlow"){
+        jsonResponse.aiMessage = `To finalize your service request, please tell me the following information so I can finalize your work order:\n \
+        ${!workOrderData.name && !jsonResponse.name ? `\n Name: ` : ""} \
+        ${!workOrderData.email && !jsonResponse.email ? `\n Email Address: ` : ""} \
+        ${!workOrderData.address && !jsonResponse.address ? `\n Address: ` : ""} \
+        ${!workOrderData.permissionToEnter && !jsonResponse.permissionToEnter ? `\n Permission to Enter: ` : ""} \
+        ${!workOrderData.propertyManagerEmail && !jsonResponse.propertyManagerEmail ? `\n Property Manager Email: ` : ""}`
+
+        updatedFlow = "userFlow"
+    }
 
     returnValue = JSON.stringify(jsonResponse)
   }
 
-  return returnValue
+  return {returnValue: returnValue, flow: updatedFlow }
 }

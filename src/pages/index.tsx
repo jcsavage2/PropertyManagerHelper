@@ -5,39 +5,7 @@ import axios from 'axios'
 import { ChatCompletionRequestMessage } from 'openai'
 import { toast } from 'react-toastify'
 import { hasAllInfo, hasAllIssueInfo } from '@/utils'
-
-
-export type ApiRequest = WorkOrder & {
-  userMessage: string;
-  messages: ChatCompletionRequestMessage[];
-};
-
-export type AiJSONResponse = Partial<UserInfo> & IssueInformation & {
-  aiMessage: string;
-};
-
-export type FinishFormRequest = IssueInformation & {
-  userMessage: string;
-  messages: ChatCompletionRequestMessage[];
-};
-
-type UserInfo = {
-  address: string | null;
-  email: string | null;
-  name: string | null;
-  permissionToEnter: boolean | null;
-  properyManagerEmail: string | null;
-}
-
-export type IssueInformation = {
-  issueLocation: string | null;
-  issueCategory: string | null;
-  issueSubCategory: string | null;
-}
-
-export type WorkOrder = UserInfo & IssueInformation
-
-
+import { AiJSONResponse, ApiRequest, WorkOrder } from '@/types'
 
 export default function Home() {
 
@@ -51,7 +19,7 @@ export default function Home() {
     address: null,
     email: session?.user?.email ?? null,
     name: session?.user?.name ?? null,
-    properyManagerEmail: null,
+    propertyManagerEmail: null,
     permissionToEnter: null,
 
     /** Issue Information */
@@ -60,6 +28,7 @@ export default function Home() {
     issueSubCategory: null,
   }
   const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
+  const [flow, setFlow] = useState<'issueFlow' | 'userFlow'>('issueFlow')
 
   // Update the user when the session is populated
   useEffect(() => {
@@ -102,7 +71,7 @@ export default function Home() {
       setIsResponding(true);
       setUserMessage('');
 
-      const body: ApiRequest = { userMessage, messages, ...workOrder };
+      const body: ApiRequest = { userMessage, messages, ...workOrder, flow };
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
@@ -110,7 +79,7 @@ export default function Home() {
         address: parsed.address || workOrder.address,
         email: parsed.email || workOrder.email,
         name: parsed.name || workOrder.email,
-        properyManagerEmail: parsed.properyManagerEmail || workOrder.properyManagerEmail,
+        propertyManagerEmail: parsed.propertyManagerEmail || workOrder.propertyManagerEmail,
         permissionToEnter: parsed.permissionToEnter || workOrder.permissionToEnter,
 
         issueCategory: parsed.issueCategory || workOrder.issueCategory,
@@ -235,7 +204,7 @@ export default function Home() {
                     <textarea
                       value={userMessage}
                       data-testid="userMessageInput"
-                      className="p-2 w-full border-solid border-2 border-gray-200 rounded-md"
+                      className="p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none"
                       placeholder={
                         messages.length
                           ? hasAllIssueInfo(workOrder)
