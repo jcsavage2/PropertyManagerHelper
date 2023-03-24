@@ -3,7 +3,7 @@ import { findIssueSample } from "@/constants"
 import { generateAdditionalUserContext, generatePrompt, processAiResponse } from "@/utils"
 import type { NextApiRequest, NextApiResponse } from "next"
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai"
-import { AiJSONResponse, ApiRequest, WorkOrder } from "@/types"
+import { AiJSONResponse, ApiRequest } from "@/types"
 
 const config = new Configuration({
   apiKey: process.env.OPEN_AI_API_KEY,
@@ -25,10 +25,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
 
 
-    console.log("\n 1 =============\n", { userMessage })
+    console.log("\n User Message =============\n", userMessage)
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData)
     const additionalUserContext = generateAdditionalUserContext(workOrderData)
-    console.log({ additionalUserContext })
 
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
@@ -38,21 +37,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         ...messages,
         {
           role: "user",
-          content: additionalUserContext + userMessage
+          content: userMessage + additionalUserContext
         },
       ],
       temperature: 0,
-    })
+    }, { headers: { "Content-Type": "application/json" } })
 
 
     const aiResponse = response.data.choices[0].message?.content ?? ""
-    console.log("\n 2 ======= Initial Response ======\n", { aiResponse })
+    console.log("\n Initial Response=============\n", aiResponse)
 
     let processedResponse: { returnValue: string | null, flow: string } = processAiResponse({ response: aiResponse, workOrderData: workOrderData, flow })
-    console.log("\n 2.5 ======= Processed Response ======\n", { processedResponse: processedResponse.returnValue })
+    console.log("\n Processed Response =============\n", { processedResponse: processedResponse.returnValue })
 
     if (!processedResponse.returnValue) {
-      console.log("\n 3 ======= Is Refetching... ======\n",)
+      console.log("\n Is Refetching... =============\n",)
       const newResponse = await openai.createChatCompletion({
         max_tokens: 1000,
         model: "gpt-3.5-turbo",
@@ -63,13 +62,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           { role: "assistant", content: aiResponse },
           {
             role: "system",
-            content: `Your answer should only be JSON formatted like this: ${JSON.stringify(findIssueSample)}, with no additional text.`,
+            content: `Reformat your response into JSON formatted like this: ${JSON.stringify(findIssueSample)}, with no additional text.`,
           }
         ],
         temperature: 0,
-      })
+      }, { headers: { "Content-Type": "application/json" } })
       const newAiResponse = newResponse.data.choices[0].message?.content ?? ""
-      console.log("\n 4 ======= New Response... ======\n", { newAiResponse })
+
+      console.log("\n New Response... =============\n", newAiResponse)
       processedResponse = processAiResponse({ response: newAiResponse, workOrderData: workOrderData, flow })
 
       //If it still doesn't work, return the original aiMessage with other WO data taken from request body
