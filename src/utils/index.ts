@@ -47,10 +47,10 @@ export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
       return `\n 
       Don't make me confirm information I've already told you.
       Keep asking me for missing information until all of the missing information in this work order is filled out: ${JSON.stringify(workOrder)}.
-      If I tell you my email, store that under "email".
-      If I tell you my name, store that under "name".
-      If I tell you the address of the property, store it under "address".
-      If I give you permission to enter, store it under "permissionToEnter".
+      If I tell you my email, store that under "email" in your JSON response.
+      If I tell you my name, store that under "name" in your JSON response.
+      If I tell you the address of the property, store it under "address" in your JSON response.
+      If I give you permission to enter, store it under "permissionToEnter" in your response.
       Assume I will only see the value of the "aiMessage" field. Don't reference the other fields. 
       Keep asking me questions until you have all of the information you need.
       Please respond to all of my messages in this format: ${JSON.stringify(findUserInfoSample)} and include no additional text.
@@ -125,6 +125,7 @@ export const processAiResponse = ({ response, workOrderData, flow }: { response:
 
     // WORK IN PROGRESS
     const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse })
+    console.log({ merged })
 
     //Error: This will continue to be called while hasAllIssueInfo is true and we will always replace the aiMessage
     if (hasAllInfo(merged)) {

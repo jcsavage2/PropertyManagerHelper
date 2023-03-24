@@ -11,6 +11,7 @@ export default function Home() {
 
   const { data: session } = useSession();
   const [userMessage, setUserMessage] = useState('');
+  const [lastUserMessage, setLastUserMessage] = useState('');
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
@@ -69,6 +70,7 @@ export default function Home() {
 
       setMessages([...messages, { role: 'user', content: userMessage }]);
       setIsResponding(true);
+      setLastUserMessage(userMessage)
       setUserMessage('');
 
       const body: ApiRequest = { userMessage, messages, ...workOrder, flow };
@@ -89,13 +91,12 @@ export default function Home() {
         issueLocation: parsed.issueLocation ?? workOrder.issueSubCategory,
       });
       const newMessage = parsed.aiMessage;
-
       setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
     } catch (err) {
       setIsResponding(false)
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: "Sorry - I had a hiccup on my end. Could you please try again?" }]);
-      setUserMessage(messages?.[messages.length - 2]?.content ?? "")
+      setUserMessage(lastUserMessage)
     }
   };
 
@@ -207,7 +208,7 @@ export default function Home() {
                 </div>
                 <div
                   id="chatbox-footer"
-                  className="p-3 bg-gray-100 rounded-b-lg flex items-center justify-center"
+                  className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
                   style={{ "height": "12dvh" }}
                 >
                   <form onSubmit={handleSubmit}
@@ -223,7 +224,7 @@ export default function Home() {
                     <textarea
                       value={userMessage}
                       data-testid="userMessageInput"
-                      className="p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none"
+                      className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
                       placeholder={
                         messages.length
                           ? hasAllIssueInfo(workOrder)

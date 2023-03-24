@@ -28,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     console.log("\n 1 =============\n", { userMessage })
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData)
     const additionalUserContext = generateAdditionalUserContext(workOrderData)
+    console.log({ additionalUserContext })
 
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
@@ -37,12 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         ...messages,
         {
           role: "user",
-          content: userMessage + additionalUserContext
+          content: additionalUserContext + userMessage
         },
-        {
-          role: "system",
-          content: `Your answer should only be JSON formatted like this: ${JSON.stringify(findIssueSample)}, with no additional text.`,
-        }
       ],
       temperature: 0,
     })
@@ -50,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const aiResponse = response.data.choices[0].message?.content ?? ""
     console.log("\n 2 ======= Initial Response ======\n", { aiResponse })
+
     let processedResponse: { returnValue: string | null, flow: string } = processAiResponse({ response: aiResponse, workOrderData: workOrderData, flow })
     console.log("\n 2.5 ======= Processed Response ======\n", { processedResponse: processedResponse.returnValue })
 
@@ -61,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         messages: [
           prompt,
           ...messages,
-          { role: "user", content: userMessage },
+          { role: "user", content: additionalUserContext + userMessage },
           { role: "assistant", content: aiResponse },
           {
             role: "system",
