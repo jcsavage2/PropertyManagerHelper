@@ -17,16 +17,15 @@ export default function Home() {
   const [isResponding, setIsResponding] = useState(false);
   const initialWorkOrderState: WorkOrder = {
     /** User Information */
-    address: null,
-    email: session?.user?.email ?? null,
-    name: session?.user?.name ?? null,
-    propertyManagerEmail: null,
-    permissionToEnter: null,
+    address: "",
+    email: session?.user?.email ?? "",
+    name: session?.user?.name ?? "",
+    permissionToEnter: "",
 
     /** Issue Information */
-    issueCategory: null,
-    issueLocation: null,
-    issueSubCategory: null,
+    issueCategory: "",
+    issueLocation: "",
+    issueSubCategory: "",
   }
   const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
   const [flow, setFlow] = useState<'issueFlow' | 'userFlow'>('issueFlow')
@@ -60,7 +59,7 @@ export default function Home() {
     setWorkOrder(initialWorkOrderState)
     return;
   }
-  console.log({ workOrder })
+  console.log(workOrder)
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     try {
@@ -80,15 +79,14 @@ export default function Home() {
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
       setFlow(flowResponse)
       setWorkOrder({
-        address: parsed.address ?? workOrder.address,
-        email: parsed.email ?? workOrder.email,
-        name: parsed.name ?? workOrder.email,
-        propertyManagerEmail: parsed.propertyManagerEmail ?? workOrder.propertyManagerEmail,
-        permissionToEnter: parsed.permissionToEnter ?? workOrder.permissionToEnter,
+        address: !!parsed.address ? parsed.address : workOrder.address,
+        email: !!parsed.email ? parsed.email : workOrder.email,
+        name: !!parsed.name ? parsed.name : workOrder.email,
+        permissionToEnter: !!parsed.permissionToEnter ? parsed.permissionToEnter : workOrder.permissionToEnter,
 
-        issueCategory: parsed.issueCategory ?? workOrder.issueCategory,
-        issueSubCategory: parsed.issueSubCategory ?? workOrder.issueSubCategory,
-        issueLocation: parsed.issueLocation ?? workOrder.issueSubCategory,
+        issueCategory: parsed.issueCategory ? parsed.issueCategory : workOrder.issueCategory,
+        issueSubCategory: parsed.issueSubCategory ? parsed.issueSubCategory : workOrder.issueSubCategory,
+        issueLocation: parsed.issueLocation ? parsed.issueLocation : workOrder.issueSubCategory,
       });
       const newMessage = parsed.aiMessage;
       setIsResponding(false);
@@ -107,7 +105,7 @@ export default function Home() {
     if (!key.startsWith("issue")) {
       const jsx = (
         <p key={key}>
-          <span className='font-bold'>{key}</span>: {workOrder[key as keyof typeof workOrder]?.toString() ?? ""}
+          <span className={`font-bold ${!workOrder[key as keyof typeof workOrder] && "text-red-600"}`}>{key}</span>: {workOrder[key as keyof typeof workOrder]?.toString() ?? ""}
         </p>
       )
       return [...acc, jsx]
