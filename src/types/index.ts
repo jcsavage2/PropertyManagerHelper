@@ -15,11 +15,11 @@ export type FinishFormRequest = IssueInformation & {
   messages: ChatCompletionRequestMessage[];
 };
 
-type UserInfo = {
-  address: string | null;
-  email: string | null;
-  name: string | null;
-  permissionToEnter: boolean | string | null;
+export type UserInfo = {
+  address: string;
+  email: string;
+  name: string;
+  permissionToEnter: string;
 }
 
 export type IssueInformation = {
@@ -28,4 +28,4 @@ export type IssueInformation = {
   issueSubCategory: string | null;
 }
 
-export type WorkOrder = UserInfo & IssueInformation
+export type WorkOrder = IssueInformation

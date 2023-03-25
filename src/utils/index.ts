@@ -1,13 +1,9 @@
 import { findIssueSample, findUserInfoSample, issueCategoryToTypes } from "@/constants"
 import { ChatCompletionRequestMessage } from "openai"
-import { AiJSONResponse, WorkOrder } from "@/types"
+import { AiJSONResponse, UserInfo, WorkOrder } from "@/types"
 
 export const hasAllIssueInfo = (workOrder: WorkOrder) => {
   return !!workOrder.issueCategory && !!workOrder.issueSubCategory && !!workOrder.issueLocation
-}
-
-export const hasNoFinishFormInfo = (workOrder: WorkOrder) => {
-  return !workOrder.address && !workOrder.email && !workOrder.name && !workOrder.permissionToEnter
 }
 
 export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse }) => {
@@ -25,6 +21,10 @@ export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrd
 /** Checks if we have all the info we need to submit the work order */
 export const hasAllInfo = (workOrder: WorkOrder) => {
   return Object.values(workOrder).every(value => !!value) // this works because we need permission to enter to be true.
+}
+
+export const hasAllUserInfo = (userInfo: UserInfo) => {
+  return Object.values(userInfo).every(value => !!value) // this works because we need permission to enter to be true.
 }
 
 /**
@@ -46,6 +46,7 @@ export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
     case true:
       return `\n 
       Please respond to all of my messages in this format: ${JSON.stringify(findUserInfoSample)} and include no additional text.
+      The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
       `
   }
 }
@@ -95,9 +96,9 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         If the user tells you their name, store it under "name" in your JSON response.
         If the user tells you their address of the property, store it under "address" in your JSON response.
         If I give you permission to enter, store it under "permissionToEnter" in your response.
-        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
         All of your responses should be stringified JSON like this: ${JSON.stringify(findUserInfoSample)}
         If the user's input is totally unrelated to a service request, cheerfully instruct them to try again.   
+        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
       `}
   }
 }
@@ -124,11 +125,10 @@ export const processAiResponse = ({ response, workOrderData, flow }: { response:
 
       // WORK IN PROGRESS
       const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse })
-      console.log({ merged })
 
       //Error: This will continue to be called while hasAllIssueInfo is true and we will always replace the aiMessage
       if (hasAllInfo(merged)) {
-        jsonResponse.aiMessage = `Please click the button below to submit your Service Request.`
+        jsonResponse.aiMessage = `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`
       } else if (hasAllIssueInfo(merged) && flow === "issueFlow") {
         jsonResponse.aiMessage = `To finalize your service request, please tell me the following information so I can finalize your work order:`
         updatedFlow = "userFlow"

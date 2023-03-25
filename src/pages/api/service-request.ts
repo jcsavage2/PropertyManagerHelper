@@ -39,6 +39,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           role: "user",
           content: userMessage + additionalUserContext
         },
+        {
+          role: "system",
+          content: `Reformat your response into JSON formatted like this: ${JSON.stringify(findIssueSample)}, with no additional text.`,
+        }
       ],
       temperature: 0,
     }, { headers: { "Content-Type": "application/json" } })
@@ -51,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     console.log("\n Processed Response =============\n", { processedResponse: processedResponse.returnValue })
 
     if (!processedResponse.returnValue) {
-      console.log("\n Is Refetching... =============\n",)
+      console.log("\n Is Refetching... \n")
       const newResponse = await openai.createChatCompletion({
         max_tokens: 1000,
         model: "gpt-3.5-turbo",

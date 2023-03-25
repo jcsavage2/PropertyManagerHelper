@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { ChatCompletionRequestMessage } from 'openai'
 import { toast } from 'react-toastify'
-import { hasAllInfo, hasAllIssueInfo } from '@/utils'
-import { AiJSONResponse, ApiRequest, WorkOrder } from '@/types'
+import { hasAllIssueInfo, hasAllUserInfo } from '@/utils'
+import { AiJSONResponse, ApiRequest, UserInfo, WorkOrder } from '@/types'
+
 
 export default function Home() {
 
@@ -13,14 +14,15 @@ export default function Home() {
   const [userMessage, setUserMessage] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
 
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [address, setAddress] = useState("")
+  const [permissionToEnter, setPermissionToEnter] = useState("yes")
+
+
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const initialWorkOrderState: WorkOrder = {
-    /** User Information */
-    address: "",
-    email: session?.user?.email ?? "",
-    name: session?.user?.name ?? "",
-    permissionToEnter: "",
 
     /** Issue Information */
     issueCategory: "",
@@ -33,7 +35,8 @@ export default function Home() {
   // Update the user when the session is populated
   useEffect(() => {
     if (session?.user) {
-      setWorkOrder({ ...workOrder, name: session.user.name ?? '', email: session.user.email ?? "" });
+      setName(session.user.name ?? '')
+      setEmail(session.user.email ?? '')
     }
   }, [session]);
 
@@ -50,8 +53,23 @@ export default function Home() {
     setUserMessage(e.currentTarget.value);
   }, [setUserMessage]);
 
+  const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setName(e.currentTarget.value);
+  }, [setName]);
+  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setEmail(e.currentTarget.value)
+  }, [setEmail]);
+  const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setAddress(e.currentTarget.value);
+  }, [setAddress]);
+  const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setPermissionToEnter(e.currentTarget.value);
+  }, [setPermissionToEnter]);
 
-  const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = () => {
+
+
+
+  const handleSubitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = () => {
     toast.success('Successfully Submitted Work Order!', {
       position: toast.POSITION.TOP_CENTER,
     });
@@ -61,12 +79,10 @@ export default function Home() {
   }
   console.log(workOrder)
 
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleSubitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     try {
       e.preventDefault();
-
       if (userMessage === '') return
-
       setMessages([...messages, { role: 'user', content: userMessage }]);
       setIsResponding(true);
       setLastUserMessage(userMessage)
@@ -79,11 +95,6 @@ export default function Home() {
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
       setFlow(flowResponse)
       setWorkOrder({
-        address: !!parsed.address ? parsed.address : workOrder.address,
-        email: !!parsed.email ? parsed.email : workOrder.email,
-        name: !!parsed.name ? parsed.name : workOrder.email,
-        permissionToEnter: !!parsed.permissionToEnter ? parsed.permissionToEnter : workOrder.permissionToEnter,
-
         issueCategory: parsed.issueCategory ? parsed.issueCategory : workOrder.issueCategory,
         issueSubCategory: parsed.issueSubCategory ? parsed.issueSubCategory : workOrder.issueSubCategory,
         issueLocation: parsed.issueLocation ? parsed.issueLocation : workOrder.issueSubCategory,
@@ -99,20 +110,15 @@ export default function Home() {
   };
 
 
+
   const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1)
 
-  const WorkOrderTable = Object.keys(workOrder).reduce((acc: any[], key) => {
-    if (!key.startsWith("issue")) {
-      const jsx = (
-        <p key={key}>
-          <span className={`font-bold ${!workOrder[key as keyof typeof workOrder] && "text-red-600"}`}>{key}</span>: {workOrder[key as keyof typeof workOrder]?.toString() ?? ""}
-        </p>
-      )
-      return [...acc, jsx]
-    }
-    return acc
-  }, [])
-
+  const userInfo: UserInfo = {
+    name,
+    email,
+    address,
+    permissionToEnter
+  }
 
   return (
     <>
@@ -182,8 +188,55 @@ export default function Home() {
                           <p data-testid={`response-${index}`} className='whitespace-pre-line break-keep'>{message.content}</p>
                           {hasAllIssueInfo(workOrder) && index === lastSystemMessageIndex && (
                             <>
-                              <br />
-                              {WorkOrderTable}
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
+                                <label htmlFor='name'>Name: </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="name"
+                                  type={"text"}
+                                  value={userInfo.name}
+                                  onChange={handleNameChange}
+                                />
+                                <label htmlFor='email'>Email: </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="email"
+                                  type={"text"}
+                                  value={userInfo.email}
+                                  onChange={handleEmailChange}
+                                />
+                                <label htmlFor='address'>Address: </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="address"
+                                  type={"text"}
+                                  value={userInfo.address}
+                                  onChange={handleAddressChange}
+                                />
+                              </div>
+                              <p className='mt-2'>{"Permission To Enter Property: "}</p>
+                              <div>
+                                <input
+                                  className='rounded px-1'
+                                  id="permission-yes"
+                                  name={"permission"}
+                                  type={"radio"}
+                                  value={"yes"}
+                                  checked={permissionToEnter === "yes"}
+                                  onChange={handlePermissionChange}
+                                />
+                                <label htmlFor='permission-yes'>{"Yes"}</label>
+                                <input
+                                  className='rounded px-1 ml-4'
+                                  id="permission-no"
+                                  name={"permission"}
+                                  type={"radio"}
+                                  value={"no"}
+                                  checked={permissionToEnter === "no"}
+                                  onChange={handlePermissionChange}
+                                />
+                                <label htmlFor='permission-no'>{"No"}</label>
+                              </div>
                             </>
                           )}
                         </div>
@@ -196,9 +249,9 @@ export default function Home() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {hasAllInfo(workOrder) && (
+                  {hasAllUserInfo(userInfo) && (
                     <button
-                      onClick={handleSubmitWorkOrder}
+                      onClick={handleSubitTextWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-400'>
                       Submit Work Order
                     </button>
@@ -209,13 +262,13 @@ export default function Home() {
                   className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
                   style={{ "height": "12dvh" }}
                 >
-                  <form onSubmit={handleSubmit}
+                  <form onSubmit={handleSubitText}
                     style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
                     onKeyDown={(e) => {
                       //Users can press enter to submit the form, enter + shift to add a new line
                       if (e.key === 'Enter' && !e.shiftKey && !isResponding) {
                         e.preventDefault();
-                        handleSubmit(e);
+                        handleSubitText(e);
                       }
                     }}
                   >
