@@ -251,10 +251,10 @@ export default function Home() {
                   )}
                   {hasAllUserInfo(userInfo) && hasAllIssueInfo(workOrder) && (
                     <button
-                      disabled={permissionToEnter === "yes"}
+                      disabled={permissionToEnter === "no"}
                       onClick={handleSubitTextWorkOrder}
-                      className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-400'>
-                      Submit Work Order
+                      className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-400 disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
+                      {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}
                     </button>
                   )}
                 </div>
