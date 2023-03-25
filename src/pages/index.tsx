@@ -249,7 +249,7 @@ export default function Home() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {hasAllUserInfo(userInfo) && (
+                  {hasAllUserInfo(userInfo) && hasAllIssueInfo(workOrder) && (
                     <button
                       onClick={handleSubitTextWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-400'>
