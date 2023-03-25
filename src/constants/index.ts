@@ -19,6 +19,7 @@ export const findUserInfoSample: Partial<AiJSONResponse> = {
 
 export const issueCategoryToTypes = {
   "Basement": ["Leaking", "Humid"],
+  "Bathtub": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty", "No Hot Water"],
   "Ceiling": ["Leaking", "Cracked"],
   "Chandalier": ["Fallen", "Won't Turn On"],
   "Dishwasher": ["Won't Run", "Overflowing", "Not Cleaning The Dishes"],
