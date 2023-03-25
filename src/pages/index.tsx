@@ -19,18 +19,15 @@ export default function Home() {
   const [address, setAddress] = useState("")
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes")
 
-
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const initialWorkOrderState: WorkOrder = {
-
     /** Issue Information */
     issueCategory: "",
     issueLocation: "",
     issueSubCategory: "",
   }
   const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
-  const [flow, setFlow] = useState<'issueFlow' | 'userFlow'>('issueFlow')
 
   // Update the user when the session is populated
   useEffect(() => {
@@ -67,9 +64,7 @@ export default function Home() {
   }, [setPermissionToEnter]);
 
 
-
-
-  const handleSubitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = () => {
+  const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = () => {
     toast.success('Successfully Submitted Work Order!', {
       position: toast.POSITION.TOP_CENTER,
     });
@@ -79,7 +74,7 @@ export default function Home() {
   }
   console.log(workOrder)
 
-  const handleSubitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     try {
       e.preventDefault();
       if (userMessage === '') return
@@ -88,12 +83,10 @@ export default function Home() {
       setLastUserMessage(userMessage)
       setUserMessage('');
 
-      const body: ApiRequest = { userMessage, messages, ...workOrder, flow };
+      const body: ApiRequest = { userMessage, messages, ...workOrder };
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
-      const flowResponse = res.data.flow
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
-      setFlow(flowResponse)
       setWorkOrder({
         issueCategory: parsed.issueCategory ? parsed.issueCategory : workOrder.issueCategory,
         issueSubCategory: parsed.issueSubCategory ? parsed.issueSubCategory : workOrder.issueSubCategory,
@@ -247,30 +240,30 @@ export default function Home() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {hasAllIssueInfo(workOrder) && (
-                    <button
-                      disabled={permissionToEnter === "no" || !hasAllUserInfo(userInfo)}
-                      onClick={handleSubitTextWorkOrder}
-                      className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-400 disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
-                      {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}
-                    </button>
-                  )}
                 </div>
                 <div
                   id="chatbox-footer"
                   className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
                   style={{ "height": "12dvh" }}
                 >
-                  <form onSubmit={handleSubitText}
-                    style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
-                    onKeyDown={(e) => {
-                      //Users can press enter to submit the form, enter + shift to add a new line
-                      if (e.key === 'Enter' && !e.shiftKey && !isResponding) {
-                        e.preventDefault();
-                        handleSubitText(e);
-                      }
-                    }}
-                  >
+                  {hasAllIssueInfo(workOrder) ? (
+                    <button
+                      disabled={permissionToEnter === "no" || !hasAllUserInfo(userInfo)}
+                      onClick={handleSubmitTextWorkOrder}
+                      className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
+                      {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}
+                    </button>
+                  ) : (
+                    <form onSubmit={handleSubmitText}
+                      style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
+                      onKeyDown={(e) => {
+                        //Users can press enter to submit the form, enter + shift to add a new line
+                        if (e.key === 'Enter' && !e.shiftKey && !isResponding) {
+                          e.preventDefault();
+                          handleSubmitText(e);
+                        }
+                      }}
+                    >
                     <textarea
                       value={userMessage}
                       data-testid="userMessageInput"
@@ -283,16 +276,16 @@ export default function Home() {
                           : 'The toilet in the master bathroom is clogged - it\'s upstairs at the end of the hall to the right.'
                       }
                       onChange={handleChange}
-                      disabled={flow === 'userFlow'}
                     />
                     <button
                       data-testid="send"
                       type="submit"
                       className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                      disabled={isResponding || !userMessage || flow === 'userFlow'}>
+                      disabled={isResponding || !userMessage}>
                       Send
                     </button>
                   </form>
+                  )}
                 </div>
               </div>
             </div>
