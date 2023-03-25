@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next"
 import { ChatCompletionRequestMessage, Configuration, CreateChatCompletionResponse, OpenAIApi } from "openai"
-import { FinishFormRequest } from "../"
+import { FinishFormRequest } from "@/types"
 
 type Data = {
   response: string
@@ -17,12 +17,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const openai = new OpenAIApi(config)
 
   const prompt: ChatCompletionRequestMessage = {
-    "role": "system", "content": `CONTEXT: examine this JSON: ${JSON.stringify(workOrder)}
+    role: "system",
+    content: `CONTEXT: examine this JSON: ${JSON.stringify(workOrder)}
   As a property management chatbot provided with an issue from the user, your job is to update the JSON fields based on the users \
   input. In every message, include the state of the form like this: "\nName: Dylan\n Address: Apt 12c\n \
   Permission to enter(y/n): Yes\n Service Request: Toilet; Clogged\n" If the user's input is totally \
   unrelated to a service request, cheerfully instruct them to try again. The user does not understand what JSON is, so refer to the JSON as \
-  "the form".`}
+  "the form".
+  If the user has given you all of the information, end the message with: \
+  "Please confirm the above looks correct and submit the work order. 
+  You and your Property Manager will receive an email with the details."
+  `}
 
   const response = await openai.createChatCompletion({
     max_tokens: 128,
