@@ -47,7 +47,7 @@ export default function Home() {
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, name, email, address, permissionToEnter]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
     setUserMessage(e.currentTarget.value);
