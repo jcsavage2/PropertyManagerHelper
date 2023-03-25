@@ -5,7 +5,7 @@ import axios from 'axios'
 import { ChatCompletionRequestMessage } from 'openai'
 import { toast } from 'react-toastify'
 import { hasAllIssueInfo, hasAllUserInfo } from '@/utils'
-import { AiJSONResponse, ApiRequest, UserInfo, WorkOrder } from '@/types'
+import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types'
 
 
 export default function Home() {
@@ -64,15 +64,23 @@ export default function Home() {
   }, [setPermissionToEnter]);
 
 
-  const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = () => {
-    toast.success('Successfully Submitted Work Order!', {
-      position: toast.POSITION.TOP_CENTER,
-    });
+  const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
+    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages }
+    const res = await axios.post('/api/send-email', body);
+    if (res.status === 200) {
+      toast.success('Successfully Submitted Work Order!', {
+        position: toast.POSITION.TOP_CENTER,
+      });
+    } else {
+      toast.error('Error Submitting Work Order. Please Try Again', {
+        position: toast.POSITION.TOP_CENTER,
+      });
+      return
+    }
     setMessages([])
     setWorkOrder(initialWorkOrderState)
     return;
   }
-  console.log(workOrder)
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     try {
