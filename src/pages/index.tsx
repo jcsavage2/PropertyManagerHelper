@@ -200,7 +200,7 @@ export default function Home() {
                                 <input
                                   className='rounded px-1'
                                   id="email"
-                                  type={"text"}
+                                  type={"email"}
                                   value={userInfo.email}
                                   onChange={handleEmailChange}
                                 />
