@@ -109,8 +109,6 @@ export default function Home() {
     }
   };
 
-
-
   const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1)
 
   const userInfo: UserInfo = {
@@ -243,15 +241,15 @@ export default function Home() {
                       </div>
                     ))}
                   {isResponding && (
-                    <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-2 mb-3 py-2 px-4 text-left">
+                    <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
                       <div className="dot animate-loader"></div>
                       <div className="dot animate-loader animation-delay-200"></div>
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {hasAllUserInfo(userInfo) && hasAllIssueInfo(workOrder) && (
+                  {hasAllIssueInfo(workOrder) && (
                     <button
-                      disabled={permissionToEnter === "no"}
+                      disabled={permissionToEnter === "no" || !hasAllUserInfo(userInfo)}
                       onClick={handleSubitTextWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-400 disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
                       {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}
@@ -285,12 +283,13 @@ export default function Home() {
                           : 'The toilet in the master bathroom is clogged - it\'s upstairs at the end of the hall to the right.'
                       }
                       onChange={handleChange}
+                      disabled={flow === 'userFlow'}
                     />
                     <button
                       data-testid="send"
                       type="submit"
                       className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                      disabled={isResponding || !userMessage}>
+                      disabled={isResponding || !userMessage || flow === 'userFlow'}>
                       Send
                     </button>
                   </form>

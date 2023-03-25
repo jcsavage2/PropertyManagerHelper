@@ -121,19 +121,16 @@ export const processAiResponse = ({ response, workOrderData, flow }: { response:
       const cleanedString = substr.replace(regex, '"').replace("True", "true").replace("False", "false").replace("undefined", '""')
       let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse
 
-      // WORK IN PROGRESS
       const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse })
 
-      //Error: This will continue to be called while hasAllIssueInfo is true and we will always replace the aiMessage
       if (hasAllInfo(merged)) {
         jsonResponse.aiMessage = `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`
-      } else if (hasAllIssueInfo(merged) && flow === "issueFlow") {
-        jsonResponse.aiMessage = `To finalize your service request, please tell me the following information so I can finalize your work order:`
         updatedFlow = "userFlow"
       }
 
       returnValue = JSON.stringify(jsonResponse)
     }
+
     return { returnValue: returnValue, flow: updatedFlow }
   } catch (err) {
     console.log({ err })
