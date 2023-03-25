@@ -133,7 +133,7 @@ export default function Home() {
                 <div id="chatbox-header"
                   style={{ padding: "0.5dvh 0" }}
                   className="text-left bg-blue-200 rounded-t-lg">
-                  <h3 className="text-xl my-auto text-gray-500 text-center">PILLAR Chat</h3>
+                  <h3 className="text-xl my-auto text-gray-600 text-center">PILLAR Chat</h3>
                 </div>
                 <div
                   id="chatbox"
@@ -264,27 +264,27 @@ export default function Home() {
                         }
                       }}
                     >
-                    <textarea
-                      value={userMessage}
-                      data-testid="userMessageInput"
-                      className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
-                      placeholder={
-                        messages.length
-                          ? hasAllIssueInfo(workOrder)
-                            ? 'John; 123 St Apt 1400, Boca, FL; yes'
-                            : ''
-                          : 'The toilet in the master bathroom is clogged - it\'s upstairs at the end of the hall to the right.'
-                      }
-                      onChange={handleChange}
-                    />
-                    <button
-                      data-testid="send"
-                      type="submit"
-                      className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                      disabled={isResponding || !userMessage}>
-                      Send
-                    </button>
-                  </form>
+                      <textarea
+                        value={userMessage}
+                        data-testid="userMessageInput"
+                        className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
+                        placeholder={
+                          messages.length
+                            ? hasAllIssueInfo(workOrder)
+                              ? 'John; 123 St Apt 1400, Boca, FL; yes'
+                              : ''
+                            : 'The toilet in the master bathroom is clogged - it\'s upstairs at the end of the hall to the right.'
+                        }
+                        onChange={handleChange}
+                      />
+                      <button
+                        data-testid="send"
+                        type="submit"
+                        className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
+                        disabled={isResponding || !userMessage}>
+                        Send
+                      </button>
+                    </form>
                   )}
                 </div>
               </div>
