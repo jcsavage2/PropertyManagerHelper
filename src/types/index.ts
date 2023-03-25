@@ -3,7 +3,6 @@ import { ChatCompletionRequestMessage } from 'openai'
 export type ApiRequest = WorkOrder & {
   userMessage: string;
   messages: ChatCompletionRequestMessage[];
-  flow: 'issueFlow' | 'userFlow';
 };
 
 export type AiJSONResponse = Partial<UserInfo> & IssueInformation & {

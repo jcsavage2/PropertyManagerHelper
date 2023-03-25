@@ -107,10 +107,9 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
  * @param response string response from GPT; no format requirements
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
-export const processAiResponse = ({ response, workOrderData, flow }: { response: string, workOrderData: WorkOrder, flow: string }): { returnValue: string | null, flow: string } => {
+export const processAiResponse = ({ response, workOrderData}: { response: string, workOrderData: WorkOrder}): string | null => {
   try {
     let returnValue: string | null = null
-    let updatedFlow = flow
     const jsonStart = response.indexOf("{")
     const jsonEnd = response.lastIndexOf("}")
 
@@ -125,15 +124,14 @@ export const processAiResponse = ({ response, workOrderData, flow }: { response:
 
       if (hasAllInfo(merged)) {
         jsonResponse.aiMessage = `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`
-        updatedFlow = "userFlow"
       }
 
       returnValue = JSON.stringify(jsonResponse)
     }
 
-    return { returnValue: returnValue, flow: updatedFlow }
+    return returnValue
   } catch (err) {
     console.log({ err })
-    return { returnValue: null, flow: flow }
+    return null
   }
 }
