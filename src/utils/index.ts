@@ -40,7 +40,9 @@ export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
       return `\n \
       Please respond to my messages in this format: ${JSON.stringify(findIssueSample)} and include no additional text. \
       Don't ask me to confirm info I've already told you.
-      If my issue is vague, eg I say something is "broken", ask for more details.`
+      If my issue is vague, eg I say something is "broken", ask for more details.
+      If you can derive an issue and a root cause, set the root cause to the "issueSubCategory" field.
+      `
     case true:
       return `\n 
       Please respond to all of my messages in this format: ${JSON.stringify(findUserInfoSample)} and include no additional text.
