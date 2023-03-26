@@ -9,10 +9,9 @@ import { NextPageContext } from 'next'
 
 type Props = {
     propertyManagerEmail: string;
-    companyEmail: string;
 }
 
-export default function Home({propertyManagerEmail, companyEmail}: Props) {
+export default function Home(props: Props) {
   const { data: session } = useSession();
   const [userMessage, setUserMessage] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
@@ -20,6 +19,7 @@ export default function Home({propertyManagerEmail, companyEmail}: Props) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [address, setAddress] = useState("")
+  const [propertyManagerEmail, setPropertyManagerEmail] = useState(props.propertyManagerEmail)
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes")
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
@@ -62,13 +62,16 @@ export default function Home({propertyManagerEmail, companyEmail}: Props) {
   const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setAddress(e.currentTarget.value);
   }, [setAddress]);
+  const handlePropertyManagerEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setPropertyManagerEmail(e.currentTarget.value);
+  }, [setPropertyManagerEmail]);
   const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setPermissionToEnter(e.currentTarget.value as "yes" | "no");
   }, [setPermissionToEnter]);
 
 
   const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
-    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, propertyManagerEmail, companyEmail, messages }
+    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, propertyManagerEmail, messages }
     const res = await axios.post('/api/send-email', body);
     if (res.status === 200) {
       toast.success('Successfully Submitted Work Order!', {
@@ -209,6 +212,15 @@ export default function Home({propertyManagerEmail, companyEmail}: Props) {
                                   value={userInfo.address}
                                   onChange={handleAddressChange}
                                 />
+                                <label htmlFor='propertyManagerEmail'>Property Manager Email: </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="propertyManagerEmail"
+                                  type={"text"}
+                                  value={propertyManagerEmail}
+                                  onChange={handlePropertyManagerEmailChange}
+                                  disabled={props.propertyManagerEmail !== ''}
+                                />
                               </div>
                               <p className='mt-2'>{"Permission To Enter Property: "}</p>
                               <div>
@@ -306,5 +318,6 @@ Home.getInitialProps = async (context: NextPageContext): Promise<Props> => {
 
     //Can call api when we connect with DDB to pull property manager email based on pid
     //We can decide how to handle page access without a pid
-    return {propertyManagerEmail: 'propertyEmail', companyEmail: 'companyEmail'}
+    const email = pid ? 'mitchposk@gmail.com' : ''
+    return {propertyManagerEmail: email}
 };
