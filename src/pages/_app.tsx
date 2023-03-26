@@ -5,10 +5,17 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
+import Head from 'next/head'
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"] }) {
   return (
     <SessionProvider session={session}>
+      <Head>
+        <title>Pillar</title>
+        <link rel="icon" href="/3.png" />
+        <meta name="description" content="App to help property managers deal with Work Orders" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>  
       <nav
         style={{ height: "7dvh" }}
         className='flex bg-slate-100 border-3 border-solid border-black py-2 sm:py-5 space-x-62'>

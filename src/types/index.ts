@@ -6,6 +6,8 @@ export type ApiRequest = WorkOrder & {
 };
 
 export type SendEmailApiRequest = UserInfo & IssueInformation & {
+  propertyManagerEmail: string;
+  companyEmail: string;
   messages: ChatCompletionRequestMessage[];
 }
 

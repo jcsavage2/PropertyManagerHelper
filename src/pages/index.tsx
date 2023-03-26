@@ -1,4 +1,3 @@
-import Head from 'next/head'
 import { useSession } from 'next-auth/react'
 import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
@@ -6,10 +5,14 @@ import { ChatCompletionRequestMessage } from 'openai'
 import { toast } from 'react-toastify'
 import { hasAllIssueInfo, hasAllUserInfo } from '@/utils'
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types'
+import { NextPageContext } from 'next'
 
+type Props = {
+    propertyManagerEmail: string;
+    companyEmail: string;
+}
 
-export default function Home() {
-
+export default function Home({propertyManagerEmail, companyEmail}: Props) {
   const { data: session } = useSession();
   const [userMessage, setUserMessage] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
@@ -65,7 +68,7 @@ export default function Home() {
 
 
   const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
-    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages }
+    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, propertyManagerEmail, companyEmail, messages }
     const res = await axios.post('/api/send-email', body);
     if (res.status === 200) {
       toast.success('Successfully Submitted Work Order!', {
@@ -121,12 +124,6 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>Pillar</title>
-        <meta name="description" content="App to help property managers deal with Work Orders" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <main
         style={{ height: "92dvh" }}
         className="text-center">
@@ -303,3 +300,11 @@ export default function Home() {
     </>
   );
 }
+
+Home.getInitialProps = async (context: NextPageContext): Promise<Props> => {
+    const pid = context.query.pid ?? null
+
+    //Can call api when we connect with DDB to pull property manager email based on pid
+    //We can decide how to handle page access without a pid
+    return {propertyManagerEmail: 'propertyEmail', companyEmail: 'companyEmail'}
+};
