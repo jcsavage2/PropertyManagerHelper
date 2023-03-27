@@ -6,28 +6,27 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 
 type Data = {
-  response: string
-}
+  response: string;
+};
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
   try {
-    const body = req.body as SendEmailApiRequest
-    console.log({ body })
-    const apiKey = process.env.SENDGRID_API_KEY
+    const body = req.body as SendEmailApiRequest;
+    const apiKey = process.env.SENDGRID_API_KEY;
     if (!apiKey) {
-      throw new Error("missing SENDGRID_API_KEY env variable.")
+      throw new Error("missing SENDGRID_API_KEY env variable.");
     }
     sendgrid.setApiKey(apiKey);
 
-    body.messages.pop()
+    body.messages.pop();
 
     const t = await sendgrid.send({
       to: body.email, // The Property Manager
       cc: "mitchposk+01@gmail.com", // The Tenant
-      from: "mitchposk@gmail.com", // The Email from the company
+      from: "dylan@pillarhq.co", // The Email from the company
       subject: `Work Order Request for ${body.address}`, // work order for address on MM-DD-YYYY
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
@@ -105,7 +104,6 @@ export default async function handler(
       </body>
       </html>`
     });
-    console.log(JSON.stringify(t))
   } catch (error: any) {
     return res.status(error.statusCode || 500).json({ response: error.message });
   }
