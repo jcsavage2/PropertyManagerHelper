@@ -5,6 +5,9 @@ import { ChatCompletionRequestMessage } from 'openai';
 import { toast } from 'react-toastify';
 import { hasAllIssueInfo, hasAllUserInfo } from '@/utils';
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types';
+import { ENTITIES } from '@/database/entities';
+
+
 
 export default function Demo() {
   const { data: session } = useSession();
@@ -63,7 +66,7 @@ export default function Demo() {
 
   const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages };
-    const res = await axios.post('/api/send-email', body);
+    const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
       toast.success('Successfully Submitted Work Order!', {
         position: toast.POSITION.TOP_CENTER,
@@ -283,6 +286,10 @@ export default function Demo() {
                         disabled={isResponding || !userMessage}>
                         Send
                       </button>
+                      <button onClick={async () => {
+                        const us = await axios.post('/api/get-user', { email, userType: ENTITIES.PROPERTY_MANAGER });
+                        console.log(JSON.parse(us.data.response));
+                      }}>Test...</button>
                     </form>
                   )}
                 </div>

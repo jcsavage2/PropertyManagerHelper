@@ -1,5 +1,5 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES } from '.';
+import { ENTITIES, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 
 
@@ -13,7 +13,7 @@ export class PropertyEntity {
         pk: { partitionKey: true }, // flag as partitionKey
         sk: { hidden: true, sortKey: true }, // flag as sortKey and mark hidden
         country: { type: 'string' },
-        streedAddress: { type: 'string' },
+        streetAddress: { type: 'string' },
         unitNumber: { type: 'string' },
         city: { type: 'string', },
         state: { type: 'string' },
@@ -62,13 +62,26 @@ export class PropertyEntity {
     return result;
   }
 
-  private async getAllWithPk({ pk }: { pk: string; }) {
-    // TBU
+  private async getAllPropertiesWithPk({ pk }: { pk: string; }) {
+    let startKey: StartKey;
+    const properties = [];
+    do {
+      try {
+
+        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(pk, { consistent: true, startKey });
+        startKey = LastEvaluatedKey as StartKey;
+        properties.push(...(Items ?? []));
+
+      } catch (error) {
+        console.log({ error });
+      }
+    } while (!!startKey);
+    return properties;
   }
 
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     const pk = this.generatePk({ propertyManagerEmail });
-    return this.getAllWithPk({ pk });
+    return await this.getAllPropertiesWithPk({ pk });
 
   }
 

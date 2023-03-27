@@ -50,7 +50,7 @@ export class PropertyManagerEntity {
       sk: this.generateSk()
     };
     const result = await this.propertyManagerEntity.get(params, { consistent: true });
-    console.log(result);
+    return result;
   }
 
 }
