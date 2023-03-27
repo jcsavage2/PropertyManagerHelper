@@ -79,7 +79,6 @@ export const UserContextProvider = (props: any) => {
 
 
     // User is logged in but haven't fetched from DB yet.
-    console.log({ user });
     if (user.email && user.userType && !user.created) {
       async function createUser() {
         const { data } = await axios.post("/api/create-new-user", { email: "fake@fake.com", userType: user.userType });
