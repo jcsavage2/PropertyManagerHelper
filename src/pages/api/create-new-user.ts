@@ -28,21 +28,21 @@ export default async function handler(
     switch (userType) {
       case ENTITIES.PROPERTY_MANAGER:
         const propertyManagerEntity = new PropertyManagerEntity();
-        const existingPropertyManager = await propertyManagerEntity.get({ email });
+        const existingPropertyManager = await propertyManagerEntity.get({ email, type: userType });
         console.log({ existingPropertyManager });
         //@ts-ignore
         const existingUserFromDB = existingPropertyManager?.Item ?? null;
         if (existingUserFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingUserFromDB) });
         } else {
-          const newPropertyManager = await propertyManagerEntity.create({ email });
+          const newPropertyManager = await propertyManagerEntity.create({ email, type: userType });
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newPropertyManager.Attributes) });
         }
 
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
-        const existingTenant = await tenantEntity.get({ email });
+        const existingTenant = await tenantEntity.get({ email, type: userType });
         //@ts-ignore
         const existingTenantFromDB = existingTenant?.Item ?? null;
         console.log({ existingTenantFromDB });
@@ -50,7 +50,7 @@ export default async function handler(
         if (existingTenantFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
-          const newPropertyManager = await tenantEntity.create({ email });
+          const newPropertyManager = await tenantEntity.create({ email, type: userType });
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newPropertyManager.Attributes) });
         }

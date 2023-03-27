@@ -1,32 +1,36 @@
 import { useUserContext } from "@/context/user";
+import { useUserTypeContext } from "@/context/user-type";
 import { useRouter } from "next/router";
 
 const Home = () => {
   const router = useRouter();
-  const { user, setUser } = useUserContext();
+  const { type, setType } = useUserTypeContext();
+  const { user, createUserInDB } = useUserContext();
   return (
     <>
       <div className="text-center">
         <h1>Pillar property management app home</h1>
         <button
           onClick={() => {
-            setUser({ ...user, userType: "TENANT" });
             router.push("login");
           }}
           className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
         >
-          Tenant Login
+          {user.email ? "Sign Out" : "Sign In/Sign Up"}
         </button>
         <br />
-        <button
-          onClick={() => {
-            setUser({ ...user, userType: "PROPERTY_MANAGER" });
-            router.push("login");
-          }}
-          className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-        >
-          Property Manager Login
-        </button>
+        {user.email && !user.modified && (
+          <>
+            <br />
+            <button
+              className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
+              onClick={() => createUserInDB("TENANT")}>Continue as Tenant</button>
+            <br />
+            <button
+              className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
+              onClick={() => createUserInDB("PROPERTY_MANAGER")}>Continue as Property Manager</button>
+          </>
+        )}
       </div>
     </>
   );

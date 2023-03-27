@@ -25,11 +25,11 @@ export default async function handler(
     switch (userType) {
       case ENTITIES.PROPERTY_MANAGER:
         const propertyManagerEntity = new PropertyManagerEntity();
-        user = await propertyManagerEntity.get({ email });
+        user = await propertyManagerEntity.get({ email, type: userType });
         return res.status(200).json({ response: JSON.stringify(user) });
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
-        user = await tenantEntity.get({ email });
+        user = await tenantEntity.get({ email, type: userType });
         return res.status(200).json({ response: JSON.stringify({ user }) });
     }
 

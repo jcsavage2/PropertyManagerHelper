@@ -1,6 +1,7 @@
 import axios from "axios";
-import { useSession } from "next-auth/react";
-import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState } from "react";
+import { useUserTypeContext } from "./user-type";
 
 
 export type ContextUser = {
@@ -10,9 +11,7 @@ export type ContextUser = {
     organization?: string | null,
     properties: string[],
     tenants: string[];
-    userType: "TENANT" | "PROPERTY_MANAGER";
     created: string;
-
     modified: string;
     pk: string;
     sk: string;
@@ -24,12 +23,12 @@ export type ContextUser = {
     organization?: string | null | undefined;
     properties: string[];
     tenants: string[];
-    userType: "TENANT" | "PROPERTY_MANAGER";
     created: string;
     modified: string;
     pk: string;
     sk: string;
   }>>;
+  createUserInDB: (userType: "TENANT" | "PROPERTY_MANAGER") => void;
 };
 
 export const UserContext = createContext<ContextUser>({
@@ -39,30 +38,30 @@ export const UserContext = createContext<ContextUser>({
     organization: null,
     properties: [],
     tenants: [],
-    userType: "TENANT",
     created: "",
     modified: "",
     pk: "",
     sk: "",
   },
-  setUser: () => { }
+  setUser: () => { },
+  createUserInDB: () => { }
 });
 
 export const UserContextProvider = (props: any) => {
   const { data: session } = useSession();
-
-  const [user, setUser] = useState<ContextUser["user"]>({
+  const initialState = {
     email: "",
     name: "",
     organization: "",
     properties: [],
     tenants: [],
-    userType: "TENANT",
     created: "",
     modified: "",
     pk: "",
     sk: "",
-  });
+  };
+  const [user, setUser] = useState<ContextUser["user"]>(initialState);
+  const { type } = useUserTypeContext();
 
   // Update user in context
   useEffect(() => {
@@ -77,12 +76,21 @@ export const UserContextProvider = (props: any) => {
 
   useEffect(() => {
 
+    if (session?.user?.email) {
+      signOut();
+    }
+  }, [type]);
 
-    // User is logged in but haven't fetched from DB yet.
-    if (user.email && user.userType && !user.created) {
+
+
+  const createUserInDB = (userType: "TENANT" | "PROPERTY_MANAGER") => {
+    console.log("doing?");
+
+    if (user.email && !user.created) {
       async function createUser() {
-        const { data } = await axios.post("/api/create-new-user", { email: "fake@fake.com", userType: user.userType });
+        const { data } = await axios.post("/api/create-new-user", { email: "fake@fake.com", userType });
         const { response } = data;
+        console.log({ response });
         const parsedUser = JSON.parse(response);
         if (parsedUser.modified) {
           setUser(parsedUser);
@@ -90,12 +98,14 @@ export const UserContextProvider = (props: any) => {
       }
       createUser();
     }
-  }, [user.email]);
+  };
+  console.log({ user });
 
   return (
     <UserContext.Provider
       value={{
         user: user,
+        createUserInDB,
         setUser
       }}
     >

@@ -6,3 +6,5 @@ export const ENTITIES = {
   WORK_ORDER: "WORK_ORDER",
   PROPERTY_MANAGER: "PROPERTY_MANAGER"
 } as const;
+
+export type EntityType = typeof ENTITIES[keyof typeof ENTITIES];
