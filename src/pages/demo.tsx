@@ -279,8 +279,6 @@ export default function Demo() {
                         disabled={isResponding || !userMessage}>
                         Send
                       </button>
-                      <button onClick={async () => {
-                      }}>Test...</button>
                     </form>
                   )}
                 </div>
