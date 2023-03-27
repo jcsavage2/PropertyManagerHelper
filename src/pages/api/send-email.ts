@@ -3,8 +3,6 @@ import sendgrid from "@sendgrid/mail";
 
 import { NextApiRequest, NextApiResponse } from "next";
 
-
-
 type Data = {
   response: string
 }
