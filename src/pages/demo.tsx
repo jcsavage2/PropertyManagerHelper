@@ -1,20 +1,24 @@
-import { useSession } from 'next-auth/react'
-import { useCallback, useEffect, useState } from 'react'
-import axios from 'axios'
-import { ChatCompletionRequestMessage } from 'openai'
-import { toast } from 'react-toastify'
-import { hasAllIssueInfo, hasAllUserInfo } from '@/utils'
-import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types'
+import { useSession } from 'next-auth/react';
+import { useCallback, useEffect, useState } from 'react';
+import axios from 'axios';
+import { ChatCompletionRequestMessage } from 'openai';
+import { toast } from 'react-toastify';
+import { hasAllIssueInfo, hasAllUserInfo } from '@/utils';
+import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types';
+import { ENTITIES } from '@/database/entities';
+import { useUserContext } from '@/context/user';
+
+
 
 export default function Demo() {
-  const { data: session } = useSession();
   const [userMessage, setUserMessage] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
+  const { user } = useUserContext();
 
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [address, setAddress] = useState("")
-  const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes")
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
+  const [address, setAddress] = useState("");
+  const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
@@ -23,16 +27,8 @@ export default function Demo() {
     issueCategory: "",
     issueLocation: "",
     issueSubCategory: "",
-  }
+  };
   const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
-
-  // Update the user when the session is populated
-  useEffect(() => {
-    if (session?.user) {
-      setName(session.user.name ?? '')
-      setEmail(session.user.email ?? '')
-    }
-  }, [session]);
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -51,7 +47,7 @@ export default function Demo() {
     setName(e.currentTarget.value);
   }, [setName]);
   const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setEmail(e.currentTarget.value)
+    setEmail(e.currentTarget.value);
   }, [setEmail]);
   const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setAddress(e.currentTarget.value);
@@ -62,8 +58,8 @@ export default function Demo() {
 
 
   const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
-    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages }
-    const res = await axios.post('/api/send-email', body);
+    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages };
+    const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
       toast.success('Successfully Submitted Work Order!', {
         position: toast.POSITION.TOP_CENTER,
@@ -72,20 +68,20 @@ export default function Demo() {
       toast.error('Error Submitting Work Order. Please Try Again', {
         position: toast.POSITION.TOP_CENTER,
       });
-      return
+      return;
     }
-    setMessages([])
-    setWorkOrder(initialWorkOrderState)
+    setMessages([]);
+    setWorkOrder(initialWorkOrderState);
     return;
-  }
+  };
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     try {
       e.preventDefault();
-      if (userMessage === '') return
+      if (userMessage === '') return;
       setMessages([...messages, { role: 'user', content: userMessage }]);
       setIsResponding(true);
-      setLastUserMessage(userMessage)
+      setLastUserMessage(userMessage);
       setUserMessage('');
 
       const body: ApiRequest = { userMessage, messages, ...workOrder };
@@ -101,20 +97,20 @@ export default function Demo() {
       setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
     } catch (err) {
-      setIsResponding(false)
+      setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: "Sorry - I had a hiccup on my end. Could you please try again?" }]);
-      setUserMessage(lastUserMessage)
+      setUserMessage(lastUserMessage);
     }
   };
 
-  const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1)
+  const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
 
   const userInfo: UserInfo = {
     name,
     email,
     address,
     permissionToEnter
-  }
+  };
 
   return (
     <>
