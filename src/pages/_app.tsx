@@ -26,8 +26,7 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
           </div>
           <div className='my-auto flex space-x-4'>
             <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>
-            <Link className='hover:text-gray-500 text-lg' href={"/about"}>About</Link>
-            <Link className='hover:text-gray-500 text-lg' href={"/login"}>Login</Link>
+            <Link className='hover:text-gray-500 text-lg' href={"/login"}>For Tenants</Link>
           </div>
         </div>
       </nav>
