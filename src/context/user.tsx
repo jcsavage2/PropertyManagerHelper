@@ -88,7 +88,7 @@ export const UserContextProvider = (props: any) => {
 
     if (user.email && !user.created) {
       async function createUser() {
-        const { data } = await axios.post("/api/create-new-user", { email: "fake@fake.com", userType });
+        const { data } = await axios.post("/api/create-new-user", { email: user.email, userType });
         const { response } = data;
         console.log({ response });
         const parsedUser = JSON.parse(response);
