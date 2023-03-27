@@ -14,13 +14,13 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    console.log("here...");
+    // TBU
     const body = req.body as GetPropertiesForPropertyManagerApiRequest;
     const propertyEntity = new PropertyEntity();
     const properties = await propertyEntity.getAllForPropertyManager({
       propertyManagerEmail: body.propertyManagerEmail.toLowerCase()
     });
-    console.log({ properties });
+    return properties;
 
   } catch (error) {
 
