@@ -54,11 +54,10 @@ export class PropertyEntity {
   public async get({ streetAddress, country, city, state, zip, unitNumber, propertyManagerEmail }:
     { streetAddress: string; country: string; city: string; state: string; zip: string; unitNumber?: string; propertyManagerEmail: string; }) {
     const params = {
-      pk: this.generatePk({ propertyManagerEmail }),
+      pk: this.generatePk({ propertyManagerEmail }), // can query all properties for a given property manager
       sk: this.generateSk({ streetAddress, country, city, state, zip, unitNumber })
     };
     const result = await this.propertyEntity.get(params, { consistent: true });
-    // TBU
     return result;
   }
 
@@ -82,7 +81,6 @@ export class PropertyEntity {
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     const pk = this.generatePk({ propertyManagerEmail });
     return await this.getAllPropertiesWithPk({ pk });
-
   }
 
 }

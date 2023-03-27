@@ -1,5 +1,6 @@
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
+import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type Data = {
@@ -20,16 +21,16 @@ export default async function handler(
   try {
     const body = req.body as GetUser;
     const { email, userType } = body;
-    console.log({ email, userType });
+    let user;
     switch (userType) {
       case ENTITIES.PROPERTY_MANAGER:
         const propertyManagerEntity = new PropertyManagerEntity();
-        const user = await propertyManagerEntity.get({ email });
+        user = await propertyManagerEntity.get({ email });
         return res.status(200).json({ response: JSON.stringify(user) });
       case ENTITIES.TENANT:
-        // const tenantEntity = new TenantEntity();
-        // const user = await tenantEntity.get({ email });
-        return res.status(200).json({ response: JSON.stringify({}) });
+        const tenantEntity = new TenantEntity();
+        user = await tenantEntity.get({ email });
+        return res.status(200).json({ response: JSON.stringify({ user }) });
     }
 
   } catch (error) {

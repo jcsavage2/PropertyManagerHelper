@@ -6,16 +6,17 @@ import { toast } from 'react-toastify';
 import { hasAllIssueInfo, hasAllUserInfo } from '@/utils';
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types';
 import { ENTITIES } from '@/database/entities';
+import { useUserContext } from '@/context/user';
 
 
 
 export default function Demo() {
-  const { data: session } = useSession();
   const [userMessage, setUserMessage] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
+  const { user } = useUserContext();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
   const [address, setAddress] = useState("");
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
 
@@ -28,14 +29,6 @@ export default function Demo() {
     issueSubCategory: "",
   };
   const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
-
-  // Update the user when the session is populated
-  useEffect(() => {
-    if (session?.user) {
-      setName(session.user.name ?? '');
-      setEmail(session.user.email ?? '');
-    }
-  }, [session]);
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -287,8 +280,6 @@ export default function Demo() {
                         Send
                       </button>
                       <button onClick={async () => {
-                        const us = await axios.post('/api/get-user', { email, userType: ENTITIES.PROPERTY_MANAGER });
-                        console.log(JSON.parse(us.data.response));
                       }}>Test...</button>
                     </form>
                   )}
