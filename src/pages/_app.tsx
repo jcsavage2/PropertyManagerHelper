@@ -11,8 +11,6 @@ import { UserContextProvider } from '@/context/user';
 
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
-
-
   return (
     <SessionProvider session={session}>
       <UserContextProvider>
