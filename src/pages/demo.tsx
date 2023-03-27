@@ -5,7 +5,6 @@ import { ChatCompletionRequestMessage } from 'openai';
 import { toast } from 'react-toastify';
 import { hasAllIssueInfo, hasAllUserInfo } from '@/utils';
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types';
-import { ENTITIES } from '@/database/entities';
 import { useUserContext } from '@/context/user';
 
 

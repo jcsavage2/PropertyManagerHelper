@@ -1,4 +1,3 @@
-import { PropertyEntity } from "@/database/entities/property";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
@@ -21,19 +20,6 @@ export default NextAuth({
 	],
 	callbacks: {
 		async signIn({ user, account, profile, email, credentials }) {
-			try {
-				const userEntity = new PropertyManagerEntity();
-				if (user.email) {
-					const props = {
-						email: user.email.toLowerCase(),
-						...(user.name && { name: user.name })
-					};
-					await userEntity.create(props);
-				}
-			} catch (err) {
-				console.log({ err });
-			}
-
 			return true;
 		},
 		async redirect({ url, baseUrl }) {

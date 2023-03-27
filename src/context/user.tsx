@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useSession } from "next-auth/react";
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
 
@@ -9,6 +10,13 @@ export type ContextUser = {
     organization?: string | null,
     properties: string[],
     tenants: string[];
+    userType: "TENANT" | "PROPERTY_MANAGER";
+    created: string;
+
+    modified: string;
+    pk: string;
+    sk: string;
+
   },
   setUser: Dispatch<SetStateAction<{
     email: string;
@@ -16,6 +24,11 @@ export type ContextUser = {
     organization?: string | null | undefined;
     properties: string[];
     tenants: string[];
+    userType: "TENANT" | "PROPERTY_MANAGER";
+    created: string;
+    modified: string;
+    pk: string;
+    sk: string;
   }>>;
 };
 
@@ -25,7 +38,12 @@ export const UserContext = createContext<ContextUser>({
     name: "",
     organization: null,
     properties: [],
-    tenants: []
+    tenants: [],
+    userType: "TENANT",
+    created: "",
+    modified: "",
+    pk: "",
+    sk: "",
   },
   setUser: () => { }
 });
@@ -38,7 +56,12 @@ export const UserContextProvider = (props: any) => {
     name: "",
     organization: "",
     properties: [],
-    tenants: []
+    tenants: [],
+    userType: "TENANT",
+    created: "",
+    modified: "",
+    pk: "",
+    sk: "",
   });
 
   // Update user in context
@@ -51,6 +74,24 @@ export const UserContextProvider = (props: any) => {
       });
     }
   }, [session]);
+
+  useEffect(() => {
+
+
+    // User is logged in but haven't fetched from DB yet.
+    console.log({ user });
+    if (user.email && user.userType && !user.created) {
+      async function createUser() {
+        const { data } = await axios.post("/api/create-new-user", { email: "fake@fake.com", userType: user.userType });
+        const { response } = data;
+        const parsedUser = JSON.parse(response);
+        if (parsedUser.modified) {
+          setUser(parsedUser);
+        }
+      }
+      createUser();
+    }
+  }, [user.email]);
 
   return (
     <UserContext.Provider

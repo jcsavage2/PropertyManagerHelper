@@ -31,26 +31,33 @@ export class PropertyManagerEntity {
   }
 
   public async create({ email, name, organization }: { email: string; name?: string; organization?: string; }) {
-    const result = await this.propertyManagerEntity.put({
-      pk: this.generatePk({ email }),
-      sk: this.generateSk(),
-      email: email.toLowerCase(),
-      name,
-      organization,
-      properties: [],
-      tenants: [],
-
-    });
-    return result.Item;
+    try {
+      const result = await this.propertyManagerEntity.update({
+        pk: this.generatePk({ email }),
+        sk: this.generateSk(),
+        email: email.toLowerCase(),
+        name,
+        organization,
+        properties: [],
+        tenants: [],
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
   }
 
   public async get({ email }: { email: string; }) {
-    const params = {
-      pk: this.generatePk({ email: email.toLowerCase() }),
-      sk: this.generateSk()
-    };
-    const result = await this.propertyManagerEntity.get(params, { consistent: true });
-    return result;
+    try {
+      const params = {
+        pk: this.generatePk({ email: email.toLowerCase() }),
+        sk: this.generateSk()
+      };
+      const result = await this.propertyManagerEntity.get(params, { consistent: true });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
   }
 
 }
