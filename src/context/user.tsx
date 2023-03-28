@@ -84,7 +84,6 @@ export const UserContextProvider = (props: any) => {
 
 
   const createUserInDB = (userType: "TENANT" | "PROPERTY_MANAGER") => {
-    console.log("doing?");
 
     if (user.email && !user.created) {
       async function createUser() {

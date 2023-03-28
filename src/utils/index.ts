@@ -1,31 +1,31 @@
-import { findIssueSample, findUserInfoSample, issueCategoryToTypes } from "@/constants"
-import { ChatCompletionRequestMessage } from "openai"
-import { AiJSONResponse, UserInfo, WorkOrder } from "@/types"
+import { findIssueSample, findUserInfoSample, issueCategoryToTypes } from "@/constants";
+import { ChatCompletionRequestMessage } from "openai";
+import { AiJSONResponse, UserInfo, WorkOrder } from "@/types";
 
 export const hasAllIssueInfo = (workOrder: WorkOrder) => {
-  return !!workOrder.issueCategory && !!workOrder.issueSubCategory && !!workOrder.issueLocation
-}
+  return !!workOrder.issueCategory && !!workOrder.issueSubCategory && !!workOrder.issueLocation;
+};
 
-export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse }) => {
-  const merged: WorkOrder = workOrder
+export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse; }) => {
+  const merged: WorkOrder = workOrder;
   for (const workOrderKey of Object.keys(workOrder)) {
-    const aiValue = aiResponse?.[workOrderKey as keyof WorkOrder]
+    const aiValue = aiResponse?.[workOrderKey as keyof WorkOrder];
     if (aiValue) {
       //@ts-ignore
-      merged[workOrderKey as keyof WorkOrder] = aiValue
+      merged[workOrderKey as keyof WorkOrder] = aiValue;
     }
   }
-  return merged
-}
+  return merged;
+};
 
 /** Checks if we have all the info we need to submit the work order */
 export const hasAllInfo = (workOrder: WorkOrder) => {
-  return Object.values(workOrder).every(value => !!value) // this works because we need permission to enter to be true.
-}
+  return Object.values(workOrder).every(value => !!value); // this works because we need permission to enter to be true.
+};
 
 export const hasAllUserInfo = (userInfo: UserInfo) => {
-  return Object.values(userInfo).every(value => !!value) // this works because we need permission to enter to be true.
-}
+  return Object.values(userInfo).every(value => !!value); // this works because we need permission to enter to be true.
+};
 
 /**
  * 
@@ -42,14 +42,14 @@ export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
       Don't ask me to confirm info I've already told you.
       If my issue is vague, eg I say something is "broken", ask for more details.
       If you can derive an issue and a root cause, set the root cause to the "issueSubCategory" field.
-      `
+      `;
     case true:
       return `\n 
       Please respond to all of my messages in this format: ${JSON.stringify(findUserInfoSample)} and include no additional text.
       The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
-      `
+      `;
   }
-}
+};
 
 /**
  * 
@@ -80,7 +80,7 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         ${workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation && 'mark "issueFound" as true.'} 
         The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key and "issueFound" key.
         When you have identified the value for keys "issueCategory" and "subCategory", mark the value for the key "issueFound" as "true".`
-      }
+      };
     case true:
       return {
         role: "system",
@@ -97,9 +97,9 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         All of your responses should be stringified JSON like this: ${JSON.stringify(findUserInfoSample)}
         If the user's input is totally unrelated to a service request, cheerfully instruct them to try again.   
         The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
-      `}
+      `};
   }
-}
+};
 
 
 /**
@@ -107,31 +107,31 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
  * @param response string response from GPT; no format requirements
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
-export const processAiResponse = ({ response, workOrderData}: { response: string, workOrderData: WorkOrder}): string | null => {
+export const processAiResponse = ({ response, workOrderData }: { response: string, workOrderData: WorkOrder; }): string | null => {
   try {
-    let returnValue: string | null = null
-    const jsonStart = response.indexOf("{")
-    const jsonEnd = response.lastIndexOf("}")
+    let returnValue: string | null = null;
+    const jsonStart = response.indexOf("{");
+    const jsonEnd = response.lastIndexOf("}");
 
 
     if ((jsonStart !== -1 && jsonEnd !== -1)) {
-      const regex = /&quot;/g
-      const substr = response.substring(jsonStart, jsonEnd + 1)
-      const cleanedString = substr.replace(regex, '"').replace("True", "true").replace("False", "false").replace("undefined", '""')
-      let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse
+      const regex = /&quot;/g;
+      const substr = response.substring(jsonStart, jsonEnd + 1);
+      const cleanedString = substr.replace(regex, '"').replace("True", "true").replace("False", "false").replace("undefined", '""');
+      let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse;
 
-      const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse })
+      const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse });
 
       if (hasAllInfo(merged)) {
-        jsonResponse.aiMessage = `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`
+        jsonResponse.aiMessage = `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`;
       }
 
-      returnValue = JSON.stringify(jsonResponse)
+      returnValue = JSON.stringify(jsonResponse);
     }
 
-    return returnValue
+    return returnValue;
   } catch (err) {
-    console.log({ err })
-    return null
+    console.log({ err });
+    return null;
   }
-}
+};
