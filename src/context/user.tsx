@@ -75,7 +75,6 @@ export const UserContextProvider = (props: any) => {
   }, [session]);
 
   useEffect(() => {
-
     if (session?.user?.email) {
       signOut();
     }
@@ -98,7 +97,6 @@ export const UserContextProvider = (props: any) => {
       createUser();
     }
   };
-  console.log({ user });
 
   return (
     <UserContext.Provider

@@ -33,6 +33,15 @@ export default function Demo() {
   };
   const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
 
+  useEffect(() => {
+    if (user.email) {
+      setEmail(user.email);
+    }
+    if (user.name) {
+      setName(user.name);
+    }
+  }, [user]);
+
   // Scroll to bottom when new message added
   useEffect(() => {
     var element = document.getElementById('chatbox');
@@ -119,18 +128,16 @@ export default function Demo() {
   };
 
   const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
-
   const userInfo: UserInfo = {
     name,
     email,
     address,
     unit,
-    state,
     city,
+    state,
     zip,
     permissionToEnter
   };
-
   return (
     <>
       <main
