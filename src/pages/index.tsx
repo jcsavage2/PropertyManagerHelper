@@ -1,10 +1,8 @@
 import { useUserContext } from "@/context/user";
-import { useUserTypeContext } from "@/context/user-type";
 import { useRouter } from "next/router";
 
 const Home = () => {
   const router = useRouter();
-  const { type, setType } = useUserTypeContext();
   const { user, createUserInDB } = useUserContext();
   return (
     <>

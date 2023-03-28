@@ -200,7 +200,7 @@ export default function Demo() {
                           <p data-testid={`response-${index}`} className='whitespace-pre-line break-keep'>{message.content}</p>
                           {hasAllIssueInfo(workOrder) && index === lastSystemMessageIndex && (
                             <>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
+                              <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
                                 <label htmlFor='name'>Name* </label>
                                 <input
                                   className='rounded px-1'

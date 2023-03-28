@@ -29,7 +29,6 @@ export default async function handler(
       case ENTITIES.PROPERTY_MANAGER:
         const propertyManagerEntity = new PropertyManagerEntity();
         const existingPropertyManager = await propertyManagerEntity.get({ email, type: userType });
-        console.log({ existingPropertyManager });
         //@ts-ignore
         const existingUserFromDB = existingPropertyManager?.Item ?? null;
         if (existingUserFromDB) {
@@ -45,7 +44,6 @@ export default async function handler(
         const existingTenant = await tenantEntity.get({ email, type: userType });
         //@ts-ignore
         const existingTenantFromDB = existingTenant?.Item ?? null;
-        console.log({ existingTenantFromDB });
 
         if (existingTenantFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });

@@ -1,4 +1,4 @@
-import { AiJSONResponse } from "@/types"
+import { AiJSONResponse } from "@/types";
 
 
 export const findIssueSample: AiJSONResponse = {
@@ -6,7 +6,7 @@ export const findIssueSample: AiJSONResponse = {
   issueCategory: "<value of the issueCategory>",
   issueLocation: "<value of issueLocation>",
   issueSubCategory: "<value of issueSubCategory>",
-}
+};
 
 export const findUserInfoSample: Partial<AiJSONResponse> = {
   // ...findIssueSample,
@@ -15,11 +15,11 @@ export const findUserInfoSample: Partial<AiJSONResponse> = {
   name: "<user's answer for name>",
   email: "<user's answer for email>",
   permissionToEnter: "<user's answer for permission to enter>",
-}
+};
 
 export const issueCategoryToTypes = {
   "Basement": ["Leaking", "Humid"],
-  "Bathtub": ["Drain Clogged", "Won't turn on", "Low Pressure", "Rusty", "No Hot Water"],
+  "Bathtub": ["Drain Clogged", "Won't turn on", "Low Water Pressure", "Rusty", "No Hot Water"],
   "Ceiling": ["Leaking", "Cracked"],
   "Chandalier": ["Fallen", "Won't Turn On"],
   "Dishwasher": ["Won't Run", "Overflowing", "Not Cleaning The Dishes"],
@@ -30,6 +30,7 @@ export const issueCategoryToTypes = {
   "Floor": ["Needs Cleaning", "Missing"],
   "Fridge": ["Fridge not running", "Freezer not running", "Fridge leaking", "Freezer leaking", "Light Is Out", "Filter Needs Replacement"],
   "Hazard": ["Mold", "Asbestos", "Gas Leak", "Fire", "Flood"],
+  "Humidifer": ["Broken", "Not De-Humidifying"],
   "Lawn": ["Needs To Be Cut", "Needs To Be Sprayed", "Has "],
   "Lightbulb": ["Won't Turn On", "Flickering"],
   "Microwave": ["Won't Turn On"],
@@ -45,4 +46,4 @@ export const issueCategoryToTypes = {
   "Walls": ["Leaking", "Hole"],
   "Washer": ["No Water", "No Hot Water", "Won't Start"],
   "Window": ["Shattered", "Cracked", "Won't Open", "Won't Close"],
-} as Record<string, string[]>
+} as Record<string, string[]>;

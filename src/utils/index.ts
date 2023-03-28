@@ -35,20 +35,10 @@ export const hasAllUserInfo = (userInfo: UserInfo) => {
  * This function determines what kind of context and rules we want to append to the user's message.
  */
 export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
-  switch (hasAllIssueInfo(workOrder)) {
-    case false:
-      return `\n \
-      Please respond to my messages in this format: ${JSON.stringify(findIssueSample)} and include no additional text. \
+  return `\n \
       Don't ask me to confirm info I've already told you.
-      If my issue is vague, eg I say something is "broken", ask for more details.
-      If you can derive an issue and a root cause, set the root cause to the "issueSubCategory" field.
-      `;
-    case true:
-      return `\n 
-      Please respond to all of my messages in this format: ${JSON.stringify(findUserInfoSample)} and include no additional text.
-      The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
-      `;
-  }
+      If my issue is vague, eg I say something is "broken", ask for more details.`;
+
 };
 
 /**
@@ -58,48 +48,41 @@ export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
  * Depending on the information that the program has, the prompt will ask user for either issue information or user information.
  */
 export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessage => {
-  switch (hasAllIssueInfo(workOrder)) {
-    case false:
-      return {
-        role: "system",
-        content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is.
+  return {
+    role: "system",
+    content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is.
         All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(findIssueSample)}
-        and should contain all of the keys: ${Object.keys(findIssueSample)}, even if there are no values. Here is an example structure: ${findIssueSample}. 
-        The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes)}.
-        You must identify the "issueLocation", which is the room or rooms where the issue is occuring. \
+        and should contain all of the keys: ${Object.keys(findIssueSample).join(", ")}, even if there are no values. 
+        The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes).join(", ")}.
+        
+        ${!workOrder.issueLocation && `You must identify the "issueLocation", which is the instructions for the service worker locate the issue. \
+        When asking for the issue location, remind the user "This information will help the service worker locate the issue."
         If the user doesn't provide an "issueLocation", set the value of "issueLocation" to "".
-        The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify\
+        The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify \
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
-        Once you have identified the "issueLocation", don't ask the user about the "issueLocation" again.
-        If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.
-        ${workOrder.issueCategory && workOrder.issueCategory !== "Other" && `When you find the "issueCategory", ask the user to clarify the root issue. \
-        See if you can categorize the root issue be one of ${issueCategoryToTypes[workOrder.issueCategory]} and this value will be the "issueSubCategory". If their root\
-        issue doesn't match one of: ${issueCategoryToTypes[workOrder.issueCategory]}, then record what they tell you as their "issueSubCategory".\
+        If you have found the "issueLocation" do not ask the user about the "issueLocation" again.`}
+       
+        
+        ${!workOrder.issueCategory && Object.keys(issueCategoryToTypes).map(issueCategory => {
+      return `If you determine that the issueCategory is "${issueCategory}", then try to categorize the "issueSubCategory" into one of these: ${issueCategoryToTypes[issueCategory].join(", ")}`;
+    }).join("\n\n ")}.
+
+        Don't assume the "issueCategory" - only fill a value for "issueCategory" if one is explicitly given. If one is not given, ask the user to "Clarify what is the 'thing' that is having the issue - eg 'washer' or 'toilet'".
+
+        ${workOrder.issueCategory && workOrder.issueCategory !== "Other" && !workOrder.issueSubCategory && `Ask the user to clarify the root issue. \
+        See if you can categorize the root issue be one of ${issueCategoryToTypes[workOrder.issueCategory].join(", ")} and this value will be the "issueSubCategory". If their root\
+        issue doesn't match one of: ${issueCategoryToTypes[workOrder.issueCategory].join(", ")}, then record what they tell you as their "issueSubCategory".\
         Once you have found their "issueSubCategory", mark "issueFound" as true.`}
+       
         ${workOrder.issueCategory && workOrder.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
-        ${workOrder.issueCategory && workOrder.issueSubCategory && workOrder.issueLocation && 'mark "issueFound" as true.'} 
+       
         The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key and "issueFound" key.
-        When you have identified the value for keys "issueCategory" and "subCategory", mark the value for the key "issueFound" as "true".`
-      };
-    case true:
-      return {
-        role: "system",
-        content: `You're a property management chatbot. The user is a tenant. 
-        You know what their issue is, but need some more information to complete a work order form.
-        CONTEXT: examine this JSON: ${JSON.stringify(findUserInfoSample)}.
-        Your job is to ask the user questions and update the form based on the users input.
-        All of your responses should be in JSON like this: ${JSON.stringify(findUserInfoSample)}. 
-        You should ask the user for any missing information, and store their response in the appropriate key/value.
-        If the user tells you their email, store it under the "email" key in your response.
-        If the user tells you their name, store it under "name" in your JSON response.
-        If the user tells you their address of the property, store it under "address" in your JSON response.
-        If I give you permission to enter, store it under "permissionToEnter" in your response.
-        All of your responses should be stringified JSON like this: ${JSON.stringify(findUserInfoSample)}
-        If the user's input is totally unrelated to a service request, cheerfully instruct them to try again.   
-        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
-      `};
-  }
+        When you have identified the value for keys "issueCategory" and "subCategory", mark the value for the key "issueFound" as "true".
+        If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.`
+  };
 };
+
+
 
 
 /**
@@ -134,4 +117,4 @@ export const processAiResponse = ({ response, workOrderData }: { response: strin
     console.log({ err });
     return null;
   }
-};
+};;

@@ -4,6 +4,7 @@ import { generateAdditionalUserContext, generatePrompt, processAiResponse } from
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { AiJSONResponse, ApiRequest } from "@/types";
+import chalk from "chalk";
 
 const config = new Configuration({
   apiKey: process.env.OPEN_AI_API_KEY,
@@ -24,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
 
 
-    console.log("\n User Message =============\n", userMessage);
+    console.log(chalk.yellow("\n User Message =============\n"), userMessage);
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData);
     const additionalUserContext = generateAdditionalUserContext(workOrderData);
 
@@ -48,13 +49,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
 
     const aiResponse = response.data.choices[0].message?.content ?? "";
-    console.log("\n Initial Response=============\n", aiResponse);
+    console.log(chalk.yellow("\n Initial Response=============\n"));
+    console.log(aiResponse);
 
     let processedResponse: string | null = processAiResponse({ response: aiResponse, workOrderData: workOrderData });
-    console.log("\n Processed Response =============\n", { processedResponse: processedResponse });
+    console.log(chalk.yellow("\n Processed Response =============\n"), { processedResponse: processedResponse });
 
     if (!processedResponse) {
-      console.log("\n Is Refetching... \n");
+      console.log(chalk.red("\n Is Refetching...  =============\n"));
       const newResponse = await openai.createChatCompletion({
         max_tokens: 1000,
         model: "gpt-3.5-turbo",

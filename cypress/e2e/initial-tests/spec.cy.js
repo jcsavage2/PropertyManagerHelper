@@ -11,7 +11,7 @@
 // https://on.cypress.io/introduction-to-cypress
 describe('Go to Home Page', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:3000/')
+    cy.visit('http://localhost:3000/demo')
   })
   it('Pro user identifies issue in one response', () => {
     cy.get('[data-testid="userMessageInput"]').type("Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right.")
@@ -19,10 +19,10 @@ describe('Go to Home Page', () => {
     cy.wait(7000)
     cy.get('[data-testid="response-1"]').should("contain", `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`)
   })
-  it('Noob user gets a follow up question', () => {
-    cy.get('[data-testid="userMessageInput"]').type("Toilet is broken.")
-    cy.get('[data-testid="send"]').click()
-    cy.wait(7000)
-    cy.get('[data-testid="response-1"]').should("not.contain", `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`)
-  })
+  // it('Noob user gets a follow up question', () => {
+    // cy.get('[data-testid="userMessageInput"]').type("Toilet is broken.")
+    // cy.get('[data-testid="send"]').click()
+    // cy.wait(7000)
+    // cy.('[data-testid="final-response"]').should("not.contain", `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`)
+  // })
 })

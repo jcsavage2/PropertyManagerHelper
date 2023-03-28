@@ -72,12 +72,14 @@ export const UserContextProvider = (props: any) => {
         name: session.user.name ?? "",
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   useEffect(() => {
     if (session?.user?.email) {
       signOut();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
 
@@ -88,7 +90,6 @@ export const UserContextProvider = (props: any) => {
       async function createUser() {
         const { data } = await axios.post("/api/create-new-user", { email: user.email, userType });
         const { response } = data;
-        console.log({ response });
         const parsedUser = JSON.parse(response);
         if (parsedUser.modified) {
           setUser(parsedUser);
