@@ -1,4 +1,4 @@
-import { ChatCompletionRequestMessage } from 'openai'
+import { ChatCompletionRequestMessage } from 'openai';
 
 export type ApiRequest = WorkOrder & {
   userMessage: string;
@@ -7,7 +7,7 @@ export type ApiRequest = WorkOrder & {
 
 export type SendEmailApiRequest = UserInfo & IssueInformation & {
   messages: ChatCompletionRequestMessage[];
-}
+};
 
 export type AiJSONResponse = Partial<UserInfo> & IssueInformation & {
   aiMessage: string;
@@ -20,15 +20,19 @@ export type FinishFormRequest = IssueInformation & {
 
 export type UserInfo = {
   address: string;
+  unit?: string;
+  state: string;
+  city: string;
+  zip: string;
   email: string;
   name: string;
   permissionToEnter: string;
-}
+};
 
 export type IssueInformation = {
   issueLocation: string | null;
   issueCategory: string | null;
   issueSubCategory: string | null;
-}
+};
 
-export type WorkOrder = IssueInformation
+export type WorkOrder = IssueInformation;

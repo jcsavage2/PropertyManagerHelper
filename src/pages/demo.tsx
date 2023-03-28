@@ -17,6 +17,10 @@ export default function Demo() {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [address, setAddress] = useState("");
+  const [unit, setUnit] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
@@ -51,6 +55,18 @@ export default function Demo() {
   const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setAddress(e.currentTarget.value);
   }, [setAddress]);
+  const handleUnitChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setUnit(e.currentTarget.value);
+  }, [setUnit]);
+  const handleStateChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setState(e.currentTarget.value);
+  }, [setState]);
+  const handleCityChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setCity(e.currentTarget.value);
+  }, [setCity]);
+  const handleZipChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setZip(e.currentTarget.value);
+  }, [setZip]);
   const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setPermissionToEnter(e.currentTarget.value as "yes" | "no");
   }, [setPermissionToEnter]);
@@ -108,6 +124,10 @@ export default function Demo() {
     name,
     email,
     address,
+    unit,
+    state,
+    city,
+    zip,
     permissionToEnter
   };
 
@@ -174,32 +194,65 @@ export default function Demo() {
                           {hasAllIssueInfo(workOrder) && index === lastSystemMessageIndex && (
                             <>
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
-                                <label htmlFor='name'>Name: </label>
+                                <label htmlFor='name'>Name* </label>
                                 <input
                                   className='rounded px-1'
                                   id="name"
                                   type={"text"}
-                                  value={userInfo.name}
+                                  value={user.name}
                                   onChange={handleNameChange}
                                 />
-                                <label htmlFor='email'>Email: </label>
+                                <label htmlFor='email'>Email* </label>
                                 <input
                                   className='rounded px-1'
                                   id="email"
                                   type={"email"}
-                                  value={userInfo.email}
+                                  value={user.email}
                                   onChange={handleEmailChange}
                                 />
-                                <label htmlFor='address'>Address: </label>
+                                <label htmlFor='address'>Address* </label>
                                 <input
                                   className='rounded px-1'
                                   id="address"
                                   type={"text"}
-                                  value={userInfo.address}
+                                  value={address}
                                   onChange={handleAddressChange}
                                 />
+                                <label htmlFor='address'>Unit </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="address"
+                                  placeholder='N/A if not applicable'
+                                  type={"text"}
+                                  value={unit}
+                                  onChange={handleUnitChange}
+                                />
+                                <label htmlFor='address'>State* </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="address"
+                                  type={"text"}
+                                  value={state}
+                                  onChange={handleStateChange}
+                                />
+                                <label htmlFor='address'>City* </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="address"
+                                  type={"text"}
+                                  value={city}
+                                  onChange={handleCityChange}
+                                />
+                                <label htmlFor='address'>Zip* </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="address"
+                                  type={"text"}
+                                  value={zip}
+                                  onChange={handleZipChange}
+                                />
                               </div>
-                              <p className='mt-2'>{"Permission To Enter Property: "}</p>
+                              <p className='mt-2'>Permission To Enter Property* </p>
                               <div>
                                 <input
                                   className='rounded px-1'

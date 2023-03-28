@@ -70,10 +70,6 @@ export default async function handler(
           <h1>New Work Order Request</h1>
           <table>
             <tr>
-              <td>Address</td>
-              <td>${body.address}</td>
-            </tr>
-            <tr>
               <td>Issue</td>
               <td>${body.issueCategory}</td>
             </tr>
@@ -88,6 +84,22 @@ export default async function handler(
             <tr>
               <td>Permission To Enter</td>
               <td>${body.permissionToEnter}</td>
+            </tr>
+            <tr>
+              <td>Address</td>
+              <td>${body.address}</td>
+            </tr>
+            <tr>
+              <td>Unit</td>
+              <td>${body.unit}</td>
+            </tr>
+            <tr>
+              <td>City</td>
+              <td>${body.city}</td>
+            </tr>
+            <tr>
+              <td>State</td>
+              <td>${body.state}</td>
             </tr>
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
