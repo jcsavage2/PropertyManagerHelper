@@ -29,7 +29,6 @@ const Login = () => {
 							</button>
 						</>
 					)}
-
 				</div>
 			</main>
 		</>

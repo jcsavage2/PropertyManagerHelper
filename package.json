@@ -23,11 +23,13 @@
     "openai": "^3.2.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-modal": "^3.16.1",
     "react-toastify": "^9.1.1",
     "typescript": "4.9.5",
     "uuidv4": "^6.2.13"
   },
   "devDependencies": {
+    "@types/react-modal": "^3.13.1",
     "autoprefixer": "^10.4.13",
     "cypress": "^12.8.1",
     "postcss": "^8.4.21",
