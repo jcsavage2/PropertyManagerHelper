@@ -93,7 +93,7 @@ export const UserContextProvider = (props: any) => {
   }, [session]);
 
   const login = ({ email, userType }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; }) => {
-    if (user.email && !user.created) {
+    if (user.email) {
       async function createUser() {
         const { data } = await axios.post("/api/create-new-user", { email, userType });
         const { response } = data;
@@ -110,7 +110,7 @@ export const UserContextProvider = (props: any) => {
   };
 
   const logOut = () => {
-    window.sessionStorage.removeItem("PILLAR::USER");
+    window.sessionStorage.clear();
     signOut();
   };
 

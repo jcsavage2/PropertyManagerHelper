@@ -17,7 +17,7 @@ const Home = () => {
           {user.email ? "Sign Out" : "Sign In/Sign Up"}
         </button>
         <br />
-        {user.email && !user.modified && (
+        {user.email && (
           <>
             <br />
             <button
