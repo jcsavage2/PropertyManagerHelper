@@ -1,11 +1,17 @@
 import { useUserContext } from "@/context/user";
-import { Dispatch, FormEventHandler, SetStateAction, useCallback, useState } from "react";
+import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
 
 import Modal from 'react-modal';
 
 export const AddTenantModal = ({ modalIsOpen, setModalIsOpen }: { modalIsOpen: boolean; setModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
-  Modal.setAppElement('#testing');
+
   const { user, createUserInDB } = useUserContext();
+  const [isBrowser, setIsBrowser] = useState(false);
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+
+  isBrowser && Modal.setAppElement('#testing');
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
