@@ -11,7 +11,7 @@ export const NavLinks = () => {
       return logOut();
     }
     return () => { };
-  }, [user]);
+  }, [user, logOut]);
 
   return (
     <>
