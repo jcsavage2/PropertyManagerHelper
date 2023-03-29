@@ -81,7 +81,7 @@ export default function Demo() {
   }, [setPermissionToEnter]);
 
 
-  const handleSubmitTextWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
+  const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages };
     const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
@@ -112,11 +112,14 @@ export default function Demo() {
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
+
       setWorkOrder({
-        issueCategory: parsed.issueCategory ? parsed.issueCategory : workOrder.issueCategory,
-        issueSubCategory: parsed.issueSubCategory ? parsed.issueSubCategory : workOrder.issueSubCategory,
-        issueLocation: parsed.issueLocation ? parsed.issueLocation : workOrder.issueSubCategory,
+        ...workOrder,
+        ...(!!parsed.issueCategory && { issueCategory: parsed.issueCategory }),
+        ...(!!parsed.issueSubCategory && { issueSubCategory: parsed.issueSubCategory }),
+        ...(!!parsed.issueLocation && { issueLocation: parsed.issueLocation })
       });
+
       const newMessage = parsed.aiMessage;
       setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
@@ -225,35 +228,35 @@ export default function Demo() {
                                   value={address}
                                   onChange={handleAddressChange}
                                 />
-                                <label htmlFor='address'>Unit </label>
+                                <label htmlFor='unit'>Unit </label>
                                 <input
                                   className='rounded px-1'
-                                  id="address"
+                                  id="unit"
                                   placeholder='N/A if not applicable'
                                   type={"text"}
                                   value={unit}
                                   onChange={handleUnitChange}
                                 />
-                                <label htmlFor='address'>State* </label>
+                                <label htmlFor='state'>State* </label>
                                 <input
                                   className='rounded px-1'
-                                  id="address"
+                                  id="state"
                                   type={"text"}
                                   value={state}
                                   onChange={handleStateChange}
                                 />
-                                <label htmlFor='address'>City* </label>
+                                <label htmlFor='city'>City* </label>
                                 <input
                                   className='rounded px-1'
-                                  id="address"
+                                  id="city"
                                   type={"text"}
                                   value={city}
                                   onChange={handleCityChange}
                                 />
-                                <label htmlFor='address'>Zip* </label>
+                                <label htmlFor='zip'>Zip* </label>
                                 <input
                                   className='rounded px-1'
-                                  id="address"
+                                  id="zip"
                                   type={"text"}
                                   value={zip}
                                   onChange={handleZipChange}
@@ -303,7 +306,7 @@ export default function Demo() {
                   {hasAllIssueInfo(workOrder) ? (
                     <button
                       disabled={permissionToEnter === "no" || !hasAllUserInfo(userInfo)}
-                      onClick={handleSubmitTextWorkOrder}
+                      onClick={handleSubmitWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
                       {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}
                     </button>

@@ -13,6 +13,7 @@ export const NavLinks = () => {
     return () => { };
   }, [user, logOut]);
 
+  console.log({ user });
   return (
     <>
       <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>

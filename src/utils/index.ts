@@ -58,6 +58,7 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         ${!workOrder.issueLocation && `You must identify the "issueLocation", which is the instructions for the service worker locate the issue. \
         When asking for the issue location, remind the user "This information will help the service worker locate the issue."
         If the user doesn't provide an "issueLocation", set the value of "issueLocation" to "".
+        If the user just gives you a room like "bathroom" ask them for instructions on how to find the room.
         The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify \
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
         If you have found the "issueLocation" do not ask the user about the "issueLocation" again.`}
