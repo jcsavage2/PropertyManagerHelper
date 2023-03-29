@@ -1,5 +1,6 @@
 import { useUserContext } from "@/context/user";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useState } from "react";
+
 import Modal from 'react-modal';
 
 export const AddTenantModal = ({ modalIsOpen, setModalIsOpen }: { modalIsOpen: boolean; setModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
@@ -69,82 +70,86 @@ export const AddTenantModal = ({ modalIsOpen, setModalIsOpen }: { modalIsOpen: b
   }, [user]);
 
   return (
-    <Modal
-      isOpen={modalIsOpen}
-      onAfterOpen={() => console.log("opened..")}
-      onRequestClose={closeModal}
-      contentLabel="Example Modal"
-      style={customStyles}
-    >
-      <button
-        className="w-full text-right"
-        onClick={closeModal}>X Close</button>
-
-      <form onSubmit={handleCreateNewUser} style={{ display: "grid" }}>
-        <label htmlFor='name'>Tenant Name</label>
-        <input
-          className='rounded px-1'
-          id="name"
-          type={"text"}
-          value={name}
-          onChange={handleNameChange}
-        />
-        <label htmlFor='email'>Email* </label>
-        <input
-          className='rounded px-1'
-          id="email"
-          type={"email"}
-          value={email}
-          onChange={handleEmailChange}
-        />
-        <label htmlFor='address'>Address* </label>
-        <input
-          className='rounded px-1'
-          id="address"
-          type={"text"}
-          value={address}
-          onChange={handleAddressChange}
-        />
-        <label htmlFor='address'>Unit </label>
-        <input
-          className='rounded px-1'
-          id="address"
-          placeholder='N/A if not applicable'
-          type={"text"}
-          value={unit}
-          onChange={handleUnitChange}
-        />
-        <label htmlFor='address'>State* </label>
-        <input
-          className='rounded px-1'
-          id="address"
-          type={"text"}
-          value={state}
-          onChange={handleStateChange}
-        />
-        <label htmlFor='address'>City* </label>
-        <input
-          className='rounded px-1'
-          id="address"
-          type={"text"}
-          value={city}
-          onChange={handleCityChange}
-        />
-        <label htmlFor='address'>Zip* </label>
-        <input
-          className='rounded px-1'
-          id="address"
-          type={"text"}
-          value={zip}
-          onChange={handleZipChange}
-        />
+    <div>
+      <Modal
+        isOpen={modalIsOpen}
+        onAfterOpen={() => console.log("opened..")}
+        onRequestClose={closeModal}
+        contentLabel="Example Modal"
+        style={customStyles}
+      >
         <button
-          className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-          type="submit"
-          disabled={!name || !email || !address || !unit || !state || !city || !zip}
-        >
-          Create New User
-        </button>
-      </form>
-    </Modal>);
+          className="w-full text-right"
+          onClick={closeModal}>X Close</button>
+
+        <form onSubmit={handleCreateNewUser} style={{ display: "grid" }}>
+          <label htmlFor='name'>Tenant Name</label>
+          <input
+            className='rounded px-1'
+            id="name"
+            type={"text"}
+            value={name}
+            onChange={handleNameChange}
+          />
+          <label htmlFor='email'>Email* </label>
+          <input
+            className='rounded px-1'
+            id="email"
+            type={"email"}
+            value={email}
+            onChange={handleEmailChange}
+          />
+          <label htmlFor='address'>Address* </label>
+          <input
+            className='rounded px-1'
+            id="address"
+            type={"text"}
+            value={address}
+            onChange={handleAddressChange}
+          />
+          <label htmlFor='address'>Unit </label>
+          <input
+            className='rounded px-1'
+            id="address"
+            placeholder='N/A if not applicable'
+            type={"text"}
+            value={unit}
+            onChange={handleUnitChange}
+          />
+          <label htmlFor='address'>State* </label>
+          <input
+            className='rounded px-1'
+            id="address"
+            type={"text"}
+            value={state}
+            onChange={handleStateChange}
+          />
+          <label htmlFor='address'>City* </label>
+          <input
+            className='rounded px-1'
+            id="address"
+            type={"text"}
+            value={city}
+            onChange={handleCityChange}
+          />
+          <label htmlFor='address'>Zip* </label>
+          <input
+            className='rounded px-1'
+            id="address"
+            type={"text"}
+            value={zip}
+            onChange={handleZipChange}
+          />
+          <button
+            className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
+            type="submit"
+            disabled={!name || !email || !address || !unit || !state || !city || !zip}
+          >
+            Create New User
+          </button>
+        </form>
+      </Modal>
+    </div>
+
+  );
 };

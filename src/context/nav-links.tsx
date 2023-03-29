@@ -16,7 +16,7 @@ export const NavLinks = () => {
   return (
     <>
       <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>
-      <Link className='hover:text-gray-500 text-lg' href={"/demo"}>Demo</Link>
+      {user.userType === ENTITIES.TENANT && <Link className='hover:text-gray-500 text-lg' href={"/demo"}>Demo</Link>}
       <Link onClick={handleClick} className='hover:text-gray-500 text-lg' href={"/login"}>{user.email ? "Sign Out" : "Sign In"}</Link>
       {user.userType == ENTITIES.PROPERTY_MANAGER && <Link className='hover:text-gray-500 text-lg' href={"/portal"}>Admin Portal</Link>}
     </>
