@@ -54,6 +54,7 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(findIssueSample)}
         and should contain all of the keys: ${Object.keys(findIssueSample).join(", ")}, even if there are no values. 
         The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes).join(", ")}.
+        Do not assume or guess the "issueCategory" if the user does not give you one. 
         
         ${!workOrder.issueLocation && `You must identify the "issueLocation", which is the instructions for the service worker locate the issue. \
         When asking for the issue location, remind the user "This information will help the service worker locate the issue."
