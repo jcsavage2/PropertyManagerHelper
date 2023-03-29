@@ -1,7 +1,6 @@
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TenantEntity } from "@/database/entities/tenant";
-import { DocumentClient, GetItemInput } from "aws-sdk/clients/dynamodb";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type Data = {
@@ -11,8 +10,9 @@ type Data = {
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
 
 export type GetUser = {
-  email: "string";
+  email: string;
   userType: UserType;
+  propertyManagerEmail?: string;
 };
 
 export default async function handler(
@@ -21,36 +21,43 @@ export default async function handler(
 ) {
   try {
     const body = req.body as GetUser;
-    const { email, userType } = body;
+    const { email, userType, propertyManagerEmail } = body;
 
+    console.log({ email, userType, propertyManagerEmail });
 
+    const propertyManagerEntity = new PropertyManagerEntity();
 
     switch (userType) {
       case ENTITIES.PROPERTY_MANAGER:
-        const propertyManagerEntity = new PropertyManagerEntity();
-        const existingPropertyManager = await propertyManagerEntity.get({ email, type: userType });
+        const existingPropertyManager = await propertyManagerEntity.get({ email });
         //@ts-ignore
         const existingUserFromDB = existingPropertyManager?.Item ?? null;
+
         if (existingUserFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingUserFromDB) });
         } else {
-          const newPropertyManager = await propertyManagerEntity.create({ email, type: userType });
+          const newPropertyManager = await propertyManagerEntity.create({ email });
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newPropertyManager.Attributes) });
         }
 
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
-        const existingTenant = await tenantEntity.get({ email, type: userType });
+        const existingTenant = await tenantEntity.get({ email });
         //@ts-ignore
         const existingTenantFromDB = existingTenant?.Item ?? null;
 
         if (existingTenantFromDB) {
+          // we want to also append this user the the property manager 
+
+          propertyManagerEmail && await propertyManagerEntity.update({ email: propertyManagerEmail, tenants: [email.toLocaleLowerCase()] });
+
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
-          const newPropertyManager = await tenantEntity.create({ email, type: userType });
+          const newTenant = await tenantEntity.create({ email });
+          propertyManagerEmail && await propertyManagerEntity.update({ email: propertyManagerEmail, tenants: [email.toLocaleLowerCase()] });
           //@ts-ignore
-          return res.status(200).json({ response: JSON.stringify(newPropertyManager.Attributes) });
+          return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
         }
     }
   } catch (error) {

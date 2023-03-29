@@ -9,6 +9,7 @@ import Head from 'next/head';
 import React from 'react';
 import { UserContextProvider } from '@/context/user';
 import { UserContextTypeProvider } from '@/context/user-type';
+import { NavLinks } from '@/context/nav-links';
 
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
@@ -31,9 +32,7 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
                 <Image src="/2.png" alt='1' width={30} height={0}></Image>
               </div>
               <div className='my-auto flex space-x-4'>
-                <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>
-                <Link className='hover:text-gray-500 text-lg' href={"/login"}>For Tenants</Link>
-                <Link className='hover:text-gray-500 text-lg' href={"/demo"}>Demo</Link>
+                <NavLinks />
               </div>
             </div>
           </nav>

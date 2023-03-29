@@ -17,6 +17,7 @@ export class PropertyManagerEntity {
         properties: { type: "list" },
         email: { type: "string" },
         organization: { type: "string" },
+        userType: { type: "string" }
       },
       table: PillarDynamoTable
     } as const);
@@ -26,20 +27,23 @@ export class PropertyManagerEntity {
     return [email.toLowerCase()].join('#');
   }
 
-  private generateSk({ type }: { type: EntityType; }) {
-    return ["ACCOUNT_TYPE", type].join("#");
+  private generateSk() {
+    return ["ACCOUNT_TYPE", ENTITIES.PROPERTY_MANAGER].join("#");
   }
 
-  public async create({ email, name, organization, type }: { email: string; name?: string; organization?: string; type: EntityType; }) {
+  public async create(
+    { email, name, organization, }:
+      { email: string; name?: string; organization?: string; }) {
     try {
       const result = await this.propertyManagerEntity.update({
         pk: this.generatePk({ email }),
-        sk: this.generateSk({ type }),
+        sk: this.generateSk(),
         email: email.toLowerCase(),
         name,
         organization,
         properties: [],
         tenants: [],
+        userType: ENTITIES.PROPERTY_MANAGER
       }, { returnValues: "ALL_NEW" });
       return result;
     } catch (err) {
@@ -47,11 +51,31 @@ export class PropertyManagerEntity {
     }
   }
 
-  public async get({ email, type }: { email: string; type: EntityType; }) {
+  public async update(
+    { email, name, organization, tenants, properties }:
+      { email: string; name?: string; organization?: string; tenants?: string[], properties?: string[]; }) {
+    try {
+      const result = await this.propertyManagerEntity.update({
+        pk: this.generatePk({ email }),
+        sk: this.generateSk(),
+        email: email.toLowerCase(),
+        ...(name && { name, }),
+        ...(organization && { organization }),
+        ...(properties && { properties }),
+        ...(tenants && { tenants }),
+        userType: ENTITIES.PROPERTY_MANAGER
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  public async get({ email }: { email: string; }) {
     try {
       const params = {
         pk: this.generatePk({ email: email.toLowerCase() }),
-        sk: this.generateSk({ type })
+        sk: this.generateSk()
       };
       const result = await this.propertyManagerEntity.get(params, { consistent: true });
       return result;

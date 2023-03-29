@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 
 const Home = () => {
   const router = useRouter();
-  const { user, createUserInDB } = useUserContext();
+  const { user, login } = useUserContext();
   return (
     <>
       <div className="text-center">
@@ -22,11 +22,11 @@ const Home = () => {
             <br />
             <button
               className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-              onClick={() => createUserInDB("TENANT")}>Continue as Tenant</button>
+              onClick={() => login({ email: user.email, userType: "TENANT" })}>Continue as Tenant</button>
             <br />
             <button
               className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-              onClick={() => createUserInDB("PROPERTY_MANAGER")}>Continue as Property Manager</button>
+              onClick={() => login({ email: user.email, userType: "PROPERTY_MANAGER" })}>Continue as Property Manager</button>
           </>
         )}
       </div>

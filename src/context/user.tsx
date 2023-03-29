@@ -13,6 +13,7 @@ export type ContextUser = {
     tenants: string[];
     created: string;
     modified: string;
+    userType: string;
     pk: string;
     sk: string;
 
@@ -25,10 +26,18 @@ export type ContextUser = {
     tenants: string[];
     created: string;
     modified: string;
+    userType: string;
     pk: string;
     sk: string;
   }>>;
-  createUserInDB: (userType: "TENANT" | "PROPERTY_MANAGER") => void;
+  createUserInDB: ({ email, userType, propertyManagerEmail }: {
+    email: string;
+    userType: "TENANT" | "PROPERTY_MANAGER";
+    propertyManagerEmail?: string;
+  }) => void;
+
+  login: any;
+  logOut: () => void;
 };
 
 export const UserContext = createContext<ContextUser>({
@@ -40,11 +49,14 @@ export const UserContext = createContext<ContextUser>({
     tenants: [],
     created: "",
     modified: "",
+    userType: "",
     pk: "",
     sk: "",
   },
   setUser: () => { },
-  createUserInDB: () => { }
+  createUserInDB: () => { },
+  login: () => { },
+  logOut: () => { }
 });
 
 export const UserContextProvider = (props: any) => {
@@ -57,15 +69,20 @@ export const UserContextProvider = (props: any) => {
     tenants: [],
     created: "",
     modified: "",
+    userType: "",
     pk: "",
     sk: "",
   };
   const [user, setUser] = useState<ContextUser["user"]>(initialState);
-  const { type } = useUserTypeContext();
 
   // Update user in context
   useEffect(() => {
-    if (session?.user?.email) {
+    const sessionUser = window.sessionStorage.getItem("PILLAR::USER");
+
+    if (sessionUser) {
+      const parsedSessionUser = JSON.parse(sessionUser);
+      setUser(parsedSessionUser);
+    } else if (session?.user?.email) {
       setUser({
         ...user,
         email: session.user.email ?? "",
@@ -75,20 +92,32 @@ export const UserContextProvider = (props: any) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  useEffect(() => {
-    if (session?.user?.email) {
-      signOut();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
-
-
-
-  const createUserInDB = (userType: "TENANT" | "PROPERTY_MANAGER") => {
-
+  const login = ({ email, userType }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; }) => {
     if (user.email && !user.created) {
       async function createUser() {
-        const { data } = await axios.post("/api/create-new-user", { email: user.email, userType });
+        const { data } = await axios.post("/api/create-new-user", { email, userType });
+        const { response } = data;
+        const parsedUser = JSON.parse(response);
+        if (parsedUser.modified) {
+          console.log("parsed");
+          console.log(parsedUser);
+          window.sessionStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
+          setUser(parsedUser);
+        }
+      }
+      createUser();
+    }
+  };
+
+  const logOut = () => {
+    window.sessionStorage.removeItem("PILLAR::USER");
+    signOut();
+  };
+
+  const createUserInDB = ({ email, userType, propertyManagerEmail }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; propertyManagerEmail?: string; }) => {
+    if (user.email) {
+      async function createUser() {
+        const { data } = await axios.post("/api/create-new-user", { email, userType, propertyManagerEmail });
         const { response } = data;
         const parsedUser = JSON.parse(response);
         if (parsedUser.modified) {
@@ -104,7 +133,9 @@ export const UserContextProvider = (props: any) => {
       value={{
         user: user,
         createUserInDB,
-        setUser
+        setUser,
+        login,
+        logOut
       }}
     >
       {props.children}
