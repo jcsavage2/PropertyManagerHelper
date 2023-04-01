@@ -30,11 +30,6 @@ export type ContextUser = {
     pk: string;
     sk: string;
   }>>;
-  createUserInDB: ({ email, userType, propertyManagerEmail }: {
-    email: string;
-    userType: "TENANT" | "PROPERTY_MANAGER";
-    propertyManagerEmail?: string;
-  }) => void;
 
   login: any;
   logOut: () => void;
@@ -54,7 +49,6 @@ export const UserContext = createContext<ContextUser>({
     sk: "",
   },
   setUser: () => { },
-  createUserInDB: () => { },
   login: () => { },
   logOut: () => { }
 });
@@ -92,6 +86,12 @@ export const UserContextProvider = (props: any) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
+  /**
+   * When the user signs in via nextAut, this function will set the "state" of their user.
+   * There are two types of users, tenants, and property managers.
+   * Depending on how to user wishes to interact with the app, we'll create the appropriate record in the database.
+   * If the user already exists in the database, we won't create the user, we'll just fetch the user. 
+   */
   const login = ({ email, userType }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; }) => {
     if (user.email) {
       async function createUser() {
@@ -99,8 +99,6 @@ export const UserContextProvider = (props: any) => {
         const { response } = data;
         const parsedUser = JSON.parse(response);
         if (parsedUser.modified) {
-          console.log("parsed");
-          console.log(parsedUser);
           window.sessionStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
           setUser(parsedUser);
         }
@@ -114,25 +112,11 @@ export const UserContextProvider = (props: any) => {
     signOut();
   };
 
-  const createUserInDB = ({ email, userType, propertyManagerEmail }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; propertyManagerEmail?: string; }) => {
-    if (user.email) {
-      async function createUser() {
-        const { data } = await axios.post("/api/create-new-user", { email, userType, propertyManagerEmail });
-        const { response } = data;
-        const parsedUser = JSON.parse(response);
-        if (parsedUser.modified) {
-          setUser(parsedUser);
-        }
-      }
-      createUser();
-    }
-  };
 
   return (
     <UserContext.Provider
       value={{
-        user: user,
-        createUserInDB,
+        user,
         setUser,
         login,
         logOut

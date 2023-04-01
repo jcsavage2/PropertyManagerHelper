@@ -1,5 +1,5 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, EntityType } from '.';
+import { ENTITIES } from '.';
 import { PillarDynamoTable } from '..';
 
 export class TenantEntity {
@@ -12,9 +12,10 @@ export class TenantEntity {
         pk: { partitionKey: true },
         sk: { sortKey: true },
         name: { type: "string" },
-        properties: { type: "list" },
         email: { type: "string" },
-        userType: { type: "string" }
+        userType: { type: "string" },
+        property: { type: "string" },
+        status: { type: "string" },
       },
       table: PillarDynamoTable
     } as const);
@@ -25,21 +26,28 @@ export class TenantEntity {
   }
 
   private generateSk() {
-    return ["ACCOUNT_TYPE", ENTITIES.TENANT].join("#");
+    return ["T", ENTITIES.TENANT].join("#");
   }
 
-  public getId(email: string) {
-    return { pk: this.generatePk(email) };
+  private generateSkForProperty({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+    return ["P", propertyManagerEmail].join("#");
   }
 
-  public async create({ email, name, properties = [], }: { email: string; name?: string; properties?: string[]; }) {
+
+  /**
+   * Creates the user record in the Database.
+   */
+  public async create(
+    { email, name, propertyManagerEmail }:
+      { email: string; name?: string; propertyManagerEmail?: string; }) {
     try {
       const result = await this.tenant.update({
         pk: this.generatePk(email),
         sk: this.generateSk(),
         email: email.toLowerCase(),
         name,
-        properties,
+        propertyManagerEmail,
+        status: propertyManagerEmail ? "INVITED" : "REQUESTED_JOIN",
         userType: ENTITIES.TENANT
       }, { returnValues: "ALL_NEW" });
       return result;
@@ -48,6 +56,43 @@ export class TenantEntity {
     }
   }
 
+  /**
+   * Updates a tenant's name or status.
+   */
+  public async update(
+    { email, name, status }:
+      { email: string; name?: string; status?: "INVITED" | "JOINED" | "REQUESTED_JOIN"; }) {
+    try {
+      const result = await this.tenant.update({
+        pk: this.generatePk(email),
+        sk: this.generateSk(),
+        ...(name && { name }),
+        ...(status && { status }),
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  public async addPropertyForTenant(
+    { email, propertyManagerEmail }:
+      { email: string; name?: string; propertyManagerEmail: string; }) {
+    try {
+      const result = await this.tenant.update({
+        pk: this.generatePk(email),
+        sk: this.generateSkForProperty({ propertyManagerEmail }),
+        propertyManagerEmail,
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  /**
+   * Returns the tenant's user record from the database.
+   */
   public async get({ email }: { email: string; }) {
     try {
       const params = {

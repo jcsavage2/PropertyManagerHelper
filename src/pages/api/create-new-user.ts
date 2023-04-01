@@ -23,7 +23,6 @@ export default async function handler(
     const body = req.body as GetUser;
     const { email, userType, propertyManagerEmail } = body;
 
-    console.log({ email, userType, propertyManagerEmail });
 
     const propertyManagerEntity = new PropertyManagerEntity();
 
@@ -48,10 +47,6 @@ export default async function handler(
         const existingTenantFromDB = existingTenant?.Item ?? null;
 
         if (existingTenantFromDB) {
-          // we want to also append this user the the property manager 
-
-          propertyManagerEmail && await propertyManagerEntity.update({ email: propertyManagerEmail, tenants: [email.toLocaleLowerCase()] });
-
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
           const newTenant = await tenantEntity.create({ email });
