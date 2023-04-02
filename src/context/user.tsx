@@ -1,7 +1,6 @@
 import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
-import { createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState } from "react";
-import { useUserTypeContext } from "./user-type";
+import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
 
 
 export type ContextUser = {

@@ -71,7 +71,7 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
   const handleCreateNewProperty: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      const { data } = await axios.post("/api/create-new-user", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.email });
+      const { data } = await axios.post("/api/create-new-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.email });
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
