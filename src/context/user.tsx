@@ -1,4 +1,4 @@
-import { GetOrCreateNewUserBody } from "@/pages/api/get-or-create-user-in-db";
+import { GetOrCreateUserBody } from "@/pages/api/get-or-create-user-in-db";
 import axios from "axios";
 import { signOut } from "next-auth/react";
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
@@ -68,7 +68,7 @@ export const UserContextProvider = (props: any) => {
   const login = ({ email, userType }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; }) => {
     if (user.email) {
       async function getOrCreateUser() {
-        const body: GetOrCreateNewUserBody = { email, userType };
+        const body: GetOrCreateUserBody = { email, userType };
         const { data } = await axios.post("/api/get-or-create-user-in-db", body);
         const { response } = data;
         const parsedUser = JSON.parse(response) as UserType;

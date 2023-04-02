@@ -1,11 +1,8 @@
+import { Data } from "@/database";
 import { SendEmailApiRequest } from "@/types";
 import sendgrid from "@sendgrid/mail";
 
 import { NextApiRequest, NextApiResponse } from "next";
-
-type Data = {
-  response: string;
-};
 
 export default async function handler(
   req: NextApiRequest,

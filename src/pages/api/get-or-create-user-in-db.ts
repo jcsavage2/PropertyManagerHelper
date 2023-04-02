@@ -1,18 +1,14 @@
+import { Data } from "@/database";
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 
-type Data = {
-  response: string;
-};
-
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
 
-export type GetOrCreateNewUserBody = {
+export type GetOrCreateUserBody = {
   email: string;
   userType: UserType;
-  propertyManagerEmail?: string;
 };
 
 /**
@@ -26,8 +22,8 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    const body = req.body as GetOrCreateNewUserBody;
-    const { email, userType, propertyManagerEmail } = body;
+    const body = req.body as GetOrCreateUserBody;
+    const { email, userType } = body;
 
 
     const propertyManagerEntity = new PropertyManagerEntity();
@@ -56,7 +52,6 @@ export default async function handler(
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
           const newTenant = await tenantEntity.create({ email });
-          propertyManagerEmail && await propertyManagerEntity.update({ email: propertyManagerEmail, tenants: [email.toLocaleLowerCase()] });
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
         }

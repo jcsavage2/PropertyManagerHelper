@@ -2,6 +2,12 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES } from '.';
 import { PillarDynamoTable } from '..';
 
+type AddTenantProps = {
+  tenantEmail: string;
+  tenantName?: string;
+  organization?: string;
+  propertyManagerEmail: string;
+};
 
 export class PropertyManagerEntity {
   private propertyManagerEntity: Entity;
@@ -79,15 +85,19 @@ export class PropertyManagerEntity {
    * Adds a companion row to the property manager that has some metadata about a tenant.
    * Note, when this happens, the API will also need to create the tenant user entity record with a status of "INVITED".
    */
-  public async addTenant(
-    { email, name, organization, tenantEmail }:
-      { email: string; name?: string; organization?: string; tenantEmail: string; }) {
+  public async createTenantCompanionRow(
+    {
+      organization,
+      propertyManagerEmail,
+      tenantEmail,
+      tenantName,
+    }: AddTenantProps) {
     try {
       const result = await this.propertyManagerEntity.update({
-        pk: this.generatePk({ email }),
+        pk: this.generatePk({ email: propertyManagerEmail }),
         sk: this.generateSkForTenant({ tenantEmail }),
-        email: email.toLowerCase(),
-        name,
+        email: tenantEmail.toLowerCase(),
+        name: tenantName?.toLocaleLowerCase(),
         organization,
       }, { returnValues: "ALL_NEW" });
       return result;

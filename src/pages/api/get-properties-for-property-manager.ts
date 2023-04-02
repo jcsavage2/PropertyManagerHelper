@@ -1,9 +1,6 @@
+import { Data } from "@/database";
 import { PropertyEntity } from "@/database/entities/property";
 import { NextApiRequest, NextApiResponse } from "next";
-
-type Data = {
-  response: string;
-};
 
 type GetPropertiesForPropertyManagerApiRequest = {
   propertyManagerEmail: "string";

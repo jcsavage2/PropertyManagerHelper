@@ -1,4 +1,5 @@
 import { useUserContext } from "@/context/user";
+import { CreateTenantBody } from "@/pages/api/create-tenant";
 import axios from "axios";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
 
@@ -70,7 +71,8 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   const handleCreateNewTenant: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      const { data } = await axios.post("/api/create-new-user", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.email });
+      const body: CreateTenantBody = { tenantEmail, tenantName, propertyManagerEmail: user.email, organization: "" };
+      const { data } = await axios.post("/api/create-tenant",);
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {

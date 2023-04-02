@@ -1,11 +1,8 @@
+import { Data } from "@/database";
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
-
-type Data = {
-  response: string;
-};
 
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
 
