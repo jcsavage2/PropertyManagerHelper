@@ -1,40 +1,31 @@
+import { GetOrCreateNewUserBody } from "@/pages/api/get-or-create-user-in-db";
 import axios from "axios";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
 
+type UserType = {
+  email: string;
+  name: string;
+  organization?: string | null,
+  properties: string[],
+  tenants: string[];
+  created: string;
+  modified: string;
+  userType: string;
+  pk: string;
+  sk: string;
+};
+type LoginProps = { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; };
 
-export type ContextUser = {
-  user: {
-    email: string;
-    name: string;
-    organization?: string | null,
-    properties: string[],
-    tenants: string[];
-    created: string;
-    modified: string;
-    userType: string;
-    pk: string;
-    sk: string;
-
-  },
-  setUser: Dispatch<SetStateAction<{
-    email: string;
-    name: string;
-    organization?: string | null | undefined;
-    properties: string[];
-    tenants: string[];
-    created: string;
-    modified: string;
-    userType: string;
-    pk: string;
-    sk: string;
-  }>>;
-
-  login: any;
+export type UserContext = {
+  user: UserType,
+  setUser: Dispatch<SetStateAction<UserType>>;
+  login: (propd: LoginProps) => void;
   logOut: () => void;
 };
 
-export const UserContext = createContext<ContextUser>({
+
+export const UserContext = createContext<UserContext>({
   user: {
     email: "",
     name: "",
@@ -53,7 +44,6 @@ export const UserContext = createContext<ContextUser>({
 });
 
 export const UserContextProvider = (props: any) => {
-  const { data: session } = useSession();
   const initialState = {
     email: "",
     name: "",
@@ -66,49 +56,40 @@ export const UserContextProvider = (props: any) => {
     pk: "",
     sk: "",
   };
-  const [user, setUser] = useState<ContextUser["user"]>(initialState);
+  const [user, setUser] = useState<UserContext["user"]>(initialState);
 
-  // Update user in context
-  useEffect(() => {
-    const sessionUser = window.sessionStorage.getItem("PILLAR::USER");
-
-    if (sessionUser) {
-      const parsedSessionUser = JSON.parse(sessionUser);
-      setUser(parsedSessionUser);
-    } else if (session?.user?.email) {
-      setUser({
-        ...user,
-        email: session.user.email ?? "",
-        name: session.user.name ?? "",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
 
   /**
-   * When the user signs in via nextAut, this function will set the "state" of their user.
-   * There are two types of users, tenants, and property managers.
-   * Depending on how to user wishes to interact with the app, we'll create the appropriate record in the database.
-   * If the user already exists in the database, we won't create the user, we'll just fetch the user. 
+   * Given the user has logged in via NextAuth signIn() method...
+   * This method first attempts to fetch the user from the database.
+   * If there is no user found for the given email/userType combo, 
+   * the user will be created in the database.
    */
   const login = ({ email, userType }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; }) => {
     if (user.email) {
-      async function createUser() {
-        const { data } = await axios.post("/api/create-new-user", { email, userType });
+      async function getOrCreateUser() {
+        const body: GetOrCreateNewUserBody = { email, userType };
+        const { data } = await axios.post("/api/get-or-create-user-in-db", body);
         const { response } = data;
-        const parsedUser = JSON.parse(response);
+        const parsedUser = JSON.parse(response) as UserType;
         if (parsedUser.modified) {
           window.sessionStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
           setUser(parsedUser);
         }
       }
-      createUser();
+      getOrCreateUser();
     }
   };
 
+  /**
+   * 1. Clear session storage - including user data.
+   * 2. Sign out the user from NextAuth.
+   * 3. Remove the user in state.
+   */
   const logOut = () => {
     window.sessionStorage.clear();
     signOut();
+    setUser(initialState);
   };
 
 

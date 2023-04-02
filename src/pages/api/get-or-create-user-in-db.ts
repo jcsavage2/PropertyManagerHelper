@@ -9,18 +9,24 @@ type Data = {
 
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
 
-export type GetUser = {
+export type GetOrCreateNewUserBody = {
   email: string;
   userType: UserType;
   propertyManagerEmail?: string;
 };
 
+/**
+ * Attempts to get the user from the database. 
+ * If the user does not exist in the database, the user is created.
+ * Note, a user with the same email can have up to two profiles - one as a tenant and one as a property manager.
+ * @returns `ContextUser` object.
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
   try {
-    const body = req.body as GetUser;
+    const body = req.body as GetOrCreateNewUserBody;
     const { email, userType, propertyManagerEmail } = body;
 
 
