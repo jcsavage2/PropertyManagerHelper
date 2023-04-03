@@ -54,7 +54,8 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(findIssueSample)}
         and should contain all of the keys: ${Object.keys(findIssueSample).join(", ")}, even if there are no values. 
         The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes).join(", ")}.
-        Do not assume or guess the "issueCategory" if the user does not give you one. 
+        ${workOrder.issueCategory && `Don't assume the "issueCategory" - only fill a value for "issueCategory" if one is explicitly given. If one is not given, ask the user to "Clarify what is the 'thing' that is having the issue - eg 'washer' or 'toilet'".`}
+
         
         ${!workOrder.issueLocation && `You must identify the "issueLocation", which is the instructions for the service worker locate the issue. \
         When asking for the issue location, remind the user "This information will help the service worker locate the issue."
@@ -63,13 +64,12 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify \
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
         If you have found the "issueLocation" do not ask the user about the "issueLocation" again.`}
-       
+        If there is already an "issueLocation" value in ${JSON.stringify(workOrder)}, do not ask the user about the issue location.
         
-        ${!workOrder.issueCategory && Object.keys(issueCategoryToTypes).map(issueCategory => {
+        ${!workOrder.issueCategory && !workOrder.issueSubCategory && Object.keys(issueCategoryToTypes).map(issueCategory => {
       return `If you determine that the issueCategory is "${issueCategory}", then try to categorize the "issueSubCategory" into one of these: ${issueCategoryToTypes[issueCategory].join(", ")}`;
     }).join("\n\n ")}.
 
-        Don't assume the "issueCategory" - only fill a value for "issueCategory" if one is explicitly given. If one is not given, ask the user to "Clarify what is the 'thing' that is having the issue - eg 'washer' or 'toilet'".
 
         ${workOrder.issueCategory && workOrder.issueCategory !== "Other" && !workOrder.issueSubCategory && `Ask the user to clarify the root issue. \
         See if you can categorize the root issue be one of ${issueCategoryToTypes[workOrder.issueCategory].join(", ")} and this value will be the "issueSubCategory". If their root\
