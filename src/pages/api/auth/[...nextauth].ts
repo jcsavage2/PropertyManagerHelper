@@ -1,9 +1,8 @@
-import { PropertyManagerEntity } from '@/database/entities/property-manager';
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import Email from 'next-auth/providers/email';
 import { DynamoDBAdapter } from '@next-auth/dynamodb-adapter';
-import { DocumentClient, DynamoDBClientCredentials, PillarDynamoTable } from '@/database';
+import { DynamoDBClientCredentials } from '@/database';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
@@ -43,7 +42,7 @@ export default NextAuth({
             from: 'mitchposk@gmail.com', 
         }),
     ],
-    adapter: DynamoDBAdapter(client, {tableName: 'pillar-hq'}),
+    adapter: DynamoDBAdapter(client),
     callbacks: {
         async signIn({ user, account, profile, email, credentials }) {
             return true;
