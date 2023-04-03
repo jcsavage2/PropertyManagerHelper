@@ -2,6 +2,12 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES } from '.';
 import { PillarDynamoTable } from '..';
 
+
+export type CreateTenantProps = {
+  email: string;
+  name: string;
+  propertyManagerEmail?: string;
+};
 export class TenantEntity {
   private tenant: Entity;
 
@@ -38,8 +44,7 @@ export class TenantEntity {
    * Creates the user record in the Database.
    */
   public async create(
-    { email, name, propertyManagerEmail }:
-      { email: string; name?: string; propertyManagerEmail?: string; }) {
+    { email, name, propertyManagerEmail }: CreateTenantProps) {
     try {
       const result = await this.tenant.update({
         pk: this.generatePk(email),
@@ -47,9 +52,9 @@ export class TenantEntity {
         email: email.toLowerCase(),
         name,
         propertyManagerEmail,
-        status: propertyManagerEmail ? "INVITED" : "REQUESTED_JOIN",
+        status: "INVITED",
         userType: ENTITIES.TENANT
-      }, { returnValues: "ALL_NEW" });
+      }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
       return result;
     } catch (err) {
       console.log({ err });

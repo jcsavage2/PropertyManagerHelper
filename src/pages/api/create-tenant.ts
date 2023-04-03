@@ -1,5 +1,4 @@
 import { Data } from "@/database";
-import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -33,9 +32,12 @@ export default async function handler(
     const propertyManagerEntity = new PropertyManagerEntity();
     const tenantEntity = new TenantEntity();
 
-
     // Create companion row for the property manager.
     await propertyManagerEntity.createTenantCompanionRow({ tenantEmail, tenantName, organization, propertyManagerEmail });
+
+    // CreateTenant
+    const newTenant = await tenantEntity.create({ email: tenantEmail, name: tenantName, propertyManagerEmail });
+
     //@ts-ignore
     return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
 

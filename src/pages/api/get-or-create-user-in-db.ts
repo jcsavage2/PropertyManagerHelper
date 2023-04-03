@@ -9,6 +9,7 @@ type UserType = typeof ENTITIES[keyof typeof ENTITIES];
 export type GetOrCreateUserBody = {
   email: string;
   userType: UserType;
+  name: string;
 };
 
 /**
@@ -23,7 +24,7 @@ export default async function handler(
 ) {
   try {
     const body = req.body as GetOrCreateUserBody;
-    const { email, userType } = body;
+    const { email, userType, name } = body;
 
 
     const propertyManagerEntity = new PropertyManagerEntity();
@@ -51,7 +52,7 @@ export default async function handler(
         if (existingTenantFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
-          const newTenant = await tenantEntity.create({ email });
+          const newTenant = await tenantEntity.create({ email, name });
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
         }
