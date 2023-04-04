@@ -64,7 +64,7 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify \
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
         If you have found the "issueLocation" do not ask the user about the "issueLocation" again.`}
-       
+        If there is already an "issueLocation" value in ${JSON.stringify(workOrder)}, do not ask the user about the issue location.
         
         ${!workOrder.issueCategory && !workOrder.issueSubCategory && Object.keys(issueCategoryToTypes).map(issueCategory => {
       return `If you determine that the issueCategory is "${issueCategory}", then try to categorize the "issueSubCategory" into one of these: ${issueCategoryToTypes[issueCategory].join(", ")}`;
