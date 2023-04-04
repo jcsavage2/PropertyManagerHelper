@@ -9,17 +9,15 @@ if (!accessKeyId || !secretAccessKey || !region) {
   throw new Error("missing aws credentials");
 }
 
-export const DynamoDBClientCredentials = {
-    accessKeyId: accessKeyId,
-    secretAccessKey: secretAccessKey,
+export const DynamoDBClientConfig = {
+    credentials: {
+        accessKeyId: accessKeyId,
+        secretAccessKey: secretAccessKey,
+    },
+    region: process.env.AWS_REGION,
 }
 
-export const DocumentClient = new DynamoDB.DocumentClient({
-  // Specify your client options as usual
-  region: process.env.AWS_REGION,
-  credentials: DynamoDBClientCredentials,
-  convertEmptyValues: false
-});
+export const DocumentClient = new DynamoDB.DocumentClient({...DynamoDBClientConfig, convertEmptyValues: false});
 
 export const PillarDynamoTable = new Table({
   //DynamoDB Table Name

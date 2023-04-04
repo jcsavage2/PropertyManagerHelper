@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import Email from 'next-auth/providers/email';
 import { DynamoDBAdapter } from '@next-auth/dynamodb-adapter';
-import { DynamoDBClientCredentials } from '@/database';
+import { DynamoDBClientConfig } from '@/database';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
@@ -13,10 +13,7 @@ if (!clientId || !clientSecret || !region) {
     throw new Error('Missing Auth Credentials!');
 }
 
-const client = DynamoDBDocument.from(new DynamoDB({
-  region: region,
-  credentials: DynamoDBClientCredentials,
-}), {
+const client = DynamoDBDocument.from(new DynamoDB(DynamoDBClientConfig), {
   marshallOptions: {
     convertEmptyValues: true,
     removeUndefinedValues: true,
