@@ -33,6 +33,16 @@ export const PillarDynamoTable = new Table({
   DocumentClient // Add the DocumentClient
 });
 
+const NextAuthTable = new Table({
+  name: "next-auth",
+  partitionKey: "pk",
+  sortKey: "sk",
+  indexes: {
+    GSI1: { partitionKey: "GSI1PK", sortKey: "GSI1SK" },
+  },
+  DocumentClient
+})
+
 export class BaseEntity {
   pk: string;
   sk: string;
