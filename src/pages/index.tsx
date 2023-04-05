@@ -25,11 +25,19 @@ const Home = () => {
             <br />
             <button
               className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-              onClick={() => login({ email: sessionUser.email ?? "", userType: "TENANT", name: sessionUser.name ?? "" })}>Continue as Tenant</button>
+              onClick={async () => {
+                await login({ email: sessionUser.email ?? "", userType: "TENANT", name: sessionUser.name ?? "" });
+                router.push("/demo");
+              }
+              }
+            >Continue as Tenant</button>
             <br />
             <button
               className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-              onClick={() => login({ email: sessionUser.email ?? "", userType: "PROPERTY_MANAGER", name: sessionUser.name ?? "" })}>Continue as Property Manager</button>
+              onClick={async () => {
+                await login({ email: sessionUser.email ?? "", userType: "PROPERTY_MANAGER", name: sessionUser.name ?? "" });
+                router.push("/portal");
+              }}>Continue as Property Manager</button>
           </>
         )}
       </div>

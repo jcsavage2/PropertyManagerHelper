@@ -37,7 +37,11 @@ type LoginProps = { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name
 export type UserContext = {
   user: UserType,
   setUser: Dispatch<SetStateAction<UserType>>;
-  login: (props: LoginProps) => void;
+  login: ({ email, userType, name }: {
+    email: string;
+    userType: "TENANT" | "PROPERTY_MANAGER";
+    name: string;
+  }) => Promise<void>;
   logOut: () => void;
   sessionUser: Session["user"] | null;
 };
@@ -56,7 +60,7 @@ export const UserContext = createContext<UserContext>({
   },
   sessionUser: null,
   setUser: () => { },
-  login: () => { },
+  login: () => Promise.resolve(),
   logOut: () => { },
 });
 
@@ -90,18 +94,15 @@ export const UserContextProvider = (props: any) => {
    * If there is no user found for the given email/userType combo, 
    * the user will be created in the database.
    */
-  const login = ({ email, userType, name }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; }) => {
-    async function getOrCreateUser() {
-      const body: GetOrCreateUserBody = { email, name, userType };
-      const { data } = await axios.post("/api/get-or-create-user-in-db", body);
-      const { response } = data;
-      const parsedUser = JSON.parse(response) as UserType;
-      if (parsedUser.pk) {
-        window.localStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
-        setUser(parsedUser);
-      }
+  const login = async ({ email, userType, name }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; }) => {
+    const body: GetOrCreateUserBody = { email, name, userType };
+    const { data } = await axios.post("/api/get-or-create-user-in-db", body);
+    const { response } = data;
+    const parsedUser = JSON.parse(response) as UserType;
+    if (parsedUser.pk) {
+      window.localStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
+      setUser(parsedUser);
     }
-    getOrCreateUser();
   };
 
   /**
