@@ -2,7 +2,7 @@ import { useUserContext } from "@/context/user";
 import { CreateTenantBody } from "@/pages/api/create-tenant";
 import axios from "axios";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
-
+import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 
 const customStyles = {
@@ -71,12 +71,21 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   const handleCreateNewTenant: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      const body: CreateTenantBody = { tenantEmail, tenantName, propertyManagerEmail: user.email, organization: "" };
-      const { data } = await axios.post("/api/create-tenant",);
+      if (!user.pmEmail) {
+        throw new Error("user needs to be a Property Manager.");
+      }
+      const body: CreateTenantBody = {
+        tenantEmail,
+        tenantName,
+        pmEmail: user.pmEmail,
+        organization: "None"
+      };
+      const { data } = await axios.post("/api/create-tenant", body);
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
-
+        toast.success("Tenant Created");
+        setTenantModalIsOpen(false);
       }
     } catch (err) {
       console.log({ err });
@@ -156,7 +165,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <button
           className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
           type="submit"
-          disabled={!tenantName || !tenantEmail || !address || !unit || !state || !city || !zip}
+          disabled={!tenantName || !tenantEmail || !address || !state || !city || !zip}
         >
           Add Tenant
         </button>

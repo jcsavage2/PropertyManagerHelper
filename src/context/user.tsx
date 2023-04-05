@@ -1,63 +1,89 @@
 import { GetOrCreateUserBody } from "@/pages/api/get-or-create-user-in-db";
 import axios from "axios";
-import { signOut } from "next-auth/react";
+import { Session } from "next-auth";
+import { signOut, useSession } from "next-auth/react";
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
-
-type UserType = {
-  email: string;
-  name: string;
-  organization?: string | null,
-  properties: string[],
-  tenants: string[];
+type BaseUser = {
   created: string;
   modified: string;
-  userType: string;
   pk: string;
   sk: string;
 };
-type LoginProps = { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; };
+
+type PropertyManager = BaseUser & {
+  pmName: string,
+  pmEmail: string,
+  organization: string,
+  userType: "PROPERTY_MANAGER";
+
+  tenantEmail?: never;
+  tenantName?: never;
+};
+
+type Tenant = BaseUser & {
+  tenantEmail: string;
+  tenantName: string;
+  pmEmail?: string | null,
+  status: string,
+  userType: "TENANT";
+
+  pmName?: never,
+  organization?: never;
+};
+
+type UserType = Tenant | PropertyManager;
+type LoginProps = { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; };
 
 export type UserContext = {
   user: UserType,
   setUser: Dispatch<SetStateAction<UserType>>;
-  login: (propd: LoginProps) => void;
+  login: (props: LoginProps) => void;
   logOut: () => void;
+  sessionUser: Session["user"] | null;
 };
 
 
 export const UserContext = createContext<UserContext>({
   user: {
-    email: "",
-    name: "",
-    organization: null,
-    properties: [],
-    tenants: [],
+    tenantEmail: "",
+    tenantName: "",
+    status: "",
     created: "",
     modified: "",
-    userType: "",
+    userType: "TENANT",
     pk: "",
     sk: "",
   },
+  sessionUser: null,
   setUser: () => { },
   login: () => { },
-  logOut: () => { }
+  logOut: () => { },
 });
 
+
 export const UserContextProvider = (props: any) => {
+  const sessionUser: Session["user"] | null = useSession().data?.user ?? null;
   const initialState = {
-    email: "",
-    name: "",
-    organization: "",
-    properties: [],
-    tenants: [],
+    tenantEmail: "",
+    tenantName: "",
+    status: "",
+    userType: "TENANT" as const,
+
     created: "",
     modified: "",
-    userType: "",
     pk: "",
     sk: "",
   };
   const [user, setUser] = useState<UserContext["user"]>(initialState);
 
+
+  useEffect(() => {
+    const localUser = window.localStorage.getItem("PILLAR::USER");
+    console.log({ localUser });
+    if (localUser) {
+      setUser(JSON.parse(localUser));
+    }
+  }, []);
 
   /**
    * Given the user has logged in via NextAuth signIn() method...
@@ -65,29 +91,27 @@ export const UserContextProvider = (props: any) => {
    * If there is no user found for the given email/userType combo, 
    * the user will be created in the database.
    */
-  const login = ({ email, userType }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; }) => {
-    if (user.email) {
-      async function getOrCreateUser() {
-        const body: GetOrCreateUserBody = { email, userType };
-        const { data } = await axios.post("/api/get-or-create-user-in-db", body);
-        const { response } = data;
-        const parsedUser = JSON.parse(response) as UserType;
-        if (parsedUser.modified) {
-          window.sessionStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
-          setUser(parsedUser);
-        }
+  const login = ({ email, userType, name }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; }) => {
+    async function getOrCreateUser() {
+      const body: GetOrCreateUserBody = { email, name, userType };
+      const { data } = await axios.post("/api/get-or-create-user-in-db", body);
+      const { response } = data;
+      const parsedUser = JSON.parse(response) as UserType;
+      if (parsedUser.pk) {
+        window.localStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
+        setUser(parsedUser);
       }
-      getOrCreateUser();
     }
+    getOrCreateUser();
   };
 
   /**
-   * 1. Clear session storage - including user data.
+   * 1. Clear local storage - including user data.
    * 2. Sign out the user from NextAuth.
    * 3. Remove the user in state.
    */
   const logOut = () => {
-    window.sessionStorage.clear();
+    window.localStorage.clear();
     signOut();
     setUser(initialState);
   };
@@ -97,9 +121,10 @@ export const UserContextProvider = (props: any) => {
     <UserContext.Provider
       value={{
         user,
+        sessionUser,
         setUser,
         login,
-        logOut
+        logOut,
       }}
     >
       {props.children}

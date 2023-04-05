@@ -8,7 +8,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 export type CreateTenantBody = {
   tenantEmail: string;
   tenantName: string;
-  propertyManagerEmail: string;
+  pmEmail: string;
   organization: string;
 };
 
@@ -24,7 +24,7 @@ export default async function handler(
     const body = req.body as CreateTenantBody;
     const {
       organization,
-      propertyManagerEmail,
+      pmEmail,
       tenantEmail,
       tenantName,
     } = body;
@@ -33,10 +33,10 @@ export default async function handler(
     const tenantEntity = new TenantEntity();
 
     // Create companion row for the property manager.
-    await propertyManagerEntity.createTenantCompanionRow({ tenantEmail, tenantName, organization, propertyManagerEmail });
+    await propertyManagerEntity.createTenantCompanionRow({ tenantEmail, tenantName, organization, pmEmail });
 
     // CreateTenant
-    const newTenant = await tenantEntity.create({ email: tenantEmail, name: tenantName, propertyManagerEmail });
+    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail });
 
     //@ts-ignore
     return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });

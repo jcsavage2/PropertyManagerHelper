@@ -2,6 +2,7 @@ import { Data } from "@/database";
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TenantEntity } from "@/database/entities/tenant";
+import chalk from "chalk";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
@@ -38,7 +39,7 @@ export default async function handler(
         if (existingUserFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingUserFromDB) });
         } else {
-          const newPropertyManager = await propertyManagerEntity.create({ email });
+          const newPropertyManager = await propertyManagerEntity.create({ pmEmail: email, pmName: name });
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newPropertyManager.Attributes) });
         }
@@ -46,13 +47,15 @@ export default async function handler(
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
         const existingTenant = await tenantEntity.get({ email });
+        console.log({ existingTenant });
         //@ts-ignore
         const existingTenantFromDB = existingTenant?.Item ?? null;
-
+        console.log({ existingTenantFromDB }, chalk.green("==============="));
         if (existingTenantFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
-          const newTenant = await tenantEntity.create({ email, name });
+          const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });
+          console.log({ newTenant }, chalk.green("==============="));
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
         }

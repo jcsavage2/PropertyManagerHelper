@@ -4,10 +4,11 @@ import { PillarDynamoTable } from '..';
 
 
 export type CreateTenantProps = {
-  email: string;
-  name: string;
-  propertyManagerEmail?: string;
+  tenantEmail: string;
+  tenantName: string;
+  pmEmail?: string;
 };
+
 export class TenantEntity {
   private tenant: Entity;
 
@@ -17,10 +18,11 @@ export class TenantEntity {
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
-        name: { type: "string" },
-        email: { type: "string" },
+        tenantName: { type: "string" },
+        tenantEmail: { type: "string" },
         userType: { type: "string" },
         property: { type: "string" },
+        pmEmail: { type: "string" },
         status: { type: "string" },
       },
       table: PillarDynamoTable
@@ -28,7 +30,8 @@ export class TenantEntity {
   }
 
   private generatePk(email: string) {
-    return `${email.toLowerCase()}`;
+    console.log({ email });
+    return ["T", `${email.toLowerCase()}`].join("#");
   }
 
   private generateSk() {
@@ -44,14 +47,15 @@ export class TenantEntity {
    * Creates the user record in the Database.
    */
   public async create(
-    { email, name, propertyManagerEmail }: CreateTenantProps) {
+    { tenantEmail, tenantName, pmEmail }: CreateTenantProps) {
+    console.log({ pmEmail });
     try {
       const result = await this.tenant.update({
-        pk: this.generatePk(email),
+        pk: this.generatePk(tenantEmail),
         sk: this.generateSk(),
-        email: email.toLowerCase(),
-        name,
-        propertyManagerEmail,
+        tenantEmail: tenantEmail.toLowerCase(),
+        tenantName,
+        ...(pmEmail && { pmEmail: pmEmail?.toLowerCase() }),
         status: "INVITED",
         userType: ENTITIES.TENANT
       }, { returnValues: "ALL_NEW", strictSchemaCheck: true });

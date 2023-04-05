@@ -6,7 +6,13 @@ type AddTenantProps = {
   tenantEmail: string;
   tenantName?: string;
   organization?: string;
-  propertyManagerEmail: string;
+  pmEmail: string;
+};
+
+type CreatePropertyManagerProps = {
+  pmEmail: string;
+  pmName?: string;
+  organization?: string;
 };
 
 export class PropertyManagerEntity {
@@ -18,8 +24,8 @@ export class PropertyManagerEntity {
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
-        name: { type: "string" },
-        email: { type: "string" },
+        pmName: { type: "string" },
+        pmEmail: { type: "string" },
         organization: { type: "string" },
         userType: { type: "string" }
       },
@@ -28,7 +34,7 @@ export class PropertyManagerEntity {
   }
 
   private generatePk({ email }: { email: string; }) {
-    return [email.toLowerCase()].join('#');
+    return ["PM", email.toLowerCase()].join('#');
   }
   private generateSk() {
     return ["PM", ENTITIES.PROPERTY_MANAGER].join("#");
@@ -38,8 +44,8 @@ export class PropertyManagerEntity {
    * Generates the SK for a tenant who is added by a property manager.
    * We create a companion row under the property manager so we can efficiently query for a property manager's tenants. 
    */
-  private generateSkForTenant({ tenantEmail }: { tenantEmail: string; }) {
-    return ["T", tenantEmail].join("#");
+  private generateSkForTenant() {
+    return ["T", ENTITIES.TENANT].join("#");
   }
 
   /**
@@ -64,14 +70,13 @@ export class PropertyManagerEntity {
    * Creates as new property manager user entity.
    */
   public async create(
-    { email, name, organization, }:
-      { email: string; name?: string; organization?: string; }) {
+    { pmEmail, pmName, organization, }: CreatePropertyManagerProps) {
     try {
       const result = await this.propertyManagerEntity.update({
-        pk: this.generatePk({ email }),
+        pk: this.generatePk({ email: pmEmail.toLowerCase() }),
         sk: this.generateSk(),
-        email: email.toLowerCase(),
-        name,
+        pmEmail: pmEmail.toLowerCase(),
+        pmName,
         organization,
         userType: ENTITIES.PROPERTY_MANAGER
       }, { returnValues: "ALL_NEW" });
@@ -88,14 +93,14 @@ export class PropertyManagerEntity {
   public async createTenantCompanionRow(
     {
       organization,
-      propertyManagerEmail,
+      pmEmail,
       tenantEmail,
       tenantName,
     }: AddTenantProps) {
     try {
       const result = await this.propertyManagerEntity.update({
-        pk: this.generatePk({ email: propertyManagerEmail }),
-        sk: this.generateSkForTenant({ tenantEmail }),
+        pk: this.generatePk({ email: pmEmail }),
+        sk: this.generateSkForTenant(),
         email: tenantEmail.toLowerCase(),
         name: tenantName?.toLocaleLowerCase(),
         organization,
@@ -111,7 +116,7 @@ export class PropertyManagerEntity {
   * Note, when this happens, the API will also need to create the tenant user entity record with a status of "INVITED".
   * Addresses can only be created by property managers, so the address PK will always match the property manager's PK. 
   */
-  public async addAddress(
+  public async createPropertyCompanionRow(
     { email, organization, addressPk, addressSk }:
       { email: string; organization?: string; addressPk: string; addressSk: string; }) {
     try {
@@ -184,7 +189,4 @@ export class PropertyManagerEntity {
       console.log({ err });
     }
   }
-
-
-
 }

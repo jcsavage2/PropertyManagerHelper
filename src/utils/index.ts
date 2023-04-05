@@ -24,7 +24,16 @@ export const hasAllInfo = (workOrder: WorkOrder) => {
 };
 
 export const hasAllUserInfo = (userInfo: UserInfo) => {
-  return Object.values(userInfo).every(value => !!value); // this works because we need permission to enter to be true.
+  const {
+    address,
+    state,
+    city,
+    zip,
+    email,
+    name,
+    permissionToEnter
+  } = userInfo;
+  return !!address && !!state && !!city && !!zip && !!email && !!name && !!permissionToEnter;
 };
 
 /**
