@@ -1,141 +1,130 @@
+import { GetOrCreateUserBody } from "@/pages/api/get-or-create-user-in-db";
 import axios from "axios";
+import { Session } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
-import { createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState } from "react";
-import { useUserTypeContext } from "./user-type";
-
-
-export type ContextUser = {
-  user: {
-    email: string;
-    name: string;
-    organization?: string | null,
-    properties: string[],
-    tenants: string[];
-    created: string;
-    modified: string;
-    userType: string;
-    pk: string;
-    sk: string;
-
-  },
-  setUser: Dispatch<SetStateAction<{
-    email: string;
-    name: string;
-    organization?: string | null | undefined;
-    properties: string[];
-    tenants: string[];
-    created: string;
-    modified: string;
-    userType: string;
-    pk: string;
-    sk: string;
-  }>>;
-  createUserInDB: ({ email, userType, propertyManagerEmail }: {
-    email: string;
-    userType: "TENANT" | "PROPERTY_MANAGER";
-    propertyManagerEmail?: string;
-  }) => void;
-
-  login: any;
-  logOut: () => void;
+import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
+type BaseUser = {
+  created: string;
+  modified: string;
+  pk: string;
+  sk: string;
 };
 
-export const UserContext = createContext<ContextUser>({
+type PropertyManager = BaseUser & {
+  pmName: string,
+  pmEmail: string,
+  organization: string,
+  userType: "PROPERTY_MANAGER";
+
+  tenantEmail?: never;
+  tenantName?: never;
+};
+
+type Tenant = BaseUser & {
+  tenantEmail: string;
+  tenantName: string;
+  pmEmail?: string | null,
+  status: string,
+  userType: "TENANT";
+
+  pmName?: never,
+  organization?: never;
+};
+
+type UserType = Tenant | PropertyManager;
+type LoginProps = { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; };
+
+export type UserContext = {
+  user: UserType,
+  setUser: Dispatch<SetStateAction<UserType>>;
+  login: ({ email, userType, name }: {
+    email: string;
+    userType: "TENANT" | "PROPERTY_MANAGER";
+    name: string;
+  }) => Promise<void>;
+  logOut: () => void;
+  sessionUser: Session["user"] | null;
+};
+
+
+export const UserContext = createContext<UserContext>({
   user: {
-    email: "",
-    name: "",
-    organization: null,
-    properties: [],
-    tenants: [],
+    tenantEmail: "",
+    tenantName: "",
+    status: "",
     created: "",
     modified: "",
-    userType: "",
+    userType: "TENANT",
     pk: "",
     sk: "",
   },
+  sessionUser: null,
   setUser: () => { },
-  createUserInDB: () => { },
-  login: () => { },
-  logOut: () => { }
+  login: () => Promise.resolve(),
+  logOut: () => { },
 });
 
+
 export const UserContextProvider = (props: any) => {
-  const { data: session } = useSession();
+  const sessionUser: Session["user"] | null = useSession().data?.user ?? null;
   const initialState = {
-    email: "",
-    name: "",
-    organization: "",
-    properties: [],
-    tenants: [],
+    tenantEmail: "",
+    tenantName: "",
+    status: "",
+    userType: "TENANT" as const,
+
     created: "",
     modified: "",
-    userType: "",
     pk: "",
     sk: "",
   };
-  const [user, setUser] = useState<ContextUser["user"]>(initialState);
+  const [user, setUser] = useState<UserContext["user"]>(initialState);
 
-  // Update user in context
+
   useEffect(() => {
-    const sessionUser = window.sessionStorage.getItem("PILLAR::USER");
-
-    if (sessionUser) {
-      const parsedSessionUser = JSON.parse(sessionUser);
-      setUser(parsedSessionUser);
-    } else if (session?.user?.email) {
-      setUser({
-        ...user,
-        email: session.user.email ?? "",
-        name: session.user.name ?? "",
-      });
+    const localUser = window.localStorage.getItem("PILLAR::USER");
+    if (localUser) {
+      setUser(JSON.parse(localUser));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, []);
 
-  const login = ({ email, userType }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; }) => {
-    if (user.email) {
-      async function createUser() {
-        const { data } = await axios.post("/api/create-new-user", { email, userType });
-        const { response } = data;
-        const parsedUser = JSON.parse(response);
-        if (parsedUser.modified) {
-          console.log("parsed");
-          console.log(parsedUser);
-          window.sessionStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
-          setUser(parsedUser);
-        }
-      }
-      createUser();
+  /**
+   * Given the user has logged in via NextAuth signIn() method...
+   * This method first attempts to fetch the user from the database.
+   * If there is no user found for the given email/userType combo, 
+   * the user will be created in the database.
+   */
+  const login = async ({ email, userType, name }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; }) => {
+    const body: GetOrCreateUserBody = { email, name, userType };
+    const { data } = await axios.post("/api/get-or-create-user-in-db", body);
+    const { response } = data;
+    const parsedUser = JSON.parse(response) as UserType;
+    if (parsedUser.pk) {
+      window.localStorage.setItem("PILLAR::USER", JSON.stringify(parsedUser));
+      setUser(parsedUser);
     }
   };
 
+  /**
+   * 1. Clear local storage - including user data.
+   * 2. Sign out the user from NextAuth.
+   * 3. Remove the user in state.
+   */
   const logOut = () => {
-    window.sessionStorage.clear();
+    window.localStorage.clear();
     signOut();
+    setUser(initialState);
   };
 
-  const createUserInDB = ({ email, userType, propertyManagerEmail }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; propertyManagerEmail?: string; }) => {
-    if (user.email) {
-      async function createUser() {
-        const { data } = await axios.post("/api/create-new-user", { email, userType, propertyManagerEmail });
-        const { response } = data;
-        const parsedUser = JSON.parse(response);
-        if (parsedUser.modified) {
-          setUser(parsedUser);
-        }
-      }
-      createUser();
-    }
-  };
 
   return (
     <UserContext.Provider
       value={{
-        user: user,
-        createUserInDB,
+        user,
+        sessionUser,
         setUser,
         login,
-        logOut
+        logOut,
       }}
     >
       {props.children}
