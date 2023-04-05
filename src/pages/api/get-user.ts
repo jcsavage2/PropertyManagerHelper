@@ -26,7 +26,7 @@ export default async function handler(
         return res.status(200).json({ response: JSON.stringify(user) });
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
-        user = await tenantEntity.get({ email });
+        user = await tenantEntity.get({ tenantEmail: email });
         return res.status(200).json({ response: JSON.stringify({ user }) });
     }
 

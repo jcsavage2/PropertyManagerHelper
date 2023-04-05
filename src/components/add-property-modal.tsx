@@ -12,7 +12,6 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
     setIsBrowser(true);
   }, []);
 
-
   isBrowser && Modal.setAppElement('#testing');
 
   const [tenantName, setTenantName] = useState("");

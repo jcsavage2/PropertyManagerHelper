@@ -1,4 +1,4 @@
-import { findIssueSample, findUserInfoSample, issueCategoryToTypes } from "@/constants";
+import { findIssueSample, issueCategoryToTypes } from "@/constants";
 import { ChatCompletionRequestMessage } from "openai";
 import { AiJSONResponse, UserInfo, WorkOrder } from "@/types";
 
@@ -29,11 +29,11 @@ export const hasAllUserInfo = (userInfo: UserInfo) => {
     state,
     city,
     zip,
-    email,
-    name,
+    tenantEmail,
+    tenantName,
     permissionToEnter
   } = userInfo;
-  return !!address && !!state && !!city && !!zip && !!email && !!name && !!permissionToEnter;
+  return !!address && !!state && !!city && !!zip && !!tenantEmail && !!tenantName && !!permissionToEnter;
 };
 
 /**

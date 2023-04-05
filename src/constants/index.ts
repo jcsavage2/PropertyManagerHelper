@@ -8,15 +8,6 @@ export const findIssueSample: AiJSONResponse = {
   issueSubCategory: "<value of issueSubCategory>",
 };
 
-export const findUserInfoSample: Partial<AiJSONResponse> = {
-  // ...findIssueSample,
-  aiMessage: findIssueSample.aiMessage,
-  address: "<user's answer for address>",
-  name: "<user's answer for name>",
-  email: "<user's answer for email>",
-  permissionToEnter: "<user's answer for permission to enter>",
-};
-
 export const issueCategoryToTypes = {
   "Basement": ["Leaking", "Humid"],
   "Bathtub": ["Drain Clogged", "Won't turn on", "Low Water Pressure", "Rusty", "No Hot Water"],

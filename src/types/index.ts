@@ -7,9 +7,10 @@ export type ApiRequest = WorkOrder & {
 
 export type SendEmailApiRequest = UserInfo & IssueInformation & {
   messages: ChatCompletionRequestMessage[];
+  pmEmail: string;
 };
 
-export type AiJSONResponse = Partial<UserInfo> & IssueInformation & {
+export type AiJSONResponse = IssueInformation & {
   aiMessage: string;
 };
 

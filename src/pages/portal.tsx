@@ -7,11 +7,11 @@ const Portal = () => {
   const [tenantModalIsOpen, setTenantModalIsOpen] = useState(false);
   const [propertyModalIsOpen, setPropertyModalIsOpen] = useState(false);
 
-  const { name, organization } = user;
+  const { pmName, organization } = user;
 
   return (
     <div id="testing" className="ml-4 mt-4">
-      <p>{`Hello${name ? ` ${name}` : ""}!`}</p>
+      <p>{`Hello${pmName ? ` ${name}` : ""}!`}</p>
       <p>{organization ? `${organization}` : `You aren't yet part of an organization!`}</p>
       <button
         className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"

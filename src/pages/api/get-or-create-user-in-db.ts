@@ -46,7 +46,7 @@ export default async function handler(
 
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
-        const existingTenant = await tenantEntity.get({ email });
+        const existingTenant = await tenantEntity.get({ tenantEmail: email });
         console.log({ existingTenant });
         //@ts-ignore
         const existingTenantFromDB = existingTenant?.Item ?? null;

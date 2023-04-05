@@ -67,7 +67,11 @@ export default function Demo() {
 
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
-    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages };
+    if (!user.pmEmail) {
+      toast.error("You must have a property manager linked to your account.");
+      return;
+    }
+    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages, pmEmail: user.pmEmail };
     const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
       toast.success('Successfully Submitted Work Order!', {
