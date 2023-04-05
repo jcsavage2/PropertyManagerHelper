@@ -10,21 +10,13 @@ const Home = () => {
   return (
     <>
       <div className="text-center">
-        <h1>Pillar property management app home</h1>
-        <button
-          onClick={() => {
-            router.push("login");
-          }}
-          className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-        >
-          {sessionUser?.email ? "Sign Out" : "Sign In/Sign Up"}
-        </button>
+        <h1 className="mt-12">Pillar property management app home</h1>
         <br />
         {!!sessionUser?.email && (
           <>
             <br />
             <button
-              className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
+              className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
               onClick={async () => {
                 await login({ email: sessionUser.email ?? "", userType: "TENANT", name: sessionUser.name ?? "" });
                 router.push("/demo");

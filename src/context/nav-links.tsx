@@ -1,4 +1,3 @@
-import { ENTITIES } from '@/database/entities';
 import Link from 'next/link';
 import React, { useCallback } from 'react';
 import { useUserContext } from './user';
@@ -8,7 +7,7 @@ export const NavLinks = () => {
 
   const handleClick = useCallback(() => {
     if (user.pmEmail || user.tenantEmail) {
-      return logOut();
+      logOut();
     }
     return () => { };
   }, [user, logOut]);
