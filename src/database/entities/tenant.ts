@@ -18,20 +18,20 @@ export class TenantEntity {
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
-        tenantName: { type: "string" },
-        tenantEmail: { type: "string" },
-        userType: { type: "string" },
-        property: { type: "string" },
         pmEmail: { type: "string" },
+        property: { type: "string" },
         status: { type: "string" },
+        tenantEmail: { type: "string" },
+        tenantName: { type: "string" },
+        userType: { type: "string" },
       },
       table: PillarDynamoTable
     } as const);
   }
 
-  private generatePk(email: string) {
-    console.log({ email });
-    return ["T", `${email.toLowerCase()}`].join("#");
+  private generatePk({ tenantEmail }: { tenantEmail: string; }) {
+    console.log({ final: tenantEmail });
+    return ["T", `${tenantEmail.toLowerCase()}`].join("#");
   }
 
   private generateSk() {
@@ -48,10 +48,10 @@ export class TenantEntity {
    */
   public async create(
     { tenantEmail, tenantName, pmEmail }: CreateTenantProps) {
-    console.log({ pmEmail });
     try {
+      console.log({ tenantEmail });
       const result = await this.tenant.update({
-        pk: this.generatePk(tenantEmail),
+        pk: this.generatePk({ tenantEmail }),
         sk: this.generateSk(),
         tenantEmail: tenantEmail.toLowerCase(),
         tenantName,
@@ -69,13 +69,13 @@ export class TenantEntity {
    * Updates a tenant's name or status.
    */
   public async update(
-    { email, name, status }:
-      { email: string; name?: string; status?: "INVITED" | "JOINED" | "REQUESTED_JOIN"; }) {
+    { tenantEmail, tenantName, status }:
+      { tenantEmail: string; tenantName?: string; status?: "INVITED" | "JOINED" | "REQUESTED_JOIN"; }) {
     try {
       const result = await this.tenant.update({
-        pk: this.generatePk(email),
+        pk: this.generatePk({ tenantEmail }),
         sk: this.generateSk(),
-        ...(name && { name }),
+        ...(tenantName && { tenantName }),
         ...(status && { status }),
       }, { returnValues: "ALL_NEW" });
       return result;
@@ -85,11 +85,11 @@ export class TenantEntity {
   }
 
   public async addPropertyForTenant(
-    { email, propertyManagerEmail }:
-      { email: string; name?: string; propertyManagerEmail: string; }) {
+    { tenantEmail, propertyManagerEmail }:
+      { tenantEmail: string; propertyManagerEmail: string; }) {
     try {
       const result = await this.tenant.update({
-        pk: this.generatePk(email),
+        pk: this.generatePk({ tenantEmail }),
         sk: this.generateSkForProperty({ propertyManagerEmail }),
         propertyManagerEmail,
       }, { returnValues: "ALL_NEW" });
@@ -102,10 +102,10 @@ export class TenantEntity {
   /**
    * Returns the tenant's user record from the database.
    */
-  public async get({ email }: { email: string; }) {
+  public async get({ tenantEmail }: { tenantEmail: string; }) {
     try {
       const params = {
-        pk: this.generatePk(email.toLowerCase()),
+        pk: this.generatePk({ tenantEmail }),
         sk: this.generateSk()
       };
       const result = await this.tenant.get(params, { consistent: true });

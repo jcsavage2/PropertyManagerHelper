@@ -79,7 +79,6 @@ export const UserContextProvider = (props: any) => {
 
   useEffect(() => {
     const localUser = window.localStorage.getItem("PILLAR::USER");
-    console.log({ localUser });
     if (localUser) {
       setUser(JSON.parse(localUser));
     }

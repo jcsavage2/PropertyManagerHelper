@@ -117,8 +117,8 @@ export default function Demo() {
 
   const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
   const userInfo: UserInfo = {
-    name: user.tenantName,
-    email: user.tenantEmail,
+    tenantName: user.tenantName,
+    tenantEmail: user.tenantEmail,
     address,
     unit,
     city,

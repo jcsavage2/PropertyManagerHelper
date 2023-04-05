@@ -13,6 +13,8 @@ const customStyles = {
     bottom: 'auto',
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
+    width: "75%",
+    backgroundColor: 'rgba(255, 255, 255)'
   },
   overLay: {
     position: 'fixed',
@@ -42,6 +44,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
 
+
   const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setTenantName(e.currentTarget.value);
   }, [setTenantName]);
@@ -67,6 +70,12 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   function closeModal() {
     setTenantModalIsOpen(false);
   }
+  console.log({
+    tenantEmail,
+    tenantName,
+    pmEmail: user.pmEmail,
+    organization: user.organization ?? ""
+  });
 
   const handleCreateNewTenant: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
@@ -74,13 +83,13 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
       if (!user.pmEmail) {
         throw new Error("user needs to be a Property Manager.");
       }
-      const body: CreateTenantBody = {
+
+      const { data } = await axios.post("/api/create-tenant", {
         tenantEmail,
         tenantName,
         pmEmail: user.pmEmail,
-        organization: "None"
-      };
-      const { data } = await axios.post("/api/create-tenant", body);
+        organization: user.organization ?? ""
+      });
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
@@ -105,71 +114,71 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         onClick={closeModal}>X Close</button>
 
       <form onSubmit={handleCreateNewTenant} style={{ display: "grid" }}>
-        <label htmlFor='name'>Tenant Name</label>
+        <label htmlFor='name'>Tenant Name*</label>
         <input
-          className='rounded px-1'
+          className='rounded px-1 border-solid border-2 border-slate-200'
           id="name"
           type={"text"}
           value={tenantName}
           onChange={handleNameChange}
         />
-        <label htmlFor='email'>Email* </label>
+        <label className='mt-5' htmlFor='email'>Email* </label>
         <input
-          className='rounded px-1'
+          className='rounded px-1 border-solid border-2 border-slate-200'
           id="email"
           type={"email"}
           value={tenantEmail}
           onChange={handleEmailChange}
         />
-        <label htmlFor='address'>Address* </label>
+        <label className='mt-5' htmlFor='address'>Address* </label>
         <input
-          className='rounded px-1'
+          className='rounded px-1 border-solid border-2 border-slate-200'
           id="address"
           type={"text"}
           value={address}
           onChange={handleAddressChange}
         />
-        <label htmlFor='address'>Unit </label>
+        <label className='mt-5' htmlFor='address'>Unit </label>
         <input
-          className='rounded px-1'
+          className='rounded px-1 border-solid border-2 border-slate-200'
           id="address"
           placeholder='N/A if not applicable'
           type={"text"}
           value={unit}
           onChange={handleUnitChange}
         />
-        <label htmlFor='address'>State* </label>
+        <label className='mt-5' htmlFor='address'>State* </label>
         <input
-          className='rounded px-1'
+          className='rounded px-1 border-solid border-2 border-slate-200'
           id="address"
           type={"text"}
           value={state}
           onChange={handleStateChange}
         />
-        <label htmlFor='address'>City* </label>
+        <label className='mt-5' htmlFor='address'>City* </label>
         <input
-          className='rounded px-1'
+          className='rounded px-1 border-solid border-2 border-slate-200'
           id="address"
           type={"text"}
           value={city}
           onChange={handleCityChange}
         />
-        <label htmlFor='address'>Zip* </label>
+        <label className='mt-5' htmlFor='address'>Zip* </label>
         <input
-          className='rounded px-1'
+          className='rounded px-1 border-solid border-2 border-slate-200'
           id="address"
           type={"text"}
           value={zip}
           onChange={handleZipChange}
         />
         <button
-          className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
+          className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
           type="submit"
           disabled={!tenantName || !tenantEmail || !address || !state || !city || !zip}
         >
           Add Tenant
         </button>
       </form>
-    </Modal>
+    </Modal >
   );
 };

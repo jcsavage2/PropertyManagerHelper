@@ -27,7 +27,9 @@ export class PropertyManagerEntity {
         pmName: { type: "string" },
         pmEmail: { type: "string" },
         organization: { type: "string" },
-        userType: { type: "string" }
+        userType: { type: "string" },
+        tenantName: { type: "string" },
+        tenantEmail: { type: "string" }
       },
       table: PillarDynamoTable
     } as const);
@@ -101,8 +103,8 @@ export class PropertyManagerEntity {
       const result = await this.propertyManagerEntity.update({
         pk: this.generatePk({ email: pmEmail }),
         sk: this.generateSkForTenant(),
-        email: tenantEmail.toLowerCase(),
-        name: tenantName?.toLocaleLowerCase(),
+        tenantEmail: tenantEmail.toLowerCase(),
+        tenantName: tenantName?.toLocaleLowerCase(),
         organization,
       }, { returnValues: "ALL_NEW" });
       return result;
@@ -179,7 +181,7 @@ export class PropertyManagerEntity {
       const result = await this.propertyManagerEntity.update({
         pk: this.generatePk({ email }),
         sk: this.generateSk(),
-        email: email.toLowerCase(),
+        pmEmail: email.toLowerCase(),
         ...(name && { name, }),
         ...(organization && { organization }),
         userType: ENTITIES.PROPERTY_MANAGER
