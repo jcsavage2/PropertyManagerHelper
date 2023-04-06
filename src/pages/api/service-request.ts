@@ -92,8 +92,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     } else {
       return res.status(200).json({ response: processedResponse });
     }
-  } catch (err) {
-    return res.status(400).json({ response: 'service-request error' });
+  } catch (err: any) {
+    return res.status(err.response?.status ?? 400).json({ response: 'service-request error' });
   }
 }
 

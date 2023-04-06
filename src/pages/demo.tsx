@@ -6,8 +6,7 @@ import { toast } from 'react-toastify';
 import { hasAllIssueInfo, hasAllUserInfo } from '@/utils';
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types';
 import { useUserContext } from '@/context/user';
-
-
+import { issueCategoryToTypes } from '@/constants';
 
 export default function Demo() {
   const [userMessage, setUserMessage] = useState('');
@@ -23,16 +22,13 @@ export default function Demo() {
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
+  const [issueCategory, setIssueCategory] = useState("");
+  const [issueSubCategory, setIssueSubCategory] = useState("");
+  const [issueLocation, setIssueLocation] = useState("");
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
-  const initialWorkOrderState: WorkOrder = {
-    /** Issue Information */
-    issueCategory: "",
-    issueLocation: "",
-    issueSubCategory: "",
-  };
-  const [workOrder, setWorkOrder] = useState<WorkOrder>(initialWorkOrderState);
+  const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -45,6 +41,16 @@ export default function Demo() {
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
     setUserMessage(e.currentTarget.value);
   }, [setUserMessage]);
+
+  const handleIssueCategoryChange: React.ChangeEventHandler<HTMLSelectElement> = useCallback((e) => {
+    setIssueCategory(e.currentTarget.value);
+  }, [setIssueCategory]);
+  const handleIssueSubCategoryChange: React.ChangeEventHandler<HTMLSelectElement> = useCallback((e) => {
+    setIssueSubCategory(e.currentTarget.value);
+  }, [setIssueSubCategory]);
+  const handleIssueLocationChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setIssueLocation(e.currentTarget.value);
+  }, [setIssueLocation]);
 
   const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setAddress(e.currentTarget.value);
@@ -84,7 +90,9 @@ export default function Demo() {
       return;
     }
     setMessages([]);
-    setWorkOrder(initialWorkOrderState);
+    setIssueCategory("");
+    setIssueSubCategory("");
+    setIssueLocation("");
     return;
   };
 
@@ -102,19 +110,23 @@ export default function Demo() {
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
 
-      setWorkOrder({
-        ...workOrder,
-        ...(!!parsed.issueCategory && { issueCategory: parsed.issueCategory }),
-        ...(!!parsed.issueSubCategory && { issueSubCategory: parsed.issueSubCategory }),
-        ...(!!parsed.issueLocation && { issueLocation: parsed.issueLocation })
-      });
+      parsed.issueCategory && setIssueCategory(parsed.issueCategory);
+      parsed.issueSubCategory && setIssueSubCategory(parsed.issueSubCategory);
+      parsed.issueLocation && setIssueLocation(parsed.issueLocation);
 
       const newMessage = parsed.aiMessage;
       setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
-    } catch (err) {
+    } catch (err: any) {
+      let assistantMessage = "Sorry - I had a hiccup on my end. Could you please try again?";
+
+      if (err.response.status === 500) {
+        setHasConnectionWithGPT(false);
+        assistantMessage = "Sorry - I am having trouble connecting to my server. Please complete this form manually or try again later.";
+      }
+
       setIsResponding(false);
-      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: "Sorry - I had a hiccup on my end. Could you please try again?" }]);
+      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: assistantMessage }]);
       setUserMessage(lastUserMessage);
     }
   };
@@ -130,6 +142,12 @@ export default function Demo() {
     zip,
     permissionToEnter
   };
+  const workOrder: WorkOrder = {
+    issueCategory,
+    issueSubCategory,
+    issueLocation
+  };
+
   return (
     <>
       <main
@@ -190,9 +208,45 @@ export default function Demo() {
                             </div>
                           )}
                           <p data-testid={`response-${index}`} className='whitespace-pre-line break-keep'>{message.content}</p>
-                          {hasAllIssueInfo(workOrder) && index === lastSystemMessageIndex && (
+                          {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder) || !hasConnectionWithGPT) && (
                             <>
                               <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
+                                {
+                                  !hasConnectionWithGPT && (
+                                    <>
+                                      <label htmlFor='issueCategory'>Issue* </label>
+                                      <select
+                                        className='rounded px-1'
+                                        id="issueCategory"
+                                        onChange={handleIssueCategoryChange}
+                                        value={issueCategory ?? ''}
+                                      >
+                                        <option value=''>Please select an issue category</option>
+                                        {Object.keys(issueCategoryToTypes).map((issueCategory, index) => { return <option key={index}>{issueCategory}</option>; })}
+                                      </select>
+                                      <label htmlFor='issueSubCategory'>Issue Details* </label>
+                                      <select
+                                        className='rounded px-1'
+                                        id="issueSubCategory"
+                                        onChange={handleIssueSubCategoryChange}
+                                        value={issueSubCategory ?? ''}
+                                        disabled={!issueCategory}
+                                      >
+                                        <option value=''>Please specify the details of your issue</option>
+                                        {issueCategory && issueCategoryToTypes[issueCategory].map((issueCategory, index) => { return <option key={index} value={issueCategory}>{issueCategory}</option>; }
+                                        )}
+                                      </select>
+                                      <label htmlFor='issueLocation'>Issue Location* </label>
+                                      <input
+                                        className='rounded px-1'
+                                        id="issueLocation"
+                                        type={"text"}
+                                        value={issueLocation}
+                                        onChange={handleIssueLocationChange}
+                                      />
+                                    </>
+                                  )
+                                }
                                 <label htmlFor='address'>Address* </label>
                                 <input
                                   className='rounded px-1'
@@ -238,7 +292,7 @@ export default function Demo() {
                                   value={zip}
                                   onChange={handleZipChange}
                                 />
-                              </div>
+                              </div >
                               <p className='mt-2'>Permission To Enter Property* </p>
                               <div>
                                 <input
@@ -263,24 +317,27 @@ export default function Demo() {
                                 <label htmlFor='permission-no'>{"No"}</label>
                               </div>
                             </>
-                          )}
-                        </div>
-                      </div>
+                          )
+                          }
+                        </div >
+                      </div >
                     ))}
-                  {isResponding && (
-                    <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
-                      <div className="dot animate-loader"></div>
-                      <div className="dot animate-loader animation-delay-200"></div>
-                      <div className="dot animate-loader animation-delay-400"></div>
-                    </div>
-                  )}
-                </div>
+                  {
+                    isResponding && (
+                      <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
+                        <div className="dot animate-loader"></div>
+                        <div className="dot animate-loader animation-delay-200"></div>
+                        <div className="dot animate-loader animation-delay-400"></div>
+                      </div>
+                    )
+                  }
+                </div >
                 <div
                   id="chatbox-footer"
                   className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
                   style={{ "height": "12dvh" }}
                 >
-                  {hasAllIssueInfo(workOrder) ? (
+                  {hasAllIssueInfo(workOrder) || !hasConnectionWithGPT ? (
                     <button
                       disabled={permissionToEnter === "no" || !hasAllUserInfo(userInfo)}
                       onClick={handleSubmitWorkOrder}
@@ -321,11 +378,11 @@ export default function Demo() {
                     </form>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+              </div >
+            </div >
+          </div >
+        </div >
+      </main >
     </>
   );
 }
