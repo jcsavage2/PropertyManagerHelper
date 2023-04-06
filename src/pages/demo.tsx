@@ -100,9 +100,9 @@ export default function Demo() {
       return;
     }
     setMessages([]);
-    setIssueCategory("")
-    setIssueSubCategory("")
-    setIssueLocation("")
+    setIssueCategory("");
+    setIssueSubCategory("");
+    setIssueLocation("");
     return;
   };
 
@@ -120,19 +120,19 @@ export default function Demo() {
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
 
-      setIssueCategory(parsed.issueCategory ?? "");
-      setIssueSubCategory(parsed.issueSubCategory ?? "");
-      setIssueLocation(parsed.issueLocation ?? "");
+      parsed.issueCategory && setIssueCategory(parsed.issueCategory);
+      parsed.issueSubCategory && setIssueSubCategory(parsed.issueSubCategory);
+      parsed.issueLocation && setIssueLocation(parsed.issueLocation);
 
       const newMessage = parsed.aiMessage;
       setIsResponding(false);
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
     } catch (err: any) {
-      let assistantMessage = "Sorry - I had a hiccup on my end. Could you please try again?" 
+      let assistantMessage = "Sorry - I had a hiccup on my end. Could you please try again?";
 
-      if(err.response.status === 500){
-        setHasConnectionWithGPT(false)
-        assistantMessage = "Sorry - I am having trouble connecting to my server. Please complete this form manually or try again later."
+      if (err.response.status === 500) {
+        setHasConnectionWithGPT(false);
+        assistantMessage = "Sorry - I am having trouble connecting to my server. Please complete this form manually or try again later.";
       }
 
       setIsResponding(false);
@@ -156,7 +156,7 @@ export default function Demo() {
     issueCategory,
     issueSubCategory,
     issueLocation
-  }
+  };
 
   return (
     <>
@@ -230,8 +230,8 @@ export default function Demo() {
                                       onChange={handleIssueCategoryChange}
                                       value={issueCategory ?? ''}
                                     >
-                                        <option value=''>Please select an issue category</option>
-                                        {Object.keys(issueCategoryToTypes).map((issueCategory, index) => {return <option key={index}>{issueCategory}</option>})}
+                                      <option value=''>Please select an issue category</option>
+                                      {Object.keys(issueCategoryToTypes).map((issueCategory, index) => { return <option key={index}>{issueCategory}</option>; })}
                                     </select>
                                     <label htmlFor='issueSubCategory'>Issue Details* </label>
                                     <select
@@ -242,9 +242,8 @@ export default function Demo() {
                                       disabled={!issueCategory}
                                     >
                                       <option value=''>Please specify the details of your issue</option>
-                                        {issueCategory && issueCategoryToTypes[issueCategory].map((issueCategory, index) => 
-                                          {return <option key={index} value={issueCategory}>{issueCategory}</option>}
-                                        )}
+                                      {issueCategory && issueCategoryToTypes[issueCategory].map((issueCategory, index) => { return <option key={index} value={issueCategory}>{issueCategory}</option>; }
+                                      )}
                                     </select>
                                     <label htmlFor='issueLocation'>Issue Location* </label>
                                     <input
