@@ -1,4 +1,5 @@
 import { useUserContext } from "@/context/user";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 
 const Home = () => {
@@ -12,6 +13,13 @@ const Home = () => {
       <div className="text-center">
         <h1 className="mt-12">Pillar property management app home</h1>
         <br />
+        {!sessionUser?.email && (
+          <button
+            onClick={() => signIn()}
+            className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25">
+            Sign In/Sign Up
+          </button>
+        )}
         {!!sessionUser?.email && (
           <>
             <br />
