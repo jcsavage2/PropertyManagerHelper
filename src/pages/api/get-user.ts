@@ -1,11 +1,8 @@
+import { Data } from "@/database";
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
-
-type Data = {
-  response: string;
-};
 
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
 
@@ -29,7 +26,7 @@ export default async function handler(
         return res.status(200).json({ response: JSON.stringify(user) });
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
-        user = await tenantEntity.get({ email });
+        user = await tenantEntity.get({ tenantEmail: email });
         return res.status(200).json({ response: JSON.stringify({ user }) });
     }
 

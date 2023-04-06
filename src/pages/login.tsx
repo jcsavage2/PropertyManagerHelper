@@ -2,15 +2,15 @@ import { useUserContext } from "@/context/user";
 import { signIn } from "next-auth/react";
 
 const Login = () => {
-	const { user, logOut } = useUserContext();
+	const { user, logOut, sessionUser } = useUserContext();
 	return (
 		<>
 			<main className='text-center'>
 				<div>
 
-					{user.name ? (
+					{sessionUser && user ? (
 						<>
-							<h3 className='text-slate-400 text-2xl mt-6 mb-12'>Welcome, {user.name}</h3>
+							<h3 className='text-slate-400 text-2xl mt-6 mb-12'>Welcome, {user.tenantName || user.pmName}</h3>
 							<button
 								onClick={() => logOut()}
 								className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"

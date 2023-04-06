@@ -28,6 +28,10 @@ export const PillarDynamoTable = new Table({
   DocumentClient
 });
 
+export type Data = {
+  response: string;
+};
+
 export class BaseEntity {
   pk: string;
   sk: string;

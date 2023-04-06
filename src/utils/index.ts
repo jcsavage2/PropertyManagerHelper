@@ -1,4 +1,4 @@
-import { findIssueSample, findUserInfoSample, issueCategoryToTypes } from "@/constants";
+import { findIssueSample, issueCategoryToTypes } from "@/constants";
 import { ChatCompletionRequestMessage } from "openai";
 import { AiJSONResponse, UserInfo, WorkOrder } from "@/types";
 
@@ -24,7 +24,16 @@ export const hasAllInfo = (workOrder: WorkOrder) => {
 };
 
 export const hasAllUserInfo = (userInfo: UserInfo) => {
-  return Object.values(userInfo).every(value => !!value); // this works because we need permission to enter to be true.
+  const {
+    address,
+    state,
+    city,
+    zip,
+    tenantEmail,
+    tenantName,
+    permissionToEnter
+  } = userInfo;
+  return !!address && !!state && !!city && !!zip && !!tenantEmail && !!tenantName && !!permissionToEnter;
 };
 
 /**
