@@ -86,14 +86,10 @@ export default function Demo() {
 
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
-    if (!user.pmEmail) {
-      toast.error("You must have a property manager linked to your account.");
-      return;
-    }
     const body: SendEmailApiRequest = {
       ...workOrder,
       messages,
-      pmEmail: user.pmEmail,
+      pmEmail,
       tenantEmail,
       tenantName,
       permissionToEnter,
