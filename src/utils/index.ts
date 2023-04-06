@@ -46,7 +46,7 @@ export const hasAllUserInfo = (userInfo: UserInfo) => {
 export const generateAdditionalUserContext = (workOrder: WorkOrder) => {
   return `\n \
       Don't ask me to confirm info I've already told you.
-      If my issue is vague, eg I say something is "broken", ask for more details.`;
+      If my issue is vague, eg I say something is "broken", ask for more details - and use the examples from above.`;
 
 };
 
@@ -76,14 +76,13 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         If there is already an "issueLocation" value in ${JSON.stringify(workOrder)}, do not ask the user about the issue location.
         
         ${!workOrder.issueCategory && !workOrder.issueSubCategory && Object.keys(issueCategoryToTypes).map(issueCategory => {
-      return `If you determine that the issueCategory is "${issueCategory}", then try to categorize the "issueSubCategory" into one of these: ${issueCategoryToTypes[issueCategory].join(", ")}`;
+      return `If you determine that the issueCategory is "${issueCategory}", then try to categorize the "issueSubCategory" into one of these: ${issueCategoryToTypes[issueCategory].join(", ")}.`;
     }).join("\n\n ")}.
 
 
-        ${workOrder.issueCategory && workOrder.issueCategory !== "Other" && !workOrder.issueSubCategory && `Ask the user to clarify the root issue. \
-        See if you can categorize the root issue be one of ${issueCategoryToTypes[workOrder.issueCategory].join(", ")} and this value will be the "issueSubCategory". If their root\
-        issue doesn't match one of: ${issueCategoryToTypes[workOrder.issueCategory].join(", ")}, then record what they tell you as their "issueSubCategory".\
-        Once you have found their "issueSubCategory", mark "issueFound" as true.`}
+        ${workOrder.issueCategory && workOrder.issueCategory !== "Other" && !workOrder.issueSubCategory && `Ask the user to clarify the root issue into one of these options: \
+        ${issueCategoryToTypes[workOrder.issueCategory].join(", ")}. Use the value they select as the "issueSubCategory". If their root\
+        issue doesn't match one of: ${issueCategoryToTypes[workOrder.issueCategory].join(", ")}, then record what they tell you as their "issueSubCategory".`}
        
         ${workOrder.issueCategory && workOrder.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
        
