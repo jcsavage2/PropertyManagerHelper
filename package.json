@@ -32,6 +32,7 @@
     "uuidv4": "^6.2.13"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.7",
     "@types/react-modal": "^3.13.1",
     "autoprefixer": "^10.4.13",
     "cypress": "^12.8.1",
