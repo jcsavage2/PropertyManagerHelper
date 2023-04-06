@@ -45,7 +45,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   const [zip, setZip] = useState("");
 
 
-  const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+  const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setTenantName(e.currentTarget.value);
   }, [setTenantName]);
   const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
@@ -99,7 +99,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
     } catch (err) {
       console.log({ err });
     }
-  }, [user]);
+  }, [user, tenantEmail, tenantName, setTenantModalIsOpen]);
 
   return (
     <Modal
@@ -120,7 +120,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
           id="name"
           type={"text"}
           value={tenantName}
-          onChange={handleNameChange}
+          onChange={handleTenantNameChange}
         />
         <label className='mt-5' htmlFor='email'>Email* </label>
         <input
@@ -147,26 +147,26 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
           value={unit}
           onChange={handleUnitChange}
         />
-        <label className='mt-5' htmlFor='address'>State* </label>
+        <label className='mt-5' htmlFor='state'>State* </label>
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
-          id="address"
+          id="state"
           type={"text"}
           value={state}
           onChange={handleStateChange}
         />
-        <label className='mt-5' htmlFor='address'>City* </label>
+        <label className='mt-5' htmlFor='city'>City* </label>
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
-          id="address"
+          id="city"
           type={"text"}
           value={city}
           onChange={handleCityChange}
         />
-        <label className='mt-5' htmlFor='address'>Zip* </label>
+        <label className='mt-5' htmlFor='zip'>Zip* </label>
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
-          id="address"
+          id="zip"
           type={"text"}
           value={zip}
           onChange={handleZipChange}

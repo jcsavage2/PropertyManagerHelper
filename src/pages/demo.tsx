@@ -16,6 +16,10 @@ export default function Demo() {
   if (user.userType !== "TENANT") {
     throw new Error("User Must be a Tenant.");
   }
+
+  const [pmEmail, setPmEmail] = useState(user.pmEmail ?? "");
+  const [tenantName, setTenantName] = useState(user.tenantName);
+  const [tenantEmail, setTenantEmail] = useState(user.tenantEmail);
   const [address, setAddress] = useState("");
   const [unit, setUnit] = useState("");
   const [state, setState] = useState("");
@@ -52,6 +56,15 @@ export default function Demo() {
     setIssueLocation(e.currentTarget.value);
   }, [setIssueLocation]);
 
+  const handlePmEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setPmEmail(e.currentTarget.value);
+  }, [setPmEmail]);
+  const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setTenantName(e.currentTarget.value);
+  }, [setTenantName]);
+  const handleTenantEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setTenantEmail(e.currentTarget.value);
+  }, [setTenantEmail]);
   const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setAddress(e.currentTarget.value);
   }, [setAddress]);
@@ -77,7 +90,18 @@ export default function Demo() {
       toast.error("You must have a property manager linked to your account.");
       return;
     }
-    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages, pmEmail: user.pmEmail };
+    const body: SendEmailApiRequest = {
+      ...workOrder,
+      messages,
+      pmEmail: user.pmEmail,
+      tenantEmail,
+      tenantName,
+      permissionToEnter,
+      address,
+      state,
+      city,
+      zip
+    };
     const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
       toast.success('Successfully Submitted Work Order!', {
@@ -247,6 +271,33 @@ export default function Demo() {
                                     </>
                                   )
                                 }
+                                <label htmlFor='pmEmail'>Property Manager Email* </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="pmEmail"
+                                  placeholder='pm@gmail.com'
+                                  type={"text"}
+                                  value={pmEmail}
+                                  onChange={handlePmEmailChange}
+                                />
+                                <label htmlFor='tenantName'>Name* </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="tenantName"
+                                  placeholder='John Doe'
+                                  type={"text"}
+                                  value={tenantName}
+                                  onChange={handleTenantNameChange}
+                                />
+                                <label htmlFor='tenantEmail'>Email* </label>
+                                <input
+                                  className='rounded px-1'
+                                  id="tenantEmail"
+                                  placeholder='my.email@gmail.com'
+                                  type={"text"}
+                                  value={tenantEmail}
+                                  onChange={handleTenantEmailChange}
+                                />
                                 <label htmlFor='address'>Address* </label>
                                 <input
                                   className='rounded px-1'
@@ -339,7 +390,9 @@ export default function Demo() {
                 >
                   {hasAllIssueInfo(workOrder) || !hasConnectionWithGPT ? (
                     <button
-                      disabled={permissionToEnter === "no" || !hasAllUserInfo(userInfo)}
+                      disabled={permissionToEnter === "no" || !hasAllUserInfo({
+                        tenantEmail, tenantName, address, state, city, zip, permissionToEnter
+                      })}
                       onClick={handleSubmitWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
                       {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}
