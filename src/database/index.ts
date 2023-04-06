@@ -4,30 +4,33 @@ import { Table } from 'dynamodb-toolbox';
 
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-if (!accessKeyId || !secretAccessKey) {
+const region = process.env.REGION;
+
+if (!accessKeyId || !secretAccessKey || !region) {
   throw new Error("missing aws credentials");
 }
-export const DocumentClient = new DynamoDB.DocumentClient({
-  // Specify your client options as usual
-  region: "us-east-1",
+
+export const DynamoDBClientConfig = {
   credentials: {
-    accessKeyId,
-    secretAccessKey,
+    accessKeyId: accessKeyId,
+    secretAccessKey: secretAccessKey,
   },
-  convertEmptyValues: false
-});
+  region: process.env.REGION,
+};
+
+export const DocumentClient = new DynamoDB.DocumentClient({ ...DynamoDBClientConfig, convertEmptyValues: false });
 
 export const PillarDynamoTable = new Table({
-  //DynamoDB Table Name
   name: 'pillar-hq',
-
-  // Define partition and sort keys
   partitionKey: 'pk',
   sortKey: 'sk',
-
   removeNullAttributes: true,
-  DocumentClient // Add the DocumentClient
+  DocumentClient
 });
+
+export type Data = {
+  response: string;
+};
 
 export class BaseEntity {
   pk: string;

@@ -5,15 +5,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { AiJSONResponse, ApiRequest } from "@/types";
 import chalk from "chalk";
+import { Data } from "@/database";
 
 const config = new Configuration({
   apiKey: process.env.OPEN_AI_API_KEY,
 });
 const openai = new OpenAIApi(config);
-
-type Data = {
-  response: string;
-};
 
 /**
  * Handles back and forth communication between openAI API and the user messages.

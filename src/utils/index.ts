@@ -1,4 +1,4 @@
-import { findIssueSample, findUserInfoSample, issueCategoryToTypes } from "@/constants";
+import { findIssueSample, issueCategoryToTypes } from "@/constants";
 import { ChatCompletionRequestMessage } from "openai";
 import { AiJSONResponse, UserInfo, WorkOrder } from "@/types";
 
@@ -24,7 +24,16 @@ export const hasAllInfo = (workOrder: WorkOrder) => {
 };
 
 export const hasAllUserInfo = (userInfo: UserInfo) => {
-  return Object.values(userInfo).every(value => !!value); // this works because we need permission to enter to be true.
+  const {
+    address,
+    state,
+    city,
+    zip,
+    tenantEmail,
+    tenantName,
+    permissionToEnter
+  } = userInfo;
+  return !!address && !!state && !!city && !!zip && !!tenantEmail && !!tenantName && !!permissionToEnter;
 };
 
 /**
@@ -64,7 +73,7 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         The user may specify multiple rooms, in which case you should record all of them in the "issueLocation" value. The user may also specify \
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
         If you have found the "issueLocation" do not ask the user about the "issueLocation" again.`}
-       
+        If there is already an "issueLocation" value in ${JSON.stringify(workOrder)}, do not ask the user about the issue location.
         
         ${!workOrder.issueCategory && !workOrder.issueSubCategory && Object.keys(issueCategoryToTypes).map(issueCategory => {
       return `If you determine that the issueCategory is "${issueCategory}", then try to categorize the "issueSubCategory" into one of these: ${issueCategoryToTypes[issueCategory].join(", ")}`;

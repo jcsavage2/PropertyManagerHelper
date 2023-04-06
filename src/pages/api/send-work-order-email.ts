@@ -1,11 +1,8 @@
+import { Data } from "@/database";
 import { SendEmailApiRequest } from "@/types";
 import sendgrid from "@sendgrid/mail";
 
 import { NextApiRequest, NextApiResponse } from "next";
-
-type Data = {
-  response: string;
-};
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,7 +19,7 @@ export default async function handler(
     body.messages.pop();
 
     const t = await sendgrid.send({
-      to: body.email, // The Property Manager
+      to: body.pmEmail, // The Property Manager
       cc: "mitchposk+01@gmail.com", // The Tenant
       from: "dylan@pillarhq.co", // The Email from the company
       subject: `Work Order Request for ${body.address}`, // work order for address on MM-DD-YYYY

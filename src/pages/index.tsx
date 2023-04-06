@@ -1,32 +1,43 @@
 import { useUserContext } from "@/context/user";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 
 const Home = () => {
   const router = useRouter();
-  const { user, login } = useUserContext();
+  const { user, login, sessionUser } = useUserContext();
+  console.log("here");
+  console.log({ sessionUser });
+
   return (
     <>
       <div className="text-center">
-        <h1>Pillar property management app home</h1>
-        <button
-          onClick={() => {
-            router.push("login");
-          }}
-          className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-        >
-          {user.email ? "Sign Out" : "Sign In/Sign Up"}
-        </button>
+        <h1 className="mt-12">Pillar property management app home</h1>
         <br />
-        {user.email && (
+        {!sessionUser?.email && (
+          <button
+            onClick={() => signIn()}
+            className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25">
+            Sign In/Sign Up
+          </button>
+        )}
+        {!!sessionUser?.email && (
           <>
             <br />
             <button
-              className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-              onClick={() => login({ email: user.email, userType: "TENANT" })}>Continue as Tenant</button>
+              className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+              onClick={async () => {
+                await login({ email: sessionUser.email ?? "", userType: "TENANT", name: sessionUser.name ?? "" });
+                router.push("/demo");
+              }
+              }
+            >Continue as Tenant</button>
             <br />
             <button
               className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
-              onClick={() => login({ email: user.email, userType: "PROPERTY_MANAGER" })}>Continue as Property Manager</button>
+              onClick={async () => {
+                await login({ email: sessionUser.email ?? "", userType: "PROPERTY_MANAGER", name: sessionUser.name ?? "" });
+                router.push("/portal");
+              }}>Continue as Property Manager</button>
           </>
         )}
       </div>

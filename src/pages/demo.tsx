@@ -13,8 +13,9 @@ export default function Demo() {
   const [lastUserMessage, setLastUserMessage] = useState('');
   const { user } = useUserContext();
 
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
+  if (user.userType !== "TENANT") {
+    throw new Error("User Must be a Tenant.");
+  }
   const [address, setAddress] = useState("");
   const [unit, setUnit] = useState("");
   const [state, setState] = useState("");
@@ -29,23 +30,13 @@ export default function Demo() {
   const [isResponding, setIsResponding] = useState(false);
   const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
 
-  useEffect(() => {
-    if (user.email) {
-      setEmail(user.email);
-    }
-    if (user.name) {
-      setName(user.name);
-    }
-  }, [user]);
-
   // Scroll to bottom when new message added
   useEffect(() => {
     var element = document.getElementById('chatbox');
-
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, name, email, address, permissionToEnter]);
+  }, [messages, address, permissionToEnter]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
     setUserMessage(e.currentTarget.value);
@@ -60,12 +51,7 @@ export default function Demo() {
   const handleIssueLocationChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIssueLocation(e.currentTarget.value);
   }, [setIssueLocation]);
-  const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setName(e.currentTarget.value);
-  }, [setName]);
-  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setEmail(e.currentTarget.value);
-  }, [setEmail]);
+
   const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setAddress(e.currentTarget.value);
   }, [setAddress]);
@@ -87,7 +73,11 @@ export default function Demo() {
 
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
-    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages };
+    if (!user.pmEmail) {
+      toast.error("You must have a property manager linked to your account.");
+      return;
+    }
+    const body: SendEmailApiRequest = { ...userInfo, ...workOrder, messages, pmEmail: user.pmEmail };
     const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
       toast.success('Successfully Submitted Work Order!', {
@@ -143,8 +133,8 @@ export default function Demo() {
 
   const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
   const userInfo: UserInfo = {
-    name,
-    email,
+    tenantName: user.tenantName,
+    tenantEmail: user.tenantEmail,
     address,
     unit,
     city,
@@ -221,60 +211,47 @@ export default function Demo() {
                           {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder) || !hasConnectionWithGPT) && (
                             <>
                               <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
-                                {!hasConnectionWithGPT && (
-                                  <>
-                                    <label htmlFor='issueCategory'>Issue* </label>
-                                    <select
-                                      className='rounded px-1'
-                                      id="issueCategory"
-                                      onChange={handleIssueCategoryChange}
-                                      value={issueCategory ?? ''}
-                                    >
-                                      <option value=''>Please select an issue category</option>
-                                      {Object.keys(issueCategoryToTypes).map((issueCategory, index) => { return <option key={index}>{issueCategory}</option>; })}
-                                    </select>
-                                    <label htmlFor='issueSubCategory'>Issue Details* </label>
-                                    <select
-                                      className='rounded px-1'
-                                      id="issueSubCategory"
-                                      onChange={handleIssueSubCategoryChange}
-                                      value={issueSubCategory ?? ''}
-                                      disabled={!issueCategory}
-                                    >
-                                      <option value=''>Please specify the details of your issue</option>
-                                      {issueCategory && issueCategoryToTypes[issueCategory].map((issueCategory, index) => { return <option key={index} value={issueCategory}>{issueCategory}</option>; }
-                                      )}
-                                    </select>
-                                    <label htmlFor='issueLocation'>Issue Location* </label>
-                                    <input
-                                      className='rounded px-1'
-                                      id="issueLocation"
-                                      type={"text"}
-                                      value={issueLocation}
-                                      onChange={handleIssueLocationChange}
-                                    />
-                                  </>
-                                )}
-                                <label htmlFor='name'>Name* </label>
-                                <input
-                                  className='rounded px-1'
-                                  id="name"
-                                  type={"text"}
-                                  value={user.name}
-                                  onChange={handleNameChange}
-                                />
-                                <label htmlFor='email'>Email* </label>
-                                <input
-                                  className='rounded px-1'
-                                  id="email"
-                                  type={"email"}
-                                  value={user.email}
-                                  onChange={handleEmailChange}
-                                />
+                                {
+                                  !hasConnectionWithGPT && (
+                                    <>
+                                      <label htmlFor='issueCategory'>Issue* </label>
+                                      <select
+                                        className='rounded px-1'
+                                        id="issueCategory"
+                                        onChange={handleIssueCategoryChange}
+                                        value={issueCategory ?? ''}
+                                      >
+                                        <option value=''>Please select an issue category</option>
+                                        {Object.keys(issueCategoryToTypes).map((issueCategory, index) => { return <option key={index}>{issueCategory}</option>; })}
+                                      </select>
+                                      <label htmlFor='issueSubCategory'>Issue Details* </label>
+                                      <select
+                                        className='rounded px-1'
+                                        id="issueSubCategory"
+                                        onChange={handleIssueSubCategoryChange}
+                                        value={issueSubCategory ?? ''}
+                                        disabled={!issueCategory}
+                                      >
+                                        <option value=''>Please specify the details of your issue</option>
+                                        {issueCategory && issueCategoryToTypes[issueCategory].map((issueCategory, index) => { return <option key={index} value={issueCategory}>{issueCategory}</option>; }
+                                        )}
+                                      </select>
+                                      <label htmlFor='issueLocation'>Issue Location* </label>
+                                      <input
+                                        className='rounded px-1'
+                                        id="issueLocation"
+                                        type={"text"}
+                                        value={issueLocation}
+                                        onChange={handleIssueLocationChange}
+                                      />
+                                    </>
+                                  )
+                                }
                                 <label htmlFor='address'>Address* </label>
                                 <input
                                   className='rounded px-1'
                                   id="address"
+                                  placeholder='123 Test Street'
                                   type={"text"}
                                   value={address}
                                   onChange={handleAddressChange}
@@ -283,7 +260,7 @@ export default function Demo() {
                                 <input
                                   className='rounded px-1'
                                   id="unit"
-                                  placeholder='N/A if not applicable'
+                                  placeholder='Unit No.'
                                   type={"text"}
                                   value={unit}
                                   onChange={handleUnitChange}
@@ -292,6 +269,7 @@ export default function Demo() {
                                 <input
                                   className='rounded px-1'
                                   id="state"
+                                  placeholder='FL'
                                   type={"text"}
                                   value={state}
                                   onChange={handleStateChange}
@@ -300,6 +278,7 @@ export default function Demo() {
                                 <input
                                   className='rounded px-1'
                                   id="city"
+                                  placeholder='Miami'
                                   type={"text"}
                                   value={city}
                                   onChange={handleCityChange}
@@ -308,11 +287,12 @@ export default function Demo() {
                                 <input
                                   className='rounded px-1'
                                   id="zip"
+                                  placeholder='33131'
                                   type={"text"}
                                   value={zip}
                                   onChange={handleZipChange}
                                 />
-                              </div>
+                              </div >
                               <p className='mt-2'>Permission To Enter Property* </p>
                               <div>
                                 <input
@@ -337,18 +317,21 @@ export default function Demo() {
                                 <label htmlFor='permission-no'>{"No"}</label>
                               </div>
                             </>
-                          )}
-                        </div>
-                      </div>
+                          )
+                          }
+                        </div >
+                      </div >
                     ))}
-                  {isResponding && (
-                    <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
-                      <div className="dot animate-loader"></div>
-                      <div className="dot animate-loader animation-delay-200"></div>
-                      <div className="dot animate-loader animation-delay-400"></div>
-                    </div>
-                  )}
-                </div>
+                  {
+                    isResponding && (
+                      <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
+                        <div className="dot animate-loader"></div>
+                        <div className="dot animate-loader animation-delay-200"></div>
+                        <div className="dot animate-loader animation-delay-400"></div>
+                      </div>
+                    )
+                  }
+                </div >
                 <div
                   id="chatbox-footer"
                   className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
@@ -395,11 +378,11 @@ export default function Demo() {
                     </form>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+              </div >
+            </div >
+          </div >
+        </div >
+      </main >
     </>
   );
 }

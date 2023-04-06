@@ -1,29 +1,32 @@
+import { Data } from "@/database";
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TenantEntity } from "@/database/entities/tenant";
+import chalk from "chalk";
 import { NextApiRequest, NextApiResponse } from "next";
-
-type Data = {
-  response: string;
-};
 
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
 
-export type GetUser = {
+export type GetOrCreateUserBody = {
   email: string;
   userType: UserType;
-  propertyManagerEmail?: string;
+  name: string;
 };
 
+/**
+ * Attempts to get the user from the database. 
+ * If the user does not exist in the database, the user is created.
+ * Note, a user with the same email can have up to two profiles - one as a tenant and one as a property manager.
+ * @returns `ContextUser` object.
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
   try {
-    const body = req.body as GetUser;
-    const { email, userType, propertyManagerEmail } = body;
+    const body = req.body as GetOrCreateUserBody;
+    const { email, userType, name } = body;
 
-    console.log({ email, userType, propertyManagerEmail });
 
     const propertyManagerEntity = new PropertyManagerEntity();
 
@@ -36,26 +39,23 @@ export default async function handler(
         if (existingUserFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingUserFromDB) });
         } else {
-          const newPropertyManager = await propertyManagerEntity.create({ email });
+          const newPropertyManager = await propertyManagerEntity.create({ pmEmail: email, pmName: name });
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newPropertyManager.Attributes) });
         }
 
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
-        const existingTenant = await tenantEntity.get({ email });
+        const existingTenant = await tenantEntity.get({ tenantEmail: email });
+        console.log({ existingTenant });
         //@ts-ignore
         const existingTenantFromDB = existingTenant?.Item ?? null;
-
+        console.log({ existingTenantFromDB }, chalk.green("==============="));
         if (existingTenantFromDB) {
-          // we want to also append this user the the property manager 
-
-          propertyManagerEmail && await propertyManagerEntity.update({ email: propertyManagerEmail, tenants: [email.toLocaleLowerCase()] });
-
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
-          const newTenant = await tenantEntity.create({ email });
-          propertyManagerEmail && await propertyManagerEntity.update({ email: propertyManagerEmail, tenants: [email.toLocaleLowerCase()] });
+          const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });
+          console.log({ newTenant }, chalk.green("==============="));
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
         }

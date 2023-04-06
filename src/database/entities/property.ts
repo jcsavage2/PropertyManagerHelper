@@ -25,7 +25,7 @@ export class PropertyEntity {
   }
 
   private generatePk({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    return [ENTITIES.PROPERTY, propertyManagerEmail.toLowerCase()].join('#');
+    return ["P", propertyManagerEmail.toLowerCase()].join('#');
   }
 
   private generateSk({ streetAddress, country, city, state, zip, unitNumber }:
