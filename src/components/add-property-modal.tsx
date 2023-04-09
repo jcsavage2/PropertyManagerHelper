@@ -20,7 +20,7 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
   const [unit, setUnit] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-  const [zip, setZip] = useState("");
+  const [postalCode, setPostalCode] = useState("");
 
   const customStyles = {
     content: {
@@ -60,8 +60,8 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
     setCity(e.currentTarget.value);
   }, [setCity]);
   const handleZipChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setZip(e.currentTarget.value);
-  }, [setZip]);
+    setPostalCode(e.currentTarget.value);
+  }, [setPostalCode]);
 
   function closeModal() {
     setTenantModalIsOpen(false);
@@ -133,13 +133,13 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
             className='rounded px-1'
             id="address"
             type={"text"}
-            value={zip}
+            value={postalCode}
             onChange={handleZipChange}
           />
           <button
             className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
             type="submit"
-            disabled={!tenantName || !tenantEmail || !address || !state || !city || !zip}
+            disabled={!tenantName || !tenantEmail || !address || !state || !city || !postalCode}
           >
             Add Property
           </button>

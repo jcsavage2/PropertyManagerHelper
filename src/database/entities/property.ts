@@ -17,7 +17,7 @@ export class PropertyEntity {
         unitNumber: { type: 'string' },
         city: { type: 'string', },
         state: { type: 'string' },
-        zip: { type: 'string' },
+        postalCode: { type: 'string' },
         workOrders: { type: 'list' },
       },
       table: PillarDynamoTable
@@ -28,34 +28,34 @@ export class PropertyEntity {
     return ["P", propertyManagerEmail.toLowerCase()].join('#');
   }
 
-  private generateSk({ streetAddress, country, city, state, zip, unitNumber }:
-    { streetAddress: string; country: string; city: string; state: string; zip: string; unitNumber?: string; }) {
-    return [streetAddress.toUpperCase(), country.toUpperCase(), city.toUpperCase(), state.toUpperCase(), zip, unitNumber ?? ""].join("#");
+  private generateSk({ streetAddress, country, city, state, postalCode, unitNumber }:
+    { streetAddress: string; country: string; city: string; state: string; postalCode: string; unitNumber?: string; }) {
+    return [streetAddress.toUpperCase(), country.toUpperCase(), city.toUpperCase(), state.toUpperCase(), postalCode.toUpperCase(), unitNumber?.toUpperCase() ?? ""].join("#");
   }
 
 
 
-  public async create({ streetAddress, country, city, state, zip, unitNumber, propertyManagerEmail }:
-    { streetAddress: string; country: string; city: string; state: string; zip: string; unitNumber?: string; propertyManagerEmail: string; }) {
+  public async create({ streetAddress, country, city, state, postalCode, unitNumber, propertyManagerEmail }:
+    { streetAddress: string; country: string; city: string; state: string; postalCode: string; unitNumber?: string; propertyManagerEmail: string; }) {
     const result = await this.propertyEntity.put({
       pk: this.generatePk({ propertyManagerEmail }),
-      sk: this.generateSk({ streetAddress, country, city, state, zip, unitNumber }),
+      sk: this.generateSk({ streetAddress, country, city, state, postalCode, unitNumber }),
       country: country.toUpperCase(),
       streetAddress: streetAddress.toUpperCase(),
       city: city.toUpperCase(),
       state: state.toUpperCase(),
-      zip: zip.toUpperCase(),
+      postalCode: postalCode.toUpperCase(),
       unitNumber: unitNumber?.toUpperCase() ?? "",
       workOrders: []
     });
     return result.Item;
   }
 
-  public async get({ streetAddress, country, city, state, zip, unitNumber, propertyManagerEmail }:
-    { streetAddress: string; country: string; city: string; state: string; zip: string; unitNumber?: string; propertyManagerEmail: string; }) {
+  public async get({ streetAddress, country, city, state, postalCode, unitNumber, propertyManagerEmail }:
+    { streetAddress: string; country: string; city: string; state: string; postalCode: string; unitNumber?: string; propertyManagerEmail: string; }) {
     const params = {
       pk: this.generatePk({ propertyManagerEmail }), // can query all properties for a given property manager
-      sk: this.generateSk({ streetAddress, country, city, state, zip, unitNumber })
+      sk: this.generateSk({ streetAddress, country, city, state, postalCode, unitNumber })
     };
     const result = await this.propertyEntity.get(params, { consistent: true });
     return result;

@@ -42,7 +42,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   const [unit, setUnit] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-  const [zip, setZip] = useState("");
+  const [postalCode, setPostalCode] = useState("");
 
 
   const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
@@ -63,9 +63,9 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   const handleCityChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setCity(e.currentTarget.value);
   }, [setCity]);
-  const handleZipChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setZip(e.currentTarget.value);
-  }, [setZip]);
+  const handlePostalCodeChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setPostalCode(e.currentTarget.value);
+  }, [setPostalCode]);
 
   function closeModal() {
     setTenantModalIsOpen(false);
@@ -163,18 +163,18 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
           value={city}
           onChange={handleCityChange}
         />
-        <label className='mt-5' htmlFor='zip'>Zip* </label>
+        <label className='mt-5' htmlFor='postalCode'>Zip* </label>
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
-          id="zip"
+          id="postalCode"
           type={"text"}
-          value={zip}
-          onChange={handleZipChange}
+          value={postalCode}
+          onChange={handlePostalCodeChange}
         />
         <button
           className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
           type="submit"
-          disabled={!tenantName || !tenantEmail || !address || !state || !city || !zip}
+          disabled={!tenantName || !tenantEmail || !address || !state || !city || !postalCode}
         >
           Add Tenant
         </button>

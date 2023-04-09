@@ -28,12 +28,12 @@ export const hasAllUserInfo = (userInfo: UserInfo) => {
     address,
     state,
     city,
-    zip,
+    postalCode,
     tenantEmail,
     tenantName,
     permissionToEnter
   } = userInfo;
-  return !!address && !!state && !!city && !!zip && !!tenantEmail && !!tenantName && !!permissionToEnter;
+  return !!address && !!state && !!city && !!postalCode && !!tenantEmail && !!tenantName && !!permissionToEnter;
 };
 
 /**

@@ -24,7 +24,7 @@ export default function Demo() {
   const [unit, setUnit] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-  const [zip, setZip] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
   const [issueCategory, setIssueCategory] = useState("");
   const [issueSubCategory, setIssueSubCategory] = useState("");
@@ -78,8 +78,8 @@ export default function Demo() {
     setCity(e.currentTarget.value);
   }, [setCity]);
   const handleZipChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setZip(e.currentTarget.value);
-  }, [setZip]);
+    setPostalCode(e.currentTarget.value);
+  }, [setPostalCode]);
   const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setPermissionToEnter(e.currentTarget.value as "yes" | "no");
   }, [setPermissionToEnter]);
@@ -96,7 +96,7 @@ export default function Demo() {
       address,
       state,
       city,
-      zip
+      postalCode
     };
     const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
@@ -159,7 +159,7 @@ export default function Demo() {
     unit,
     city,
     state,
-    zip,
+    postalCode,
     permissionToEnter
   };
   const workOrder: WorkOrder = {
@@ -330,13 +330,13 @@ export default function Demo() {
                                   value={city}
                                   onChange={handleCityChange}
                                 />
-                                <label htmlFor='zip'>Zip* </label>
+                                <label htmlFor='postalCode'>Zip* </label>
                                 <input
                                   className='rounded px-1'
-                                  id="zip"
+                                  id="postalCode"
                                   placeholder='33131'
                                   type={"text"}
-                                  value={zip}
+                                  value={postalCode}
                                   onChange={handleZipChange}
                                 />
                               </div >
@@ -387,7 +387,7 @@ export default function Demo() {
                   {hasAllIssueInfo(workOrder) || !hasConnectionWithGPT ? (
                     <button
                       disabled={permissionToEnter === "no" || !hasAllUserInfo({
-                        tenantEmail, tenantName, address, state, city, zip, permissionToEnter
+                        tenantEmail, tenantName, address, state, city, postalCode, permissionToEnter
                       })}
                       onClick={handleSubmitWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>

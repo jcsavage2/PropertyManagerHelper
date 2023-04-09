@@ -24,7 +24,7 @@ export type UserInfo = {
   unit?: string;
   state: string;
   city: string;
-  zip: string;
+  postalCode: string;
   tenantEmail: string;
   tenantName: string;
   permissionToEnter: string;

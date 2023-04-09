@@ -10,7 +10,7 @@ export type CreatePropertyBody = {
   country: string;
   city: string;
   state: string;
-  zip: string;
+  postalCode: string;
   unitNumber?: string;
   propertyManagerEmail: string;
 };
@@ -25,13 +25,13 @@ export default async function handler(
 ) {
   try {
     const body = req.body as CreatePropertyBody;
-    const { streetAddress, country, city, state, zip, unitNumber, propertyManagerEmail } = body;
+    const { streetAddress, country, city, state, postalCode, unitNumber, propertyManagerEmail } = body;
 
     const propertyManagerEntity = new PropertyManagerEntity();
     const propertyEntity = new PropertyEntity();
 
     // Create Property
-    const newProperty = await propertyEntity.create({ streetAddress, country, city, state, zip, unitNumber, propertyManagerEmail });
+    const newProperty = await propertyEntity.create({ streetAddress, country, city, state, postalCode, unitNumber, propertyManagerEmail });
     await propertyManagerEntity.createPropertyCompanionRow({ email: propertyManagerEmail, organization: "", addressPk: newProperty.pk, addressSk: newProperty.sk });
 
     //@ts-ignore
