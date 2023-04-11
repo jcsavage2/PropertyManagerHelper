@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from "axios";
 
-const Portal = () => {
+const WorkOrders = () => {
   const { user } = useUserContext();
   const router = useRouter();
   const [workOrders, setWorkOrders] = useState([]);
@@ -96,4 +96,4 @@ const Portal = () => {
   );
 };
 
-export default Portal;
+export default WorkOrders;
