@@ -17,7 +17,9 @@ export default async function handler(
     await workOrderEntity.create({
       addressId: "123",
       propertyManagerEmail: body.pmEmail,
-      status: "TO_DO"
+      status: "TO_DO",
+      issueCategory: body.issueCategory ?? "",
+      issueSubCategory: body.issueSubCategory ?? "",
     });
 
 
