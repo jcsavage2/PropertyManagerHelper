@@ -17,6 +17,7 @@ export default async function handler(
     await workOrderEntity.create({
       addressId: "123",
       propertyManagerEmail: body.pmEmail,
+      issue: body.issueDescription || "No Issue Description",
       status: "TO_DO"
     });
 
@@ -80,11 +81,7 @@ export default async function handler(
           <table>
             <tr>
               <td>Issue</td>
-              <td>${body.issueCategory}</td>
-            </tr>
-            <tr>
-              <td>Issue Sub-Category</td>
-              <td>${body.issueSubCategory}</td>
+              <td>${body.issueDescription}</td>
             </tr>
             <tr>
               <td>Issue Location</td>

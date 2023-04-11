@@ -32,8 +32,7 @@ export type UserInfo = {
 
 export type IssueInformation = {
   issueLocation: string | null;
-  issueCategory: string | null;
-  issueSubCategory: string | null;
+  issueDescription: string | null;
 };
 
 export type WorkOrder = IssueInformation;

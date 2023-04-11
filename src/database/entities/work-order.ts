@@ -3,7 +3,7 @@ import { ENTITIES, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 
 type WorkOrderStatus = "TO_DO" | "COMPLETE";
-type CreateWorkOrderProps = { addressId: string, propertyManagerEmail: string; status: WorkOrderStatus; issue: string; issueCategory: string; };
+type CreateWorkOrderProps = { addressId: string, propertyManagerEmail: string; status: WorkOrderStatus; issue: string; };
 
 export class WorkOrderEntity {
   private propertyEntity: Entity;
@@ -18,7 +18,6 @@ export class WorkOrderEntity {
         GSI1SK: { type: "string" },
         pmEmail: { type: 'string' },
         issue: { type: "string" },
-        issueCategory: { type: "string" },
         tenantEmail: { type: 'string' },
         addressId: { type: "string" },
         status: { type: "string" },
@@ -47,7 +46,7 @@ export class WorkOrderEntity {
   /**
    * Creates a work order entity.
    */
-  public async create({ addressId, propertyManagerEmail, status, issue, issueCategory }: CreateWorkOrderProps) {
+  public async create({ addressId, propertyManagerEmail, status, issue }: CreateWorkOrderProps) {
     const result = await this.propertyEntity.put({
       pk: this.generatePk({ addressId }),
       sk: this.generateSk({ status }),
@@ -55,7 +54,6 @@ export class WorkOrderEntity {
       GSI1SK: this.generateSk({ status }),
       pmEmail: propertyManagerEmail.toLowerCase(),
       issue: issue.toLowerCase(),
-      issueCategory: issueCategory.toLowerCase(),
     });
     return result.Item;
   }

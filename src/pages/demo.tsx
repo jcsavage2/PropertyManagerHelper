@@ -26,8 +26,7 @@ export default function Demo() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
-  const [issueCategory, setIssueCategory] = useState("");
-  const [issueSubCategory, setIssueSubCategory] = useState("");
+  const [issueDescription, setIssueDescription] = useState("");
   const [issueLocation, setIssueLocation] = useState("");
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
@@ -46,12 +45,9 @@ export default function Demo() {
     setUserMessage(e.currentTarget.value);
   }, [setUserMessage]);
 
-  const handleIssueCategoryChange: React.ChangeEventHandler<HTMLSelectElement> = useCallback((e) => {
-    setIssueCategory(e.currentTarget.value);
-  }, [setIssueCategory]);
-  const handleIssueSubCategoryChange: React.ChangeEventHandler<HTMLSelectElement> = useCallback((e) => {
-    setIssueSubCategory(e.currentTarget.value);
-  }, [setIssueSubCategory]);
+  const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setIssueDescription(e.currentTarget.value);
+  }, [setIssueDescription]);
   const handleIssueLocationChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIssueLocation(e.currentTarget.value);
   }, [setIssueLocation]);
@@ -110,8 +106,7 @@ export default function Demo() {
       return;
     }
     setMessages([]);
-    setIssueCategory("");
-    setIssueSubCategory("");
+    setIssueDescription("");
     setIssueLocation("");
     return;
   };
@@ -130,8 +125,7 @@ export default function Demo() {
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
 
-      parsed.issueCategory && setIssueCategory(parsed.issueCategory);
-      parsed.issueSubCategory && setIssueSubCategory(parsed.issueSubCategory);
+      parsed.issueDescription && setIssueDescription(parsed.issueDescription);
       parsed.issueLocation && setIssueLocation(parsed.issueLocation);
 
       const newMessage = parsed.aiMessage;
@@ -163,8 +157,7 @@ export default function Demo() {
     permissionToEnter
   };
   const workOrder: WorkOrder = {
-    issueCategory,
-    issueSubCategory,
+    issueDescription,
     issueLocation
   };
 
@@ -207,12 +200,12 @@ export default function Demo() {
                             ? 'bg-gray-200 text-left'
                             : 'bg-blue-100 text-right'
                             }`}>
-                          {workOrder.issueCategory && index === lastSystemMessageIndex && (
+                          {workOrder.issueDescription && index === lastSystemMessageIndex && (
                             <div className="text-left mb-1 text-gray-700">
                               <h3 className="text-left font-semibold">
                                 Issue:{' '}
                                 <span className="font-normal">
-                                  {`${workOrder.issueCategory}` + `; ${workOrder.issueSubCategory ?? ""}`}
+                                  {`${workOrder.issueDescription}`}
                                 </span>
                               </h3>
                             </div>
@@ -234,28 +227,14 @@ export default function Demo() {
                                 {
                                   !hasConnectionWithGPT && (
                                     <>
-                                      <label htmlFor='issueCategory'>Issue* </label>
-                                      <select
+                                      <label htmlFor='issueDescription'>Issue Details* </label>
+                                      <input
                                         className='rounded px-1'
-                                        id="issueCategory"
-                                        onChange={handleIssueCategoryChange}
-                                        value={issueCategory ?? ''}
-                                      >
-                                        <option value=''>Please select an issue category</option>
-                                        {Object.keys(issueCategoryToTypes).map((issueCategory, index) => { return <option key={index}>{issueCategory}</option>; })}
-                                      </select>
-                                      <label htmlFor='issueSubCategory'>Issue Details* </label>
-                                      <select
-                                        className='rounded px-1'
-                                        id="issueSubCategory"
-                                        onChange={handleIssueSubCategoryChange}
-                                        value={issueSubCategory ?? ''}
-                                        disabled={!issueCategory}
-                                      >
-                                        <option value=''>Please specify the details of your issue</option>
-                                        {issueCategory && issueCategoryToTypes[issueCategory].map((issueCategory, index) => { return <option key={index} value={issueCategory}>{issueCategory}</option>; }
-                                        )}
-                                      </select>
+                                        id="issueDescription"
+                                        type={"text"}
+                                        value={issueDescription}
+                                        onChange={handleIssueDescriptionChange}
+                                      />
                                       <label htmlFor='issueLocation'>Issue Location* </label>
                                       <input
                                         className='rounded px-1'
