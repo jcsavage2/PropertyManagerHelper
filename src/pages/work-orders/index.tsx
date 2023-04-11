@@ -69,7 +69,7 @@ const Portal = () => {
               return (
                 <tr className='hover:bg-blue-200 cursor-pointer' key={`${wo.pk}-${wo.sk}`}>
                   <td>
-                    {`${wo.issueCategory} - ${wo.issueSubCategory}`}
+                    {`${wo.issueDescription}`}
                   </td>
                   <td>
                     {wo.sk.split("#")[1] === "TO_DO" ? "To Do" : "Done"}
