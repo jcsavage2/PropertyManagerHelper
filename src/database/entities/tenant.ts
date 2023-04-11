@@ -30,7 +30,6 @@ export class TenantEntity {
   }
 
   private generatePk({ tenantEmail }: { tenantEmail: string; }) {
-    console.log({ final: tenantEmail });
     return ["T", `${tenantEmail.toLowerCase()}`].join("#");
   }
 
@@ -49,7 +48,6 @@ export class TenantEntity {
   public async create(
     { tenantEmail, tenantName, pmEmail }: CreateTenantProps) {
     try {
-      console.log({ tenantEmail });
       const result = await this.tenant.update({
         pk: this.generatePk({ tenantEmail }),
         sk: this.generateSk(),

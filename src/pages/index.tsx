@@ -5,8 +5,6 @@ import { useRouter } from "next/router";
 const Home = () => {
   const router = useRouter();
   const { user, login, sessionUser } = useUserContext();
-  console.log("here");
-  console.log({ sessionUser });
 
   return (
     <>
@@ -36,7 +34,7 @@ const Home = () => {
               className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
               onClick={async () => {
                 await login({ email: sessionUser.email ?? "", userType: "PROPERTY_MANAGER", name: sessionUser.name ?? "" });
-                router.push("/portal");
+                router.push("/work-orders");
               }}>Continue as Property Manager</button>
           </>
         )}

@@ -1,4 +1,5 @@
 import { Data } from "@/database";
+import { WorkOrderEntity } from "@/database/entities/work-order";
 import { SendEmailApiRequest } from "@/types";
 import sendgrid from "@sendgrid/mail";
 
@@ -10,6 +11,17 @@ export default async function handler(
 ) {
   try {
     const body = req.body as SendEmailApiRequest;
+    const workOrderEntity = new WorkOrderEntity();
+
+    /** CREATE THE WORK ORDER */
+    await workOrderEntity.create({
+      addressId: "123",
+      propertyManagerEmail: body.pmEmail,
+      status: "TO_DO"
+    });
+
+
+    /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.SENDGRID_API_KEY;
     if (!apiKey) {
       throw new Error("missing SENDGRID_API_KEY env variable.");
@@ -18,7 +30,7 @@ export default async function handler(
 
     body.messages.pop();
 
-    const t = await sendgrid.send({
+    await sendgrid.send({
       to: body.pmEmail, // The Property Manager
       cc: "mitchposk+01@gmail.com", // The Tenant
       from: "dylan@pillarhq.co", // The Email from the company

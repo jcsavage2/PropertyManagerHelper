@@ -17,7 +17,7 @@ export const NavLinks = () => {
       <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>
       {sessionUser?.email && (<Link onClick={handleClick} className='hover:text-gray-500 text-lg' href={"/"}>{"Sign Out"}</Link>)}
       {user.pk.startsWith("T") && <Link className='hover:text-gray-500 text-lg' href={"/demo"}>Demo</Link>}
-      {user.pk.startsWith("PM") && <Link className='hover:text-gray-500 text-lg' href={"/portal"}>Admin Portal</Link>}
+      {user.pk.startsWith("PM") && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Admin Portal</Link>}
     </>
   );
 };

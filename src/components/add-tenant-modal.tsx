@@ -70,12 +70,6 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
   function closeModal() {
     setTenantModalIsOpen(false);
   }
-  console.log({
-    tenantEmail,
-    tenantName,
-    pmEmail: user.pmEmail,
-    organization: user.organization ?? ""
-  });
 
   const handleCreateNewTenant: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
@@ -88,7 +82,12 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         tenantEmail,
         tenantName,
         pmEmail: user.pmEmail,
-        organization: user.organization ?? ""
+        organization: user.organization ?? "",
+        address,
+        unit,
+        state,
+        city,
+        postalCode,
       });
       const { response } = data;
       const parsedUser = JSON.parse(response);
@@ -99,7 +98,16 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
     } catch (err) {
       console.log({ err });
     }
-  }, [user, tenantEmail, tenantName, setTenantModalIsOpen]);
+  }, [
+    user,
+    tenantEmail,
+    tenantName,
+    setTenantModalIsOpen,
+    address,
+    unit,
+    state,
+    city,
+    postalCode]);
 
   return (
     <Modal

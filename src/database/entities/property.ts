@@ -8,10 +8,11 @@ export class PropertyEntity {
 
   constructor() {
     this.propertyEntity = new Entity({
-      name: ENTITIES.PROPERTY_MANAGER,
+      name: ENTITIES.PROPERTY,
       attributes: {
-        pk: { partitionKey: true }, // flag as partitionKey
-        sk: { hidden: true, sortKey: true }, // flag as sortKey and mark hidden
+        pk: { partitionKey: true },
+        sk: { sortKey: true },
+        GSI1PK: { type: "string" },
         country: { type: 'string' },
         streetAddress: { type: 'string' },
         unitNumber: { type: 'string' },

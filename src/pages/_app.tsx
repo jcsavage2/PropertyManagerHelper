@@ -27,7 +27,7 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
           <div className="flex space-x-5 text-center">
             <div className='flex'>
               <p className='pl-4 text-xl my-auto font-sans'>PILLAR</p>
-              <Image src="/2.png" alt='1' width={30} height={0}></Image>
+              <Image src="/2.png" alt='1' width={30} height={0} />
             </div>
             <div className='my-auto flex space-x-4'>
               <NavLinks />
