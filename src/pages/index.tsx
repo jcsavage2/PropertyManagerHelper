@@ -25,7 +25,7 @@ const Home = () => {
               className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
               onClick={async () => {
                 await login({ email: sessionUser.email ?? "", userType: "TENANT", name: sessionUser.name ?? "" });
-                router.push("/demo");
+                router.push("/work-order-chatbot");
               }
               }
             >Continue as Tenant</button>

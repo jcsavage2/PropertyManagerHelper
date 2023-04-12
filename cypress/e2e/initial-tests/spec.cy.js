@@ -11,7 +11,7 @@
 // https://on.cypress.io/introduction-to-cypress
 describe('Go to Home Page', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:3000/demo')
+    cy.visit('http://localhost:3000/work-order-chatbot')
   })
   it('Pro user identifies issue in one response', () => {
     cy.get('[data-testid="userMessageInput"]').type("Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right.")

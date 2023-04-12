@@ -1,38 +1,74 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
+import { uuid } from 'uuidv4';
 
 type WorkOrderStatus = "TO_DO" | "COMPLETE";
-type CreateWorkOrderProps = { addressId: string, propertyManagerEmail: string; status: WorkOrderStatus; issueSubCategory: string; issueCategory: string; };
+type CreateWorkOrderProps = {
+  address: string;
+  tenantEmail: string;
+  tenantName: string;
+  unit?: string;
+  state: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  propertyManagerEmail: string;
+  status: WorkOrderStatus;
+  issue: string;
+};
 
 export class WorkOrderEntity {
-  private propertyEntity: Entity;
+  private workOrderEntity: Entity;
 
   constructor() {
-    this.propertyEntity = new Entity({
+    this.workOrderEntity = new Entity({
       name: ENTITIES.WORK_ORDER,
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
         GSI1PK: { type: "string" },
         GSI1SK: { type: "string" },
+        GSI2PK: { type: "string" },
+        GSI2SK: { type: "string" },
         pmEmail: { type: 'string' },
         issue: { type: "string" },
-        issueCategory: { type: "string" },
         tenantEmail: { type: 'string' },
-        addressId: { type: "string" },
+        tenantName: { type: "string" },
+        address: { type: "map" },
         status: { type: "string" },
       },
       table: PillarDynamoTable
     } as const);
   }
 
-  private generatePk({ addressId }: { addressId: string; }) {
-    return ["WO", addressId.toLowerCase()].join('#');
+  private generatePk() {
+    return ["WO", uuid()].join('#');
   }
 
   private generateSk({ status }: { status: WorkOrderStatus; }) {
     return ["STATUS", status].join("#");
+  }
+
+  private generateAddress({
+    address,
+    country,
+    city,
+    state,
+    postalCode,
+    unit,
+  }: {
+    address: string;
+    country: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    unit?: string;
+  }) {
+
+    return {
+      address, unit, city, state, postalCode, country
+    };
   }
 
   /**
@@ -43,19 +79,26 @@ export class WorkOrderEntity {
   private generateGSI1PK({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     return ["PM", propertyManagerEmail.toLowerCase()].join("#");
   }
+  private generateGSI2PK({ tenantEmail }: { tenantEmail: string; }) {
+    return ["PM", tenantEmail.toLowerCase()].join("#");
+  }
 
   /**
    * Creates a work order entity.
    */
-  public async create({ addressId, propertyManagerEmail, status, issueSubCategory, issueCategory }: CreateWorkOrderProps) {
-    const result = await this.propertyEntity.put({
-      pk: this.generatePk({ addressId }),
+  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
+    const result = await this.workOrderEntity.put({
+      pk: this.generatePk(),
       sk: this.generateSk({ status }),
       GSI1PK: this.generateGSI1PK({ propertyManagerEmail }),
       GSI1SK: this.generateSk({ status }),
+      GSI2PK: this.generateGSI2PK({ tenantEmail }),
+      GSI2SK: this.generateSk({ status }),
       pmEmail: propertyManagerEmail.toLowerCase(),
-      issueCategory: issueCategory.toLowerCase(),
-      issueSubCategory: issueSubCategory.toLowerCase(),
+      tenantEmail,
+      tenantName,
+      address: this.generateAddress({ address, country, city, state, postalCode, unit }),
+      issue: issue.toLowerCase(),
     });
     return result.Item;
   }
@@ -66,32 +109,14 @@ export class WorkOrderEntity {
   public async get({ addressId, status }:
     { addressId: string; status: WorkOrderStatus; }) {
     const params = {
-      pk: this.generatePk({ addressId }), // can query all properties for a given property manager
+      pk: this.generatePk(), // can query all properties for a given property manager
       sk: this.generateSk({ status })
     };
-    const result = await this.propertyEntity.get(params, { consistent: true });
+    const result = await this.workOrderEntity.get(params, { consistent: true });
     return result;
   }
 
-  private async getAllPropertiesWithPk({ pk }: { pk: string; }) {
-    let startKey: StartKey;
-    const properties = [];
-    do {
-      try {
-
-        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(pk, { consistent: true, startKey });
-        startKey = LastEvaluatedKey as StartKey;
-        properties.push(...(Items ?? []));
-
-      } catch (error) {
-        console.log({ error });
-      }
-    } while (!!startKey);
-    return properties;
-  }
-
   /**
-   * 
    * @returns All work orders for a given property manager
    */
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
@@ -112,3 +137,4 @@ export class WorkOrderEntity {
     }
   }
 }
+

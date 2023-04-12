@@ -3,7 +3,7 @@ import { ChatCompletionRequestMessage } from "openai";
 import { AiJSONResponse, UserInfo, WorkOrder } from "@/types";
 
 export const hasAllIssueInfo = (workOrder: WorkOrder) => {
-  return !!workOrder.issueCategory && !!workOrder.issueSubCategory && !!workOrder.issueLocation;
+  return !!workOrder.issueDescription && !!workOrder.issueLocation;
 };
 
 export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse; }) => {
@@ -62,10 +62,9 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
     content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is.
         All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(findIssueSample)}
         and should contain all of the keys: ${Object.keys(findIssueSample).join(", ")}, even if there are no values. 
-        The "issueCategory" value will always be one of: ${Object.keys(issueCategoryToTypes).join(", ")}.
-        ${workOrder.issueCategory && `Don't assume the "issueCategory" - only fill a value for "issueCategory" if one is explicitly given. If one is not given, ask the user to "Clarify what is the 'thing' that is having the issue - eg 'washer' or 'toilet'".`}
+        The value of "issueDescription" is the issue or request for service the user tells you.
+        ${workOrder.issueDescription && `Don't assume the "issueDescription" - only fill a value for "issueDescription" if one is explicitly given. If one is not given, ask the user to "Clarify what they need help with".`}
 
-        
         ${!workOrder.issueLocation && `You must identify the "issueLocation", which is the instructions for the service worker locate the issue. \
         When asking for the issue location, remind the user "This information will help the service worker locate the issue."
         If the user doesn't provide an "issueLocation", set the value of "issueLocation" to "".
@@ -74,20 +73,8 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         that the issue is general to their entire apartment, in which case you should record "All Rooms" as the "issueLocation" value.
         If you have found the "issueLocation" do not ask the user about the "issueLocation" again.`}
         If there is already an "issueLocation" value in ${JSON.stringify(workOrder)}, do not ask the user about the issue location.
-        
-        ${!workOrder.issueCategory && !workOrder.issueSubCategory && Object.keys(issueCategoryToTypes).map(issueCategory => {
-      return `If you determine that the issueCategory is "${issueCategory}", then try to categorize the "issueSubCategory" into one of these: ${issueCategoryToTypes[issueCategory].join(", ")}.`;
-    }).join("\n\n ")}.
-
-
-        ${workOrder.issueCategory && workOrder.issueCategory !== "Other" && !workOrder.issueSubCategory && `Ask the user to clarify the root issue into one of these options: \
-        ${issueCategoryToTypes[workOrder.issueCategory].join(", ")}. Use the value they select as the "issueSubCategory". If their root\
-        issue doesn't match one of: ${issueCategoryToTypes[workOrder.issueCategory].join(", ")}, then record what they tell you as their "issueSubCategory".`}
        
-        ${workOrder.issueCategory && workOrder.issueCategory === "Other" && 'Ask the user to clarify the root issue. Record their root issue as the "issueSubCategory".'}
-       
-        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key and "issueFound" key.
-        When you have identified the value for keys "issueCategory" and "subCategory", mark the value for the key "issueFound" as "true".
+        The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
         If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.`
   };
 };
@@ -127,4 +114,9 @@ export const processAiResponse = ({ response, workOrderData }: { response: strin
     console.log({ err });
     return null;
   }
-};;
+};
+
+export function generateAddressKey({ unit, address }: { unit?: string; address: string; }) {
+  const unitString = unit ? `- ${unit?.toLowerCase()}` : "";
+  return `${address.toLowerCase()} ${unitString}`;
+}

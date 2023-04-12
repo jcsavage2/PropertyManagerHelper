@@ -77,8 +77,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       //If it still doesn't work, return the original aiMessage with other WO data taken from request body
       if (!processedResponse) {
         let incompleteResponse: AiJSONResponse = {
-          issueCategory: workOrderData.issueCategory ?? "",
-          issueSubCategory: workOrderData.issueSubCategory ?? "",
+          issueDescription: workOrderData.issueDescription ?? "",
           issueLocation: workOrderData.issueLocation ?? "",
           aiMessage: aiResponse
         };

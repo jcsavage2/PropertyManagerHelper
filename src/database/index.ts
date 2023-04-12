@@ -22,7 +22,7 @@ export const DocumentClient = new DynamoDB.DocumentClient({ ...DynamoDBClientCon
 
 export const INDEXES = {
   GSI1: "GSI1PK-GSI1SK-index"
-};
+} as const;
 
 export const PillarDynamoTable = new Table({
   name: 'pillar-hq',

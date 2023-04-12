@@ -12,9 +12,10 @@ export type CreateTenantBody = {
   pmEmail: string;
   organization: string;
   address: string;
-  unit: string;
+  unit?: string;
   state: string;
   city: string;
+  country: string;
   postalCode: string;
 };
 
@@ -33,6 +34,12 @@ export default async function handler(
       pmEmail,
       tenantEmail,
       tenantName,
+      address,
+      country,
+      city,
+      state,
+      postalCode,
+      unit
     } = body;
 
     const propertyManagerEntity = new PropertyManagerEntity();
@@ -42,10 +49,22 @@ export default async function handler(
     // Create companion row for the property manager.
     await propertyManagerEntity.createTenantCompanionRow({ tenantEmail, tenantName, organization, pmEmail });
 
-    // CreateTenant
-    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail });
-
     // Create Property
+    await propertyEntity.create(
+      {
+        tenantEmail,
+        propertyManagerEmail: pmEmail,
+        address,
+        country,
+        city,
+        state,
+        postalCode,
+        unit,
+      });
+
+    // CreateTenant
+    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
+
 
     //@ts-ignore
     return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });

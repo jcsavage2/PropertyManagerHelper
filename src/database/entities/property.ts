@@ -2,7 +2,16 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 
-
+type CreatePropertyProps = {
+  address: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  propertyManagerEmail: string;
+  state: string;
+  tenantEmail?: string;
+  unit?: string;
+};
 export class PropertyEntity {
   private propertyEntity: Entity;
 
@@ -13,9 +22,14 @@ export class PropertyEntity {
         pk: { partitionKey: true },
         sk: { sortKey: true },
         GSI1PK: { type: "string" },
+        GSI1SK: { type: "string" },
+        GSI2PK: { type: "string" },
+        GSI2SK: { type: "string" },
         country: { type: 'string' },
-        streetAddress: { type: 'string' },
-        unitNumber: { type: 'string' },
+        address: { type: 'string' },
+        pmEmail: { type: "string" },
+        tenantEmail: { type: "string" },
+        unit: { type: 'string' },
         city: { type: 'string', },
         state: { type: 'string' },
         postalCode: { type: 'string' },
@@ -29,34 +43,47 @@ export class PropertyEntity {
     return ["P", propertyManagerEmail.toLowerCase()].join('#');
   }
 
-  private generateSk({ streetAddress, country, city, state, postalCode, unitNumber }:
-    { streetAddress: string; country: string; city: string; state: string; postalCode: string; unitNumber?: string; }) {
-    return [streetAddress.toUpperCase(), country.toUpperCase(), city.toUpperCase(), state.toUpperCase(), postalCode.toUpperCase(), unitNumber?.toUpperCase() ?? ""].join("#");
+  private generateGSI1PK({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+    return ["PM", propertyManagerEmail.toLowerCase()].join('#');
+  }
+  private generateGSI2PK({ tenantEmail }: { tenantEmail: string; }) {
+    return ["PM", tenantEmail.toLowerCase()].join('#');
+  }
+
+  private generateSk({ address, country = "US", city, state, postalCode, unit }:
+    { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; }) {
+    return ["P", "A", address.toUpperCase(), "COUNTRY", country.toUpperCase(), "CITY", city.toUpperCase(), "STATE", state.toUpperCase(), "POSTAL", postalCode.toUpperCase(), "UNIT", unit ? unit?.toUpperCase() : ""].join("#");
   }
 
 
 
-  public async create({ streetAddress, country, city, state, postalCode, unitNumber, propertyManagerEmail }:
-    { streetAddress: string; country: string; city: string; state: string; postalCode: string; unitNumber?: string; propertyManagerEmail: string; }) {
-    const result = await this.propertyEntity.put({
+  public async create({ address, country = "US", tenantEmail, city, state, postalCode, unit, propertyManagerEmail }: CreatePropertyProps) {
+    const result = await this.propertyEntity.update({
       pk: this.generatePk({ propertyManagerEmail }),
-      sk: this.generateSk({ streetAddress, country, city, state, postalCode, unitNumber }),
+      sk: this.generateSk({ address, country, city, state, postalCode, unit }),
+      GSI1PK: this.generateGSI1PK({ propertyManagerEmail }),
+      GSI1SK: this.generateSk({ address, country, city, state, postalCode, unit }),
+      ...(tenantEmail && { GSI2PK: this.generateGSI2PK({ tenantEmail }) }),
+      GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit }),
+      tenantEmail: tenantEmail?.toLowerCase(),
       country: country.toUpperCase(),
-      streetAddress: streetAddress.toUpperCase(),
+      address: address.toUpperCase(),
       city: city.toUpperCase(),
       state: state.toUpperCase(),
       postalCode: postalCode.toUpperCase(),
-      unitNumber: unitNumber?.toUpperCase() ?? "",
-      workOrders: []
-    });
-    return result.Item;
+      pmEmail: propertyManagerEmail.toLowerCase(),
+      unit: unit?.toUpperCase() ?? "",
+    }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+
+    //@ts-ignore
+    return result.Attributes;
   }
 
-  public async get({ streetAddress, country, city, state, postalCode, unitNumber, propertyManagerEmail }:
-    { streetAddress: string; country: string; city: string; state: string; postalCode: string; unitNumber?: string; propertyManagerEmail: string; }) {
+  public async get({ address, country, city, state, postalCode, unit, propertyManagerEmail }:
+    { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; propertyManagerEmail: string; }) {
     const params = {
       pk: this.generatePk({ propertyManagerEmail }), // can query all properties for a given property manager
-      sk: this.generateSk({ streetAddress, country, city, state, postalCode, unitNumber })
+      sk: this.generateSk({ address, country, city, state, postalCode, unit })
     };
     const result = await this.propertyEntity.get(params, { consistent: true });
     return result;

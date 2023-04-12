@@ -24,6 +24,7 @@ export type UserInfo = {
   unit?: string;
   state: string;
   city: string;
+  country?: string;
   postalCode: string;
   tenantEmail: string;
   tenantName: string;
@@ -32,8 +33,7 @@ export type UserInfo = {
 
 export type IssueInformation = {
   issueLocation: string | null;
-  issueCategory: string | null;
-  issueSubCategory: string | null;
+  issueDescription: string | null;
 };
 
 export type WorkOrder = IssueInformation;

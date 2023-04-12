@@ -13,13 +13,31 @@ export default async function handler(
     const body = req.body as SendEmailApiRequest;
     const workOrderEntity = new WorkOrderEntity();
 
+    const {
+      address,
+      city,
+      country,
+      postalCode,
+      state,
+      tenantEmail,
+      tenantName,
+      unit,
+    } = body;
+
+    console.log({ tenantEmail, tenantName });
     /** CREATE THE WORK ORDER */
     await workOrderEntity.create({
-      addressId: "123",
+      address,
+      city,
+      country: country ?? "US",
+      issue: body.issueDescription || "No Issue Description",
+      postalCode,
       propertyManagerEmail: body.pmEmail,
+      state,
       status: "TO_DO",
-      issueCategory: body.issueCategory ?? "",
-      issueSubCategory: body.issueSubCategory ?? "",
+      tenantEmail,
+      tenantName,
+      unit,
     });
 
 
@@ -82,11 +100,7 @@ export default async function handler(
           <table>
             <tr>
               <td>Issue</td>
-              <td>${body.issueCategory}</td>
-            </tr>
-            <tr>
-              <td>Issue Sub-Category</td>
-              <td>${body.issueSubCategory}</td>
+              <td>${body.issueDescription}</td>
             </tr>
             <tr>
               <td>Issue Location</td>
@@ -102,7 +116,7 @@ export default async function handler(
             </tr>
             <tr>
               <td>Unit</td>
-              <td>${body.unit}</td>
+              <td>${body.unit ?? "No Unit"}</td>
             </tr>
             <tr>
               <td>City</td>
@@ -111,6 +125,10 @@ export default async function handler(
             <tr>
               <td>State</td>
               <td>${body.state}</td>
+            </tr>
+            <tr>
+              <td>Postal Code</td>
+              <td>${body.postalCode}</td>
             </tr>
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
@@ -126,6 +144,7 @@ export default async function handler(
       </html>`
     });
   } catch (error: any) {
+    console.log({ error });
     return res.status(error.statusCode || 500).json({ response: error.message });
   }
 

@@ -3,9 +3,8 @@ import { AiJSONResponse } from "@/types";
 
 export const findIssueSample: AiJSONResponse = {
   aiMessage: "<your AI generated conversational response>",
-  issueCategory: "<value of the issueCategory>",
+  issueDescription: "<value of the issueDescription>",
   issueLocation: "<value of issueLocation>",
-  issueSubCategory: "<value of issueSubCategory>",
 };
 
 export const issueCategoryToTypes = {
