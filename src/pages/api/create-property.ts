@@ -31,7 +31,7 @@ export default async function handler(
     const propertyEntity = new PropertyEntity();
 
     // Create Property
-    const newProperty = await propertyEntity.create({ streetAddress, country, city, state, postalCode, unitNumber, propertyManagerEmail });
+    const newProperty = await propertyEntity.create({ address: streetAddress, country, city, state, unit: unitNumber, postalCode, propertyManagerEmail });
     await propertyManagerEntity.createPropertyCompanionRow({ email: propertyManagerEmail, organization: "", addressPk: newProperty.pk, addressSk: newProperty.sk });
 
     //@ts-ignore

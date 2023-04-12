@@ -54,8 +54,8 @@ export default async function handler(
         if (existingTenantFromDB) {
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
-          const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });
-          console.log({ newTenant }, chalk.green("==============="));
+          // const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });
+          // console.log({ newTenant }, chalk.green("==============="));
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
         }

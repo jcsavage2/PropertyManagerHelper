@@ -7,6 +7,7 @@ import { BsFillPersonFill } from "react-icons/bs";
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from "axios";
+import { generateAddressKey } from '@/utils';
 
 const WorkOrders = () => {
   const { user } = useUserContext();
@@ -17,7 +18,6 @@ const WorkOrders = () => {
     async function get() {
       const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
       const orders = JSON.parse(data.response);
-      console.log({ orders });
       orders.length && setWorkOrders(orders);
 
     }
@@ -29,22 +29,22 @@ const WorkOrders = () => {
       <div>
         <Image className="mx-auto" src="/2.png" alt='1' width={100} height={0} />
         <hr style={{ height: "2px", color: "#e5e7eb", backgroundColor: "#e5e7eb" }} />
-        <div className="mt-4" style={{ display: "grid", rowGap: "0.5rem" }}>
+        <div className="mt-4 ml-2 text-lg" style={{ display: "grid", rowGap: "0.5rem" }}>
           <div className='inline'>
             <RiFilePaper2Fill className='inline mr-1 my-auto' />
-            <Link className='inline my-auto' href={"work-orders"}>Work Orders</Link>
+            <Link className={`${router.pathname === "/work-orders" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"work-orders"}>Work Orders</Link>
           </div>
           <div className='inline'>
-            <BsFillPersonFill className='inline mr-1 my-auto' />
-            <Link href={"tenants"}>Tenants</Link>
+            <BsFillPersonFill className={`inline mr-1 my-auto`} />
+            <Link className={`${router.pathname === "/tenants" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"tenants"}>Tenants</Link>
           </div>
           <div className='inline'>
             <CiLocationOn className='inline mr-1 my-auto' />
-            <Link href={"properties"}>Properties</Link>
+            <Link className={`${router.pathname === "/properties" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"properties"}>Properties</Link>
           </div>
         </div>
       </div>
-      <div>
+      <div className="lg:max-w-4xl">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
           <h1 className="text-4xl">{`Work Orders`}</h1>
           <button
@@ -65,26 +65,28 @@ const WorkOrders = () => {
           <tbody className='text-gray-700'>
             {workOrders.map((wo: any) => {
               const date = new Date(wo.created);
-              console.log({ date });
+              console.log({ wo });
+              const add = wo.address;
+              const addressString = generateAddressKey({ address: wo.address.address, unit: wo?.address.unit ?? "" });
               return (
                 <tr className='hover:bg-blue-200 cursor-pointer' key={`${wo.pk}-${wo.sk}`}>
                   <td>
-                    {`${wo.issueDescription}`}
+                    {`${wo.issue}`}
                   </td>
                   <td>
                     {wo.sk.split("#")[1] === "TO_DO" ? "To Do" : "Done"}
                   </td>
                   <td>
-                    {"123 King St"}
+                    {addressString.toUpperCase()}
                   </td>
                   <td>
-                    {"Eddie Eng"}
+                    {"Update"}
                   </td>
                   <td>
                     {`${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`}
                   </td>
                   <td>
-                    {"Tom Tenant"}
+                    {wo.tenantName ?? ""}
                   </td>
                 </tr>
               );

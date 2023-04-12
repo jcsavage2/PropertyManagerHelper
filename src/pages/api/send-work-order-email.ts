@@ -13,12 +13,31 @@ export default async function handler(
     const body = req.body as SendEmailApiRequest;
     const workOrderEntity = new WorkOrderEntity();
 
+    const {
+      address,
+      city,
+      country,
+      postalCode,
+      state,
+      tenantEmail,
+      tenantName,
+      unit,
+    } = body;
+
+    console.log({ tenantEmail, tenantName });
     /** CREATE THE WORK ORDER */
     await workOrderEntity.create({
-      addressId: "123",
-      propertyManagerEmail: body.pmEmail,
+      address,
+      city,
+      country: country ?? "US",
       issue: body.issueDescription || "No Issue Description",
-      status: "TO_DO"
+      postalCode,
+      propertyManagerEmail: body.pmEmail,
+      state,
+      status: "TO_DO",
+      tenantEmail,
+      tenantName,
+      unit,
     });
 
 
@@ -97,7 +116,7 @@ export default async function handler(
             </tr>
             <tr>
               <td>Unit</td>
-              <td>${body.unit}</td>
+              <td>${body.unit ?? "No Unit"}</td>
             </tr>
             <tr>
               <td>City</td>
@@ -106,6 +125,10 @@ export default async function handler(
             <tr>
               <td>State</td>
               <td>${body.state}</td>
+            </tr>
+            <tr>
+              <td>Postal Code</td>
+              <td>${body.postalCode}</td>
             </tr>
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
@@ -121,6 +144,7 @@ export default async function handler(
       </html>`
     });
   } catch (error: any) {
+    console.log({ error });
     return res.status(error.statusCode || 500).json({ response: error.message });
   }
 

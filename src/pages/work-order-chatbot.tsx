@@ -1,14 +1,12 @@
-import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { ChatCompletionRequestMessage } from 'openai';
 import { toast } from 'react-toastify';
-import { hasAllIssueInfo, hasAllUserInfo } from '@/utils';
-import { AiJSONResponse, ApiRequest, SendEmailApiRequest, UserInfo, WorkOrder } from '@/types';
+import { hasAllIssueInfo } from '@/utils';
+import { AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from '@/types';
 import { useUserContext } from '@/context/user';
-import { issueCategoryToTypes } from '@/constants';
 
-export default function Demo() {
+export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
   const { user } = useUserContext();
@@ -17,14 +15,19 @@ export default function Demo() {
     throw new Error("User Must be a Tenant.");
   }
 
+  const addressesOptions = Object.values(user?.addresses)?.map((address: any) => (
+    {
+      title: `${address?.address} ${address?.unit}`.trim(),
+      value: JSON.stringify(address)
+    }
+  )) ?? [];
+
+
   const [pmEmail, setPmEmail] = useState(user.pmEmail ?? "");
   const [tenantName, setTenantName] = useState(user.tenantName);
   const [tenantEmail, setTenantEmail] = useState(user.tenantEmail);
-  const [address, setAddress] = useState("");
-  const [unit, setUnit] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState<string>(addressesOptions?.[0]?.value ?? "");
+
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
   const [issueDescription, setIssueDescription] = useState("");
   const [issueLocation, setIssueLocation] = useState("");
@@ -33,13 +36,20 @@ export default function Demo() {
   const [isResponding, setIsResponding] = useState(false);
   const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
 
+  useEffect(() => {
+    user?.pmEmail && setPmEmail(user.pmEmail);
+    user?.tenantName && setTenantName(user.tenantName);
+    user?.tenantEmail && setTenantEmail(user.tenantEmail);
+    addressesOptions.length > 0 && setSelectedAddress(JSON.stringify(addressesOptions?.[0]?.value ?? ""));
+  }, [user]);
+
   // Scroll to bottom when new message added
   useEffect(() => {
     var element = document.getElementById('chatbox');
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, address, permissionToEnter]);
+  }, [messages, permissionToEnter]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
     setUserMessage(e.currentTarget.value);
@@ -61,27 +71,13 @@ export default function Demo() {
   const handleTenantEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setTenantEmail(e.currentTarget.value);
   }, [setTenantEmail]);
-  const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setAddress(e.currentTarget.value);
-  }, [setAddress]);
-  const handleUnitChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setUnit(e.currentTarget.value);
-  }, [setUnit]);
-  const handleStateChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setState(e.currentTarget.value);
-  }, [setState]);
-  const handleCityChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setCity(e.currentTarget.value);
-  }, [setCity]);
-  const handleZipChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setPostalCode(e.currentTarget.value);
-  }, [setPostalCode]);
   const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setPermissionToEnter(e.currentTarget.value as "yes" | "no");
   }, [setPermissionToEnter]);
 
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
+    const parsedAddress = JSON.parse(selectedAddress);
     const body: SendEmailApiRequest = {
       ...workOrder,
       messages,
@@ -89,10 +85,10 @@ export default function Demo() {
       tenantEmail,
       tenantName,
       permissionToEnter,
-      address,
-      state,
-      city,
-      postalCode
+      address: parsedAddress.address,
+      state: parsedAddress.state,
+      city: parsedAddress.city,
+      postalCode: parsedAddress.postalCode
     };
     const res = await axios.post('/api/send-work-order-email', body);
     if (res.status === 200) {
@@ -109,6 +105,10 @@ export default function Demo() {
     setIssueDescription("");
     setIssueLocation("");
     return;
+  };
+
+  const handleAddressSelectChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
+    setSelectedAddress(e.target.value);
   };
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
@@ -146,16 +146,7 @@ export default function Demo() {
   };
 
   const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
-  const userInfo: UserInfo = {
-    tenantName: user.tenantName,
-    tenantEmail: user.tenantEmail,
-    address,
-    unit,
-    city,
-    state,
-    postalCode,
-    permissionToEnter
-  };
+
   const workOrder: WorkOrder = {
     issueDescription,
     issueLocation
@@ -274,50 +265,11 @@ export default function Demo() {
                                   onChange={handleTenantEmailChange}
                                 />
                                 <label htmlFor='address'>Address* </label>
-                                <input
-                                  className='rounded px-1'
-                                  id="address"
-                                  placeholder='123 Test Street'
-                                  type={"text"}
-                                  value={address}
-                                  onChange={handleAddressChange}
-                                />
-                                <label htmlFor='unit'>Unit </label>
-                                <input
-                                  className='rounded px-1'
-                                  id="unit"
-                                  placeholder='Unit No.'
-                                  type={"text"}
-                                  value={unit}
-                                  onChange={handleUnitChange}
-                                />
-                                <label htmlFor='state'>State* </label>
-                                <input
-                                  className='rounded px-1'
-                                  id="state"
-                                  placeholder='FL'
-                                  type={"text"}
-                                  value={state}
-                                  onChange={handleStateChange}
-                                />
-                                <label htmlFor='city'>City* </label>
-                                <input
-                                  className='rounded px-1'
-                                  id="city"
-                                  placeholder='Miami'
-                                  type={"text"}
-                                  value={city}
-                                  onChange={handleCityChange}
-                                />
-                                <label htmlFor='postalCode'>Zip* </label>
-                                <input
-                                  className='rounded px-1'
-                                  id="postalCode"
-                                  placeholder='33131'
-                                  type={"text"}
-                                  value={postalCode}
-                                  onChange={handleZipChange}
-                                />
+                                <select id="address" onChange={handleAddressSelectChange} value={selectedAddress}>
+                                  {addressesOptions.map((option: { title: string; value: string; }, index) => {
+                                    return <option key={`${option.value}-${index}`} value={option.value}>{option.title}</option>;
+                                  })}
+                                </select>
                               </div >
                               <p className='mt-2'>Permission To Enter Property* </p>
                               <div>
@@ -365,9 +317,7 @@ export default function Demo() {
                 >
                   {hasAllIssueInfo(workOrder) || !hasConnectionWithGPT ? (
                     <button
-                      disabled={permissionToEnter === "no" || !hasAllUserInfo({
-                        tenantEmail, tenantName, address, state, city, postalCode, permissionToEnter
-                      })}
+                      disabled={permissionToEnter !== "yes"}
                       onClick={handleSubmitWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
                       {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}

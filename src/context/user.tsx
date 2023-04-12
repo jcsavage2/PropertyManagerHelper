@@ -26,6 +26,7 @@ type Tenant = BaseUser & {
   pmEmail?: string | null,
   status: string,
   userType: "TENANT";
+  addresses: Record<string, any>;
 
   pmName?: never,
   organization?: never;
@@ -57,6 +58,7 @@ export const UserContext = createContext<UserContext>({
     userType: "TENANT",
     pk: "",
     sk: "",
+    addresses: {}
   },
   sessionUser: null,
   setUser: () => { },
@@ -77,6 +79,7 @@ export const UserContextProvider = (props: any) => {
     modified: "",
     pk: "",
     sk: "",
+    addresses: {}
   };
   const [user, setUser] = useState<UserContext["user"]>(initialState);
 

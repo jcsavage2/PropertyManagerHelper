@@ -114,4 +114,9 @@ export const processAiResponse = ({ response, workOrderData }: { response: strin
     console.log({ err });
     return null;
   }
-};;
+};
+
+export function generateAddressKey({ unit, address }: { unit?: string; address: string; }) {
+  const unitString = unit ? `- ${unit?.toLowerCase()}` : "";
+  return `${address.toLowerCase()} ${unitString}`;
+}
