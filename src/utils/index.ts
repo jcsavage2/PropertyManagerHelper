@@ -118,5 +118,11 @@ export const processAiResponse = ({ response, workOrderData }: { response: strin
 
 export function generateAddressKey({ unit, address }: { unit?: string; address: string; }) {
   const unitString = unit ? `- ${unit?.toLowerCase()}` : "";
-  return `${address.toLowerCase()} ${unitString}`;
+  return `${address?.toLowerCase()} ${unitString}`;
+}
+
+export function toTitleCase(str: string) {
+  return str.toLowerCase().split(' ').map(function (word) {
+    return (word.charAt(0).toUpperCase() + word.slice(1));
+  }).join(' ');
 }

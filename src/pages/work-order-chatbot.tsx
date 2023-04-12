@@ -75,9 +75,8 @@ export default function WorkOrderChatbot() {
     setPermissionToEnter(e.currentTarget.value as "yes" | "no");
   }, [setPermissionToEnter]);
 
-
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
-    const parsedAddress = JSON.parse(selectedAddress);
+    const parsedAddress = JSON.parse(JSON.parse(selectedAddress));
     const body: SendEmailApiRequest = {
       ...workOrder,
       messages,

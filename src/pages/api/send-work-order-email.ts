@@ -24,7 +24,7 @@ export default async function handler(
       unit,
     } = body;
 
-    console.log({ tenantEmail, tenantName });
+    console.log({ tenantEmail, tenantName, address, city });
     /** CREATE THE WORK ORDER */
     await workOrderEntity.create({
       address,

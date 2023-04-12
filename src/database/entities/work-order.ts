@@ -18,6 +18,21 @@ type CreateWorkOrderProps = {
   issue: string;
 };
 
+export interface IWorkOrder {
+  pk: string,
+  sk: string,
+  GSI1PK: string,
+  GSI1SK: string,
+  GSI2PK: string,
+  GSI2SK: string,
+  pmEmail: string,
+  issue: string,
+  tenantEmail: string,
+  tenantName: string,
+  address: object,
+  status: "COMPLETE" | "TO_DO",
+};
+
 export class WorkOrderEntity {
   private workOrderEntity: Entity;
 
@@ -65,7 +80,6 @@ export class WorkOrderEntity {
     postalCode: string;
     unit?: string;
   }) {
-
     return {
       address, unit, city, state, postalCode, country
     };
@@ -96,6 +110,7 @@ export class WorkOrderEntity {
       GSI2SK: this.generateSk({ status }),
       pmEmail: propertyManagerEmail.toLowerCase(),
       tenantEmail,
+      status,
       tenantName,
       address: this.generateAddress({ address, country, city, state, postalCode, unit }),
       issue: issue.toLowerCase(),

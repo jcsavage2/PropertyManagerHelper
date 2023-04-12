@@ -26,7 +26,7 @@ const customStyles = {
   }
 };
 
-export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { tenantModalIsOpen: boolean; setTenantModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
+export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSuccessfulAdd }: { tenantModalIsOpen: boolean; setTenantModalIsOpen: Dispatch<SetStateAction<boolean>>; onSuccessfulAdd: () => void; }) => {
 
   const { user } = useUserContext();
   const [isBrowser, setIsBrowser] = useState(false);
@@ -93,6 +93,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
         toast.success("Tenant Created");
+        onSuccessfulAdd();
         setTenantModalIsOpen(false);
       }
     } catch (err) {
@@ -100,6 +101,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
     }
   }, [
     user,
+    onSuccessfulAdd,
     tenantEmail,
     tenantName,
     setTenantModalIsOpen,
@@ -145,6 +147,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
           id="name"
+          placeholder="John Doe"
           type={"text"}
           value={tenantName}
           onChange={handleTenantNameChange}
@@ -153,6 +156,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
           id="email"
+          placeholder="someEmail@gmail.com"
           type={"email"}
           value={tenantEmail}
           onChange={handleEmailChange}
@@ -161,6 +165,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
           id="address"
+          placeholder="123 Test St"
           type={"text"}
           value={address}
           onChange={handleAddressChange}
@@ -169,7 +174,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
           id="address"
-          placeholder='N/A if not applicable'
+          placeholder='207'
           type={"text"}
           value={unit}
           onChange={handleUnitChange}
@@ -178,6 +183,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
           id="state"
+          placeholder="FL"
           type={"text"}
           value={state}
           onChange={handleStateChange}
@@ -186,6 +192,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
           id="city"
+          placeholder="Miami"
           type={"text"}
           value={city}
           onChange={handleCityChange}
@@ -194,6 +201,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { te
         <input
           className='rounded px-1 border-solid border-2 border-slate-200'
           id="postalCode"
+          placeholder="33131"
           type={"text"}
           value={postalCode}
           onChange={handlePostalCodeChange}

@@ -52,6 +52,7 @@ export default async function handler(
         const existingTenantFromDB = existingTenant?.Item ?? null;
         console.log({ existingTenantFromDB }, chalk.green("==============="));
         if (existingTenantFromDB) {
+          await tenantEntity.update({ tenantEmail: email, status: "JOINED" });
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
           // const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });

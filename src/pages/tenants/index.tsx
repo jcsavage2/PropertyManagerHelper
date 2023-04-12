@@ -5,9 +5,10 @@ import { CiLocationOn } from "react-icons/ci";
 import { RiFilePaper2Fill } from "react-icons/ri";
 import { BsFillPersonFill } from "react-icons/bs";
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from "axios";
 import { AddTenantModal } from '@/components/add-tenant-modal';
+import { toTitleCase } from '@/utils';
 
 const Tenants = () => {
   const [tenantModalIsOpen, setTenantModalIsOpen] = useState(false);
@@ -23,10 +24,15 @@ const Tenants = () => {
         const tenants = JSON.parse(data.response);
         console.log({ tenants });
         tenants.length && setTenants(tenants);
-
       }
       get();
     }
+  }, [user.pmEmail]);
+
+  const refetch = useCallback(async () => {
+    const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
+    const tenants = JSON.parse(data.response);
+    tenants.length && setTenants(tenants);
   }, [user.pmEmail]);
 
   return (
@@ -71,9 +77,11 @@ const Tenants = () => {
               const date = new Date(tenant.created);
               const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
               return (
-                <tr className='hover:bg-blue-200 cursor-pointer' key={`${tenant.pk}-${tenant.sk}`}>
+                <tr
+                  key={`${tenant.pk}-${tenant.sk}`}
+                >
                   <td>
-                    {`${tenant.tenantName}`}
+                    {`${toTitleCase(tenant.tenantName)}`}
                   </td>
                   <td>
                     {tenant.status}
@@ -90,8 +98,8 @@ const Tenants = () => {
           </tbody>
         </table>
       </div>
-      <AddTenantModal tenantModalIsOpen={tenantModalIsOpen} setTenantModalIsOpen={setTenantModalIsOpen} />
-    </div>
+      <AddTenantModal tenantModalIsOpen={tenantModalIsOpen} setTenantModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={refetch} />
+    </div >
   );
 };
 
