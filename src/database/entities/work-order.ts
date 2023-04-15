@@ -1,9 +1,10 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, StartKey } from '.';
+import { ENTITIES } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { uuid } from 'uuidv4';
 
-type WorkOrderStatus = "TO_DO" | "COMPLETE";
+
+export type WorkOrderStatus = "COMPLETE" | "TO_DO";
 type CreateWorkOrderProps = {
   address: string;
   tenantEmail: string;
@@ -18,9 +19,19 @@ type CreateWorkOrderProps = {
   issue: string;
 };
 
+type PropertyAddress = {
+  address: string;
+  unit?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+};
+
 export interface IWorkOrder {
   pk: string,
   sk: string,
+  created: string,
   GSI1PK: string,
   GSI1SK: string,
   GSI2PK: string,
@@ -29,8 +40,8 @@ export interface IWorkOrder {
   issue: string,
   tenantEmail: string,
   tenantName: string,
-  address: object,
-  status: "COMPLETE" | "TO_DO",
+  address: PropertyAddress,
+  status: WorkOrderStatus;
 };
 
 export class WorkOrderEntity {

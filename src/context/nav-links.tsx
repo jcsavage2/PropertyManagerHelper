@@ -1,16 +1,18 @@
 import Link from 'next/link';
 import React, { useCallback } from 'react';
 import { useUserContext } from './user';
+import { useRouter } from 'next/router';
 
 export const NavLinks = () => {
   const { user, logOut, sessionUser } = useUserContext();
+  const router = useRouter();
 
-  const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback((e) => {
+  const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
     if (user.pmEmail || user.tenantEmail) {
       logOut();
+      router.push("/");
     }
-    return () => { };
-  }, [user, logOut]);
+  }, [user, logOut, router]);
 
   return (
     <>

@@ -117,26 +117,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
       onAfterOpen={() => { }}
       onRequestClose={closeModal}
       contentLabel="Example Modal"
-      style={{
-        content: {
-          top: '50%',
-          left: '50%',
-          right: 'auto',
-          bottom: 'auto',
-          marginRight: '-50%',
-          transform: 'translate(-50%, -50%)',
-          width: "75%",
-          backgroundColor: 'rgba(255, 255, 255)'
-        },
-        overlay: {
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(255, 255, 255, 0.75)'
-        }
-      }}
+      style={customStyles}
     >
       <button
         className="w-full text-right"

@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 
 const Home = () => {
   const router = useRouter();
-  const { user, login, sessionUser } = useUserContext();
+  const { login, sessionUser } = useUserContext();
 
   return (
     <>
