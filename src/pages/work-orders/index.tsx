@@ -1,13 +1,3 @@
-import Image from 'next/image';
-import { useUserContext } from "@/context/user";
-import Link from 'next/link';
-import { CiLocationOn } from "react-icons/ci";
-import { RiFilePaper2Fill } from "react-icons/ri";
-import { BsFillPersonFill } from "react-icons/bs";
-import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
-import axios from "axios";
-import { IWorkOrder } from '@/database/entities/work-order';
 import { WorkOrdersTable } from './work-orders-table';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 

@@ -12,18 +12,16 @@ type HandleUpdateStatusProps = {
   sk: string;
 };
 export const WorkOrdersTable = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [workOrders, setWorkOrders] = useState<Array<IWorkOrder>>([]);
+
+  const [sortField, setSortField] = useState<string>();
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const [sortField, setSortField] = useState("");
-  const [order, setOrder] = useState("asc");
-
-  const [statusFilters, setStatusFilters] = useState({
+  const [order, setOrder] = useState<"asc" | "desc">();
+  const [statusFilters, setStatusFilters] = useState<Record<IWorkOrder["status"], boolean>>({
     TO_DO: true,
-    COMPLETE: false
+    COMPLETE: true
   });
 
-  const [workOrders, setWorkOrders] = useState<Array<IWorkOrder>>([]);
   const { user } = useUserContext();
 
   useEffect(() => {
@@ -95,10 +93,12 @@ export const WorkOrdersTable = () => {
 
   const filteredRows = remappedWorkOrders.filter(w => !!statusFilters[w.status]);
 
-  const SortedWorkOrders = filteredRows.map((workOrder): any => {
+  const sortedWorkOrders = filteredRows.map((workOrder): any => {
     return (
       <tr key={uuid()}>
         {columns.map(({ accessor }) => {
+          const allStatuses: IWorkOrder["status"][] = ["TO_DO", "COMPLETE"];
+          const remainingOptions = allStatuses.filter(s => s !== workOrder.status);
           const isStatusAccessor = accessor === "status";
           //@ts-ignore
           const tData = workOrder[accessor];
@@ -110,8 +110,10 @@ export const WorkOrdersTable = () => {
                   value={tData}
                   onChange={handleUpdateStatus({ pk: workOrder.pk, sk: workOrder.sk })}
                 >
-                  <option value={"TO_DO"}>{tData}</option>
-                  <option value={"TO_DO"}>{"Complete"}</option>
+                  <option value={tData}>{tData}</option>
+                  {remainingOptions.map((o) => {
+                    return <option key={o} value={o}>{o}</option>;
+                  })}
                 </select>
               </td>
             );
@@ -156,7 +158,7 @@ export const WorkOrdersTable = () => {
             </tr>
           </thead>
           <tbody className='text-gray-700'>
-            {SortedWorkOrders}
+            {sortedWorkOrders}
           </tbody>
         </table>
       </div >
