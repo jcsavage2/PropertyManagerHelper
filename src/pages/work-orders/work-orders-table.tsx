@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
+import { BiCheckbox, BiCheckboxChecked } from "react-icons/bi";
 
 
 type HandleUpdateStatusProps = {
@@ -14,13 +15,14 @@ type HandleUpdateStatusProps = {
 export const WorkOrdersTable = () => {
   const [workOrders, setWorkOrders] = useState<Array<IWorkOrder>>([]);
 
-  const [sortField, setSortField] = useState<string>();
+  const [sortField, setSortField] = useState<string>("status");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [order, setOrder] = useState<"asc" | "desc">();
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
   const [statusFilters, setStatusFilters] = useState<Record<IWorkOrder["status"], boolean>>({
     TO_DO: true,
     COMPLETE: true
   });
+  const [showSelectFilter, setShowSelectFilter] = useState(false);
 
   const { user } = useUserContext();
 
@@ -59,7 +61,13 @@ export const WorkOrdersTable = () => {
       const { data } = await axios.post("/api/update-work-order", { pk, sk, status: newStatus });
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
-        const newWorkOrders = workOrders.map(wo => wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo);
+        const newWorkOrders = workOrders.map(wo => wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo).sort((a, b) => {
+          return (
+            a[sortField].toString().localeCompare(b[sortField].toString(), "en", {
+              numeric: true,
+            }) * (order === "asc" ? 1 : -1)
+          );
+        });;
         setWorkOrders(newWorkOrders);
       }
       setIsUpdating(false);
@@ -92,7 +100,6 @@ export const WorkOrdersTable = () => {
   });
 
   const filteredRows = remappedWorkOrders.filter(w => !!statusFilters[w.status]);
-
   const sortedWorkOrders = filteredRows.map((workOrder): any => {
     return (
       <tr key={uuid()}>
@@ -139,8 +146,31 @@ export const WorkOrdersTable = () => {
 
   return (
     <div className="mt-8">
-      <button className={`py-1 px-3 rounded ${statusFilters.TO_DO ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setStatusFilters({ ...statusFilters, TO_DO: !statusFilters.TO_DO })}>To Do</button>
-      <button className={`py-1 px-3 ml-4 rounded ${statusFilters.COMPLETE ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setStatusFilters({ ...statusFilters, COMPLETE: !statusFilters.COMPLETE })}>Complete</button>
+      <button className={`py-1 px-3 rounded ${statusFilters.TO_DO ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowSelectFilter((s) => !s)}>
+        Status
+      </button>
+      {showSelectFilter && (
+        <div className="absolute z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
+          <div className={`flex ${statusFilters.TO_DO ? "hover:bg-blue-200" : "hover:bg-gray-200"}`}>
+            <p className={`py-1 px-3 cursor-pointer flex w-full rounded`} onClick={() => setStatusFilters({ ...statusFilters, TO_DO: !statusFilters.TO_DO })}>
+              To Do
+            </p>
+            {!statusFilters.TO_DO ? (<BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />) : (
+              <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />
+            )}
+          </div>
+
+          <div className={`flex ${statusFilters.COMPLETE ? "hover:bg-blue-200" : "hover:bg-gray-200"}`}>
+            <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilters.COMPLETE ? "hover:bg-blue-200" : "hover:bg-gray-200"}`} onClick={() => setStatusFilters({ ...statusFilters, COMPLETE: !statusFilters.COMPLETE })}>
+              Complete
+            </p>
+            {!statusFilters.COMPLETE ? (<BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />) : (
+              <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />
+            )}
+          </div>
+
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className='w-full mt-4 border-spacing-x-10 table-auto'>
           <thead className=''>
