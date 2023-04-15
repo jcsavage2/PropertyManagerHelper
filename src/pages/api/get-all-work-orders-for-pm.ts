@@ -15,7 +15,9 @@ export default async function handler(
     const body = req.body as GetPropertiesForPropertyManagerApiRequest;
     const workOrderEntity = new WorkOrderEntity();
     const propertyManagerEmail = body.propertyManagerEmail;
+    console.log({ propertyManagerEmail });
     const workOrders = await workOrderEntity.getAllForPropertyManager({ propertyManagerEmail });
+
     return res.status(200).json({ response: JSON.stringify(workOrders) });;
 
   } catch (error) {

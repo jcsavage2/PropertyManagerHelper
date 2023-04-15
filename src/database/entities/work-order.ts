@@ -68,12 +68,12 @@ export class WorkOrderEntity {
     } as const);
   }
 
-  private generatePk() {
-    return ["WO", uuid()].join('#');
+  private generatePk(uniqueId: string) {
+    return ["WO", uniqueId].join('#');
   }
 
-  private generateSk({ status }: { status: WorkOrderStatus; }) {
-    return ["STATUS", status].join("#");
+  private generateSk(uniqueId: string) {
+    return ["WO", uniqueId].join('#');
   }
 
   private generateAddress({
@@ -112,13 +112,14 @@ export class WorkOrderEntity {
    * Creates a work order entity.
    */
   public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
+    const uniqueId = uuid();
     const result = await this.workOrderEntity.put({
-      pk: this.generatePk(),
-      sk: this.generateSk({ status }),
+      pk: this.generatePk(uniqueId),
+      sk: this.generateSk(uniqueId),
       GSI1PK: this.generateGSI1PK({ propertyManagerEmail }),
-      GSI1SK: this.generateSk({ status }),
+      GSI1SK: this.generateSk(uniqueId),
       GSI2PK: this.generateGSI2PK({ tenantEmail }),
-      GSI2SK: this.generateSk({ status }),
+      GSI2SK: this.generateSk(uniqueId),
       pmEmail: propertyManagerEmail.toLowerCase(),
       tenantEmail,
       status,
@@ -132,11 +133,11 @@ export class WorkOrderEntity {
   /**
    * @returns Work Order metadata for a single work order.
    */
-  public async get({ addressId, status }:
-    { addressId: string; status: WorkOrderStatus; }) {
+  public async get({ pk, sk, addressId, status }:
+    { pk: string; sk: string; addressId: string; status: WorkOrderStatus; }) {
     const params = {
-      pk: this.generatePk(), // can query all properties for a given property manager
-      sk: this.generateSk({ status })
+      pk: this.generatePk(pk), // can query all properties for a given property manager
+      sk: this.generateSk(sk)
     };
     const result = await this.workOrderEntity.get(params, { consistent: true });
     return result;
@@ -153,11 +154,24 @@ export class WorkOrderEntity {
         {
           limit: 20,
           reverse: true,
-          beginsWith: "STATUS",
+          beginsWith: "WO",
           index: INDEXES.GSI1,
         }
       ));
       return result.Items ?? [];
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  public async update({ pk, sk, status }: { pk: string, sk: string; status: WorkOrderStatus; }) {
+    try {
+      const result = await this.workOrderEntity.update({
+        pk,
+        sk,
+        status
+      }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+      return result;
     } catch (err) {
       console.log({ err });
     }
