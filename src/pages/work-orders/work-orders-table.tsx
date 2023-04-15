@@ -7,8 +7,6 @@ import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 
-
-
 export const WorkOrdersTable = () => {
   const [sortField, setSortField] = useState("");
   const [order, setOrder] = useState("asc");
@@ -122,3 +120,5 @@ export const WorkOrdersTable = () => {
     </div >
   );
 };
+
+export default WorkOrdersTable;

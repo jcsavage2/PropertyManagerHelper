@@ -79,7 +79,7 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
     } catch (err) {
       console.log({ err });
     }
-  }, [user]);
+  }, [user, tenantEmail]);
 
   return (
     <div>

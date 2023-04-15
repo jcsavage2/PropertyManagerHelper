@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { ChatCompletionRequestMessage } from 'openai';
 import { toast } from 'react-toastify';
@@ -15,12 +15,12 @@ export default function WorkOrderChatbot() {
     throw new Error("User Must be a Tenant.");
   }
 
-  const addressesOptions = Object.values(user?.addresses)?.map((address: any) => (
+  const addressesOptions = useMemo(() => Object.values(user?.addresses)?.map((address: any) => (
     {
       title: `${address?.address} ${address?.unit}`.trim(),
       value: JSON.stringify(address)
     }
-  )) ?? [];
+  )) ?? [], [user.addresses]);
 
 
   const [pmEmail, setPmEmail] = useState(user.pmEmail ?? "");
@@ -41,7 +41,7 @@ export default function WorkOrderChatbot() {
     user?.tenantName && setTenantName(user.tenantName);
     user?.tenantEmail && setTenantEmail(user.tenantEmail);
     addressesOptions.length > 0 && setSelectedAddress(JSON.stringify(addressesOptions?.[0]?.value ?? ""));
-  }, [user]);
+  }, [user, addressesOptions]);
 
   // Scroll to bottom when new message added
   useEffect(() => {
