@@ -1,14 +1,10 @@
-import Image from 'next/image';
 import { useUserContext } from "@/context/user";
-import Link from 'next/link';
-import { CiLocationOn } from "react-icons/ci";
-import { RiFilePaper2Fill } from "react-icons/ri";
-import { BsFillPersonFill } from "react-icons/bs";
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import axios from "axios";
 import { AddTenantModal } from '@/components/add-tenant-modal';
 import { toTitleCase } from '@/utils';
+import { PortalLeftPanel } from '@/components/portal-left-panel';
 
 const Tenants = () => {
   const [tenantModalIsOpen, setTenantModalIsOpen] = useState(false);
@@ -37,24 +33,7 @@ const Tenants = () => {
 
   return (
     <div id="testing" className="mx-4 mt-4" style={{ display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
-      <div>
-        <Image className="mx-auto" src="/2.png" alt='1' width={100} height={0} />
-        <hr style={{ height: "2px", color: "#e5e7eb", backgroundColor: "#e5e7eb" }} />
-        <div className="mt-4 ml-2 text-lg" style={{ display: "grid", rowGap: "0.5rem" }}>
-          <div className='inline'>
-            <RiFilePaper2Fill className='inline mr-1 my-auto' />
-            <Link className={`${router.pathname === "/work-orders" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"work-orders"}>Work Orders</Link>
-          </div>
-          <div className='inline'>
-            <BsFillPersonFill className={`inline mr-1 my-auto`} />
-            <Link className={`${router.pathname === "/tenants" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"tenants"}>Tenants</Link>
-          </div>
-          <div className='inline'>
-            <CiLocationOn className='inline mr-1 my-auto' />
-            <Link className={`${router.pathname === "/properties" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"properties"}>Properties</Link>
-          </div>
-        </div>
-      </div>
+      <PortalLeftPanel />
       <div className="lg:max-w-3xl">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
           <h1 className="text-4xl">Tenants</h1>
