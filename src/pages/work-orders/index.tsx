@@ -1,4 +1,4 @@
-import { WorkOrdersTable } from './work-orders-table';
+import { WorkOrdersTable } from '@/components/work-orders-table';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 
 const WorkOrders = () => {
