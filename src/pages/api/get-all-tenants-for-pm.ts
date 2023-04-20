@@ -1,6 +1,5 @@
 import { Data } from "@/database";
 import { TenantEntity } from "@/database/entities/tenant";
-import { WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type GetPropertiesForPropertyManagerApiRequest = {
