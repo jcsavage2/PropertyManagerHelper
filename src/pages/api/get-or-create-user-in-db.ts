@@ -47,10 +47,8 @@ export default async function handler(
       case ENTITIES.TENANT:
         const tenantEntity = new TenantEntity();
         const existingTenant = await tenantEntity.get({ tenantEmail: email });
-        console.log({ existingTenant });
         //@ts-ignore
         const existingTenantFromDB = existingTenant?.Item ?? null;
-        console.log({ existingTenantFromDB }, chalk.green("==============="));
         if (existingTenantFromDB) {
           await tenantEntity.update({ tenantEmail: email, status: "JOINED" });
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });

@@ -1,11 +1,12 @@
 import { useUserContext } from "@/context/user";
-import { IWorkOrder, WorkOrderStatus } from "@/database/entities/work-order";
+import { IWorkOrder } from "@/database/entities/work-order";
 import { generateAddressKey, toTitleCase } from "@/utils";
 import axios from "axios";
-import { useRouter } from "next/router";
+import { AiOutlineFilter } from "react-icons/ai";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { BiCheckbox, BiCheckboxChecked } from "react-icons/bi";
+import Link from "next/link";
 
 
 type HandleUpdateStatusProps = {
@@ -23,8 +24,8 @@ export const WorkOrdersTable = () => {
     COMPLETE: true
   });
   const [showSelectFilter, setShowSelectFilter] = useState(false);
-
   const { user } = useUserContext();
+
 
   useEffect(() => {
     async function get() {
@@ -103,7 +104,7 @@ export const WorkOrdersTable = () => {
   const sortedWorkOrders = filteredRows.map((workOrder): any => {
     return (
       <tr key={uuid()}>
-        {columns.map(({ accessor }) => {
+        {columns.map(({ accessor }, index) => {
           const allStatuses: IWorkOrder["status"][] = ["TO_DO", "COMPLETE"];
           const remainingOptions = allStatuses.filter(s => s !== workOrder.status);
           const isStatusAccessor = accessor === "status";
@@ -126,7 +127,11 @@ export const WorkOrdersTable = () => {
             );
           }
           return (
-            <td className="border px-4 py-1" key={accessor}>{tData}</td>
+            <td className="border px-4 py-1" key={accessor}>
+              <Link key={workOrder.pk + index} href={`/work-orders/?workOrderId=${workOrder.pk}`} as={`/work-order/${workOrder.pk}`}>
+                {tData}
+              </Link>
+            </td>
           );
         })}
       </tr>
@@ -143,12 +148,17 @@ export const WorkOrdersTable = () => {
   };
 
 
-
   return (
     <div className="mt-8">
-      <button className={`py-1 px-3 rounded ${statusFilters.TO_DO ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowSelectFilter((s) => !s)}>
-        Status
-      </button>
+      <div className="flex">
+        <button className={`py-1 mr-2 px-3 rounded ${statusFilters.TO_DO ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowSelectFilter((s) => !s)}>
+          Status
+        </button>
+        <div className="my-auto flex mr-2">
+          <AiOutlineFilter className="mr-1 my-auto" />
+          Filters
+        </div>
+      </div>
       {showSelectFilter && (
         <div className="absolute z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
           <div className={`flex ${statusFilters.TO_DO ? "hover:bg-blue-200" : "hover:bg-gray-200"}`}>
@@ -196,4 +206,4 @@ export const WorkOrdersTable = () => {
   );
 };
 
-export default WorkOrdersTable;
+export default WorkOrdersTable;;;

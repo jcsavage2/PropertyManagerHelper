@@ -88,6 +88,7 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
         onAfterOpen={() => console.log("opened..")}
         onRequestClose={closeModal}
         contentLabel="Example Modal"
+        closeTimeoutMS={200}
         style={customStyles}
       >
         <button

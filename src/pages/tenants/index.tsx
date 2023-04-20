@@ -22,7 +22,6 @@ const Tenants = () => {
       async function get() {
         const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
         const tenants = JSON.parse(data.response);
-        console.log({ tenants });
         tenants.length && setTenants(tenants);
       }
       get();
