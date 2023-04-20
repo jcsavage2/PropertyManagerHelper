@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { BsFillPersonFill } from 'react-icons/bs';
 import { CiLocationOn } from 'react-icons/ci';
 import { RiFilePaper2Fill } from 'react-icons/ri';
+import { MdEngineering } from 'react-icons/md';
 
 
 export const PortalLeftPanel = () => {
@@ -21,6 +22,10 @@ export const PortalLeftPanel = () => {
         <div className='inline'>
           <BsFillPersonFill className={`inline mr-1 my-auto`} />
           <Link className={`${router.pathname === "/tenants" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"tenants"}>Tenants</Link>
+        </div>
+        <div className='inline'>
+          <MdEngineering className={`inline mr-1 my-auto`} />
+          <Link className={`${router.pathname === "/technicians" ? "text-gray-800" : "text-gray-500"} hover:text-slate-400`} href={"technicians"}>Technicians</Link>
         </div>
         <div className='inline'>
           <CiLocationOn className='inline mr-1 my-auto' />

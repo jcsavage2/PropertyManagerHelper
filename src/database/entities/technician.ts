@@ -1,6 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES } from '.';
-import { PillarDynamoTable } from '..';
+import { INDEXES, PillarDynamoTable } from '..';
+import { uuid } from 'uuidv4';
 
 type CreateTechnicianProps = {
   name: string;
@@ -9,17 +10,29 @@ type CreateTechnicianProps = {
   organization: string;
 };
 
-export class PropertyManagerEntity {
+export interface ITechnician {
+  pk: string,
+  sk: string,
+  created: string,
+  technicianName: string,
+  technicianEmail: string,
+  pmEmail: string,
+  organization: string,
+};
+
+export class TechnicianEntity {
   private technicianEntity: Entity;
 
   constructor() {
     this.technicianEntity = new Entity({
-      name: ENTITIES.PROPERTY_MANAGER,
+      name: ENTITIES.TECHNICIAN,
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
-        name: { type: "string" },
-        email: { type: "string" },
+        GSI1PK: { type: "string" }, //PM email
+        GSI1SK: { type: "string" },
+        technicianName: { type: "string" },
+        technicianEmail: { type: "string" },
         pmEmail: { type: "string" },
         organization: { type: "string" },
       },
@@ -33,6 +46,12 @@ export class PropertyManagerEntity {
   private generateSk() {
     return ["E", ENTITIES.TECHNICIAN].join("#");
   }
+  private generateTechnicianSK(uniqueId: string) {
+    return ["E", uniqueId].join('#');
+  }
+  private generateGSI1PK({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+    return ["PM", propertyManagerEmail.toLowerCase()].join("#");
+  }
 
   /**
    * Creates a new technician attached to a property manager and organization.
@@ -43,11 +62,14 @@ export class PropertyManagerEntity {
       const result = await this.technicianEntity.update({
         pk: this.generatePk({ email: email.toLowerCase() }),
         sk: this.generateSk(),
-        name,
-        email: email.toLowerCase(),
+        GSI1PK: this.generateGSI1PK({ propertyManagerEmail: pmEmail.toLowerCase() }),
+        GSI1SK: this.generateTechnicianSK(uuid()),
+        technicianName: name,
+        technicianEmail: email.toLowerCase(),
         pmEmail: pmEmail.toLowerCase(),
         organization,
       }, { returnValues: "ALL_NEW" });
+      console.log("Technician that was just created: ", result);
       return result;
     } catch (err) {
       console.log({ err });
@@ -73,13 +95,33 @@ export class PropertyManagerEntity {
       const result = await this.technicianEntity.update({
         pk: this.generatePk({ email: email.toLowerCase() }),
         sk: this.generateSk(),
-        email: email.toLowerCase(),
-        ...(name && { name, }),
+        technicianEmail: email.toLowerCase(),
+        ...(name && { technicianName: name, }),
         ...(pmEmail && { pmEmail }),
         ...(organization && { organization }),
         userType: ENTITIES.TECHNICIAN
       }, { returnValues: "ALL_NEW" });
       return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  /**
+   * @returns All technicians for a given property manager
+   */
+  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+    try {
+      const result = (await PillarDynamoTable.query(
+        this.generateGSI1PK({ propertyManagerEmail }),
+        {
+          limit: 20,
+          reverse: true,
+          beginsWith: "E",
+          index: INDEXES.GSI1
+        }
+      ));
+      return result.Items ?? [];
     } catch (err) {
       console.log({ err });
     }

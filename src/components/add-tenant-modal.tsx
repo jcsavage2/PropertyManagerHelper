@@ -1,5 +1,4 @@
 import { useUserContext } from "@/context/user";
-import { CreateTenantBody } from "@/pages/api/create-tenant";
 import axios from "axios";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
 import { toast } from 'react-toastify';
@@ -188,7 +187,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
           onChange={handlePostalCodeChange}
         />
         <button
-          className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
+          className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
           type="submit"
           disabled={!tenantName || !tenantEmail || !address || !state || !city || !postalCode}
         >
