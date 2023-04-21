@@ -53,9 +53,9 @@ export class WorkOrderEntity {
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
-        GSI1PK: { type: "string" },
+        GSI1PK: { type: "string" }, //PM email
         GSI1SK: { type: "string" },
-        GSI2PK: { type: "string" },
+        GSI2PK: { type: "string" }, //Tenant email
         GSI2SK: { type: "string" },
         pmEmail: { type: 'string' },
         issue: { type: "string" },
@@ -105,13 +105,13 @@ export class WorkOrderEntity {
     return ["PM", propertyManagerEmail.toLowerCase()].join("#");
   }
   private generateGSI2PK({ tenantEmail }: { tenantEmail: string; }) {
-    return ["PM", tenantEmail.toLowerCase()].join("#");
+    return ["T", tenantEmail.toLowerCase()].join("#");
   }
 
   /**
    * Creates a work order entity.
    */
-  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
+  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail}: CreateWorkOrderProps) {
     const uniqueId = uuid();
     const result = await this.workOrderEntity.put({
       pk: this.generatePk(uniqueId),
@@ -164,7 +164,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async update({ pk, sk, status }: { pk: string, sk: string; status: WorkOrderStatus; }) {
+  public async update({ pk, sk, status}: { pk: string, sk: string; status: WorkOrderStatus; }) {
     try {
       const result = await this.workOrderEntity.update({
         pk,
@@ -177,4 +177,3 @@ export class WorkOrderEntity {
     }
   }
 }
-

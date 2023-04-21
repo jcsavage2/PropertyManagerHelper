@@ -115,7 +115,6 @@ export class PropertyManagerEntity {
 
   /**
   * Adds a companion row to the property manager that has some metadata about a tenant.
-  * Note, when this happens, the API will also need to create the tenant user entity record with a status of "INVITED".
   * Addresses can only be created by property managers, so the address PK will always match the property manager's PK. 
   */
   public async createPropertyCompanionRow(
@@ -128,20 +127,6 @@ export class PropertyManagerEntity {
         organization,
       }, { returnValues: "ALL_NEW" });
       return result;
-    } catch (err) {
-      console.log({ err });
-    }
-  }
-
-  public async getAllTenants({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    try {
-      const result = await this.propertyManagerEntity.query(
-        this.generatePk({ email: propertyManagerEmail }),
-        {
-          beginsWith: "T#",
-          reverse: true,
-        }
-      );
     } catch (err) {
       console.log({ err });
     }
