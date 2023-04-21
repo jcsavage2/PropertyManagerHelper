@@ -21,10 +21,9 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
       }
     }
     getWorkOrder();
-  }, [workOrderId]);
+  }, []);
 
-  if (workOrder) {
-    console.log({ workOrder });
+  if (workOrder && !isLoading) {
     return (
       <div >
         <div>Issue: {workOrder.issue}</div>

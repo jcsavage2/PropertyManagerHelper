@@ -15,6 +15,9 @@ export default async function handler(
   try {
     const body = req.body as GetUser;
     const { pk, sk } = body;
+    if (!pk || !sk) {
+      return res.status(400).json({ response: "Missing PK or SK" });
+    }
     const workOrderEntity = new WorkOrderEntity();
     const workOrder = await workOrderEntity.get({ pk, sk });
     return res.status(200).json({ response: JSON.stringify(workOrder) });
