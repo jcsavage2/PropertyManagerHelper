@@ -1,0 +1,24 @@
+import { Data } from "@/database";
+import { WorkOrderEntity } from "@/database/entities/work-order";
+import { NextApiRequest, NextApiResponse } from "next";
+
+
+export type GetUser = {
+  pk: string;
+  sk: string;
+};
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<Data>
+) {
+  try {
+    const body = req.body as GetUser;
+    const { pk, sk } = body;
+    const workOrderEntity = new WorkOrderEntity();
+    const workOrder = await workOrderEntity.get({ pk, sk });
+    return res.status(200).json({ response: JSON.stringify(workOrder) });
+  } catch (error) {
+    console.error(error);
+  }
+}

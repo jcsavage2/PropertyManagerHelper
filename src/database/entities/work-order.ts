@@ -133,11 +133,11 @@ export class WorkOrderEntity {
   /**
    * @returns Work Order metadata for a single work order.
    */
-  public async get({ pk, sk, addressId, status }:
-    { pk: string; sk: string; addressId: string; status: WorkOrderStatus; }) {
+  public async get({ pk, sk }:
+    { pk: string; sk: string; }) {
     const params = {
-      pk: this.generatePk(pk), // can query all properties for a given property manager
-      sk: this.generateSk(sk)
+      pk,
+      sk,
     };
     const result = await this.workOrderEntity.get(params, { consistent: true });
     return result;

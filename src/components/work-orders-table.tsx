@@ -18,7 +18,7 @@ export const WorkOrdersTable = () => {
 
   const [sortField, setSortField] = useState<string>("status");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [statusFilters, setStatusFilters] = useState<Record<IWorkOrder["status"], boolean>>({
     TO_DO: true,
     COMPLETE: true
@@ -108,6 +108,7 @@ export const WorkOrdersTable = () => {
           const allStatuses: IWorkOrder["status"][] = ["TO_DO", "COMPLETE"];
           const remainingOptions = allStatuses.filter(s => s !== workOrder.status);
           const isStatusAccessor = accessor === "status";
+          const workOrderId = `${workOrder.pk}`;
           //@ts-ignore
           const tData = workOrder[accessor];
           if (isStatusAccessor) {
@@ -128,7 +129,7 @@ export const WorkOrdersTable = () => {
           }
           return (
             <td className="border px-4 py-1" key={accessor}>
-              <Link key={workOrder.pk + index} href={`/work-orders/?workOrderId=${workOrder.pk}`} as={`/work-order/${workOrder.pk}`}>
+              <Link key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`} as={`/work-order/${encodeURIComponent(workOrderId)}`}>
                 {tData}
               </Link>
             </td>
