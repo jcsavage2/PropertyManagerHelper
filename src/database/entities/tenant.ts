@@ -1,6 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES } from '.';
+import { ENTITIES, ENTITY_KEY } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
+import { generateKey } from '@/utils';
 
 
 export type CreateTenantProps = {
@@ -24,7 +25,7 @@ export class TenantEntity {
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
-        GSI1PK: { type: "string" },
+        GSI1PK: { type: "string" }, //PM email
         GSI1SK: { type: "string" },
         pmEmail: { type: "string" },
         status: { type: "string" },
@@ -35,17 +36,6 @@ export class TenantEntity {
       },
       table: PillarDynamoTable
     } as const);
-  }
-
-  private generatePk({ tenantEmail }: { tenantEmail: string; }) {
-    return ["T", `${tenantEmail.toLowerCase()}`].join("#");
-  }
-  private generateGSI1PK({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    return ["PM", propertyManagerEmail.toLowerCase()].join('#');
-  }
-
-  private generateSk() {
-    return ["T", ENTITIES.TENANT].join("#");
   }
 
   private generateAddress({ address,
@@ -71,8 +61,6 @@ export class TenantEntity {
     };
   }
 
-
-
   /**
    * Creates the user record in the Database.
    */
@@ -90,10 +78,10 @@ export class TenantEntity {
     }: CreateTenantProps) {
     try {
       const result = await this.tenant.update({
-        pk: this.generatePk({ tenantEmail }),
-        sk: this.generateSk(),
-        GSI1PK: this.generateGSI1PK({ propertyManagerEmail: pmEmail }),
-        GSI1SK: this.generateSk(),
+        pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
         tenantEmail: tenantEmail.toLowerCase(),
         tenantName,
         ...(pmEmail && { pmEmail: pmEmail?.toLowerCase() }),
@@ -123,8 +111,8 @@ export class TenantEntity {
       { tenantEmail: string; tenantName?: string; status?: "INVITED" | "JOINED" | "REQUESTED_JOIN"; }) {
     try {
       const result = await this.tenant.update({
-        pk: this.generatePk({ tenantEmail }),
-        sk: this.generateSk(),
+        pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
         ...(tenantName && { tenantName }),
         ...(status && { status }),
       }, { returnValues: "ALL_NEW" });
@@ -140,8 +128,8 @@ export class TenantEntity {
   public async get({ tenantEmail }: { tenantEmail: string; }) {
     try {
       const params = {
-        pk: this.generatePk({ tenantEmail }),
-        sk: this.generateSk()
+        pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT)
       };
       const result = await this.tenant.get(params, { consistent: true });
       return result;
@@ -151,7 +139,7 @@ export class TenantEntity {
   }
 
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    const GSI1PK = this.generateGSI1PK({ propertyManagerEmail });
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase());
     try {
       const result = (await PillarDynamoTable.query(
         GSI1PK,

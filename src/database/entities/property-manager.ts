@@ -1,6 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES } from '.';
+import { ENTITIES, ENTITY_KEY } from '.';
 import { PillarDynamoTable } from '..';
+import { generateKey } from '@/utils';
 
 type AddTenantProps = {
   tenantEmail: string;
@@ -29,27 +30,13 @@ export class PropertyManagerEntity {
         organization: { type: "string" },
         userType: { type: "string" },
         tenantName: { type: "string" },
-        tenantEmail: { type: "string" }
+        tenantEmail: { type: "string" },
+        technicians: { type: "map" }
       },
       table: PillarDynamoTable
     } as const);
   }
-
-  private generatePk({ email }: { email: string; }) {
-    return ["PM", email.toLowerCase()].join('#');
-  }
-  private generateSk() {
-    return ["PM", ENTITIES.PROPERTY_MANAGER].join("#");
-  }
-
-  /**
-   * Generates the SK for a tenant who is added by a property manager.
-   * We create a companion row under the property manager so we can efficiently query for a property manager's tenants. 
-   */
-  private generateSkForTenant() {
-    return ["T", ENTITIES.TENANT].join("#");
-  }
-
+  
   /**
     * Generates the SK for a property who is added by a property manager.
     * We create a companion row under the property manager so we can efficiently query for a property manager's properties. 
@@ -59,24 +46,14 @@ export class PropertyManagerEntity {
   }
 
   /**
-    * Generates the SK for a workOrder that exists for a given property manager.
-    * We create a companion row under the property manager so we can efficiently query for a property manager's work orders. 
-    */
-  private generateSkForWorkOrder({ workOrderPk }: { workOrderPk: string; }) {
-    return ["WO", workOrderPk].join("#");
-  }
-
-
-
-  /**
    * Creates as new property manager user entity.
    */
   public async create(
     { pmEmail, pmName, organization, }: CreatePropertyManagerProps) {
     try {
       const result = await this.propertyManagerEntity.update({
-        pk: this.generatePk({ email: pmEmail.toLowerCase() }),
-        sk: this.generateSk(),
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
         pmEmail: pmEmail.toLowerCase(),
         pmName,
         organization,
@@ -101,8 +78,8 @@ export class PropertyManagerEntity {
     }: AddTenantProps) {
     try {
       const result = await this.propertyManagerEntity.update({
-        pk: this.generatePk({ email: pmEmail }),
-        sk: this.generateSkForTenant(),
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
         tenantEmail: tenantEmail.toLowerCase(),
         tenantName: tenantName?.toLocaleLowerCase(),
         organization,
@@ -122,7 +99,7 @@ export class PropertyManagerEntity {
       { email: string; organization?: string; addressPk: string; addressSk: string; }) {
     try {
       const result = await this.propertyManagerEntity.update({
-        pk: this.generatePk({ email }),
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, email.toLowerCase()),
         sk: this.generateSkForProperty({ addressPk, addressSk }),
         organization,
       }, { returnValues: "ALL_NEW" });
@@ -135,7 +112,7 @@ export class PropertyManagerEntity {
   public async getAllUnits({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     try {
       const result = await this.propertyManagerEntity.query(
-        this.generatePk({ email: propertyManagerEmail }),
+        generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
         {
           beginsWith: "T#",
           reverse: true,
@@ -149,8 +126,8 @@ export class PropertyManagerEntity {
   public async get({ email }: { email: string; }) {
     try {
       const params = {
-        pk: this.generatePk({ email: email.toLowerCase() }),
-        sk: this.generateSk()
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, email.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER)
       };
       const result = await this.propertyManagerEntity.get(params, { consistent: true });
       return result;
@@ -164,12 +141,32 @@ export class PropertyManagerEntity {
       { email: string; name?: string; organization?: string; tenants?: string[], properties?: string[]; }) {
     try {
       const result = await this.propertyManagerEntity.update({
-        pk: this.generatePk({ email }),
-        sk: this.generateSk(),
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, email.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
         pmEmail: email.toLowerCase(),
         ...(name && { name, }),
         ...(organization && { organization }),
         userType: ENTITIES.PROPERTY_MANAGER
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  //Add technician to property manager technicians map
+  public async addTechnician(
+    { pmEmail, technicianEmail }:
+      { pmEmail: string; technicianEmail: string; }) {
+    try {
+      const result = await this.propertyManagerEntity.update({
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
+        technicians: {
+            $set: {
+                [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
+            }
+        }
       }, { returnValues: "ALL_NEW" });
       return result;
     } catch (err) {
