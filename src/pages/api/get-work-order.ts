@@ -3,7 +3,7 @@ import { WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
 
 
-export type GetUser = {
+export type GetWorkOrder = {
   pk: string;
   sk: string;
 };
@@ -13,7 +13,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    const body = req.body as GetUser;
+    const body = req.body as GetWorkOrder;
     const { pk, sk } = body;
     if (!pk || !sk) {
       return res.status(400).json({ response: "Missing PK or SK" });

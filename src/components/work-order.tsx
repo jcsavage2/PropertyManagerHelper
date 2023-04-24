@@ -1,4 +1,5 @@
 import { IWorkOrder } from "@/database/entities/work-order";
+import { GetWorkOrder } from "@/pages/api/get-work-order";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -10,6 +11,9 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   useEffect(() => {
     async function getWorkOrder() {
       try {
+        if (!workOrderId) {
+          return;
+        }
         const { data } = await axios.post("/api/get-work-order", { pk: workOrderId, sk: workOrderId });
         if (data.response) {
           const parsed = JSON.parse(data.response);
