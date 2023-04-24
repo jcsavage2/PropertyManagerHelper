@@ -129,7 +129,7 @@ export const WorkOrdersTable = () => {
           }
           return (
             <td className="border px-4 py-1" key={accessor}>
-              <Link key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`} as={`/work-order/${encodeURIComponent(workOrderId)}`}>
+              <Link key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`} as={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}>
                 {tData}
               </Link>
             </td>
