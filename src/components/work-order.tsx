@@ -21,7 +21,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
       }
     }
     getWorkOrder();
-  }, []);
+  }, [workOrderId]);
 
   if (workOrder && !isLoading) {
     return (
