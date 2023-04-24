@@ -1,6 +1,8 @@
-import { findIssueSample, issueCategoryToTypes } from "@/constants";
+import { findIssueSample } from "@/constants";
 import { ChatCompletionRequestMessage } from "openai";
 import { AiJSONResponse, UserInfo, WorkOrder } from "@/types";
+import ksuid from 'ksuid';
+import { ENTITY_KEY, EntityTypeValues } from "@/database/entities";
 
 export const hasAllIssueInfo = (workOrder: WorkOrder) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
@@ -125,4 +127,18 @@ export function toTitleCase(str: string) {
   return str.toLowerCase().split(' ').map(function (word) {
     return (word.charAt(0).toUpperCase() + word.slice(1));
   }).join(' ');
+}
+
+/**
+ * @returns A key for use in DDB tables; {firstIdentifier}#{secondIdentifier}
+ */
+export function generateKey(entityIdentifier: EntityTypeValues, secondIdentifier: string) {
+  return [entityIdentifier, secondIdentifier].join('#');
+}
+
+/**
+ * @returns KSUID
+ */
+export function generateKSUID() {
+  return ksuid.randomSync().string;
 }

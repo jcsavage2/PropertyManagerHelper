@@ -1,8 +1,8 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES } from '.';
+import { ENTITIES, ENTITY_KEY } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { uuid } from 'uuidv4';
-
+import { generateKey } from '@/utils';
 
 export type WorkOrderStatus = "COMPLETE" | "TO_DO";
 type CreateWorkOrderProps = {
@@ -42,6 +42,7 @@ export interface IWorkOrder {
   tenantName: string,
   address: PropertyAddress,
   status: WorkOrderStatus;
+  assignedTo: Map<string, string>;
 };
 
 export class WorkOrderEntity {
@@ -63,17 +64,10 @@ export class WorkOrderEntity {
         tenantName: { type: "string" },
         address: { type: "map" },
         status: { type: "string" },
+        assignedTo: { type: "map" },
       },
       table: PillarDynamoTable
     } as const);
-  }
-
-  private generatePk(uniqueId: string) {
-    return ["WO", uniqueId].join('#');
-  }
-
-  private generateSk(uniqueId: string) {
-    return ["WO", uniqueId].join('#');
   }
 
   private generateAddress({
@@ -97,29 +91,18 @@ export class WorkOrderEntity {
   }
 
   /**
-   * 
-   * Generates the PK for the first global secondary index, the property manager email.
-   * This will allow us to get all work orders for a given property manager. 
-   */
-  private generateGSI1PK({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    return ["PM", propertyManagerEmail.toLowerCase()].join("#");
-  }
-  private generateGSI2PK({ tenantEmail }: { tenantEmail: string; }) {
-    return ["T", tenantEmail.toLowerCase()].join("#");
-  }
-
-  /**
    * Creates a work order entity.
    */
-  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail}: CreateWorkOrderProps) {
+  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
     const uniqueId = uuid();
+    const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uniqueId);
     const result = await this.workOrderEntity.put({
-      pk: this.generatePk(uniqueId),
-      sk: this.generateSk(uniqueId),
-      GSI1PK: this.generateGSI1PK({ propertyManagerEmail }),
-      GSI1SK: this.generateSk(uniqueId),
-      GSI2PK: this.generateGSI2PK({ tenantEmail }),
-      GSI2SK: this.generateSk(uniqueId),
+      pk: workOrderIdKey,
+      sk: workOrderIdKey,
+      GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
+      GSI1SK: workOrderIdKey,
+      GSI2PK: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
+      GSI2SK: workOrderIdKey,
       pmEmail: propertyManagerEmail.toLowerCase(),
       tenantEmail,
       status,
@@ -147,14 +130,14 @@ export class WorkOrderEntity {
    * @returns All work orders for a given property manager
    */
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    const GSI1PK = this.generateGSI1PK({ propertyManagerEmail });
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase());
     try {
       const result = (await PillarDynamoTable.query(
         GSI1PK,
         {
           limit: 20,
           reverse: true,
-          beginsWith: "WO",
+          beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
           index: INDEXES.GSI1,
         }
       ));
@@ -164,7 +147,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async update({ pk, sk, status}: { pk: string, sk: string; status: WorkOrderStatus; }) {
+  public async update({ pk, sk, status }: { pk: string, sk: string; status: WorkOrderStatus; }) {
     try {
       const result = await this.workOrderEntity.update({
         pk,
@@ -176,4 +159,23 @@ export class WorkOrderEntity {
       console.log({ err });
     }
   }
+
+  public async assignToTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
+    const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+    try {
+      const result = await this.workOrderEntity.update({
+        pk: key,
+        sk: key,
+        assignedTo: {
+          $set: {
+            [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
+          }
+        }
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
 }

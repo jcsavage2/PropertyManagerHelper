@@ -1,6 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES } from '.';
+import { ENTITIES, ENTITY_KEY } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
+import { generateKey } from '@/utils';
 import { uuid } from 'uuidv4';
 
 type CreateTechnicianProps = {
@@ -40,19 +41,6 @@ export class TechnicianEntity {
     } as const);
   }
 
-  private generatePk({ email }: { email: string; }) {
-    return ["E", email.toLowerCase()].join('#');
-  }
-  private generateSk() {
-    return ["E", ENTITIES.TECHNICIAN].join("#");
-  }
-  private generateTechnicianSK(uniqueId: string) {
-    return ["E", uniqueId].join('#');
-  }
-  private generateGSI1PK({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    return ["PM", propertyManagerEmail.toLowerCase()].join("#");
-  }
-
   /**
    * Creates a new technician attached to a property manager and organization.
    */
@@ -60,10 +48,10 @@ export class TechnicianEntity {
     { name, email, pmEmail, organization }: CreateTechnicianProps) {
     try {
       const result = await this.technicianEntity.update({
-        pk: this.generatePk({ email: email.toLowerCase() }),
-        sk: this.generateSk(),
-        GSI1PK: this.generateGSI1PK({ propertyManagerEmail: pmEmail.toLowerCase() }),
-        GSI1SK: this.generateTechnicianSK(uuid()),
+        pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, uuid()),
         technicianName: name,
         technicianEmail: email.toLowerCase(),
         pmEmail: pmEmail.toLowerCase(),
@@ -76,11 +64,11 @@ export class TechnicianEntity {
     }
   }
 
-  public async get({ email }: { email: string; }) {
+  public async get({ technicianEmail, pmEmail }: { technicianEmail: string; pmEmail: string; }) {
     try {
       const params = {
-        pk: this.generatePk({ email: email.toLowerCase() }),
-        sk: this.generateSk()
+        pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
       };
       const result = await this.technicianEntity.get(params, { consistent: true });
       return result;
@@ -90,11 +78,11 @@ export class TechnicianEntity {
   }
 
   public async update(
-    { email, name, pmEmail, organization}: { email: string; name?: string; pmEmail?: string; organization?: string; }) {
+    { email, name, pmEmail, organization }: { email: string; name?: string; pmEmail: string; organization?: string; }) {
     try {
       const result = await this.technicianEntity.update({
-        pk: this.generatePk({ email: email.toLowerCase() }),
-        sk: this.generateSk(),
+        pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
         technicianEmail: email.toLowerCase(),
         ...(name && { technicianName: name, }),
         ...(pmEmail && { pmEmail }),
@@ -113,11 +101,11 @@ export class TechnicianEntity {
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     try {
       const result = (await PillarDynamoTable.query(
-        this.generateGSI1PK({ propertyManagerEmail }),
+        generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
         {
           limit: 20,
           reverse: true,
-          beginsWith: "E",
+          beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
           index: INDEXES.GSI1
         }
       ));
