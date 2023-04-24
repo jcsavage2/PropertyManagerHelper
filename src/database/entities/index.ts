@@ -18,5 +18,5 @@ export const ENTITY_KEY = {
   EVENT: "EV",
 } as const;
 
-export type EntityType = typeof ENTITIES[keyof typeof ENTITIES];
-export type EntityKeyType = typeof ENTITY_KEY[keyof typeof ENTITY_KEY];
+export type EntityTypeKeys = keyof typeof ENTITY_KEY;
+export type EntityTypeValues = typeof ENTITY_KEY[EntityTypeKeys];
