@@ -40,7 +40,7 @@ export class WorkOrderEntity {
   /**
    * Creates a new event for a work order.
    */
-  public async create({ workOrderId, updateType, updateDescription, updateMadeBy}: CreateEventProps) {
+  public async create({ workOrderId, updateType, updateDescription, updateMadeBy }: CreateEventProps) {
     const result = await this.eventEntity.put({
       pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
       sk: generateKSUID(),
@@ -65,5 +65,5 @@ export class WorkOrderEntity {
       console.log({ err });
     }
   }
-  
+
 }

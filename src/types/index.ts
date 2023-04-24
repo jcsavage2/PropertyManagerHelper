@@ -38,4 +38,4 @@ export type IssueInformation = {
 
 export type WorkOrder = IssueInformation;
 
-export type EventType = 'statusUpdate' | 'assignedTo' | 'workOrderCreated';
+export type EventType = 'STATUS_UPDATE' | 'ASSIGNED_TO_UPDATE' | 'COMMENT_UPDATE';
