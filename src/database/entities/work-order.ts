@@ -93,9 +93,9 @@ export class WorkOrderEntity {
   /**
    * Creates a work order entity.
    */
-  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail}: CreateWorkOrderProps) {
+  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
     const uniqueId = uuid();
-    const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uniqueId)
+    const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uniqueId);
     const result = await this.workOrderEntity.put({
       pk: workOrderIdKey,
       sk: workOrderIdKey,
@@ -137,7 +137,7 @@ export class WorkOrderEntity {
         {
           limit: 20,
           reverse: true,
-          beginsWith: "WO",
+          beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
           index: INDEXES.GSI1,
         }
       ));
@@ -147,7 +147,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async update({ pk, sk, status}: { pk: string, sk: string; status: WorkOrderStatus; }) {
+  public async update({ pk, sk, status }: { pk: string, sk: string; status: WorkOrderStatus; }) {
     try {
       const result = await this.workOrderEntity.update({
         pk,
@@ -167,9 +167,9 @@ export class WorkOrderEntity {
         pk: key,
         sk: key,
         assignedTo: {
-            $set: {
-                [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
-            }
+          $set: {
+            [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
+          }
         }
       }, { returnValues: "ALL_NEW" });
       return result;
@@ -177,5 +177,5 @@ export class WorkOrderEntity {
       console.log({ err });
     }
   }
-  
+
 }

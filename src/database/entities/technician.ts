@@ -78,7 +78,7 @@ export class TechnicianEntity {
   }
 
   public async update(
-    { email, name, pmEmail, organization}: { email: string; name?: string; pmEmail: string; organization?: string; }) {
+    { email, name, pmEmail, organization }: { email: string; name?: string; pmEmail: string; organization?: string; }) {
     try {
       const result = await this.technicianEntity.update({
         pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
@@ -105,7 +105,7 @@ export class TechnicianEntity {
         {
           limit: 20,
           reverse: true,
-          beginsWith: "E",
+          beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
           index: INDEXES.GSI1
         }
       ));

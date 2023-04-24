@@ -146,7 +146,7 @@ export class TenantEntity {
         {
           limit: 20,
           reverse: true,
-          beginsWith: "T",
+          beginsWith: `${ENTITY_KEY.TENANT}#`,
           index: INDEXES.GSI1,
         }
       ));

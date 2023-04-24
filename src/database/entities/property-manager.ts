@@ -36,7 +36,7 @@ export class PropertyManagerEntity {
       table: PillarDynamoTable
     } as const);
   }
-  
+
   /**
     * Generates the SK for a property who is added by a property manager.
     * We create a companion row under the property manager so we can efficiently query for a property manager's properties. 
@@ -114,7 +114,7 @@ export class PropertyManagerEntity {
       const result = await this.propertyManagerEntity.query(
         generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
         {
-          beginsWith: "T#",
+          beginsWith: `${ENTITY_KEY.PROPERTY_MANAGER}#`,
           reverse: true,
         }
       );
@@ -163,9 +163,9 @@ export class PropertyManagerEntity {
         pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
         sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
         technicians: {
-            $set: {
-                [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
-            }
+          $set: {
+            [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
+          }
         }
       }, { returnValues: "ALL_NEW" });
       return result;
