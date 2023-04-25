@@ -1,8 +1,22 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, ENTITY_KEY } from '.';
+import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 
+
+export interface ITenant {
+  pk: string,
+  sk: string,
+  GSI1PK: string,
+  created: string,
+  GSI1SK: string,
+  pmEmail: string,
+  status: string,
+  tenantEmail: string,
+  tenantName: string,
+  userType: string,
+  addresses: Map<string, any>,
+}
 
 export type CreateTenantProps = {
   tenantEmail: string;
@@ -139,21 +153,26 @@ export class TenantEntity {
   }
 
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+    let startKey: StartKey;
+    const tenants: ITenant[] = [];
     const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase());
-    try {
-      const result = (await PillarDynamoTable.query(
-        GSI1PK,
-        {
-          limit: 20,
-          reverse: true,
-          beginsWith: `${ENTITY_KEY.TENANT}#`,
-          index: INDEXES.GSI1,
-        }
-      ));
-      return result.Items ?? [];
-    } catch (err) {
-      console.log({ err });
-    }
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          GSI1PK,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.TENANT}#`,
+            index: INDEXES.GSI1,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        tenants.push(...(Items ?? []) as ITenant[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return tenants;
   }
-
 }

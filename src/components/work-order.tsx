@@ -1,5 +1,4 @@
 import { IWorkOrder } from "@/database/entities/work-order";
-import { GetWorkOrder } from "@/pages/api/get-work-order";
 import axios from "axios";
 import { useEffect, useState } from "react";
 

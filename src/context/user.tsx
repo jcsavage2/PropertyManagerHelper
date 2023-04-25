@@ -15,7 +15,6 @@ type PropertyManager = BaseUser & {
   pmEmail: string,
   organization: string,
   userType: "PROPERTY_MANAGER";
-
   tenantEmail?: never;
   tenantName?: never;
 };

@@ -30,7 +30,7 @@ export class PropertyManagerEntity {
         organization: { type: "string" },
         userType: { type: "string" },
         tenantName: { type: "string" },
-        tenantEmail: { type: "string" },
+        tenants: { type: "map" },
         technicians: { type: "map" }
       },
       table: PillarDynamoTable

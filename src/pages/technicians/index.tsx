@@ -6,10 +6,13 @@ import { AddTechnicianModal } from '@/components/add-technician-modal';
 import { useUserContext } from '@/context/user';
 import axios from 'axios';
 import { ITechnician } from '@/database/entities/technician';
+import { useDevice } from '@/hooks/use-window-size';
+import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 
 const Technicians = () => {
   const [technicianModalIsOpen, setTenantModalIsOpen] = useState(false);
   const { user } = useUserContext();
+  const { isMobile } = useDevice();
   const [technicians, setTechnicians] = useState<ITechnician[]>([]);
 
   useEffect(() => {
@@ -25,8 +28,8 @@ const Technicians = () => {
   }, [user.pmEmail]);
 
   const refetch = useCallback(async () => {
-    if(!user.pmEmail){
-        return
+    if (!user.pmEmail) {
+      return;
     }
     const { data } = await axios.post("/api/get-all-technicians-for-pm", { propertyManagerEmail: user.pmEmail });
     const techs = JSON.parse(data.response);
@@ -35,7 +38,7 @@ const Technicians = () => {
 
   return (
     <div id="testing" className="mx-4 mt-4" style={{ display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
-      <PortalLeftPanel />
+      {!isMobile && <PortalLeftPanel />}
       <div className="lg:max-w-5xl">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
           <h1 className="text-4xl">{`Technicians`}</h1>
@@ -47,6 +50,7 @@ const Technicians = () => {
         <TechnicianTable technicians={technicians} />
       </div>
       <AddTechnicianModal technicianModalIsOpen={technicianModalIsOpen} setTechnicianModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={refetch} />
+      {isMobile && <BottomNavigationPanel />}
     </div>
   );
 };

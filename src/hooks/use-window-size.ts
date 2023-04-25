@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useEventListener, useIsomorphicLayoutEffect } from 'usehooks-ts';
 
@@ -7,7 +7,7 @@ interface WindowSize {
   height: number;
 }
 
-export function useWindowSize(): WindowSize {
+export function useDevice(): { windowSize: WindowSize; isMobile: boolean; } {
   const [windowSize, setWindowSize] = useState<WindowSize>({
     width: 0,
     height: 0,
@@ -20,6 +20,8 @@ export function useWindowSize(): WindowSize {
     });
   };
 
+  const isMobile = windowSize.width < 767;
+
   useEventListener('resize', handleSize);
 
   // Set size at the first client-side load
@@ -28,5 +30,5 @@ export function useWindowSize(): WindowSize {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return windowSize;
+  return { windowSize, isMobile };
 }

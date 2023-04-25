@@ -4,7 +4,7 @@ import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, use
 
 import Modal from 'react-modal';
 
-export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { tenantModalIsOpen: boolean; setTenantModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
+export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsOpen }: { addPropetyModalIsOpen: boolean; setAddPropertyModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
   const [isBrowser, setIsBrowser] = useState(false);
   const { user } = useUserContext();
 
@@ -12,7 +12,7 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
     setIsBrowser(true);
   }, []);
 
-  isBrowser && Modal.setAppElement('#testing');
+  isBrowser && Modal.setAppElement('#property');
 
   const [tenantName, setTenantName] = useState("");
   const [tenantEmail, setTenantEmail] = useState("");
@@ -28,7 +28,7 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
       left: '50%',
       right: 'auto',
       bottom: 'auto',
-      marginRight: '-50%',
+      width: "50%",
       transform: 'translate(-50%, -50%)',
     },
     overLay: {
@@ -41,12 +41,6 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
     }
   };
 
-  const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setTenantName(e.currentTarget.value);
-  }, [setTenantName]);
-  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setTenantEmail(e.currentTarget.value);
-  }, [setTenantEmail]);
   const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setAddress(e.currentTarget.value);
   }, [setAddress]);
@@ -64,13 +58,13 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
   }, [setPostalCode]);
 
   function closeModal() {
-    setTenantModalIsOpen(false);
+    setAddPropertyModalIsOpen(false);
   }
 
   const handleCreateNewProperty: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      const { data } = await axios.post("/api/create-new-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.pmEmail });
+      const { data } = await axios.post("/api/create-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.pmEmail });
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
@@ -84,7 +78,7 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
   return (
     <div>
       <Modal
-        isOpen={tenantModalIsOpen}
+        isOpen={addPropetyModalIsOpen}
         onAfterOpen={() => console.log("opened..")}
         onRequestClose={closeModal}
         contentLabel="Example Modal"
@@ -137,6 +131,11 @@ export const AddPropertyModal = ({ tenantModalIsOpen, setTenantModalIsOpen }: { 
             value={postalCode}
             onChange={handleZipChange}
           />
+          <label htmlFor='tenant'>Select Tenant</label>
+          <select id="tenant">
+            <option value="mitch" label="Mitchell - mitchposk@gmail.com" />
+          </select>
+
           <button
             className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
             type="submit"

@@ -3,6 +3,21 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 
+export interface IProperty {
+  tenants: Map<string, string>;
+  pmEmail: string;
+  pk: string;
+  postalCode: string;
+  sk: string;
+  city: string;
+  state: string;
+  organizationId: string;
+  created: string;
+  address: string;
+  unit: string;
+
+}
+
 type CreatePropertyProps = {
   address: string;
   city: string;
@@ -42,7 +57,7 @@ export class PropertyEntity {
 
   private generateSk({ address, country = "US", city, state, postalCode, unit }:
     { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; }) {
-    return ["P", "A", address.toUpperCase(), "COUNTRY", country.toUpperCase(), "CITY", city.toUpperCase(), "STATE", state.toUpperCase(), "POSTAL", postalCode.toUpperCase(), "UNIT", unit ? unit?.toUpperCase() : ""].join("#");
+    return [ENTITY_KEY.PROPERTY, "ADDRESS", address.toUpperCase(), "COUNTRY", country.toUpperCase(), "CITY", city.toUpperCase(), "STATE", state.toUpperCase(), "POSTAL", postalCode.toUpperCase(), "UNIT", unit ? unit?.toUpperCase() : ""].join("#");
   }
 
   public async create({ address, country = "US", tenantEmail, city, state, postalCode, unit, propertyManagerEmail }: CreatePropertyProps) {
@@ -52,7 +67,7 @@ export class PropertyEntity {
       GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
       GSI1SK: this.generateSk({ address, country, city, state, postalCode, unit }),
       ...(tenantEmail && { GSI2PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, tenantEmail.toLowerCase()) }),
-      ...(tenantEmail && { GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit })}),
+      ...(tenantEmail && { GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit }) }),
       tenantEmail: tenantEmail?.toLowerCase(),
       country: country.toUpperCase(),
       address: address.toUpperCase(),
@@ -82,7 +97,6 @@ export class PropertyEntity {
     const properties = [];
     do {
       try {
-
         const { Items, LastEvaluatedKey } = await this.propertyEntity.query(pk, { consistent: true, startKey });
         startKey = LastEvaluatedKey as StartKey;
         properties.push(...(Items ?? []));

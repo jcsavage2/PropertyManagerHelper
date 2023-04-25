@@ -34,10 +34,7 @@ export default async function handler(
     const newProperty = await propertyEntity.create({ address: streetAddress, country, city, state, unit: unitNumber, postalCode, propertyManagerEmail });
     await propertyManagerEntity.createPropertyCompanionRow({ email: propertyManagerEmail, organization: "", addressPk: newProperty.pk, addressSk: newProperty.sk });
 
-    //@ts-ignore
-    return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
-
-
+    return res.status(200).json({ response: JSON.stringify(newProperty) });
   } catch (error) {
     console.log({ error });
   }

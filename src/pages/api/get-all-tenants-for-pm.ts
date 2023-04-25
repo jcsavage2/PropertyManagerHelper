@@ -16,7 +16,7 @@ export default async function handler(
     const tenantEntity = new TenantEntity();
     const propertyManagerEmail = body.propertyManagerEmail;
     const tenants = await tenantEntity.getAllForPropertyManager({ propertyManagerEmail });
-    return res.status(200).json({ response: JSON.stringify(tenants) });;
+    return res.status(200).json({ response: JSON.stringify(tenants) });
 
   } catch (error) {
     console.log({ error });

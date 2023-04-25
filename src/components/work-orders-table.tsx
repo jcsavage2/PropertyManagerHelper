@@ -19,11 +19,11 @@ export const WorkOrdersTable = () => {
   const [sortField, setSortField] = useState<string>("status");
   const [isUpdating, setIsUpdating] = useState(false);
   const [order, setOrder] = useState<"asc" | "desc">("asc");
-  const [statusFilters, setStatusFilters] = useState<Record<IWorkOrder["status"], boolean>>({
+  const [statusFilter, setStatusFilter] = useState<Record<IWorkOrder["status"], boolean>>({
     TO_DO: true,
     COMPLETE: true
   });
-  const [showSelectFilter, setShowSelectFilter] = useState(false);
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
   const { user } = useUserContext();
 
 
@@ -100,7 +100,7 @@ export const WorkOrdersTable = () => {
     };
   });
 
-  const filteredRows = remappedWorkOrders.filter(w => !!statusFilters[w.status]);
+  const filteredRows = remappedWorkOrders.filter(w => !!statusFilter[w.status]);
   const sortedWorkOrders = filteredRows.map((workOrder): any => {
     return (
       <tr key={uuid()}>
@@ -113,7 +113,7 @@ export const WorkOrdersTable = () => {
           const tData = workOrder[accessor];
           if (isStatusAccessor) {
             return (
-              <td key={accessor} className="border px-4 py-2">
+              <td key={accessor} className="border px-4 py-1">
                 <select
                   className={`cursor-pointer rounded p-1 ${tData === "TO_DO" && "bg-yellow-200"} ${tData === "COMPLETE" && "bg-green-200"}`}
                   value={tData}
@@ -152,36 +152,39 @@ export const WorkOrdersTable = () => {
   return (
     <div className="mt-8">
       <div className="flex">
-        <button className={`py-1 mr-2 px-3 rounded ${statusFilters.TO_DO ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowSelectFilter((s) => !s)}>
-          Status
-        </button>
+        <div>
+          <button className={`py-1 mr-2 px-3 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowStatusFilter((s) => !s)}>
+            Status
+          </button>
+          {showStatusFilter && (
+            <div className="absolute z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
+              <div className={`flex ${statusFilter.TO_DO ? "hover:bg-blue-200" : "hover:bg-gray-200"}`}>
+                <p className={`py-1 px-3 cursor-pointer flex w-full rounded`} onClick={() => setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO })}>
+                  To Do
+                </p>
+                {!statusFilter.TO_DO ? (<BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />) : (
+                  <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />
+                )}
+              </div>
+
+              <div className={`flex ${statusFilter.COMPLETE ? "hover:bg-blue-200" : "hover:bg-gray-200"}`}>
+                <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? "hover:bg-blue-200" : "hover:bg-gray-200"}`} onClick={() => setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE })}>
+                  Complete
+                </p>
+                {!statusFilter.COMPLETE ? (<BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />) : (
+                  <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />
+                )}
+              </div>
+
+            </div>
+          )}
+        </div>
         <div className="my-auto flex mr-2">
           <AiOutlineFilter className="mr-1 my-auto" />
           Filters
         </div>
       </div>
-      {showSelectFilter && (
-        <div className="absolute z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
-          <div className={`flex ${statusFilters.TO_DO ? "hover:bg-blue-200" : "hover:bg-gray-200"}`}>
-            <p className={`py-1 px-3 cursor-pointer flex w-full rounded`} onClick={() => setStatusFilters({ ...statusFilters, TO_DO: !statusFilters.TO_DO })}>
-              To Do
-            </p>
-            {!statusFilters.TO_DO ? (<BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />) : (
-              <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />
-            )}
-          </div>
 
-          <div className={`flex ${statusFilters.COMPLETE ? "hover:bg-blue-200" : "hover:bg-gray-200"}`}>
-            <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilters.COMPLETE ? "hover:bg-blue-200" : "hover:bg-gray-200"}`} onClick={() => setStatusFilters({ ...statusFilters, COMPLETE: !statusFilters.COMPLETE })}>
-              Complete
-            </p>
-            {!statusFilters.COMPLETE ? (<BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />) : (
-              <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={"1.5em"} />
-            )}
-          </div>
-
-        </div>
-      )}
       <div className="overflow-x-auto">
         <table className='w-full mt-4 border-spacing-x-10 table-auto'>
           <thead className=''>

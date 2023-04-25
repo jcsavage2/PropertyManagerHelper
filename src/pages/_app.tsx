@@ -9,9 +9,11 @@ import Head from 'next/head';
 import React from 'react';
 import { UserContextProvider } from '@/context/user';
 import { NavLinks } from '@/context/nav-links';
+import { useRouter } from 'next/router';
 
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
+  const router = useRouter();
   return (
     <SessionProvider session={session}>
       <UserContextProvider>
@@ -23,9 +25,9 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
         </Head>
         <nav
           style={{ height: "7dvh" }}
-          className='flex bg-slate-100 border-3 border-solid border-black py-2 sm:py-5 space-x-62'>
+          className='flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62'>
           <div className="flex space-x-5 text-center">
-            <div className='flex'>
+            <div className='flex cursor-pointer' onClick={() => router.push("/")}>
               <p className='pl-4 text-xl my-auto font-sans'>PILLAR</p>
               <Image src="/2.png" alt='1' width={30} height={0} />
             </div>

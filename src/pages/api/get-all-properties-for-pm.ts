@@ -1,6 +1,5 @@
 import { Data } from "@/database";
-import { TenantEntity } from "@/database/entities/tenant";
-import { WorkOrderEntity } from "@/database/entities/work-order";
+import { PropertyEntity } from "@/database/entities/property";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type GetPropertiesForPropertyManagerApiRequest = {
@@ -12,12 +11,11 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    // TBU
     const body = req.body as GetPropertiesForPropertyManagerApiRequest;
-    const tenantEntity = new TenantEntity();
+    const propertyEntity = new PropertyEntity();
     const propertyManagerEmail = body.propertyManagerEmail;
-    const workOrders = await tenantEntity.getAllForPropertyManager({ propertyManagerEmail });
-    return res.status(200).json({ response: JSON.stringify(workOrders) });;
+    const properties = await propertyEntity.getAllForPropertyManager({ propertyManagerEmail });
+    return res.status(200).json({ response: JSON.stringify(properties) });;
 
   } catch (error) {
     console.log({ error });
