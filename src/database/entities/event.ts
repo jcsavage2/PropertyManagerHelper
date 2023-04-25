@@ -20,7 +20,7 @@ export interface IEvent {
   updateMadeBy: string;
 };
 
-export class WorkOrderEntity {
+export class EventEntity {
   private eventEntity: Entity;
 
   constructor() {
@@ -58,7 +58,10 @@ export class WorkOrderEntity {
     { woId: string; }) {
     try {
       const result = (await this.eventEntity.query(
-        generateKey(ENTITY_KEY.EVENT, woId)
+        generateKey(ENTITY_KEY.EVENT, woId),
+        {
+            reverse: true,
+        }
       ));
       return result.Items ?? [];
     } catch (err) {

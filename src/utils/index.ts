@@ -137,6 +137,13 @@ export function generateKey(entityIdentifier: EntityTypeValues, secondIdentifier
 }
 
 /**
+ * @returns The second identifier for a key; the part after the #
+ */
+export function deconstructKey(key: string): string {
+  return key.split('#')[1];
+}
+
+/**
  * @returns KSUID
  */
 export function generateKSUID() {

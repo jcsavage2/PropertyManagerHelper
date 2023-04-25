@@ -1,11 +1,11 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { uuid } from 'uuidv4';
 import { generateKey } from '@/utils';
 
 export type WorkOrderStatus = "COMPLETE" | "TO_DO";
 type CreateWorkOrderProps = {
+  uuid: string;
   address: string;
   tenantEmail: string;
   tenantName: string;
@@ -42,7 +42,7 @@ export interface IWorkOrder {
   tenantName: string,
   address: PropertyAddress,
   status: WorkOrderStatus;
-  assignedTo: Map<string, string>;
+  assignedTo: Set<string>;
 };
 
 export class WorkOrderEntity {
@@ -64,7 +64,7 @@ export class WorkOrderEntity {
         tenantName: { type: "string" },
         address: { type: "map" },
         status: { type: "string" },
-        assignedTo: { type: "map" },
+        assignedTo: { type: "set" },
       },
       table: PillarDynamoTable
     } as const);
@@ -93,9 +93,8 @@ export class WorkOrderEntity {
   /**
    * Creates a work order entity.
    */
-  public async create({ address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
-    const uniqueId = uuid();
-    const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uniqueId);
+  public async create({ uuid, address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
+    const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
     const result = await this.workOrderEntity.put({
       pk: workOrderIdKey,
       sk: workOrderIdKey,
@@ -167,9 +166,7 @@ export class WorkOrderEntity {
         pk: key,
         sk: key,
         assignedTo: {
-          $set: {
-            [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
-          }
+            $add: [technicianEmail.toLowerCase()]
         }
       }, { returnValues: "ALL_NEW" });
       return result;

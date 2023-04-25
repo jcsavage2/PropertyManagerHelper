@@ -29,7 +29,7 @@ export const WorkOrdersTable = () => {
 
   useEffect(() => {
     async function get() {
-      if (isUpdating) {
+      if (isUpdating || !user.pmEmail) {
         return;
       }
       const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });

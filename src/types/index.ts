@@ -1,4 +1,5 @@
 import { ChatCompletionRequestMessage } from 'openai';
+import { Events } from '../constants';
 
 export type ApiRequest = WorkOrder & {
   userMessage: string;
@@ -38,4 +39,4 @@ export type IssueInformation = {
 
 export type WorkOrder = IssueInformation;
 
-export type EventType = 'STATUS_UPDATE' | 'ASSIGNED_TO_UPDATE' | 'COMMENT_UPDATE';
+export type EventType = typeof Events[keyof typeof Events];

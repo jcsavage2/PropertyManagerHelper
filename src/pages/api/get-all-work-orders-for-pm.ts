@@ -2,7 +2,7 @@ import { Data } from "@/database";
 import { WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
 
-type GetPropertiesForPropertyManagerApiRequest = {
+type GetWorkOrdersForPropertyManagerApiRequest = {
   propertyManagerEmail: "string";
 };
 
@@ -11,7 +11,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    const body = req.body as GetPropertiesForPropertyManagerApiRequest;
+    const body = req.body as GetWorkOrdersForPropertyManagerApiRequest;
     const workOrderEntity = new WorkOrderEntity();
     const propertyManagerEmail = body.propertyManagerEmail;
     const workOrders = await workOrderEntity.getAllForPropertyManager({ propertyManagerEmail });

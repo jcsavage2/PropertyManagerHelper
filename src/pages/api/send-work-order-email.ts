@@ -1,9 +1,12 @@
+import { Events } from "@/constants";
 import { Data } from "@/database";
+import { EventEntity } from "@/database/entities/event";
 import { WorkOrderEntity } from "@/database/entities/work-order";
 import { SendEmailApiRequest } from "@/types";
 import sendgrid from "@sendgrid/mail";
 
 import { NextApiRequest, NextApiResponse } from "next";
+import { uuid } from "uuidv4";
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,6 +15,7 @@ export default async function handler(
   try {
     const body = req.body as SendEmailApiRequest;
     const workOrderEntity = new WorkOrderEntity();
+    const eventEntity = new EventEntity();
 
     const {
       address,
@@ -24,8 +28,11 @@ export default async function handler(
       unit,
     } = body;
 
+    const woId = uuid();
+
     /** CREATE THE WORK ORDER */
     await workOrderEntity.create({
+      uuid: woId,
       address,
       city,
       country: country ?? "US",
@@ -39,6 +46,13 @@ export default async function handler(
       unit,
     });
 
+    /** CREATE THE FIRST EVENT FOR THE WO */
+    await eventEntity.create({
+        workOrderId: woId,
+        updateType: Events.STATUS_UPDATE,
+        updateDescription: "Work Order Created",
+        updateMadeBy: body.pmEmail,
+    });
 
     /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.SENDGRID_API_KEY;

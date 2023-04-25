@@ -37,3 +37,9 @@ export const issueCategoryToTypes = {
   "Washer": ["No Water", "No Hot Water", "Won't Start"],
   "Window": ["Shattered", "Cracked", "Won't Open", "Won't Close"],
 } as Record<string, string[]>;
+
+export const Events = {
+    STATUS_UPDATE: "STATUS_UPDATE",
+    ASSIGNED_TO_UPDATE: "ASSIGNED_TO_UPDATE",
+    COMMENT_UPDATE: "COMMENT_UPDATE",
+}
