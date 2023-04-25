@@ -1,7 +1,4 @@
-
-import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { BsFillPersonFill } from 'react-icons/bs';
 import { CiLocationOn } from 'react-icons/ci';
 import { RiFilePaper2Fill } from 'react-icons/ri';
