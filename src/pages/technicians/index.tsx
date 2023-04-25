@@ -8,6 +8,7 @@ import axios from 'axios';
 import { ITechnician } from '@/database/entities/technician';
 import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
+import { TechnicianCards } from './technician-cards';
 
 const Technicians = () => {
   const [technicianModalIsOpen, setTenantModalIsOpen] = useState(false);
@@ -36,8 +37,10 @@ const Technicians = () => {
     techs.length && setTechnicians(techs);
   }, [user.pmEmail]);
 
+  const customStyles = isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" };
+
   return (
-    <div id="testing" className="mx-4 mt-4" style={{ display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
+    <div id="testing" className="mx-4 mt-4" style={{ ...customStyles }}>
       {!isMobile && <PortalLeftPanel />}
       <div className="lg:max-w-5xl">
         <div style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 1fr" }}>
@@ -47,7 +50,8 @@ const Technicians = () => {
             onClick={() => setTenantModalIsOpen(true)}
           >+ Add Technician</button>
         </div>
-        <TechnicianTable technicians={technicians} />
+        {!isMobile && <TechnicianTable technicians={technicians} />}
+        {isMobile && <TechnicianCards technicians={technicians} />}
       </div>
       <AddTechnicianModal technicianModalIsOpen={technicianModalIsOpen} setTechnicianModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={refetch} />
       {isMobile && <BottomNavigationPanel />}

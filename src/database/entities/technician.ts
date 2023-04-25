@@ -19,6 +19,7 @@ export interface ITechnician {
   technicianEmail: string,
   pmEmail: string,
   organization: string,
+  skills: string[];
 };
 
 export class TechnicianEntity {
