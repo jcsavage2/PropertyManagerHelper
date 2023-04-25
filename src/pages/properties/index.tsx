@@ -15,11 +15,11 @@ const Properties = () => {
     <div id="property" className="mx-4 mt-4" style={{ display: "grid", ...customStyle }}>
       {!isMobile && <PortalLeftPanel />}
       <div className="lg:max-w-5xl">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        <div style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 1fr" }}>
           <h1 className="text-4xl">Properties</h1>
           <button
             onClick={() => setAddPropteryModalIsOpen(true)}
-            className="bg-blue-200 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-40 justify-self-end text-center"
+            className="bg-blue-200 mt-2 md:mt-0 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-40 justify-self-end text-center"
           >+ New Property</button>
         </div>
         <PropertiesTable />
