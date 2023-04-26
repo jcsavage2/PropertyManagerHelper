@@ -2,6 +2,7 @@ import { Events } from "@/constants";
 import { Data } from "@/database";
 import { EventEntity } from "@/database/entities/event";
 import { WorkOrderEntity } from "@/database/entities/work-order";
+import { deconstructKey } from "@/utils";
 import { NextApiRequest, NextApiResponse } from "next";
 
 
@@ -23,13 +24,13 @@ export default async function handler(
     }
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
-    const newEvent = await eventEntity.create({
-        workOrderId,
+    await eventEntity.create({
+        workOrderId: deconstructKey(workOrderId),
         updateType: Events.ASSIGNED_TO_UPDATE,
         updateDescription: "Work Order Assigned to Technician: " + technicianEmail,
         updateMadeBy: pmEmail,
     })
-    const response = await workOrderEntity.assignToTechnician({ woId: workOrderId, technicianEmail });
+    const response = await workOrderEntity.assignToTechnician({ woId: deconstructKey(workOrderId), technicianEmail });
 
     return res.status(200).json({ response: JSON.stringify(response) });
   } catch (error) {

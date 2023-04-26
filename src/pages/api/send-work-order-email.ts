@@ -51,7 +51,7 @@ export default async function handler(
         workOrderId: woId,
         updateType: Events.STATUS_UPDATE,
         updateDescription: "Work Order Created",
-        updateMadeBy: body.pmEmail,
+        updateMadeBy: tenantEmail,
     });
 
     /** SEND THE EMAIL TO THE USER */
