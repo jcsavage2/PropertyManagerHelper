@@ -4,15 +4,15 @@ import { ITechnician } from "@/database/entities/technician";
 import { v4 as uuid } from "uuid";
 
 export type TechnicianTableProps = {
-    technicians: ITechnician[];
-}
+  technicians: ITechnician[];
+};
 
 export const TechnicianTable = (props: TechnicianTableProps) => {
   const [technicians, setTechnicians] = useState<Array<ITechnician>>([]);
 
   useEffect(() => {
-    setTechnicians(props.technicians)
-  }, [props])
+    setTechnicians(props.technicians);
+  }, [props]);
 
   const columns: { label: string, accessor: keyof ITechnician; width: string; }[] = [
     { label: "Name", accessor: "technicianName", width: "w-56" },
@@ -20,8 +20,8 @@ export const TechnicianTable = (props: TechnicianTableProps) => {
     { label: "Joined", accessor: "created", width: "" },
   ];
 
-  const formattedTechnicians = technicians.map(tech => {
-    const { technicianName, technicianEmail, created} = tech;
+  const formattedTechnicians: Partial<ITechnician>[] = technicians.map(tech => {
+    const { technicianName, technicianEmail, created } = tech;
     const date = new Date(created);
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
     return {
@@ -53,15 +53,15 @@ export const TechnicianTable = (props: TechnicianTableProps) => {
             </tr>
           </thead>
           <tbody className='text-gray-700'>
-            
-            {formattedTechnicians.map((technician: ITechnician) => {
+
+            {formattedTechnicians.map((technician) => {
               return (
                 <tr key={uuid()}>
                   {columns.map(({ label, accessor, width }) => {
                     const columnData = technician[accessor];
-                    return <td className="border px-4 py-1" key={accessor}>{columnData}</td>
-                })}
-              </tr>)
+                    return <td className="border px-4 py-1" key={accessor}>{columnData}</td>;
+                  })}
+                </tr>);
             })}
           </tbody>
         </table>
