@@ -41,5 +41,5 @@ export const issueCategoryToTypes = {
 export const Events = {
     STATUS_UPDATE: "STATUS_UPDATE",
     ASSIGNED_TO_UPDATE: "ASSIGNED_TO_UPDATE",
-    COMMENT_UPDATE: "COMMENT_UPDATE",
+    COMMENT_UPDATE: "COMMENT_UPDATE"
 }

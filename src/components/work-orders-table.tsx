@@ -1,6 +1,6 @@
 import { useUserContext } from "@/context/user";
 import { IWorkOrder } from "@/database/entities/work-order";
-import { generateAddressKey, toTitleCase } from "@/utils";
+import { deconstructKey, generateAddressKey, toTitleCase } from "@/utils";
 import axios from "axios";
 import { AiOutlineFilter } from "react-icons/ai";
 import { useEffect, useState } from "react";
@@ -15,7 +15,6 @@ type HandleUpdateStatusProps = {
 };
 export const WorkOrdersTable = () => {
   const [workOrders, setWorkOrders] = useState<Array<IWorkOrder>>([]);
-
   const [sortField, setSortField] = useState<string>("status");
   const [isUpdating, setIsUpdating] = useState(false);
   const [order, setOrder] = useState<"asc" | "desc">("asc");
@@ -59,7 +58,7 @@ export const WorkOrdersTable = () => {
     React.ChangeEventHandler<HTMLSelectElement> = ({ pk, sk }: HandleUpdateStatusProps) => async (e) => {
       setIsUpdating(true);
       const newStatus = e.target.value;
-      const { data } = await axios.post("/api/update-work-order", { pk, sk, status: newStatus });
+      const { data } = await axios.post("/api/update-work-order", { pk, sk, status: newStatus, email: deconstructKey(user.pk) });
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         const newWorkOrders = workOrders.map(wo => wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo).sort((a, b) => {
