@@ -1,6 +1,7 @@
 import { Data } from "@/database";
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
+import { TechnicianEntity } from "@/database/entities/technician";
 import { TenantEntity } from "@/database/entities/tenant";
 import chalk from "chalk";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -51,6 +52,18 @@ export default async function handler(
         const existingTenantFromDB = existingTenant?.Item ?? null;
         if (existingTenantFromDB) {
           await tenantEntity.update({ tenantEmail: email, status: "JOINED" });
+          return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
+        } else {
+          //@ts-ignore
+          return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
+        }
+      case ENTITIES.TECHNICIAN:
+        const technicianEntity = new TechnicianEntity();
+        const existingTechnician = await technicianEntity.get({ technicianEmail: email });
+        //@ts-ignore
+        const existingTenantFromDB = existingTenant?.Item ?? null;
+        if (existingTenantFromDB) {
+          await technicianEntity.update({ technicianEmail: email, status: "JOINED" });
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
           // const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });

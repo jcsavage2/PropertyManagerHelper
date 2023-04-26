@@ -39,7 +39,7 @@ export type UserContext = {
   setUser: Dispatch<SetStateAction<UserType>>;
   login: ({ email, userType, name }: {
     email: string;
-    userType: "TENANT" | "PROPERTY_MANAGER";
+    userType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
     name: string;
   }) => Promise<void>;
   logOut: () => void;
