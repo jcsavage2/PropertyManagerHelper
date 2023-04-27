@@ -68,8 +68,6 @@ export const WorkOrdersCards = () => {
                   ${status === "TO_DO" ? "bg-yellow-200" : "bg-green-200"} 
                 `}
                 value={{ label: status }}
-                controlShouldRenderValue={true}
-                defaultInputValue={status}
                 isClearable={false}
                 blurInputOnSelect={false}
                 onChange={(v) => {

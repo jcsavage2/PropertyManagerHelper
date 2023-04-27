@@ -117,28 +117,28 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
             <hr />
             <div className="pt-3 text-md my-auto flex text-gray-600">
               <label className="my-auto pr-2" htmlFor='status-select'>{"Status:" + ""}</label>
-              {!isUpdatingStatus && <Select
-                id="status-select"
-                className={`
+              {!isUpdatingStatus &&
+                <Select
+                  id="status-select"
+                  className={`
                   cursor-pointer
                   rounded 
                   p-1 
                   w-48
                   ${workOrder?.status === "TO_DO" ? "bg-yellow-200" : "bg-green-200"} 
                 `}
-                value={{ label: workOrder?.status }}
-                defaultInputValue={workOrder?.status}
-                isClearable={false}
-                blurInputOnSelect={false}
-                onChange={(v) => {
-                  if (v) {
-                    //@ts-ignore
-                    handleUpdateStatus(v.value);
-                  }
-                }}
-                //@ts-ignore
-                options={options}
-              />}
+                  value={{ label: workOrder?.status }}
+                  isClearable={false}
+                  blurInputOnSelect={false}
+                  onChange={(v) => {
+                    if (v) {
+                      //@ts-ignore
+                      handleUpdateStatus(v.value);
+                    }
+                  }}
+                  //@ts-ignore
+                  options={options}
+                />}
             </div>
           </div>
           {isMobile ? (
