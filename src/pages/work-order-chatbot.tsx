@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { hasAllIssueInfo } from '@/utils';
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from '@/types';
 import { useUserContext } from '@/context/user';
+import Select from 'react-select';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -17,7 +18,7 @@ export default function WorkOrderChatbot() {
 
   const addressesOptions = useMemo(() => Object.values(user?.addresses)?.map((address: any) => (
     {
-      title: `${address?.address} ${address?.unit}`.trim(),
+      label: `${address?.address} ${address?.unit}`.trim(),
       value: JSON.stringify(address)
     }
   )) ?? [], [user.addresses]);
@@ -106,8 +107,8 @@ export default function WorkOrderChatbot() {
     return;
   };
 
-  const handleAddressSelectChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
-    setSelectedAddress(e.target.value);
+  const handleAddressSelectChange = (value: string) => {
+    setSelectedAddress(value);
   };
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
@@ -264,11 +265,14 @@ export default function WorkOrderChatbot() {
                                   onChange={handleTenantEmailChange}
                                 />
                                 <label htmlFor='address'>Address* </label>
-                                <select id="address" onChange={handleAddressSelectChange} value={selectedAddress}>
-                                  {addressesOptions.map((option: { title: string; value: string; }, index) => {
-                                    return <option key={`${option.value}-${index}`} value={option.value}>{option.title}</option>;
-                                  })}
-                                </select>
+                                <Select
+                                  onChange={(v) => {
+                                    //@ts-ignore
+                                    handleAddressSelectChange(v.value);
+                                  }}
+                                  value={{ label: addressesOptions?.[0]?.label, value: addressesOptions?.[0]?.value }}
+                                  options={addressesOptions}
+                                />
                               </div >
                               <p className='mt-2'>Permission To Enter Property* </p>
                               <div>
