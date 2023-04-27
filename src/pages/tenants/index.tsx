@@ -8,6 +8,7 @@ import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { useDevice } from "@/hooks/use-window-size";
 import { BottomNavigationPanel } from "@/components/bottom-navigation-panel";
 import { TenantsTable } from "@/components/tenants-table";
+import TenantsCards from "./tenant-cards";
 
 const Tenants = () => {
   const [tenantModalIsOpen, setTenantModalIsOpen] = useState(false);
@@ -47,7 +48,8 @@ const Tenants = () => {
             onClick={() => setTenantModalIsOpen(true)}
           >+ New Tenant</button>
         </div>
-        <TenantsTable />
+        {!isMobile && <TenantsTable />}
+        {isMobile && <TenantsCards />}
       </div>
       <AddTenantModal tenantModalIsOpen={tenantModalIsOpen} setTenantModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={refetch} />
       {isMobile && <BottomNavigationPanel />}
