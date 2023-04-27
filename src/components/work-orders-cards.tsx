@@ -52,7 +52,7 @@ export const WorkOrdersCards = () => {
           const remainingOptions = allStatuses.filter(s => s !== workOrder.status);
           return (
             <div
-              className="py-4 px-2 bg-gray-100 rounded w-full shadow-[0px_1px_7px_0px_rgba(0,0,0,0.3)]"
+              className="py-4 px-2 bg-gray-100 rounded w-full shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]"
               key={`${workOrder.pk}-${workOrder.sk}-${index}`}
             >
               <Link key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`} as={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}>
