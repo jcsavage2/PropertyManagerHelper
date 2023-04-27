@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
+import WorkOrdersCards from '@/components/work-orders-cards';
 
 
 const WorkOrders = () => {
@@ -29,7 +30,7 @@ const WorkOrders = () => {
       >
         <WorkOrder workOrderId={router.query.workOrderId as string} />
       </Modal>
-      <div id="workOrder" className="mx-4 mt-4" style={{ display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
+      <div id="workOrder" className="mx-4 mt-4" style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
         {!isMobile && <PortalLeftPanel />}
         <div className="lg:max-w-5xl">
           <div style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 1fr" }}>
@@ -38,7 +39,8 @@ const WorkOrders = () => {
               className="mt-2 md:mt-0 bg-blue-200 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-40 justify-self-end text-center"
             >+ New Work Order</button>
           </div>
-          <WorkOrdersTable />
+          {!isMobile && <WorkOrdersTable />}
+          {isMobile && <WorkOrdersCards />}
           {isMobile && <BottomNavigationPanel />}
         </div>
       </div>

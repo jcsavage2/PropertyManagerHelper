@@ -14,26 +14,6 @@ export const TechnicianCards = (props: TechnicianTableProps) => {
     setTechnicians(props.technicians);
   }, [props]);
 
-  const columns: { label: string, accessor: keyof ITechnician; width: string; }[] = [
-    { label: "Name", accessor: "technicianName", width: "w-56" },
-    { label: "Email", accessor: "technicianEmail", width: "" },
-    { label: "Joined", accessor: "created", width: "" },
-  ];
-
-  const formattedTechnicians = technicians.map(tech => {
-    const { technicianName, technicianEmail, created } = tech;
-    const date = new Date(created);
-    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    return {
-      pk: tech.pk,
-      sk: tech.sk,
-      technicianName: toTitleCase(technicianName),
-      technicianEmail,
-      created: formattedDate,
-      pmEmail: tech.pmEmail,
-      organization: tech.organization,
-    };
-  });
 
   return (
     <div className="mt-8">
