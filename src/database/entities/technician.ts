@@ -58,7 +58,6 @@ export class TechnicianEntity {
         pmEmail: pmEmail.toLowerCase(),
         organization,
       }, { returnValues: "ALL_NEW" });
-      console.log("Technician that was just created: ", result);
       return result;
     } catch (err) {
       console.log({ err });

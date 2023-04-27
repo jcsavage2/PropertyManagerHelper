@@ -25,11 +25,11 @@ export default async function handler(
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
     await eventEntity.create({
-        workOrderId: deconstructKey(workOrderId),
-        updateType: Events.ASSIGNED_TO_UPDATE,
-        updateDescription: "Work Order Assigned to Technician: " + technicianEmail,
-        updateMadeBy: pmEmail,
-    })
+      workOrderId: deconstructKey(workOrderId),
+      updateType: Events.ASSIGNED_TO_UPDATE,
+      updateDescription: "Assigned" + technicianEmail + "to the work order",
+      updateMadeBy: pmEmail,
+    });
     const response = await workOrderEntity.assignToTechnician({ woId: deconstructKey(workOrderId), technicianEmail });
 
     return res.status(200).json({ response: JSON.stringify(response) });

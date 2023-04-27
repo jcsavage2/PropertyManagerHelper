@@ -24,7 +24,6 @@ export const TechnicianCards = (props: TechnicianTableProps) => {
               className="py-4 px-2 bg-gray-100 rounded w-full"
               key={`${technician.pk}-${technician.sk}-${index}`}
             >
-
               <p className="text-xl text-gray-800">{technician.technicianName} </p>
               <p className="text-lg">{technician.skills ?? "Plumbing, Electrical"}</p>
               <p className="text-sm mt-1">{technician.technicianEmail} </p>

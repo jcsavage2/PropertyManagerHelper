@@ -79,7 +79,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
     <div>
       <Modal
         isOpen={addPropetyModalIsOpen}
-        onAfterOpen={() => console.log("opened..")}
+        onAfterOpen={() => { }}
         onRequestClose={closeModal}
         contentLabel="Example Modal"
         closeTimeoutMS={200}

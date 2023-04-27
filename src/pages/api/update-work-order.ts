@@ -17,7 +17,6 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    // TBU
     const body = req.body as UpdateWorkOrderApiRequest;
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
@@ -30,12 +29,12 @@ export default async function handler(
 
     //Spawn new event on status change
     await eventEntity.create({
-        workOrderId: deconstructKey(pk),
-        updateType: Events.STATUS_UPDATE,
-        updateDescription: `Work Order status changed to ${status}`,
-        updateMadeBy: email,
-    })
-    
+      workOrderId: deconstructKey(pk),
+      updateType: Events.STATUS_UPDATE,
+      updateDescription: `Changed work order status to: ${status}`,
+      updateMadeBy: email,
+    });
+
     return res.status(200).json({ response: JSON.stringify(newWorkOrder) });;
 
   } catch (error) {
