@@ -39,6 +39,7 @@ export interface IWorkOrder {
   pmEmail: string,
   issue: string,
   tenantEmail: string,
+  createdBy: "TENANT" | "PROPERTY_MANAGER",
   tenantName: string,
   address: PropertyAddress,
   status: WorkOrderStatus;
@@ -64,6 +65,7 @@ export class WorkOrderEntity {
         tenantName: { type: "string" },
         address: { type: "map" },
         status: { type: "string" },
+        createdBy: { type: "string" },
         assignedTo: { type: "set" },
       },
       table: PillarDynamoTable
@@ -166,7 +168,7 @@ export class WorkOrderEntity {
         pk: key,
         sk: key,
         assignedTo: {
-            $add: [technicianEmail.toLowerCase()]
+          $add: [technicianEmail.toLowerCase()]
         }
       }, { returnValues: "ALL_NEW" });
       return result;

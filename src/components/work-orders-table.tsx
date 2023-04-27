@@ -13,6 +13,7 @@ type HandleUpdateStatusProps = {
   pk: string;
   sk: string;
 };
+
 export const WorkOrdersTable = () => {
   const [workOrders, setWorkOrders] = useState<Array<IWorkOrder>>([]);
   const [sortField, setSortField] = useState<string>("status");

@@ -3,6 +3,7 @@ import axios from "axios";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
 
 import Modal from 'react-modal';
+import Select from "react-select";
 
 export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsOpen }: { addPropetyModalIsOpen: boolean; setAddPropertyModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
   const [isBrowser, setIsBrowser] = useState(false);
@@ -79,7 +80,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
     <div>
       <Modal
         isOpen={addPropetyModalIsOpen}
-        onAfterOpen={() => console.log("opened..")}
+        onAfterOpen={() => { }}
         onRequestClose={closeModal}
         contentLabel="Example Modal"
         closeTimeoutMS={200}
@@ -132,9 +133,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
             onChange={handleZipChange}
           />
           <label htmlFor='tenant'>Select Tenant</label>
-          <select id="tenant">
-            <option value="mitch" label="Mitchell - mitchposk@gmail.com" />
-          </select>
+          <Select options={[]} id="tenant" />
 
           <button
             className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"

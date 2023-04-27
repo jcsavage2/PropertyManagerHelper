@@ -92,7 +92,7 @@ export const AssignTechnicianModal = ({
   const [technicianEmail, setTechnicianEmail] = useState<string>('');
   const [technicians, setTechnicians] = useState<ITechnician[]>([]);
 
-  async function getWorkOrder() {
+  const getWorkOrder = useCallback(async () => {
     try {
       if (!workOrderId) {
         return;
@@ -109,7 +109,7 @@ export const AssignTechnicianModal = ({
     } catch (err) {
       console.error(err);
     }
-  }
+  }, [workOrderId]);
 
   useEffect(() => {
     async function getTechnicians() {
@@ -140,7 +140,7 @@ export const AssignTechnicianModal = ({
     }
     getTechnicians();
     getWorkOrder();
-  }, [user.pmEmail, assignTechnicianModalIsOpen]);
+  }, [user.pmEmail, assignTechnicianModalIsOpen, getWorkOrder, workOrderId]);
 
   const handleTechnicianEmailChange: React.ChangeEventHandler<HTMLSelectElement> = useCallback(
     (e) => {
@@ -178,7 +178,15 @@ export const AssignTechnicianModal = ({
         console.log({ err });
       }
     },
-    [user, onSuccessfulAdd, technicianEmail, setAssignTechnicianModalIsOpen]
+    [
+      user,
+      onSuccessfulAdd,
+      technicianEmail,
+      getWorkOrder,
+      isMobile,
+      workOrderId,
+      setAssignTechnicianModalIsOpen
+    ]
   );
 
   const renderAssignedTechnicians = () => {
@@ -206,7 +214,7 @@ export const AssignTechnicianModal = ({
   return (
     <Modal
       isOpen={assignTechnicianModalIsOpen}
-      onAfterOpen={() => {}}
+      onAfterOpen={() => { }}
       onRequestClose={() => setAssignTechnicianModalIsOpen(false)}
       contentLabel="Assign Technician to Work Order Modal"
       style={isMobile ? mobileStyles : customStyles}>
