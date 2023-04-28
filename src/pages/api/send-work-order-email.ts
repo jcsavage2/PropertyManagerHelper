@@ -41,8 +41,6 @@ export default async function handler(
       propertyManagerEmail: body.pmEmail,
       state,
       status: "TO_DO",
-      createdBy: tenantEmail,
-      createdByType: "TENANT",
       tenantEmail,
       tenantName,
       unit,
@@ -50,10 +48,10 @@ export default async function handler(
 
     /** CREATE THE FIRST EVENT FOR THE WO */
     await eventEntity.create({
-      workOrderId: woId,
-      updateType: Events.STATUS_UPDATE,
-      updateDescription: "Work Order Created",
-      updateMadeBy: tenantEmail,
+        workOrderId: woId,
+        updateType: Events.STATUS_UPDATE,
+        updateDescription: "Work Order Created",
+        updateMadeBy: tenantEmail,
     });
 
     /** SEND THE EMAIL TO THE USER */
@@ -67,7 +65,7 @@ export default async function handler(
 
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
-      cc: tenantEmail.toLowerCase(), // The Tenant
+      cc: "mitchposk+01@gmail.com", // The Tenant
       from: "dylan@pillarhq.co", // The Email from the company
       subject: `Work Order Request for ${body.address}`, // work order for address on MM-DD-YYYY
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
