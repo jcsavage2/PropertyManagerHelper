@@ -41,14 +41,15 @@ export class EventEntity {
    * Creates a new event for a work order.
    */
   public async create({ workOrderId, updateType, updateDescription, updateMadeBy }: CreateEventProps) {
-    const result = await this.eventEntity.put({
+    const result = await this.eventEntity.update({
       pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
       sk: generateKSUID(),
       updateType,
       updateDescription,
       updateMadeBy
-    });
-    return result.Item;
+    }, { returnValues: "ALL_NEW"});
+    //@ts-ignore
+    return result.Attributes;
   }
 
   /**

@@ -20,7 +20,7 @@ export default async function handler(
     }
     const eventEntity = new EventEntity();
     const events = await eventEntity.getEvents({ woId: deconstructKey(workOrderId) });
-    console.log("for workOrderId: ", workOrderId, " found events: ", events);
+    
     return res.status(200).json({ response: JSON.stringify(events) });
   } catch (error) {
     console.error(error);
