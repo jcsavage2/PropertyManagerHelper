@@ -7,6 +7,7 @@ import { useDevice } from '@/hooks/use-window-size';
 import { toTitleCase, deconstructKey } from '@/utils';
 import Select from 'react-select';
 import { useUserContext } from '@/context/user';
+import { AddCommentModal } from './add-comment-modal';
 
 const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,6 +18,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const { user } = useUserContext();
 
   const [openAssignTechnicianModal, setOpenAssignTechnicianModal] = useState(false);
+  const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
   const { isMobile } = useDevice();
 
   const renderAssignedTechnicians = () => {
@@ -111,6 +113,15 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
             getWorkOrderEvents();
           }}
         />
+        <AddCommentModal
+          addCommentModalIsOpen={openAddCommentModal}
+          setAddCommentModalIsOpen={setOpenAddCommentModal}
+          workOrderId={workOrderId}
+          onSuccessfulAdd={() => {
+            getWorkOrder();
+            getWorkOrderEvents();
+          }}
+        />
         <div className="md:flex flex-column md:flex-row w-full justify-center md:justify-between md:content-between">
           <div>
             <div className="text-lg my-auto text-gray-600">{toTitleCase(workOrder?.issue)}</div>
@@ -162,8 +173,14 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
             </div>
           )}
         </div>
-
-        <div className="text-xl my-auto text-gray-600 text-center">Work Order History:</div>
+        <div className="flex md:flex-row flex-col md:mt-4 w-full justify-center align-middle">
+            <div className="text-xl text-gray-600 mr-4 text-center">Work Order History:</div>
+            <button
+                className="bg-blue-200 p-1 text-gray-600 hover:bg-blue-300 mx-auto md:mx-0 rounded disabled:opacity-25 h-8 w-32"
+                onClick={() => setOpenAddCommentModal(true)}>
+                + Comment
+            </button>
+        </div>
         <div className="overflow-scroll h-full">
           {isLoadingEvents ? (
             <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">

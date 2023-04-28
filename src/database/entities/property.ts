@@ -4,7 +4,6 @@ import { PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 
 export interface IProperty {
-  tenants: Map<string, string>;
   pmEmail: string;
   pk: string;
   postalCode: string;
@@ -14,6 +13,7 @@ export interface IProperty {
   organizationId: string;
   created: string;
   address: string;
+  tenants: Map<string, string>; // tenant email, tenant name
   unit: string;
 
 }
@@ -45,6 +45,7 @@ export class PropertyEntity {
         address: { type: 'string' },
         pmEmail: { type: "string" },
         tenantEmail: { type: "string" },
+        tenants: { type: "map" },
         unit: { type: 'string' },
         city: { type: 'string', },
         state: { type: 'string' },
@@ -83,7 +84,15 @@ export class PropertyEntity {
   }
 
   public async get({ address, country, city, state, postalCode, unit, propertyManagerEmail }:
-    { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; propertyManagerEmail: string; }) {
+    {
+      address: string;
+      country: string;
+      city: string;
+      state: string;
+      postalCode: string;
+      unit?: string;
+      propertyManagerEmail: string;
+    }) {
     const params = {
       pk: generateKey(ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()), // can query all properties for a given property manager
       sk: this.generateSk({ address, country, city, state, postalCode, unit })

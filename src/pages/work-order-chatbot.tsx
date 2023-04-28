@@ -79,7 +79,8 @@ export default function WorkOrderChatbot() {
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     const parsedAddress = JSON.parse(JSON.parse(selectedAddress));
     const body: SendEmailApiRequest = {
-      ...workOrder,
+      issueDescription,
+      issueLocation,
       messages,
       pmEmail,
       tenantEmail,

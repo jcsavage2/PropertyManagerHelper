@@ -10,7 +10,10 @@ type CreateWorkOrderProps = {
   tenantEmail: string;
   tenantName: string;
   unit?: string;
+  createdBy: string;
+  createdByType: "TENANT" | "PROPERTY_MANAGER",
   state: string;
+  permissionToEnter: "yes" | "no";
   city: string;
   country: string;
   postalCode: string;
@@ -38,8 +41,10 @@ export interface IWorkOrder {
   GSI2SK: string,
   pmEmail: string,
   issue: string,
+  permissionToEnter: "yes" | "no",
   tenantEmail: string,
-  createdBy: "TENANT" | "PROPERTY_MANAGER",
+  createdBy: string,
+  createdByType: "TENANT" | "PROPERTY_MANAGER",
   tenantName: string,
   address: PropertyAddress,
   status: WorkOrderStatus;
@@ -59,6 +64,7 @@ export class WorkOrderEntity {
         GSI1SK: { type: "string" },
         GSI2PK: { type: "string" }, //Tenant email
         GSI2SK: { type: "string" },
+        permissionToEnter: { type: "string" },
         pmEmail: { type: 'string' },
         issue: { type: "string" },
         tenantEmail: { type: 'string' },
@@ -66,6 +72,7 @@ export class WorkOrderEntity {
         address: { type: "map" },
         status: { type: "string" },
         createdBy: { type: "string" },
+        createdByType: { type: "string" },
         assignedTo: { type: "set" },
       },
       table: PillarDynamoTable
@@ -95,7 +102,23 @@ export class WorkOrderEntity {
   /**
    * Creates a work order entity.
    */
-  public async create({ uuid, address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
+  public async create({
+    uuid,
+    address,
+    country = "US",
+    city,
+    createdBy,
+    createdByType,
+    state,
+    postalCode,
+    permissionToEnter,
+    unit,
+    propertyManagerEmail,
+    status,
+    issue,
+    tenantName,
+    tenantEmail
+  }: CreateWorkOrderProps) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
     const result = await this.workOrderEntity.put({
       pk: workOrderIdKey,
@@ -104,7 +127,10 @@ export class WorkOrderEntity {
       GSI1SK: workOrderIdKey,
       GSI2PK: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
       GSI2SK: workOrderIdKey,
+      permissionToEnter,
       pmEmail: propertyManagerEmail.toLowerCase(),
+      createdBy: createdBy.toLowerCase(),
+      createdByType,
       tenantEmail,
       status,
       tenantName,
@@ -148,12 +174,13 @@ export class WorkOrderEntity {
     }
   }
 
-  public async update({ pk, sk, status }: { pk: string, sk: string; status: WorkOrderStatus; }) {
+  public async update({ pk, sk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter: "yes" | "no"; }) {
     try {
       const result = await this.workOrderEntity.update({
         pk,
         sk,
-        status
+        status,
+        permissionToEnter
       }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
       return result;
     } catch (err) {
