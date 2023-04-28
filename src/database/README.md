@@ -29,3 +29,13 @@
 **Given** Tenant has previously submitted a work order.
 **When** Tenant goes to the tenant's portal.
 **Then** They should have the ability to view all historical work orders.
+
+#### Technician
+**Given** There is an existing work order with no technicians assigned and existing technicians.
+**When** Property Manager assigns an existing technician to the work order.
+
+**Given** There is an existing work order with no technicians assigned and no existing technicians for the property manager.
+**When** Property Manager goes to assign a technician to the work order.
+**Then** The PM should have the ability to +Add a new technician via a modal, which they can then attach to the work order.
+**And** We should create both the companion 
+

@@ -61,10 +61,10 @@ export default async function handler(
         const technicianEntity = new TechnicianEntity();
         const existingTechnician = await technicianEntity.get({ technicianEmail: email });
         //@ts-ignore
-        const existingTenantFromDB = existingTenant?.Item ?? null;
-        if (existingTenantFromDB) {
-          await technicianEntity.update({ technicianEmail: email, status: "JOINED" });
-          return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
+        const existingTechnicianFromDB = existingTechnician?.Item ?? null;
+        if (existingTechnicianFromDB) {
+          await technicianEntity.update({ email });
+          return res.status(200).json({ response: JSON.stringify(existingTechnicianFromDB) });
         } else {
           // const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });
           // console.log({ newTenant }, chalk.green("==============="));

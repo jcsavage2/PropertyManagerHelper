@@ -154,6 +154,10 @@ export const AssignTechnicianModal = ({
       try {
         event.preventDefault();
         if (!user.pmEmail) {
+          /**
+           * TODO: instead of throwing here we should toast.error 
+           * or block this UI from being seen if user is not a PM.
+           */
           throw new Error('user needs to be a Property Manager.');
         }
         if (technicianEmail === '') {

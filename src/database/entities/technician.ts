@@ -36,6 +36,7 @@ export class TechnicianEntity {
         GSI1SK: { type: "string" },
         technicianName: { type: "string" },
         propertyManagers: { type: "map" },
+        status: { type: "string" },
         technicianEmail: { type: "string" },
         pmEmail: { type: "string" },
         organization: { type: "string" },
@@ -52,10 +53,18 @@ export class TechnicianEntity {
     const propertyManagersMap = new Map();
     pmEmail && propertyManagersMap.set(pmEmail, pmEmail);
     try {
+      /**
+       * We first need to attempt to create the Technician.
+       * If the technician already exists, we must only update the value of the propertyManager map and the GSI1PK/GSI1SK.
+       * We need one consistent profile though so that when the technician comes to the app, 
+       * they are able to fetch their profile with pk and sk (with their email alone).
+       * We must additionally create a companion row with the Property Manager email as the SK
+       * so we are able to perform the getAll technicians for 
+       */
       const result = await this.technicianEntity.update({
         pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
-        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        ...(pmEmail && { GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()) }),
         GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, uuid()),
         technicianName: name,
         userType: "TECHNICIAN",
@@ -91,6 +100,7 @@ export class TechnicianEntity {
         technicianEmail: email.toLowerCase(),
         ...(name && { technicianName: name, }),
         ...(organization && { organization }),
+        status: "JOINED",
         userType: ENTITIES.TECHNICIAN
       }, { returnValues: "ALL_NEW" });
       return result;

@@ -27,6 +27,7 @@ export class PropertyManagerEntity {
         sk: { sortKey: true },
         pmName: { type: "string" },
         pmEmail: { type: "string" },
+        tenantEmail: { type: "string" }, // for companion row
         organization: { type: "string" },
         userType: { type: "string" },
         tenantName: { type: "string" },

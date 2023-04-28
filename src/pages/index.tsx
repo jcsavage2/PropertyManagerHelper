@@ -38,7 +38,7 @@ const Home = () => {
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={async () => {
-                await login({ email: sessionUser.email ?? "", userType: "PROPERTY_MANAGER", name: sessionUser.name ?? "" });
+                await login({ email: sessionUser.email ?? "", userType: "TECHNICIAN", name: sessionUser.name ?? "" });
                 router.push("/work-orders");
               }}>Continue as Technician</button>
           </div>

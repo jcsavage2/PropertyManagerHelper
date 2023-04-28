@@ -1,3 +1,4 @@
+import { ITechnician } from "@/database/entities/technician";
 import { GetOrCreateUserBody } from "@/pages/api/get-or-create-user-in-db";
 import axios from "axios";
 import { Session } from "next-auth";
@@ -31,8 +32,11 @@ type Tenant = BaseUser & {
   organization?: never;
 };
 
-type UserType = Tenant | PropertyManager;
-type LoginProps = { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; };
+type Technician = BaseUser & ITechnician & {
+  pmEmail?: never;
+};
+
+type UserType = Tenant | PropertyManager | Technician;
 
 export type UserContext = {
   user: UserType,
@@ -96,7 +100,7 @@ export const UserContextProvider = (props: any) => {
    * If there is no user found for the given email/userType combo, 
    * the user will be created in the database.
    */
-  const login = async ({ email, userType, name }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER"; name: string; }) => {
+  const login = async ({ email, userType, name }: { email: string; userType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN"; name: string; }) => {
     const body: GetOrCreateUserBody = { email, name, userType };
     const { data } = await axios.post("/api/get-or-create-user-in-db", body);
     const { response } = data;
