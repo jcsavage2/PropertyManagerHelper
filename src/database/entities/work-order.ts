@@ -13,6 +13,7 @@ type CreateWorkOrderProps = {
   createdBy: string;
   createdByType: "TENANT" | "PROPERTY_MANAGER",
   state: string;
+  permissionToEnter: "yes" | "no";
   city: string;
   country: string;
   postalCode: string;
@@ -40,6 +41,7 @@ export interface IWorkOrder {
   GSI2SK: string,
   pmEmail: string,
   issue: string,
+  permissionToEnter: "yes" | "no",
   tenantEmail: string,
   createdBy: string,
   createdByType: "TENANT" | "PROPERTY_MANAGER",
@@ -62,6 +64,7 @@ export class WorkOrderEntity {
         GSI1SK: { type: "string" },
         GSI2PK: { type: "string" }, //Tenant email
         GSI2SK: { type: "string" },
+        permissionToEnter: { type: "string" },
         pmEmail: { type: 'string' },
         issue: { type: "string" },
         tenantEmail: { type: 'string' },
@@ -108,6 +111,7 @@ export class WorkOrderEntity {
     createdByType,
     state,
     postalCode,
+    permissionToEnter,
     unit,
     propertyManagerEmail,
     status,
@@ -123,6 +127,7 @@ export class WorkOrderEntity {
       GSI1SK: workOrderIdKey,
       GSI2PK: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
       GSI2SK: workOrderIdKey,
+      permissionToEnter,
       pmEmail: propertyManagerEmail.toLowerCase(),
       createdBy: createdBy.toLowerCase(),
       createdByType,
@@ -169,12 +174,13 @@ export class WorkOrderEntity {
     }
   }
 
-  public async update({ pk, sk, status }: { pk: string, sk: string; status: WorkOrderStatus; }) {
+  public async update({ pk, sk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter: "yes" | "no"; }) {
     try {
       const result = await this.workOrderEntity.update({
         pk,
         sk,
-        status
+        status,
+        permissionToEnter
       }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
       return result;
     } catch (err) {
