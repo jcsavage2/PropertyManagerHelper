@@ -10,6 +10,8 @@ type CreateWorkOrderProps = {
   tenantEmail: string;
   tenantName: string;
   unit?: string;
+  createdBy: string;
+  createdByType: "TENANT" | "PROPERTY_MANAGER",
   state: string;
   city: string;
   country: string;
@@ -39,7 +41,8 @@ export interface IWorkOrder {
   pmEmail: string,
   issue: string,
   tenantEmail: string,
-  createdBy: "TENANT" | "PROPERTY_MANAGER",
+  createdBy: string,
+  createdByType: "TENANT" | "PROPERTY_MANAGER",
   tenantName: string,
   address: PropertyAddress,
   status: WorkOrderStatus;
@@ -66,6 +69,7 @@ export class WorkOrderEntity {
         address: { type: "map" },
         status: { type: "string" },
         createdBy: { type: "string" },
+        createdByType: { type: "string" },
         assignedTo: { type: "set" },
       },
       table: PillarDynamoTable
@@ -95,7 +99,22 @@ export class WorkOrderEntity {
   /**
    * Creates a work order entity.
    */
-  public async create({ uuid, address, country = "US", city, state, postalCode, unit, propertyManagerEmail, status, issue, tenantName, tenantEmail }: CreateWorkOrderProps) {
+  public async create({
+    uuid,
+    address,
+    country = "US",
+    city,
+    createdBy,
+    createdByType,
+    state,
+    postalCode,
+    unit,
+    propertyManagerEmail,
+    status,
+    issue,
+    tenantName,
+    tenantEmail
+  }: CreateWorkOrderProps) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
     const result = await this.workOrderEntity.put({
       pk: workOrderIdKey,
@@ -105,6 +124,8 @@ export class WorkOrderEntity {
       GSI2PK: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
       GSI2SK: workOrderIdKey,
       pmEmail: propertyManagerEmail.toLowerCase(),
+      createdBy: createdBy.toLowerCase(),
+      createdByType,
       tenantEmail,
       status,
       tenantName,
