@@ -115,7 +115,6 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
   const stateSet = new Set();
   const zipSet = new Set();
   for (const property of properties) {
-    console.log({ property });
     unitSet.add(property.unit);
     addressSet.add(property.address);
     citySet.add(property.city);
