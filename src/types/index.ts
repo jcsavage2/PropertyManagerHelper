@@ -29,7 +29,7 @@ export type UserInfo = {
   postalCode: string;
   tenantEmail: string;
   tenantName: string;
-  permissionToEnter: "yes" | "no";
+  permissionToEnter: string;
 };
 
 export type IssueInformation = {

@@ -80,7 +80,6 @@ export const WorkOrdersCards = () => {
               />
               <p className="text-sm font-light">Address: {workOrder.address.address}</p>
               <p className="text-sm font-light">Unit: {workOrder.address.unit ?? "N/A"}</p>
-              <p className="text-sm font-light">Permission to Enter: {workOrder.permissionToEnter}</p>
               <p className="text-sm mt-1 font-light">Assigned To: {workOrder.assignedTo ?? "Unassigned"} </p>
               <div className="grid grid-cols-2">
                 <p className="text-sm mt-1 font-light">Created By: {workOrder.createdBy ?? "Unassigned"} </p>

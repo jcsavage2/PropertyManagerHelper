@@ -20,7 +20,6 @@ export default async function handler(
     const {
       address,
       city,
-      permissionToEnter,
       country,
       postalCode,
       state,
@@ -36,7 +35,6 @@ export default async function handler(
       uuid: woId,
       address,
       city,
-      permissionToEnter,
       country: country ?? "US",
       issue: body.issueDescription || "No Issue Description",
       postalCode,

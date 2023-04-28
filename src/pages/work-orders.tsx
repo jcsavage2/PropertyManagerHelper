@@ -7,13 +7,11 @@ import { useEffect, useState } from 'react';
 import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import WorkOrdersCards from '@/components/work-orders-cards';
-import { AddWorkOrderModal } from '@/components/add-work-order-modal';
 
 
 const WorkOrders = () => {
   const router = useRouter();
   const [isBrowser, setIsBrowser] = useState(false);
-  const [workOrderModalIsOpen, setWorkOrderModalIsOpen] = useState(false);
   const { isMobile } = useDevice();
 
   useEffect(() => {
@@ -39,16 +37,10 @@ const WorkOrders = () => {
             <h1 className="text-4xl">{`Work Orders`}</h1>
             <button
               className="mt-2 md:mt-0 bg-blue-200 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-40 justify-self-end text-center"
-              onClick={() => setWorkOrderModalIsOpen(true)}
             >+ New Work Order</button>
           </div>
           {!isMobile && <WorkOrdersTable />}
           {isMobile && <WorkOrdersCards />}
-          <AddWorkOrderModal
-            workOrderModalIsOpen={workOrderModalIsOpen}
-            setWorkOrderModalIsOpen={setWorkOrderModalIsOpen}
-            onSuccessfulAdd={() => console.log("done...")}
-          />
           {isMobile && <BottomNavigationPanel />}
         </div>
       </div>
