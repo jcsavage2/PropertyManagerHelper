@@ -174,13 +174,13 @@ export class WorkOrderEntity {
     }
   }
 
-  public async update({ pk, sk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter: "yes" | "no"; }) {
+  public async update({ pk, sk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter?: "yes" | "no"; }) {
     try {
       const result = await this.workOrderEntity.update({
         pk,
         sk,
         status,
-        permissionToEnter
+        ...(permissionToEnter && { permissionToEnter })
       }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
       return result;
     } catch (err) {
