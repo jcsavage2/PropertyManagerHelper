@@ -19,7 +19,7 @@ const Home = () => {
           </button>
         )}
         {!!sessionUser?.email && (
-          <div className="" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+          <div className="" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "2em" }}>
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={async () => {

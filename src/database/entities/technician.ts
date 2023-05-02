@@ -1,41 +1,67 @@
-import { Entity } from 'dynamodb-toolbox';
+import { Entity, EntityItem } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY } from '.';
-import { INDEXES, PillarDynamoTable } from '..';
+import { IBaseEntity, INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 import { uuid } from 'uuidv4';
+
 
 type CreateTechnicianProps = {
   name: string;
   email: string;
+  status?: "JOINED" | "INVITED";
   pmEmail?: string;
   organization: string;
 };
 
-export interface ITechnician {
+type ITechnicianBase = {
   pk: string,
   sk: string,
-  created: string,
+  technicianName: string,
+  technicianEmail: string,
+  userType: "TECHNICIAN";
+  status: "JOINED" | "INVITED";
+  propertyManagers?: Map<string, string>;
+  organization: string,
+};
+
+export interface ITechnician extends IBaseEntity {
+  pk: string,
+  sk: string,
   technicianName: string,
   technicianEmail: string,
   userType: "TECHNICIAN";
   propertyManagers?: Map<string, string>;
   organization: string,
-  skills: string[];
+};
+
+type CompositKey = {
+  pk: string;
+  sk: string;
 };
 
 export class TechnicianEntity {
-  private technicianEntity: Entity;
+  private technicianEntity: Entity<"TECHNICIAN", ITechnicianBase, CompositKey, typeof PillarDynamoTable>;
 
   constructor() {
-    this.technicianEntity = new Entity({
+    this.technicianEntity = new Entity<"TECHNICIAN", ITechnicianBase, CompositKey, typeof PillarDynamoTable>({
       name: ENTITIES.TECHNICIAN,
       attributes: {
+        // Technician Email 
         pk: { partitionKey: true },
+        // Technician Email 
         sk: { sortKey: true },
-        GSI1PK: { type: "string" }, //PM email
+
+        // PM Email
+        GSI1PK: { type: "string" },
+        // KSUID - timestamp
         GSI1SK: { type: "string" },
+
         technicianName: { type: "string" },
+
+        // Map <pmEmail, pmName>
         propertyManagers: { type: "map" },
+
+        // Invited || Joined
         status: { type: "string" },
         technicianEmail: { type: "string" },
         pmEmail: { type: "string" },
@@ -64,10 +90,9 @@ export class TechnicianEntity {
       const result = await this.technicianEntity.update({
         pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
-        ...(pmEmail && { GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()) }),
-        GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, uuid()),
         technicianName: name,
         userType: "TECHNICIAN",
+        status: "INVITED",
         technicianEmail: email.toLowerCase(),
         propertyManagers: propertyManagersMap,
         organization,
@@ -78,31 +103,38 @@ export class TechnicianEntity {
     }
   }
 
-  public async get({ technicianEmail }: { technicianEmail: string; }) {
+
+  public async get({ technicianEmail }: { technicianEmail: string; }): Promise<ITechnician | null> {
     try {
       const params = {
         pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       };
       const result = await this.technicianEntity.get(params, { consistent: true });
-      return result;
+      return result.Item ?? null;
     } catch (err) {
       console.log({ err });
+      return null;
     }
   }
 
+
+
   public async update(
-    { email, name, organization }: { email: string; name?: string; organization?: string; }) {
+    { technicianEmail, technicianName, organization, status }: Partial<ITechnicianBase>) {
+    if (!technicianEmail) {
+      throw new Error(" No Technician email provided");
+    }
+    const lowerCaseTechEmail = technicianEmail.toLowerCase();
     try {
       const result = await this.technicianEntity.update({
-        pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
-        technicianEmail: email.toLowerCase(),
-        ...(name && { technicianName: name, }),
+        pk: generateKey(ENTITY_KEY.TECHNICIAN, lowerCaseTechEmail),
+        sk: generateKey(ENTITY_KEY.TECHNICIAN, lowerCaseTechEmail),
+        ...(technicianName && { technicianName }),
         ...(organization && { organization }),
-        status: "JOINED",
+        ...(status && { status }),
         userType: ENTITIES.TECHNICIAN
-      }, { returnValues: "ALL_NEW" });
+      } as any, { returnValues: "ALL_NEW" });
       return result;
     } catch (err) {
       console.log({ err });
