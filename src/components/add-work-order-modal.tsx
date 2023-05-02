@@ -13,7 +13,8 @@ const customStyles = {
     right: 'auto',
     bottom: 'auto',
     transform: 'translate(-50%, -50%)',
-    width: "75%",
+    width: "90%",
+    height: "80%",
     backgroundColor: 'rgba(255, 255, 255)'
   },
   overLay: {
