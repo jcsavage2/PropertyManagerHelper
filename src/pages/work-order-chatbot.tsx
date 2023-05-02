@@ -346,7 +346,7 @@ export default function WorkOrderChatbot() {
                             ? hasAllIssueInfo(workOrder)
                               ? 'John; 123 St Apt 1400, Boca, FL; yes'
                               : ''
-                            : 'The toilet in the master bathroom is clogged - it\'s upstairs at the end of the hall to the right.'
+                            : 'Tell us about your issue.'
                         }
                         onChange={handleChange}
                       />
