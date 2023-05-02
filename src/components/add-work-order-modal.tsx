@@ -234,10 +234,8 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
               onClick={() => setSelectedProperty(o)}
               className="bg-gray-200 rounded mt-1 p-1"
             >
-              <p>{o.address.trim()} </p>
-              <p>Unit: {o.unit ?? "N/A"} </p>
-              <p>{o.city + ", " + o.state} </p>
-              <p>{o.postalCode} </p>
+              <p className="text-sm text-gray-800">{o.address.trim() + " " + o.unit} </p>
+              <p className="text-sm font-light">{o.city + ", " + o.state + " " + o.postalCode} </p>
             </div>);
         })}
         {selectedProperty && (
