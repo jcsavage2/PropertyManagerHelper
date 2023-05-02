@@ -81,10 +81,11 @@ export const WorkOrdersTable = () => {
     { label: "Assigned To", accessor: "tenantEmail", width: "" },
     { label: "Created", accessor: "created", width: "" },
     { label: "Created By", accessor: "tenantName", width: "" },
+    { label: "Permission To Enter", accessor: "permissionToEnter", width: "" },
   ];
 
   const remappedWorkOrders = workOrders.map(wo => {
-    const { status, address, tenantEmail, created, tenantName } = wo;
+    const { status, address, tenantEmail, created, tenantName, permissionToEnter } = wo;
     const date = new Date(created);
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
     const addressString = generateAddressKey({ address: address?.address, unit: wo?.address?.unit ?? "" });
@@ -96,6 +97,7 @@ export const WorkOrdersTable = () => {
       tenantEmail,
       address: addressString,
       created: formattedDate,
+      permissionToEnter,
       tenantName: toTitleCase(tenantName)
     };
   });
