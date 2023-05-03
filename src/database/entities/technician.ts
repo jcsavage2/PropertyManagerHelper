@@ -104,8 +104,10 @@ export class TechnicianEntity {
 
       // Create Companion Row
       await this.technicianEntity.update({
-        pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail?.toLowerCase()),
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail?.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
+        technicianEmail: email.toLowerCase(),
+        technicianName: toTitleCase(name)
       });
       return result;
     } catch (err) {

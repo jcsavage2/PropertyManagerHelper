@@ -1,5 +1,6 @@
 import { useUserContext } from "@/context/user";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 
@@ -35,6 +36,7 @@ const HamburgerMenu = () => {
             {user.pk.startsWith("PM") && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
             {user.pk.startsWith("T") && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
             {sessionUser?.email && (<Link onClick={handleClick} className={linkStyle} href={"/"}>{"Sign Out"}</Link>)}
+            {!sessionUser?.email && (<Link onClick={() => signIn()} className={linkStyle} href={"/"}>{"Sign In"}</Link>)}
 
           </div>
         </div>
