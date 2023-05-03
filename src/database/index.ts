@@ -29,9 +29,9 @@ export const PillarDynamoTable = new Table({
   name: 'pillar-hq',
   partitionKey: 'pk',
   sortKey: 'sk',
-  indexes: { 
-    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' }, 
-    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' }, 
+  indexes: {
+    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' },
+    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' },
   },
   removeNullAttributes: true,
   DocumentClient
