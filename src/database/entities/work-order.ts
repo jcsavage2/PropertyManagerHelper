@@ -168,9 +168,10 @@ export class WorkOrderEntity {
           index: INDEXES.GSI1,
         }
       ));
-      return result.Items ?? [];
+      return result.Items ?? [] as IWorkOrder[];
     } catch (err) {
       console.log({ err });
+      return [] as IWorkOrder[];
     }
   }
 

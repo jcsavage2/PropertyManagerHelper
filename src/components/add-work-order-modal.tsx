@@ -59,6 +59,9 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
 
   useEffect(() => {
     async function getProperties() {
+      if (!user.pmEmail) {
+        return;
+      }
       const { data } = await axios.post('/api/get-all-properties-for-pm', {
         propertyManagerEmail: user.pmEmail,
       });
