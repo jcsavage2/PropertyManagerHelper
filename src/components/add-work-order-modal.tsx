@@ -13,7 +13,8 @@ const customStyles = {
     right: 'auto',
     bottom: 'auto',
     transform: 'translate(-50%, -50%)',
-    width: "75%",
+    width: "90%",
+    height: "80%",
     backgroundColor: 'rgba(255, 255, 255)'
   },
   overLay: {
@@ -52,12 +53,17 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
   const [selectedZip, setSelectedZip] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<IProperty | null>(null);
 
+  const [issueDescription, setIssueDescription] = useState("");
+
   function closeModal() {
     setWorkOrderModalIsOpen(false);
   }
 
   useEffect(() => {
     async function getProperties() {
+      if (!user.pmEmail) {
+        return;
+      }
       const { data } = await axios.post('/api/get-all-properties-for-pm', {
         propertyManagerEmail: user.pmEmail,
       });
@@ -108,6 +114,10 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
     city,
     postalCode
   ]);
+
+  const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setIssueDescription(e.currentTarget.value);
+  }, [setIssueDescription]);
 
   const addressSet = new Set();
   const unitSet = new Set();
@@ -234,18 +244,30 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
               onClick={() => setSelectedProperty(o)}
               className="bg-gray-200 rounded mt-1 p-1"
             >
-              <p>{o.address.trim()} </p>
-              <p>Unit: {o.unit ?? "N/A"} </p>
-              <p>{o.city + ", " + o.state} </p>
-              <p>{o.postalCode} </p>
+              <p className="text-sm text-gray-800">{o.address.trim() + " " + o.unit} </p>
+              <p className="text-sm font-light">{o.city + ", " + o.state + " " + o.postalCode} </p>
             </div>);
         })}
         {selectedProperty && (
           <div>
-            <p>{selectedProperty.address}</p>
+            <p>{selectedProperty.address + selectedProperty.unit}</p>
             <button
               className="bg-slate-200 py-1 px-2 rounded"
-              onClick={() => setSelectedProperty(null)}>Select Other Property</button>
+              onClick={() => setSelectedProperty(null)}>Select Other Property
+            </button>
+            <br />
+            <label htmlFor='issueDescription'>Issue Details* </label>
+            <input
+              className='rounded px-1'
+              id="issueDescription"
+              type={"text"}
+              value={issueDescription}
+              onChange={handleIssueDescriptionChange}
+            />
+
+
+
+
 
           </div>)
         }
