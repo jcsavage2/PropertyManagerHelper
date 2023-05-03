@@ -9,7 +9,7 @@ type CreateTechnicianProps = {
   name: string;
   email: string;
   status?: "JOINED" | "INVITED";
-  pmEmail?: string;
+  pmEmail: string;
   organization: string;
 };
 
@@ -59,7 +59,7 @@ export class TechnicianEntity {
         technicianName: { type: "string" },
 
         // Map <pmEmail, pmName>
-        propertyManagers: { type: "map" },
+        propertyManagers: { type: "set" },
 
         // Invited || Joined
         status: { type: "string" },
@@ -90,16 +90,23 @@ export class TechnicianEntity {
         pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
         organization,
-        propertyManagers: {
-          $set: {
-            [email.toLowerCase()]: email.toLowerCase()
+        ...(pmEmail && {
+          propertyManagers: {
+            $add: [pmEmail.toLowerCase()]
           }
-        },
+        }),
         status: "INVITED",
         technicianEmail: email.toLowerCase(),
         technicianName: toTitleCase(name),
         userType: "TECHNICIAN",
       }, { returnValues: "ALL_NEW" });
+
+
+      // Create Companion Row
+      await this.technicianEntity.update({
+        pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail?.toLowerCase()),
+      });
       return result;
     } catch (err) {
       console.log({ err });
@@ -150,15 +157,14 @@ export class TechnicianEntity {
    */
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     try {
-      const result = (await PillarDynamoTable.query(
+      const result = await PillarDynamoTable.query(
         generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
         {
           limit: 20,
           reverse: true,
           beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
-          index: INDEXES.GSI1
         }
-      ));
+      );
       return result.Items ?? [];
     } catch (err) {
       console.log({ err });
