@@ -13,7 +13,8 @@ export const NavLinks = () => {
 
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
-    if (user.pmEmail || user.tenantEmail) {
+    //@ts-ignore
+    if (user.pmEmail || user.tenantEmail || user.userType === "TECHNICIAN") {
       logOut();
       router.push("/");
     }

@@ -26,11 +26,11 @@ const customStyles = {
   }
 };
 
-export type AddTechnicianModalProps = { 
-    technicianModalIsOpen: boolean;
-    setTechnicianModalIsOpen: Dispatch<SetStateAction<boolean>>; 
-    onSuccessfulAdd: () => void; 
-}
+export type AddTechnicianModalProps = {
+  technicianModalIsOpen: boolean;
+  setTechnicianModalIsOpen: Dispatch<SetStateAction<boolean>>;
+  onSuccessfulAdd: () => void;
+};
 
 export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIsOpen, onSuccessfulAdd }: AddTechnicianModalProps) => {
 

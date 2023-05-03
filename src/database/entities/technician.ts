@@ -1,7 +1,7 @@
 import { Entity, EntityItem } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY } from '.';
 import { IBaseEntity, INDEXES, PillarDynamoTable } from '..';
-import { generateKey } from '@/utils';
+import { generateKey, toTitleCase } from '@/utils';
 import { uuid } from 'uuidv4';
 
 
@@ -40,10 +40,10 @@ type CompositKey = {
 };
 
 export class TechnicianEntity {
-  private technicianEntity: Entity<"TECHNICIAN", ITechnicianBase, CompositKey, typeof PillarDynamoTable>;
+  private technicianEntity: Entity;
 
   constructor() {
-    this.technicianEntity = new Entity<"TECHNICIAN", ITechnicianBase, CompositKey, typeof PillarDynamoTable>({
+    this.technicianEntity = new Entity({
       name: ENTITIES.TECHNICIAN,
       attributes: {
         // Technician Email 
@@ -63,6 +63,7 @@ export class TechnicianEntity {
 
         // Invited || Joined
         status: { type: "string" },
+        userType: { type: "string" },
         technicianEmail: { type: "string" },
         pmEmail: { type: "string" },
         organization: { type: "string" },
@@ -76,8 +77,6 @@ export class TechnicianEntity {
    */
   public async create(
     { name, email, pmEmail, organization }: CreateTechnicianProps) {
-    const propertyManagersMap = new Map();
-    pmEmail && propertyManagersMap.set(pmEmail, pmEmail);
     try {
       /**
        * We first need to attempt to create the Technician.
@@ -90,12 +89,16 @@ export class TechnicianEntity {
       const result = await this.technicianEntity.update({
         pk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
-        technicianName: name,
-        userType: "TECHNICIAN",
+        organization,
+        propertyManagers: {
+          $set: {
+            [email.toLowerCase()]: email.toLowerCase()
+          }
+        },
         status: "INVITED",
         technicianEmail: email.toLowerCase(),
-        propertyManagers: propertyManagersMap,
-        organization,
+        technicianName: toTitleCase(name),
+        userType: "TECHNICIAN",
       }, { returnValues: "ALL_NEW" });
       return result;
     } catch (err) {
@@ -111,6 +114,7 @@ export class TechnicianEntity {
         sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       };
       const result = await this.technicianEntity.get(params, { consistent: true });
+      //@ts-ignore
       return result.Item ?? null;
     } catch (err) {
       console.log({ err });

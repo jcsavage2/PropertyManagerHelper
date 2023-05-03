@@ -10,7 +10,8 @@ const HamburgerMenu = () => {
   const linkStyle = "hover:text-gray-500 my-auto text-3xl text-white cursor-pointer mt-12";
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
-    if (user.pmEmail || user.tenantEmail) {
+    //@ts-ignore
+    if (user.pmEmail || user.tenantEmail || user.userType === "TECHNICIAN") {
       logOut();
       router.push("/");
     }

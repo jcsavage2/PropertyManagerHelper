@@ -63,13 +63,11 @@ export default async function handler(
         //@ts-ignore
         const existingTechnicianFromDB = existingTechnician?.Item ?? null;
         if (existingTechnicianFromDB) {
-          await technicianEntity.update({ email });
+          await technicianEntity.update({ technicianEmail: email, status: "JOINED" });
           return res.status(200).json({ response: JSON.stringify(existingTechnicianFromDB) });
         } else {
-          // const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });
-          // console.log({ newTenant }, chalk.green("==============="));
           //@ts-ignore
-          return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
+          return res.status(200).json({ response: JSON.stringify({}) });
         }
     }
   } catch (error) {
