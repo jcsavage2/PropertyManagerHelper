@@ -53,6 +53,8 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
   const [selectedZip, setSelectedZip] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<IProperty | null>(null);
 
+  const [issueDescription, setIssueDescription] = useState("");
+
   function closeModal() {
     setWorkOrderModalIsOpen(false);
   }
@@ -112,6 +114,10 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
     city,
     postalCode
   ]);
+
+  const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    setIssueDescription(e.currentTarget.value);
+  }, [setIssueDescription]);
 
   const addressSet = new Set();
   const unitSet = new Set();
@@ -244,10 +250,24 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
         })}
         {selectedProperty && (
           <div>
-            <p>{selectedProperty.address}</p>
+            <p>{selectedProperty.address + selectedProperty.unit}</p>
             <button
               className="bg-slate-200 py-1 px-2 rounded"
-              onClick={() => setSelectedProperty(null)}>Select Other Property</button>
+              onClick={() => setSelectedProperty(null)}>Select Other Property
+            </button>
+            <br />
+            <label htmlFor='issueDescription'>Issue Details* </label>
+            <input
+              className='rounded px-1'
+              id="issueDescription"
+              type={"text"}
+              value={issueDescription}
+              onChange={handleIssueDescriptionChange}
+            />
+
+
+
+
 
           </div>)
         }
