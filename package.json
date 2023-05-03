@@ -10,7 +10,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.325.0",
     "@aws-sdk/lib-dynamodb": "^3.325.0",
-    "@next-auth/dynamodb-adapter": "^3.0.1",
+    "@next-auth/dynamodb-adapter": "^3.0.2",
     "@sendgrid/mail": "^7.7.0",
     "@types/node": "18.14.6",
     "@types/react": "18.0.28",

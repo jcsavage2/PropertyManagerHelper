@@ -977,10 +977,10 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@next-auth/dynamodb-adapter@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.npmjs.org/@next-auth/dynamodb-adapter/-/dynamodb-adapter-3.0.1.tgz"
-  integrity sha512-F6QoASFzwYEkT4IOZOxCIXJln5gnCw8QaBtwdeLRY6SMMe6wGBymUVZKYOwgtypyQhlAAm6opmRiXMLnLrPHxQ==
+"@next-auth/dynamodb-adapter@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@next-auth/dynamodb-adapter/-/dynamodb-adapter-3.0.2.tgz#0272ea739879d3cc047b8e1878809b2ab5ff3932"
+  integrity sha512-hCj8RYyHZc6SwZs7FkOV56/jcok4GLdQ2oIun/no9+0vrpdMhGzRM4qQCoRNq3BnZot/C/6ILWSxMXzsEznlgA==
   dependencies:
     uuid "^9.0.0"
 
