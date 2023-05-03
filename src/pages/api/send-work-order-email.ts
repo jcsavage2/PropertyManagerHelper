@@ -1,8 +1,10 @@
 import { Events } from "@/constants";
 import { Data } from "@/database";
+import { ENTITY_KEY } from "@/database/entities";
 import { EventEntity } from "@/database/entities/event";
 import { WorkOrderEntity } from "@/database/entities/work-order";
 import { SendEmailApiRequest } from "@/types";
+import { generateKey } from "@/utils";
 import sendgrid from "@sendgrid/mail";
 
 import { NextApiRequest, NextApiResponse } from "next";
@@ -58,6 +60,8 @@ export default async function handler(
       updateMadeBy: tenantEmail,
     });
 
+    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`
+
     /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.SENDGRID_API_KEY;
     if (!apiKey) {
@@ -97,6 +101,12 @@ export default async function handler(
             background-color: #dddddd;
           }
 
+          a {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 20px;
+          }
+
           @media only screen and (max-width: 600px) {
             table {
               font-family: arial, sans-serif;
@@ -114,6 +124,7 @@ export default async function handler(
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
           <h1>New Work Order Request</h1>
+          <a href="${workOrderLink}">View Work Order in PILLAR</a>
           <table>
             <tr>
               <td>Issue</td>
