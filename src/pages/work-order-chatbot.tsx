@@ -23,6 +23,7 @@ export default function WorkOrderChatbot() {
     }
   )) ?? [], [user.addresses]);
 
+  const [isUsingAI, _setIsUsingAI] = useState(false);
 
   const [pmEmail, setPmEmail] = useState(user.pmEmail ?? "");
   const [tenantName, setTenantName] = useState(user.tenantName);
@@ -53,8 +54,13 @@ export default function WorkOrderChatbot() {
   }, [messages, permissionToEnter]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
-    setUserMessage(e.currentTarget.value);
-  }, [setUserMessage]);
+    if (isUsingAI) {
+      setUserMessage(e.currentTarget.value);
+    } else {
+      setIssueDescription(e.currentTarget.value);
+    }
+
+  }, [setUserMessage, setIssueDescription, isUsingAI]);
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIssueDescription(e.currentTarget.value);
@@ -113,8 +119,12 @@ export default function WorkOrderChatbot() {
   };
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault();
     try {
-      e.preventDefault();
+      if (!isUsingAI) {
+        setMessages([...messages, { role: "user", content: issueDescription }, { role: "assistant", content: "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request." }]);
+      }
+
       if (userMessage === '') return;
       setMessages([...messages, { role: 'user', content: userMessage }]);
       setIsResponding(true);
@@ -213,7 +223,7 @@ export default function WorkOrderChatbot() {
                             </div>
                           )}
                           <p data-testid={`response-${index}`} className='whitespace-pre-line break-keep'>{message.content}</p>
-                          {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder) || !hasConnectionWithGPT) && (
+                          {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder, isUsingAI) || !hasConnectionWithGPT) && (
                             <>
                               <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
                                 {
@@ -319,9 +329,8 @@ export default function WorkOrderChatbot() {
                   className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
                   style={{ "height": "12dvh" }}
                 >
-                  {hasAllIssueInfo(workOrder) || !hasConnectionWithGPT ? (
+                  {hasAllIssueInfo(workOrder, isUsingAI) && messages.length > 1 || !hasConnectionWithGPT ? (
                     <button
-                      disabled={permissionToEnter !== "yes"}
                       onClick={handleSubmitWorkOrder}
                       className='text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400'>
                       {permissionToEnter ? "Submit Work Order" : "Need Permission To Enter"}
@@ -338,13 +347,13 @@ export default function WorkOrderChatbot() {
                       }}
                     >
                       <textarea
-                        value={userMessage}
+                        value={isUsingAI ? userMessage : issueDescription}
                         data-testid="userMessageInput"
                         className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
                         placeholder={
                           messages.length
-                            ? hasAllIssueInfo(workOrder)
-                              ? 'John; 123 St Apt 1400, Boca, FL; yes'
+                            ? hasAllIssueInfo(workOrder, isUsingAI)
+                              ? ''
                               : ''
                             : 'Tell us about your issue.'
                         }
@@ -354,7 +363,7 @@ export default function WorkOrderChatbot() {
                         data-testid="send"
                         type="submit"
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                        disabled={isResponding || !userMessage}>
+                        disabled={isResponding || (isUsingAI ? !userMessage : !issueDescription)}>
                         Send
                       </button>
                     </form>
