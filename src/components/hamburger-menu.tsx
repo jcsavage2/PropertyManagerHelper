@@ -1,0 +1,45 @@
+import { useUserContext } from "@/context/user";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useCallback, useState } from "react";
+
+const HamburgerMenu = () => {
+  const { user, logOut, sessionUser } = useUserContext();
+  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const linkStyle = "hover:text-gray-500 my-auto text-3xl text-white cursor-pointer mt-12";
+
+  const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
+    if (user.pmEmail || user.tenantEmail) {
+      logOut();
+      router.push("/");
+    }
+  }, [user, logOut, router]);
+
+  return (
+    <>
+      <div className="space-y-1 justify-self-end" onClick={() => setIsOpen(s => !s)}>
+        <span className="block w-8 h-1 bg-gray-600"></span>
+        <span className="block w-8 h-1 bg-gray-600"></span>
+        <span className="block w-8 h-1 bg-gray-600"></span>
+      </div>
+      {isOpen && (
+        <div
+          className="absolute left-0 bg-blue-400 mt-0 w-full grid z-10"
+          style={{ top: "7dvh", height: "93dvh" }}
+          onClick={() => setIsOpen(false)}
+        >
+          <div className="mt-4 flex flex-col h-12">
+            <Link className={linkStyle} href={"/"}>Home</Link>
+            {user.pk.startsWith("PM") && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
+            {user.pk.startsWith("T") && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
+            {sessionUser?.email && (<Link onClick={handleClick} className={linkStyle} href={"/"}>{"Sign Out"}</Link>)}
+
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default HamburgerMenu;

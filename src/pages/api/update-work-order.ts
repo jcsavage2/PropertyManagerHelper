@@ -9,6 +9,7 @@ type UpdateWorkOrderApiRequest = {
   pk: string;
   sk: string;
   status: WorkOrderStatus;
+  permissionToEnter?: "yes" | "no";
   email: string;
 };
 
@@ -20,11 +21,12 @@ export default async function handler(
     const body = req.body as UpdateWorkOrderApiRequest;
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
-    const { pk, sk, status, email } = body;
+    const { pk, sk, status, email, permissionToEnter } = body;
     const newWorkOrder = await workOrderEntity.update({
       pk,
       sk,
-      status
+      status,
+      ...(permissionToEnter && { permissionToEnter })
     });
 
     //Spawn new event on status change

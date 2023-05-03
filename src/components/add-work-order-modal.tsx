@@ -13,7 +13,8 @@ const customStyles = {
     right: 'auto',
     bottom: 'auto',
     transform: 'translate(-50%, -50%)',
-    width: "75%",
+    width: "90%",
+    height: "80%",
     backgroundColor: 'rgba(255, 255, 255)'
   },
   overLay: {
@@ -58,6 +59,9 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
 
   useEffect(() => {
     async function getProperties() {
+      if (!user.pmEmail) {
+        return;
+      }
       const { data } = await axios.post('/api/get-all-properties-for-pm', {
         propertyManagerEmail: user.pmEmail,
       });
@@ -234,10 +238,8 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
               onClick={() => setSelectedProperty(o)}
               className="bg-gray-200 rounded mt-1 p-1"
             >
-              <p>{o.address.trim()} </p>
-              <p>Unit: {o.unit ?? "N/A"} </p>
-              <p>{o.city + ", " + o.state} </p>
-              <p>{o.postalCode} </p>
+              <p className="text-sm text-gray-800">{o.address.trim() + " " + o.unit} </p>
+              <p className="text-sm font-light">{o.city + ", " + o.state + " " + o.postalCode} </p>
             </div>);
         })}
         {selectedProperty && (

@@ -78,13 +78,12 @@ export const WorkOrdersCards = () => {
                 //@ts-ignore
                 options={options}
               />
-              <p className="text-sm font-light">Address: {workOrder.address.address}</p>
-              <p className="text-sm font-light">Unit: {workOrder.address.unit ?? "N/A"}</p>
+              <p className="text-sm font-light">{(workOrder.address.address + " " + (workOrder?.address?.unit ?? ""))} </p>
               <p className="text-sm font-light">Permission to Enter: {workOrder.permissionToEnter}</p>
               <p className="text-sm mt-1 font-light">Assigned To: {workOrder.assignedTo ?? "Unassigned"} </p>
               <div className="grid grid-cols-2">
                 <p className="text-sm mt-1 font-light">Created By: {workOrder.createdBy ?? "Unassigned"} </p>
-                <Link className="justify-self-end px-4 py-1 bg-slate-500 text-slate-100 rounded" key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`} as={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}>
+                <Link className="justify-self-end my-auto px-4 py-1 bg-slate-500 text-slate-100 rounded" key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`} as={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}>
                   Open Details
                 </Link>
 
