@@ -27,7 +27,7 @@ export default async function handler(
     await eventEntity.create({
       workOrderId: deconstructKey(workOrderId),
       updateType: Events.ASSIGNED_TO_UPDATE,
-      updateDescription: "Assigned" + technicianEmail + "to the work order",
+      updateDescription: "Assigned " + technicianEmail + " to the work order",
       updateMadeBy: pmEmail,
     });
     const response = await workOrderEntity.assignToTechnician({ woId: deconstructKey(workOrderId), technicianEmail });
