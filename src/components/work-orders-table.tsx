@@ -5,9 +5,8 @@ import axios from "axios";
 import { AiOutlineFilter } from "react-icons/ai";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { BiCheckbox, BiCheckboxChecked } from "react-icons/bi";
+import { BiCheckbox, BiCheckboxChecked, BiRefresh } from "react-icons/bi";
 import Link from "next/link";
-
 
 type HandleUpdateStatusProps = {
   pk: string;
@@ -18,6 +17,7 @@ export const WorkOrdersTable = () => {
   const [workOrders, setWorkOrders] = useState<Array<IWorkOrder>>([]);
   const [sortField, setSortField] = useState<string>("status");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [statusFilter, setStatusFilter] = useState<Record<IWorkOrder["status"], boolean>>({
     TO_DO: true,
@@ -26,21 +26,22 @@ export const WorkOrdersTable = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const { user } = useUserContext();
 
+  const fetchWorkOrders = async () => {
+    if (isFetching || isUpdating || !user.pmEmail) {
+      return;
+    }
+    setIsFetching(true);
+    const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
+    const orders: IWorkOrder[] = JSON.parse(data.response);
+    if (orders.length) {
+      setWorkOrders(orders);
+    }
+    setIsFetching(false);
+  };
 
   useEffect(() => {
-    async function get() {
-      if (isUpdating || !user.pmEmail) {
-        return;
-      }
-      const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
-      const orders: IWorkOrder[] = JSON.parse(data.response);
-      if (orders.length) {
-        setWorkOrders(orders);
-      }
-    }
-    get();
+    fetchWorkOrders();
   }, [user.pmEmail, isUpdating]);
-
 
   const handleSorting = (sortField: keyof IWorkOrder, sortOrder: "asc" | "desc") => {
     if (sortField) {
@@ -153,9 +154,9 @@ export const WorkOrdersTable = () => {
 
   return (
     <div className="mt-8">
-      <div className="flex">
+      <div className="flex flex-row w-full">
         <div>
-          <button className={`py-1 mr-2 px-3 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowStatusFilter((s) => !s)}>
+          <button className={`h-full mr-2 px-3 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowStatusFilter((s) => !s)}>
             Status
           </button>
           {showStatusFilter && (
@@ -185,10 +186,16 @@ export const WorkOrdersTable = () => {
           <AiOutlineFilter className="mr-1 my-auto" />
           Filters
         </div>
+        <button className="ml-auto mr-4 md:mt-0 bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center"
+            onClick={fetchWorkOrders}
+            disabled={isFetching || isUpdating}
+          >
+            <BiRefresh className='text-2xl'/>
+          </button>
       </div>
 
       <div className="overflow-x-auto">
-        <table className='w-full mt-4 border-spacing-x-10 table-auto'>
+        <table className='w-full mt-2 border-spacing-x-10 table-auto'>
           <thead className=''>
             <tr className='text-left text-gray-400'>
               {columns.map(({ label, accessor, width }) => {

@@ -38,7 +38,7 @@ const WorkOrders = () => {
           <div style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             <h1 className="text-4xl">{`Work Orders`}</h1>
             <button
-              className="mt-2 md:mt-0 bg-blue-200 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-56 justify-self-end text-center"
+              className="float-left mt-2 md:mt-0 bg-blue-200 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-56 justify-self-end text-center"
               onClick={() => setWorkOrderModalIsOpen(true)}
             >+ New Work Order</button>
           </div>
