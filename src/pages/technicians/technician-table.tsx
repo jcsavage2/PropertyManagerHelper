@@ -22,7 +22,7 @@ export const TechnicianTable = (props: TechnicianTableProps) => {
 
   const formattedTechnicians: Partial<ITechnician>[] = technicians.map(tech => {
     const { technicianName, technicianEmail, created } = tech;
-    const date = new Date(created);
+    const date = new Date(created ?? "");
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
     return {
       pk: tech.pk,
@@ -30,7 +30,6 @@ export const TechnicianTable = (props: TechnicianTableProps) => {
       technicianName: toTitleCase(technicianName),
       technicianEmail,
       created: formattedDate,
-      pmEmail: tech.pmEmail,
       organization: tech.organization,
     };
   });
