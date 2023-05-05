@@ -3,7 +3,6 @@ import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { TechnicianEntity } from "@/database/entities/technician";
 import { TenantEntity } from "@/database/entities/tenant";
-import chalk from "chalk";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
@@ -60,13 +59,11 @@ export default async function handler(
       case ENTITIES.TECHNICIAN:
         const technicianEntity = new TechnicianEntity();
         const existingTechnician = await technicianEntity.get({ technicianEmail: email });
-        //@ts-ignore
-        const existingTechnicianFromDB = existingTechnician?.Item ?? null;
+        const existingTechnicianFromDB = existingTechnician ?? null;
         if (existingTechnicianFromDB) {
           await technicianEntity.update({ technicianEmail: email, status: "JOINED" });
           return res.status(200).json({ response: JSON.stringify(existingTechnicianFromDB) });
         } else {
-          //@ts-ignore
           return res.status(200).json({ response: JSON.stringify({}) });
         }
     }

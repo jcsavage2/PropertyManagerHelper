@@ -28,18 +28,31 @@ export const WorkOrdersTable = () => {
 
 
   useEffect(() => {
+    console.log({ user });
+    if (isUpdating || (!user.pmEmail && !user.userType)) {
+      return;
+    }
     async function get() {
-      if (isUpdating || !user.pmEmail) {
-        return;
+      if (user.userType === "TECHNICIAN") {
+        console.log("FETCHING");
+        const { data } = await axios.post("/api/get-all-work-orders-for-technician", { technicianEmail: user.technicianEmail });
+        const orders: IWorkOrder[] = JSON.parse(data.response);
+        console.log({ orders });
+        if (orders.length) {
+          sessionStorage.setItem("WORK_ORDERS", JSON.stringify(orders));
+          setWorkOrders(orders);
+        }
       }
+
       const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
       const orders: IWorkOrder[] = JSON.parse(data.response);
       if (orders.length) {
+        sessionStorage.setItem("", JSON.stringify(orders));
         setWorkOrders(orders);
       }
     }
     get();
-  }, [user.pmEmail, isUpdating]);
+  }, [user.pmEmail, isUpdating, user.userType, user]);
 
 
   const handleSorting = (sortField: keyof IWorkOrder, sortOrder: "asc" | "desc") => {

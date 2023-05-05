@@ -69,6 +69,11 @@ export type AssignTechnicianModalProps = {
   onSuccessfulAdd: () => void;
 };
 
+// when I assign a technician, I need to create a companion row of the work order.
+// This companion row will also neet to be updated when status is updated.
+// Thus, when updating a status for the work order, we must also update it for each of the technicians.
+// This will mean 1 additional write (possibly more if multiple technicians are assigned).
+
 export const AssignTechnicianModal = ({
   assignTechnicianModalIsOpen,
   workOrderId,
@@ -166,6 +171,10 @@ export const AssignTechnicianModal = ({
         const { data } = await axios.post('/api/assign-technician', {
           technicianEmail: technicianEmail,
           workOrderId,
+          address: workOrder?.address,
+          status: workOrder?.status,
+          issueDescription: workOrder?.issue,
+          permissionToEnter: workOrder?.permissionToEnter,
           pmEmail: user.pmEmail,
         } as AssignTechnicianBody);
         const { response } = data;

@@ -1,5 +1,5 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, ENTITY_KEY } from '.';
+import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 
@@ -11,7 +11,7 @@ type CreateWorkOrderProps = {
   tenantName: string;
   unit?: string;
   createdBy: string;
-  createdByType: "TENANT" | "PROPERTY_MANAGER",
+  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN",
   state: string;
   permissionToEnter: "yes" | "no";
   city: string;
@@ -22,13 +22,23 @@ type CreateWorkOrderProps = {
   issue: string;
 };
 
-type PropertyAddress = {
+export type PropertyAddress = {
   address: string;
   unit?: string;
   city: string;
   state: string;
   postalCode: string;
   country: string;
+};
+
+type AssignTechnicianProps = {
+  technicianEmail: string,
+  workOrderId: string,
+  address: PropertyAddress,
+  status: IWorkOrder["status"],
+  issueDescription: string,
+  permissionToEnter: "yes" | "no",
+  pmEmail: string,
 };
 
 export interface IWorkOrder {
@@ -44,7 +54,7 @@ export interface IWorkOrder {
   permissionToEnter: "yes" | "no",
   tenantEmail: string,
   createdBy: string,
-  createdByType: "TENANT" | "PROPERTY_MANAGER",
+  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN",
   tenantName: string,
   address: PropertyAddress,
   status: WorkOrderStatus;
@@ -77,26 +87,6 @@ export class WorkOrderEntity {
       },
       table: PillarDynamoTable
     } as const);
-  }
-
-  private generateAddress({
-    address,
-    country,
-    city,
-    state,
-    postalCode,
-    unit,
-  }: {
-    address: string;
-    country: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    unit?: string;
-  }) {
-    return {
-      address, unit, city, state, postalCode, country
-    };
   }
 
   /**
@@ -157,22 +147,59 @@ export class WorkOrderEntity {
    * @returns All work orders for a given property manager
    */
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
     const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase());
-    try {
-      const result = (await PillarDynamoTable.query(
-        GSI1PK,
-        {
-          limit: 20,
-          reverse: true,
-          beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
-          index: INDEXES.GSI1,
-        }
-      ));
-      return result.Items ?? [] as IWorkOrder[];
-    } catch (err) {
-      console.log({ err });
-      return [] as IWorkOrder[];
-    }
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          GSI1PK,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            index: INDEXES.GSI1,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return workOrders;
+  }
+
+  /**
+   * @returns All work orders for a given property manager
+   */
+  public async getAllForTechnician({ technicianEmail }: { technicianEmail: string; }) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
+    const pk = generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase());
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          pk,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    console.log({ workOrders });
+    const remapped = workOrders.map(wo => ({ pk: wo.sk, sk: wo.sk }));
+    console.log({ remapped });
+    const newe = await PillarDynamoTable.getBatch({ keys: remapped });
+    console.log({ newe });
+
+    return workOrders;
   }
 
   public async update({ pk, sk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter?: "yes" | "no"; }) {
@@ -189,9 +216,27 @@ export class WorkOrderEntity {
     }
   }
 
-  public async assignToTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
-    const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+  public async assignTechnician({
+    workOrderId,
+    technicianEmail,
+    address,
+    status,
+    issueDescription,
+    permissionToEnter,
+    pmEmail }: AssignTechnicianProps) {
+    const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
+      // Create companion row for the technician
+      await this.workOrderEntity.update({
+        pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
+        address: this.generateAddress(address),
+        issue: issueDescription.toLowerCase(),
+        permissionToEnter,
+        pmEmail,
+        status
+      });
+
       const result = await this.workOrderEntity.update({
         pk: key,
         sk: key,
@@ -200,9 +245,31 @@ export class WorkOrderEntity {
         }
       }, { returnValues: "ALL_NEW" });
       return result;
+
+
     } catch (err) {
       console.log({ err });
     }
+  }
+
+  private generateAddress({
+    address,
+    country,
+    city,
+    state,
+    postalCode,
+    unit,
+  }: {
+    address: string;
+    country: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    unit?: string;
+  }) {
+    return {
+      address, unit, city, state, postalCode, country
+    };
   }
 
 }

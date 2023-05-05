@@ -1,12 +1,21 @@
 ### Query Access Patterns
 
 - Get all properties for a property manager
-- Get all property managers for an Organization
-- Get all Tenants for a property manager 
-- Get all work orders for a property 
+- Get all properties for a tenant
+
+- Get all property managers for an organization
+- Get all property managers for an tenant
+
+- Get all tenants for a property manager 
+
 - Get all work orders for a property manager
 - Get all work orders for a tenant 
-- Get a property manager for a tenant 
+- Get all work orders for a technician 
+
+- Get a property manager for a tenant
+- Get a property manager for a work order
+- Get a property manager for a property
+
 
 ### User Paths
 #### Property Manager (PM)
@@ -39,3 +48,7 @@
 **Then** The PM should have the ability to +Add a new technician via a modal, which they can then attach to the work order.
 **And** We should create both the companion row for the 
 
+
+
+## Optimizations
+- Save data fetches on local storage. When we refetch we can go to the database, but on the initial fetch we can go to local storage. 

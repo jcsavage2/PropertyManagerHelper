@@ -30,7 +30,7 @@ export const PillarDynamoTable = new Table({
   partitionKey: 'pk',
   sortKey: 'sk',
   indexes: {
-    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' },
+    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' }, // PM Email
     [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' },
   },
   removeNullAttributes: true,

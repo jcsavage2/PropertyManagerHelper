@@ -30,7 +30,7 @@ export const TechnicianTable = (props: TechnicianTableProps) => {
       technicianName: toTitleCase(technicianName),
       technicianEmail,
       created: formattedDate,
-      organization: tech.organization,
+      organization: tech?.organization,
     };
   });
 
