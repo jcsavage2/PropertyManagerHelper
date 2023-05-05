@@ -209,7 +209,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                       className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
                       <div className='text-sm text-gray-500'>{event.updateMadeBy}</div>
                       <div className='text-sm text-gray-500'>{formattedDate} @{formattedTime}</div>
-                      <div>{event.updateDescription}</div>
+                      <div className='break-words'>{event.updateDescription}</div>
                     </div>
                   );
                 }

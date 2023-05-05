@@ -6,6 +6,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useDevice } from "@/hooks/use-window-size";
 import Select from "react-select";
+import { BiRefresh } from "react-icons/bi";
 
 type HandleUpdateStatusProps = {
   pk: string;
@@ -16,32 +17,26 @@ type HandleUpdateStatusProps = {
 export const WorkOrdersCards = () => {
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isRefetching, setIsRefetching] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const { user } = useUserContext();
   const { isMobile } = useDevice();
 
-  useEffect(() => {
-    async function get() {
-      if (isUpdating || !user.pmEmail) {
-        return;
-      }
-      const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
-      const orders: IWorkOrder[] = JSON.parse(data.response);
-      if (orders.length) {
-        setWorkOrders(orders);
-      }
+  const fetchWorkOrders = async () => {
+    if (isFetching || isUpdating || !user.pmEmail) {
+      return;
     }
-    get();
-  }, [user.pmEmail, isUpdating]);
-
-
-  const handleRefetch = async () => {
+    setIsFetching(true);
     const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
     const orders: IWorkOrder[] = JSON.parse(data.response);
     if (orders.length) {
       setWorkOrders(orders);
     }
+    setIsFetching(false);
   };
+
+  useEffect(() => {
+    fetchWorkOrders();
+  }, [user.pmEmail, isUpdating]);
 
   const handleUpdateStatus = async ({ pk, sk, value }: HandleUpdateStatusProps) => {
     setIsUpdating(true);
@@ -57,10 +52,11 @@ export const WorkOrdersCards = () => {
 
   return (
     <>
-      <button className="mt-2 md:mt-0 bg-blue-200 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-56 justify-self-end text-center"
-        onClick={handleRefetch}
+      <button className="mt-2 ml-2 md:mt-0 bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center"
+        onClick={fetchWorkOrders}
+        disabled={isFetching || isUpdating}
       >
-        Refetch Work Orders
+        <BiRefresh className='text-2xl'/>
       </button>
       <div className={`mt-8 ${isMobile ? " pb-24" : "pb-0"}`}>
         <div className="grid gap-y-3">
@@ -68,6 +64,9 @@ export const WorkOrdersCards = () => {
             const { status } = workOrder;
             const allStatuses: IWorkOrder["status"][] = ["TO_DO", "COMPLETE"];
             const options = allStatuses.map(o => ({ label: o, value: o })) as { label: string; value: string; }[];
+
+            const assignees = workOrder?.assignedTo ? Array.from(workOrder.assignedTo) : []
+            const assignedToString = assignees.length ? assignees.length > 1 ? (assignees[0] + '... +' + (assignees.length - 1))  : assignees[0] : "Unassigned"
             return (
               <div
                 className="py-4 px-2 bg-gray-100 rounded w-full shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]"
@@ -96,9 +95,9 @@ export const WorkOrdersCards = () => {
                 />
                 <p className="text-sm font-light">{(workOrder.address.address + " " + (workOrder?.address?.unit ?? ""))} </p>
                 <p className="text-sm font-light">Permission to Enter: {workOrder.permissionToEnter}</p>
-                <p className="text-sm mt-1 font-light">Assigned To: {workOrder.assignedTo ?? "Unassigned"} </p>
+                <p className="text-sm mt-1 font-light">Assigned To: {assignedToString} </p>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm mt-1 font-light">Created By: {workOrder.createdBy ?? "Unassigned"} </p>
+                  {workOrder.createdBy && <p className="text-sm mt-1 font-light">Created By: {workOrder.createdBy} </p>}
                   <Link className="justify-self-end my-auto px-4 py-1 bg-slate-500 text-slate-100 rounded" key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`} as={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}>
                     Open Details
                   </Link>
