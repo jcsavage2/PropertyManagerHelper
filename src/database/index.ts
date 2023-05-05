@@ -22,7 +22,8 @@ export const DocumentClient = new DynamoDB.DocumentClient({ ...DynamoDBClientCon
 
 export const INDEXES = {
   GSI1: "GSI1PK-GSI1SK-index",
-  GSI2: "GSI2PK-GSI2SK-index",
+  GSI2: "tenant-index",
+  GSI3: "technician-index",
 } as const;
 
 export const PillarDynamoTable = new Table({
@@ -31,7 +32,8 @@ export const PillarDynamoTable = new Table({
   sortKey: 'sk',
   indexes: {
     [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' }, // PM Email
-    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' },
+    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' }, // Tenant Email
+    [INDEXES.GSI3]: { partitionKey: 'GSI3PK', sortKey: 'GSI3SK' }, // Technician Email
   },
   removeNullAttributes: true,
   DocumentClient

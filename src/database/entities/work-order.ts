@@ -49,6 +49,10 @@ export interface IWorkOrder {
   GSI1SK: string,
   GSI2PK: string,
   GSI2SK: string,
+  /** Technician Email */
+  GSI3PK: string,
+  /** Work Order ID */
+  GSI3SK: string,
   pmEmail: string,
   issue: string,
   permissionToEnter: "yes" | "no",
@@ -74,6 +78,8 @@ export class WorkOrderEntity {
         GSI1SK: { type: "string" },
         GSI2PK: { type: "string" }, //Tenant email
         GSI2SK: { type: "string" },
+        GSI3PK: { type: "string" }, //Technician email
+        GSI3SK: { type: "string" },
         permissionToEnter: { type: "string" },
         pmEmail: { type: 'string' },
         issue: { type: "string" },
@@ -193,23 +199,33 @@ export class WorkOrderEntity {
         console.log({ err });
       }
     } while (!!startKey);
-    console.log({ workOrders });
-    const remapped = workOrders.map(wo => ({ pk: wo.sk, sk: wo.sk }));
-    console.log({ remapped });
-    const newe = await PillarDynamoTable.getBatch({ keys: remapped });
-    console.log({ newe });
-
     return workOrders;
   }
 
   public async update({ pk, sk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter?: "yes" | "no"; }) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
     try {
-      const result = await this.workOrderEntity.update({
-        pk,
-        sk,
-        status,
-        ...(permissionToEnter && { permissionToEnter })
-      }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+      do {
+        try {
+          const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(pk);
+          startKey = LastEvaluatedKey as StartKey;
+          workOrders.push(...(Items ?? []) as IWorkOrder[]);
+        } catch (err) {
+          console.log({ err });
+        }
+      } while (!!startKey);
+
+      let result = null;
+      for (const workOrder of workOrders) {
+        console.log({ workOrder });
+        result = await this.workOrderEntity.update({
+          pk: workOrder.pk,
+          sk: workOrder.sk,
+          status,
+          ...(permissionToEnter && { permissionToEnter })
+        }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+      }
       return result;
     } catch (err) {
       console.log({ err });
@@ -224,13 +240,15 @@ export class WorkOrderEntity {
     issueDescription,
     permissionToEnter,
     pmEmail }: AssignTechnicianProps) {
-    const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
+    const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       // Create companion row for the technician
       await this.workOrderEntity.update({
-        pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
+        pk: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
+        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
         address: this.generateAddress(address),
+        GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        GSI3SK: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
         pmEmail,
@@ -238,12 +256,13 @@ export class WorkOrderEntity {
       });
 
       const result = await this.workOrderEntity.update({
-        pk: key,
-        sk: key,
+        pk: workOrderIdKey,
+        sk: workOrderIdKey,
         assignedTo: {
           $add: [technicianEmail.toLowerCase()]
         }
       }, { returnValues: "ALL_NEW" });
+
       return result;
 
 
