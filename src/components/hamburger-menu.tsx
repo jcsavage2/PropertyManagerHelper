@@ -1,5 +1,6 @@
 import { useUserContext } from "@/context/user";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 
@@ -10,7 +11,8 @@ const HamburgerMenu = () => {
   const linkStyle = "hover:text-gray-500 my-auto text-3xl text-white cursor-pointer mt-12";
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
-    if (user.pmEmail || user.tenantEmail) {
+    //@ts-ignore
+    if (user.pmEmail || user.tenantEmail || user.userType === "TECHNICIAN") {
       logOut();
       router.push("/");
     }
@@ -34,6 +36,7 @@ const HamburgerMenu = () => {
             {user.pk.startsWith("PM") && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
             {user.pk.startsWith("T") && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
             {sessionUser?.email && (<Link onClick={handleClick} className={linkStyle} href={"/"}>{"Sign Out"}</Link>)}
+            {!sessionUser?.email && (<Link onClick={() => signIn()} className={linkStyle} href={"/"}>{"Sign In"}</Link>)}
 
           </div>
         </div>

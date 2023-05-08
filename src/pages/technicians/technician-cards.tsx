@@ -25,7 +25,6 @@ export const TechnicianCards = (props: TechnicianTableProps) => {
               key={`${technician.pk}-${technician.sk}-${index}`}
             >
               <p className="text-xl text-gray-800">{technician.technicianName} </p>
-              <p className="text-lg">{technician.skills ?? "Plumbing, Electrical"}</p>
               <p className="text-sm mt-1">{technician.technicianEmail} </p>
               <p className="text-sm">{technician.organization ?? "Some Organization Inc."}</p>
             </div>

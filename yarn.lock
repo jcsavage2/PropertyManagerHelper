@@ -2013,7 +2013,7 @@ decompress-response@^7.0.0:
 
 deep-copy@^1.4.2:
   version "1.4.2"
-  resolved "https://registry.npmjs.org/deep-copy/-/deep-copy-1.4.2.tgz"
+  resolved "https://registry.yarnpkg.com/deep-copy/-/deep-copy-1.4.2.tgz#0622719257e4bd60240e401ea96718211c5c4697"
   integrity sha512-VxZwQ/1+WGQPl5nE67uLhh7OqdrmqI1OazrraO9Bbw/M8Bt6Mol/RxzDA6N6ZgRXpsG/W9PgUj8E1LHHBEq2GQ==
 
 deep-equal@^2.0.5:
@@ -2120,10 +2120,10 @@ dom-helpers@^5.0.1:
     "@babel/runtime" "^7.8.7"
     csstype "^3.0.2"
 
-dynamodb-toolbox@^0.7.0:
-  version "0.7.0"
-  resolved "https://registry.npmjs.org/dynamodb-toolbox/-/dynamodb-toolbox-0.7.0.tgz"
-  integrity sha512-LvWciwtBZm5UKAXuseYoTTjoR3+9FIqGcqPQl/LcQTP36nOoXQ6ldXxkhSJCKglO4v4JNWR7fooD+79SoD05vg==
+dynamodb-toolbox@^0.8.5:
+  version "0.8.5"
+  resolved "https://registry.yarnpkg.com/dynamodb-toolbox/-/dynamodb-toolbox-0.8.5.tgz#a04383d999e1c0fa582cd697d304f01d160165f9"
+  integrity sha512-cCoZ19SX16tcd14I/V1Eh3VNthvk7xneSJkcsUsDiLMuP+97WGH9Q1SdfAn8rRjOXS71noguZL3hBz9QFI5mRw==
   dependencies:
     deep-copy "^1.4.2"
     ts-toolbelt "^9.6.0"
@@ -4674,7 +4674,7 @@ tough-cookie@~2.5.0:
 
 ts-toolbelt@^9.6.0:
   version "9.6.0"
-  resolved "https://registry.npmjs.org/ts-toolbelt/-/ts-toolbelt-9.6.0.tgz"
+  resolved "https://registry.yarnpkg.com/ts-toolbelt/-/ts-toolbelt-9.6.0.tgz#50a25426cfed500d4a09bd1b3afb6f28879edfd5"
   integrity sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==
 
 tsconfig-paths@^3.14.1:

@@ -45,6 +45,6 @@ export const Events = {
 }
 
 export const STATUS = {
-    TO_DO: "To Do",
-    IN_PROGRESS: "In Progress",
+    TO_DO: "TO_DO",
+    COMPLETE: "COMPLETE",
 }

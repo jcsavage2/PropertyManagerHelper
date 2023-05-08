@@ -1,6 +1,6 @@
 import { deconstructKey, setToShortenedString, toTitleCase } from "@/utils";
 import { IWorkOrder } from "@/database/entities/work-order";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useUserContext } from "@/context/user";
 import axios from "axios";
 import Link from "next/link";
@@ -21,22 +21,35 @@ export const WorkOrdersCards = () => {
   const { user } = useUserContext();
   const { isMobile } = useDevice();
 
-  const fetchWorkOrders = async () => {
-    if (isFetching || isUpdating || !user.pmEmail) {
+  const fetchWorkOrders = useCallback(async () => {
+    if (isUpdating || (!user.pmEmail && !user.userType)) {
       return;
     }
     setIsFetching(true);
+    if (user.userType === "TECHNICIAN") {
+      console.log("FETCHING");
+      const { data } = await axios.post("/api/get-all-work-orders-for-technician", { technicianEmail: user.technicianEmail });
+      const orders: IWorkOrder[] = JSON.parse(data.response);
+      console.log({ orders });
+      if (orders.length) {
+        sessionStorage.setItem("WORK_ORDERS", JSON.stringify(orders));
+        setWorkOrders(orders);
+      }
+    }
+
     const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
     const orders: IWorkOrder[] = JSON.parse(data.response);
     if (orders.length) {
+      sessionStorage.setItem("", JSON.stringify(orders));
       setWorkOrders(orders);
     }
+
     setIsFetching(false);
-  };
+  }, [isUpdating, user.pmEmail, user, user.userType]);
 
   useEffect(() => {
     fetchWorkOrders();
-  }, [user.pmEmail, isUpdating]);
+  }, [fetchWorkOrders]);
 
   const handleUpdateStatus = async ({ pk, sk, value }: HandleUpdateStatusProps) => {
     setIsUpdating(true);
@@ -56,7 +69,7 @@ export const WorkOrdersCards = () => {
         onClick={fetchWorkOrders}
         disabled={isFetching || isUpdating}
       >
-        <BiRefresh className='text-2xl'/>
+        <BiRefresh className='text-2xl' />
       </button>
       <div className={`mt-8 ${isMobile ? " pb-24" : "pb-0"}`}>
         <div className="grid gap-y-3">

@@ -118,6 +118,27 @@ export class TenantEntity {
   }
 
   /**
+   * 
+   */
+  public async createTenantCompanionRow({
+    organization,
+    pmEmail,
+    tenantEmail,
+  }: { organization?: string; pmEmail: string; tenantEmail: string; }) {
+    try {
+      const result = await this.tenant.update({
+        pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        organization,
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+
+  /**
    * Updates a tenant's name or status.
    */
   public async update(

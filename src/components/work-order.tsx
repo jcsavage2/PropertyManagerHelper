@@ -5,48 +5,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { AssignTechnicianModal } from './assign-technician-modal';
 import { useDevice } from '@/hooks/use-window-size';
 import { toTitleCase, deconstructKey } from '@/utils';
-import Select, { ActionMeta, InputActionMeta, MultiValue } from 'react-select';
+import { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
 import { OptionType } from '@/types';
 import { ITechnician } from '@/database/entities/technician';
-import { toast } from 'react-toastify';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
-import { GrInProgress } from 'react-icons/gr';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { STATUS } from '@/constants';
-
-// const selectStyles = {
-//     control: (provided: any, state: any) => ({
-//       ...provided,
-//       background: '#fff',
-//       borderColor: '#9e9e9e',
-//       minHeight: '40px',
-//       height: '40px',
-//       boxShadow: state.isFocused ? null : null,
-//     }),
-
-//     valueContainer: (provided: any, state: any) => ({
-//       ...provided,
-//       height: '35px',
-//       padding: '0 6px',
-//       overflowX: 'scroll',
-//     }),
-
-//     input: (provided: any, state: any) => ({
-//       ...provided,
-//       margin: '0px',
-//     }),
-//     indicatorSeparator: (state: any) => ({
-//       display: 'none',
-//     }),
-//     indicatorsContainer: (provided: any, state: any) => ({
-//       ...provided,
-//       height: '35px',
-//     }),
-//   };
 
 const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -162,24 +130,21 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
     }
   }, [workOrderId]);
 
-  const handleUpdateStatus = async (e: any) => {
+  const handleUpdateStatus = async (e: any, status: string) => {
     if (!workOrder) return;
-    console.log(e.target.id)
-    // setIsUpdatingStatus(true);
-    // setIsLoadingEvents(true);
-    // //@ts-ignore
-    // const { data } = await axios.post('/api/update-work-order', {
-    //   pk: workOrder.pk,
-    //   sk: workOrder.sk,
-    //   status: value,
-    //   email: deconstructKey(user.pk),
-    // });
-    // const updatedWorkOrder = JSON.parse(data.response);
-    // if (updatedWorkOrder) {
-    //   setWorkOrder(updatedWorkOrder.Attributes);
-    // }
-    // await getWorkOrderEvents();
-    // setIsUpdatingStatus(false);
+    setIsUpdatingStatus(true);
+    const { data } = await axios.post('/api/update-work-order', {
+      pk: workOrder.pk,
+      sk: workOrder.sk,
+      status: status,
+      email: deconstructKey(user.pk),
+    });
+    const updatedWorkOrder = JSON.parse(data.response);
+    if (updatedWorkOrder) {
+      setWorkOrder(updatedWorkOrder.Attributes);
+    }
+    await getWorkOrderEvents();
+    setIsUpdatingStatus(false);
   };
 
   const handleAssignTechnician = async (assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
@@ -193,6 +158,10 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
         pmEmail: user.pmEmail,
         technicianEmail: selectedTechnician.value,
         technicianName: selectedTechnician.label,
+        address: workOrder?.address,
+        status: workOrder?.status,
+        permissionToEnter: workOrder?.permissionToEnter,
+        issueDescription: workOrder?.issue,
       } as AssignTechnicianBody);
     } else if (actionType === 'remove-value') {
       const removedTechnician = actionMeta.removedValue as OptionType;
@@ -234,17 +203,17 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
         <div className="flex flex-col w-full align-middle items-center">
           <div className="text-3xl my-auto flex flex-row items-end text-gray-600">
             {toTitleCase(workOrder?.issue)}
-            <div className="hidden md:inline text-lg ml-4 text-gray-300"># {deconstructKey(workOrderId)}</div>
+            {workOrderId && <div className="hidden md:inline text-lg ml-4 text-gray-300"># {deconstructKey(workOrderId)}</div>}
           </div>
           <hr className="w-full mt-2" />
           <div className="pt-3 text-md my-auto flex text-gray-600">
-            <button id='in-progress' onClick={(e) => handleUpdateStatus(e, STATUS.IN_PROGRESS)} className={`${workOrder.status === "TO_DO" && 'bg-blue-200'} rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+            <button id='in-progress' onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)} className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
               <GoTasklist />
-              <span className="text-xs">In Progress</span>
+              <span className="text-xs">Todo</span>
             </button>
-            <button onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)} className="rounded px-3 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25">
-              <AiOutlineCheck />
-              <span className="text-xs">Complete</span>
+            <button onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)} className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+              <AiOutlineCheck color={'green'} />
+              <span className="text-xs text-green-700">Complete</span>
             </button>
           </div>
           {isMobile ? (
@@ -284,14 +253,12 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
           </button>
         </div>
         <div className="h-full">
-          {isLoadingEvents ? (
-            <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
+            {isLoadingEvents && <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
               <div className="dot animate-loader"></div>
               <div className="dot animate-loader animation-delay-200"></div>
               <div className="dot animate-loader animation-delay-400"></div>
-            </div>
-          ) : (
-            (events &&
+            </div>}
+            {events ?
               events.map((event: IEvent | null, i: number) => {
                 if (event) {
                   const date = new Date(event.created);
@@ -313,9 +280,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
                     </div>
                   );
                 }
-              })) ??
-            'No events found'
-          )}
+              }): 'No events found'}
         </div>
       </div>
     );
