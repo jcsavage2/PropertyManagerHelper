@@ -29,12 +29,9 @@ export default async function handler(
     const technicianEntity = new TechnicianEntity();
 
     const newTechnician = await technicianEntity.create({ name: technicianName, email: technicianEmail, organization, pmEmail });
-    console.log({ newTechnician });
 
     //@ts-ignore
     return res.status(200).json({ response: JSON.stringify(newTechnician.Attributes) });
-
-
   } catch (error) {
     console.log({ error });
   }

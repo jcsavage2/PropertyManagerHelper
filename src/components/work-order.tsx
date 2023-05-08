@@ -2,7 +2,6 @@ import { IEvent } from '@/database/entities/event';
 import { IWorkOrder } from '@/database/entities/work-order';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { AssignTechnicianModal } from './assign-technician-modal';
 import { useDevice } from '@/hooks/use-window-size';
 import { toTitleCase, deconstructKey } from '@/utils';
 import { ActionMeta, MultiValue } from 'react-select';
@@ -15,6 +14,7 @@ import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { STATUS } from '@/constants';
+import { toast } from 'react-toastify';
 
 const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -25,9 +25,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   const [technicianOptions, setTechnicianOptions] = useState<OptionType[]>([]);
   const [assignedTechnicians, setAssignedTechnicians] = useState<OptionType[]>([]);
   const [loadingAssignedTechnicians, setLoadingAssignedTechnicians] = useState(true);
+  const [assignedTechniciansMenuOpen, setAssignedTechniciansMenuOpen] = useState(false);
   const { user } = useUserContext();
-
-  const [openAssignTechnicianModal, setOpenAssignTechnicianModal] = useState(false);
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
   const { isMobile } = useDevice();
 
@@ -38,11 +37,6 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   }, []);
 
   useEffect(() => {
-    console.log('Assigned technicians: ', assignedTechnicians);
-  }, [assignedTechnicians]);
-
-  useEffect(() => {
-    console.log("Updating assigned Technicians")
     setLoadingAssignedTechnicians(true);
     //set assigned technicians name + email using technicianOptions
     setAssignedTechnicians([]);
@@ -148,7 +142,6 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   };
 
   const handleAssignTechnician = async (assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
-    console.log({ assignedTechnicians, actionMeta });
     setLoadingAssignedTechnicians(true);
     const actionType = actionMeta.action;
     if (actionType === 'select-option') {
@@ -178,19 +171,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   };
 
   if (workOrder && !isLoading) {
-    const allStatuses: IWorkOrder['status'][] = ['TO_DO', 'COMPLETE'];
-    const options = allStatuses.map((o) => ({ label: o, value: o }));
     return (
       <div id="work-order">
-        <AssignTechnicianModal
-          assignTechnicianModalIsOpen={openAssignTechnicianModal}
-          setAssignTechnicianModalIsOpen={setOpenAssignTechnicianModal}
-          workOrderId={workOrderId}
-          onSuccessfulAdd={() => {
-            getWorkOrder();
-            getWorkOrderEvents();
-          }}
-        />
         <AddCommentModal
           addCommentModalIsOpen={openAddCommentModal}
           setAddCommentModalIsOpen={setOpenAddCommentModal}
@@ -207,30 +189,21 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
           </div>
           <hr className="w-full mt-2" />
           <div className="pt-3 text-md my-auto flex text-gray-600">
-            <button id='in-progress' onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)} className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+            <button disabled={isUpdatingStatus} onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)} className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
               <GoTasklist />
               <span className="text-xs">Todo</span>
             </button>
-            <button onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)} className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
-              <AiOutlineCheck color={'green'} />
-              <span className="text-xs text-green-700">Complete</span>
+            <button disabled={isUpdatingStatus} onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)} className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+              <AiOutlineCheck />
+              <span className="text-xs">Complete</span>
             </button>
           </div>
-          {isMobile ? (
-            <div className="flex align-middle pt-2 pb-6">
-              <button
-                className="bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-full"
-                onClick={() => setOpenAssignTechnicianModal(true)}>
-                Assigned Technicians
-              </button>
-            </div>
-          ) : (
-            <div className='flex flex-row items-center align-middle justify-center w-3/4 h-12 mt-4'>
-              <span className='mr-8 text-lg'>Assigned To: </span>
+            <div className='flex md:flex-row flex-col items-center align-middle justify-center w-3/4 md:h-12 mt-4'>
+              <span className='md:mr-8 pb-2 md:p-0 text-lg'>Assigned To: </span>
               <AsyncSelect
                 placeholder={loadingAssignedTechnicians ? "Loading..." : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
                 menuPosition="fixed"
-                className={'w-2/5 my-auto'}
+                className={'md:w-2/5 w-full mb-4 md:my-auto'}
                 closeMenuOnSelect={false}
                 isMulti
                 defaultOptions={technicianOptions}
@@ -240,15 +213,18 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
                 isLoading={loadingAssignedTechnicians}
                 onChange={handleAssignTechnician}
                 isClearable={false}
+                onMenuOpen={() => setAssignedTechniciansMenuOpen(true)}
+                onMenuClose={() => setAssignedTechniciansMenuOpen(false)}
               />
             </div>
-          )}
         </div>
         <div className="flex md:flex-row flex-col md:mt-4 w-full justify-center align-middle">
           <div className="text-xl text-gray-600 mr-4 text-center">Work Order History:</div>
           <button
             className="bg-blue-200 p-1 text-gray-600 hover:bg-blue-300 mx-auto md:mx-0 rounded disabled:opacity-25 h-8 w-32"
-            onClick={() => setOpenAddCommentModal(true)}>
+            onClick={() => setOpenAddCommentModal(true)}
+            disabled={assignedTechniciansMenuOpen}
+            >
             + Comment
           </button>
         </div>

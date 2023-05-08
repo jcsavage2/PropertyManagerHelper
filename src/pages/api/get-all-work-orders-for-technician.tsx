@@ -15,7 +15,7 @@ export default async function handler(
     const workOrderEntity = new WorkOrderEntity();
     const technicianEmail = body.technicianEmail;
     const workOrders = await workOrderEntity.getAllForTechnician({ technicianEmail });
-    console.log({ workOrders });
+
     //@ts-ignore
     const sorted = workOrders?.sort((a: IWorkOrder, b: IWorkOrder) => {
       //@ts-ignore
