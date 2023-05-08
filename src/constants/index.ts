@@ -43,3 +43,8 @@ export const Events = {
     ASSIGNED_TO_UPDATE: "ASSIGNED_TO_UPDATE",
     COMMENT_UPDATE: "COMMENT_UPDATE"
 }
+
+export const STATUS = {
+    TO_DO: "To Do",
+    IN_PROGRESS: "In Progress",
+}

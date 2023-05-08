@@ -16,11 +16,7 @@ import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { useDevice } from '@/hooks/use-window-size';
 import { IWorkOrder } from '@/database/entities/work-order';
 import Select from 'react-select';
-
-type OptionType = {
-  value: string;
-  label: string;
-};
+import { OptionType } from '@/types';
 
 const customStyles = {
   content: {
@@ -111,33 +107,34 @@ export const AssignTechnicianModal = ({
     }
   }, [workOrderId]);
 
-  useEffect(() => {
-    async function getTechnicians() {
-      try {
-        if (!workOrderId) {
-          return;
-        }
-        const { data } = await axios.post('/api/get-all-technicians-for-pm', {
-          propertyManagerEmail: user.pmEmail,
-        });
-        if (data.response) {
-          const parsed = JSON.parse(data.response);
-          setTechnicians(parsed);
-          setTechnicianOptions([]);
-          for (let i = 0; i < parsed.length; i++) {
-            setTechnicianOptions((prev) => [
-              ...prev,
-              {
-                value: parsed[i].technicianEmail as string,
-                label: parsed[i].technicianEmail as string,
-              },
-            ]);
-          }
-        }
-      } catch (err) {
-        console.error(err);
+  async function getTechnicians() {
+    try {
+      if (!workOrderId) {
+        return;
       }
+      const { data } = await axios.post('/api/get-all-technicians-for-pm', {
+        propertyManagerEmail: user.pmEmail,
+      });
+      if (data.response) {
+        const parsed = JSON.parse(data.response);
+        setTechnicians(parsed);
+        setTechnicianOptions([]);
+        for (let i = 0; i < parsed.length; i++) {
+          setTechnicianOptions((prev) => [
+            ...prev,
+            {
+              value: parsed[i].technicianEmail as string,
+              label: parsed[i].technicianEmail as string,
+            },
+          ]);
+        }
+      }
+    } catch (err) {
+      console.error(err);
     }
+  }
+
+  useEffect(() => {
     getTechnicians();
     getWorkOrder();
   }, [user.pmEmail, assignTechnicianModalIsOpen, getWorkOrder, workOrderId]);
@@ -164,7 +161,6 @@ export const AssignTechnicianModal = ({
           workOrderId,
           pmEmail: user.pmEmail,
         } as AssignTechnicianBody);
-        const { response } = data;
         toast.success('Technician Assigned to Work Order');
 
         onSuccessfulAdd();
@@ -193,7 +189,7 @@ export const AssignTechnicianModal = ({
     if (workOrder && workOrder.assignedTo) {
       return (
         <div className="overflow-scroll flex flex-col text-base h-20 mb-2">
-          {Array.from(workOrder.assignedTo).map((email: string, index: number) =>
+          {/* {Array.from(workOrder.assignedTo).map((email: string, index: number) =>
             index !== Array.from(workOrder.assignedTo).length - 1 ? (
               <span className="px-2 pb-.5" key={email}>
                 {email},{' '}
@@ -203,7 +199,7 @@ export const AssignTechnicianModal = ({
                 {email}
               </span>
             )
-          )}
+          )} */}
         </div>
       );
     } else {

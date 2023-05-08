@@ -189,7 +189,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async assignToTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
+  public async assignToTechnician({ woId, technicianEmail, technicianName }: { woId: string; technicianEmail: string; technicianName: string; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
     try {
       const result = await this.workOrderEntity.update({
@@ -197,6 +197,22 @@ export class WorkOrderEntity {
         sk: key,
         assignedTo: {
           $add: [technicianEmail.toLowerCase()]
+        }
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
+    const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+    try {
+      const result = await this.workOrderEntity.update({
+        pk: key,
+        sk: key,
+        assignedTo: {
+          $delete: [technicianEmail.toLowerCase()]
         }
       }, { returnValues: "ALL_NEW" });
       return result;

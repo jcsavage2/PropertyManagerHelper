@@ -6,7 +6,7 @@ import { deconstructKey } from "@/utils";
 import { NextApiRequest, NextApiResponse } from "next";
 
 
-export type AssignTechnicianBody = {
+export type RemoveTechnicianBody = {
   workOrderId: string;
   pmEmail: string;
   technicianEmail: string;
@@ -18,7 +18,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    const body = req.body as AssignTechnicianBody;
+    const body = req.body as RemoveTechnicianBody;
     const { workOrderId, pmEmail, technicianEmail, technicianName } = body;
     if (!workOrderId || !pmEmail || !technicianEmail || !technicianName) {
       return res.status(400).json({ response: "Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName" });
@@ -28,10 +28,10 @@ export default async function handler(
     await eventEntity.create({
       workOrderId: deconstructKey(workOrderId),
       updateType: Events.ASSIGNED_TO_UPDATE,
-      updateDescription: `Assigned  ${technicianName}(${technicianEmail}) to the work order`,
+      updateDescription: `Removed ${technicianName}(${technicianEmail}) from the work order`,
       updateMadeBy: pmEmail,
     });
-    const response = await workOrderEntity.assignToTechnician({ woId: deconstructKey(workOrderId), technicianEmail, technicianName });
+    const response = await workOrderEntity.removeTechnician({ woId: deconstructKey(workOrderId), technicianEmail });
 
     return res.status(200).json({ response: JSON.stringify(response) });
   } catch (error) {

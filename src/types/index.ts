@@ -40,3 +40,8 @@ export type IssueInformation = {
 export type WorkOrder = IssueInformation;
 
 export type EventType = typeof Events[keyof typeof Events];
+
+export type OptionType = {
+  value: string;
+  label: string;
+};

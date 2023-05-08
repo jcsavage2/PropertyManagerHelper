@@ -1,4 +1,4 @@
-import { deconstructKey, toTitleCase } from "@/utils";
+import { deconstructKey, setToShortenedString, toTitleCase } from "@/utils";
 import { IWorkOrder } from "@/database/entities/work-order";
 import { useEffect, useState } from "react";
 import { useUserContext } from "@/context/user";
@@ -65,8 +65,7 @@ export const WorkOrdersCards = () => {
             const allStatuses: IWorkOrder["status"][] = ["TO_DO", "COMPLETE"];
             const options = allStatuses.map(o => ({ label: o, value: o })) as { label: string; value: string; }[];
 
-            const assignees = workOrder?.assignedTo ? Array.from(workOrder.assignedTo) : []
-            const assignedToString = assignees.length ? assignees.length > 1 ? (assignees[0] + '... +' + (assignees.length - 1))  : assignees[0] : "Unassigned"
+            const assignedToString = setToShortenedString(workOrder.assignedTo);
             return (
               <div
                 className="py-4 px-2 bg-gray-100 rounded w-full shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]"
