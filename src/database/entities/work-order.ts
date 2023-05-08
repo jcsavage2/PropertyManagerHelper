@@ -272,6 +272,27 @@ export class WorkOrderEntity {
     }
   }
 
+  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
+    const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+    try {
+      await this.workOrderEntity.delete({
+        pk: key,
+        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+      })
+
+      const result = await this.workOrderEntity.update({
+        pk: key,
+        sk: key,
+        assignedTo: {
+          $delete: [technicianEmail.toLowerCase()]
+        }
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
   private generateAddress({
     address,
     country,

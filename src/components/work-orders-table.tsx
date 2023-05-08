@@ -1,6 +1,6 @@
 import { useUserContext } from "@/context/user";
 import { IWorkOrder } from "@/database/entities/work-order";
-import { deconstructKey, generateAddressKey, toTitleCase } from "@/utils";
+import { deconstructKey, generateAddressKey, setToShortenedString, toTitleCase } from "@/utils";
 import axios from "axios";
 import { AiOutlineFilter } from "react-icons/ai";
 import { useCallback, useEffect, useState } from "react";
@@ -92,17 +92,17 @@ export const WorkOrdersTable = () => {
     { label: "Title", accessor: "issue", width: "w-72" },
     { label: "Status", accessor: "status", width: "" },
     { label: "Address", accessor: "address", width: "" },
-    { label: "Assigned To", accessor: "tenantEmail", width: "" },
+    { label: "Assigned To", accessor: "assignedTo", width: "" },
     { label: "Created", accessor: "created", width: "" },
     { label: "Created By", accessor: "tenantName", width: "" },
-    { label: "Permission To Enter", accessor: "permissionToEnter", width: "" },
   ];
 
   const remappedWorkOrders = workOrders.map(wo => {
-    const { status, address, tenantEmail, created, tenantName, permissionToEnter } = wo;
+    const { status, address, tenantEmail, created, tenantName, permissionToEnter, assignedTo } = wo;
     const date = new Date(created);
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
     const addressString = generateAddressKey({ address: address?.address, unit: wo?.address?.unit ?? "" });
+    const assignedToString = setToShortenedString(assignedTo);
     return {
       pk: wo.pk,
       sk: wo.sk,
@@ -111,8 +111,8 @@ export const WorkOrdersTable = () => {
       tenantEmail,
       address: addressString,
       created: formattedDate,
-      permissionToEnter,
-      tenantName: toTitleCase(tenantName)
+      tenantName: toTitleCase(tenantName),
+      assignedTo: assignedToString
     };
   });
 
@@ -144,7 +144,7 @@ export const WorkOrdersTable = () => {
             );
           }
           return (
-            <td className="border px-4 py-1" key={accessor}>
+            <td className={`border px-4 py-1 ${accessor === 'assignedTo' && 'whitespace-nowrap w-max'}`} key={accessor}>
               <Link key={workOrder.pk + index} href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`} as={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}>
                 {tData}
               </Link>
@@ -207,7 +207,7 @@ export const WorkOrdersTable = () => {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto mb-8">
         <table className='w-full mt-2 border-spacing-x-10 table-auto'>
           <thead className=''>
             <tr className='text-left text-gray-400'>

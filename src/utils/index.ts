@@ -152,3 +152,12 @@ export function deconstructKey(key: string): string {
 export function generateKSUID() {
   return ksuid.randomSync().string;
 }
+
+/**
+ * @param set List of technician name and emails
+ * @returns string of the first item in the set and the remaining appended in shorthand, or "Unassigned" if the set is empty
+ */
+export function setToShortenedString(set: Set<string>): string {
+    const arr = set ? Array.from(set) : []
+    return arr.length ? arr.length > 1 ? (arr[0] + ', +' + (arr.length - 1))  : arr[0] : "Unassigned"
+}

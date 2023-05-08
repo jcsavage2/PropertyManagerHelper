@@ -53,6 +53,8 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   }, [setEmail]);
 
   function closeModal() {
+    setName("");
+    setEmail("");
     setTechnicianModalIsOpen(false);
   }
 
