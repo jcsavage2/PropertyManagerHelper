@@ -42,12 +42,14 @@ export default async function handler(
       unit
     } = body;
 
-    const propertyManagerEntity = new PropertyManagerEntity();
     const tenantEntity = new TenantEntity();
     const propertyEntity = new PropertyEntity();
 
-    // Create companion row for the property manager.
-    await propertyManagerEntity.createTenantCompanionRow({ tenantEmail, tenantName, organization, pmEmail });
+
+    // CreateTenant 
+    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
+    // Create Companion Row
+    await tenantEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
 
     // Create Property
     await propertyEntity.create(
@@ -62,8 +64,6 @@ export default async function handler(
         unit,
       });
 
-    // CreateTenant
-    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
 
 
     //@ts-ignore

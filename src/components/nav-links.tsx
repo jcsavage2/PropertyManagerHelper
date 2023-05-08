@@ -13,11 +13,11 @@ export const NavLinks = () => {
 
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
-    if (user.pmEmail || user.tenantEmail) {
-      logOut();
-      router.push("/");
-    }
-  }, [user, logOut, router]);
+
+    logOut();
+    router.push("/");
+
+  }, [logOut, router]);
 
   if (isMobile) {
     return (

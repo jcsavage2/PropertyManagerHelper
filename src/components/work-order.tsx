@@ -174,12 +174,12 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
           )}
         </div>
         <div className="flex md:flex-row flex-col md:mt-4 w-full justify-center align-middle">
-            <div className="text-xl text-gray-600 mr-4 text-center">Work Order History:</div>
-            <button
-                className="bg-blue-200 p-1 text-gray-600 hover:bg-blue-300 mx-auto md:mx-0 rounded disabled:opacity-25 h-8 w-32"
-                onClick={() => setOpenAddCommentModal(true)}>
-                + Comment
-            </button>
+          <div className="text-xl text-gray-600 mr-4 text-center">Work Order History:</div>
+          <button
+            className="bg-blue-200 p-1 text-gray-600 hover:bg-blue-300 mx-auto md:mx-0 rounded disabled:opacity-25 h-8 w-32"
+            onClick={() => setOpenAddCommentModal(true)}>
+            + Comment
+          </button>
         </div>
         <div className="overflow-scroll h-full">
           {isLoadingEvents ? (

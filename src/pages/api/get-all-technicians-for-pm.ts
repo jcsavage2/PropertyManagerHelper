@@ -10,7 +10,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  try { 
+  try {
     const body = req.body as GetTechniciansForPropertyManagerApiRequest;
     const techEntity = new TechnicianEntity();
     const propertyManagerEmail = body.propertyManagerEmail;

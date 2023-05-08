@@ -1,8 +1,8 @@
 import { Data } from "@/database";
 import { ENTITIES } from "@/database/entities";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
+import { TechnicianEntity } from "@/database/entities/technician";
 import { TenantEntity } from "@/database/entities/tenant";
-import chalk from "chalk";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type UserType = typeof ENTITIES[keyof typeof ENTITIES];
@@ -53,10 +53,18 @@ export default async function handler(
           await tenantEntity.update({ tenantEmail: email, status: "JOINED" });
           return res.status(200).json({ response: JSON.stringify(existingTenantFromDB) });
         } else {
-          // const newTenant = await tenantEntity.create({ tenantEmail: email, tenantName: name });
-          // console.log({ newTenant }, chalk.green("==============="));
           //@ts-ignore
           return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
+        }
+      case ENTITIES.TECHNICIAN:
+        const technicianEntity = new TechnicianEntity();
+        const existingTechnician = await technicianEntity.get({ technicianEmail: email });
+        const existingTechnicianFromDB = existingTechnician ?? null;
+        if (existingTechnicianFromDB) {
+          await technicianEntity.update({ technicianEmail: email, status: "JOINED" });
+          return res.status(200).json({ response: JSON.stringify(existingTechnicianFromDB) });
+        } else {
+          return res.status(200).json({ response: JSON.stringify({}) });
         }
     }
   } catch (error) {

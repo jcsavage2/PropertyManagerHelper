@@ -3,7 +3,7 @@ import { IWorkOrder } from "@/database/entities/work-order";
 import { deconstructKey, generateAddressKey, toTitleCase } from "@/utils";
 import axios from "axios";
 import { AiOutlineFilter } from "react-icons/ai";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { BiCheckbox, BiCheckboxChecked, BiRefresh } from "react-icons/bi";
 import Link from "next/link";
@@ -26,22 +26,35 @@ export const WorkOrdersTable = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const { user } = useUserContext();
 
-  const fetchWorkOrders = async () => {
-    if (isFetching || isUpdating || !user.pmEmail) {
+  const fetchWorkOrders = useCallback(async () => {
+    if (isUpdating || (!user.pmEmail && !user.userType)) {
       return;
     }
     setIsFetching(true);
+    if (user.userType === "TECHNICIAN") {
+      console.log("FETCHING");
+      const { data } = await axios.post("/api/get-all-work-orders-for-technician", { technicianEmail: user.technicianEmail });
+      const orders: IWorkOrder[] = JSON.parse(data.response);
+      console.log({ orders });
+      if (orders.length) {
+        sessionStorage.setItem("WORK_ORDERS", JSON.stringify(orders));
+        setWorkOrders(orders);
+      }
+    }
+
     const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
     const orders: IWorkOrder[] = JSON.parse(data.response);
     if (orders.length) {
+      sessionStorage.setItem("", JSON.stringify(orders));
       setWorkOrders(orders);
     }
+
     setIsFetching(false);
-  };
+  }, [isUpdating, user]);
 
   useEffect(() => {
     fetchWorkOrders();
-  }, [user.pmEmail, isUpdating]);
+  }, [fetchWorkOrders]);
 
   const handleSorting = (sortField: keyof IWorkOrder, sortOrder: "asc" | "desc") => {
     if (sortField) {
@@ -187,11 +200,11 @@ export const WorkOrdersTable = () => {
           Filters
         </div>
         <button className="ml-auto mr-4 md:mt-0 bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center"
-            onClick={fetchWorkOrders}
-            disabled={isFetching || isUpdating}
-          >
-            <BiRefresh className='text-2xl'/>
-          </button>
+          onClick={fetchWorkOrders}
+          disabled={isFetching || isUpdating}
+        >
+          <BiRefresh className='text-2xl' />
+        </button>
       </div>
 
       <div className="overflow-x-auto">

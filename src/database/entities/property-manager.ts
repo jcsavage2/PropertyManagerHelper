@@ -27,6 +27,7 @@ export class PropertyManagerEntity {
         sk: { sortKey: true },
         pmName: { type: "string" },
         pmEmail: { type: "string" },
+        tenantEmail: { type: "string" }, // for companion row
         organization: { type: "string" },
         userType: { type: "string" },
         tenantName: { type: "string" },
@@ -161,12 +162,7 @@ export class PropertyManagerEntity {
     try {
       const result = await this.propertyManagerEntity.update({
         pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
-        technicians: {
-          $set: {
-            [technicianEmail.toLowerCase()]: technicianEmail.toLowerCase()
-          }
-        }
+        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       }, { returnValues: "ALL_NEW" });
       return result;
     } catch (err) {

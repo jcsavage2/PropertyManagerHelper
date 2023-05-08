@@ -148,6 +148,7 @@ export const TenantsTable = () => {
           <thead className=''>
             <tr className='text-left text-gray-400'>
               <th className='font-normal'>Name</th>
+              <th className='font-normal'>Email</th>
               <th className='font-normal'>Status</th>
               <th className='font-normal'>Primary Address</th>
               <th className='font-normal'>Created</th>
@@ -165,10 +166,13 @@ export const TenantsTable = () => {
                     {`${toTitleCase(tenant.tenantName)}`}
                   </td>
                   <td className="border px-4 py-1">
+                    {`${tenant.tenantEmail}`}
+                  </td>
+                  <td className="border px-4 py-1">
                     {tenant.status}
                   </td>
                   <td className="border px-4 py-1">
-                    {primaryAddress.address}
+                    {primaryAddress.address + " " + primaryAddress.unit}
                   </td>
                   <td className="border px-4 py-1">
                     {`${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`}

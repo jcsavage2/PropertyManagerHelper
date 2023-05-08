@@ -29,6 +29,9 @@ const Tenants = () => {
     }
   }, [user.pmEmail]);
 
+  /**
+   * TODO refetch is not working as expected upon successful
+   */
   const refetch = useCallback(async () => {
     const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
     const tenants = JSON.parse(data.response);
