@@ -191,6 +191,7 @@ export class WorkOrderEntity {
             limit: 20,
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            index: INDEXES.GSI3
           }
         ));
         startKey = LastEvaluatedKey as StartKey;
@@ -202,7 +203,7 @@ export class WorkOrderEntity {
     return workOrders;
   }
 
-  public async update({ pk, sk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter?: "yes" | "no"; }) {
+  public async update({ pk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter?: "yes" | "no"; }) {
     let startKey: StartKey;
     const workOrders: IWorkOrder[] = [];
     try {
@@ -222,7 +223,7 @@ export class WorkOrderEntity {
         result = await this.workOrderEntity.update({
           pk: workOrder.pk,
           sk: workOrder.sk,
-          status,
+          ...(status && { status }),
           ...(permissionToEnter && { permissionToEnter })
         }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
       }
