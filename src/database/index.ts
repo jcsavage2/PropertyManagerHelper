@@ -1,4 +1,5 @@
-import DynamoDB from 'aws-sdk/clients/dynamodb';
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { Table } from 'dynamodb-toolbox';
 
 
@@ -18,7 +19,7 @@ export const DynamoDBClientConfig = {
   region: process.env.REGION,
 };
 
-export const DocumentClient = new DynamoDB.DocumentClient({ ...DynamoDBClientConfig, convertEmptyValues: false });
+export const DocumentClient = DynamoDBDocument.from(new DynamoDB({ ...DynamoDBClientConfig }));
 
 export const INDEXES = {
   GSI1: "GSI1PK-GSI1SK-index",
