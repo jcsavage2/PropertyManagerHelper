@@ -5,13 +5,16 @@ import { useUserContext } from "@/context/user";
 import axios from "axios";
 import Link from "next/link";
 import { useDevice } from "@/hooks/use-window-size";
-import Select from "react-select";
+import Select, { SingleValue } from "react-select";
 import { BiRefresh } from "react-icons/bi";
+import { STATUS } from "@/constants";
+import { StatusOptions } from "./work-orders-table";
+import { StatusOptionType } from "@/types";
 
 type HandleUpdateStatusProps = {
-  pk: string;
-  sk: string;
-  value: IWorkOrder["status"];
+    val: SingleValue<StatusOptionType>;
+    pk: string;
+    sk: string;
 };
 
 export const WorkOrdersCards = () => {
@@ -51,10 +54,10 @@ export const WorkOrdersCards = () => {
     fetchWorkOrders();
   }, [fetchWorkOrders]);
 
-  const handleUpdateStatus = async ({ pk, sk, value }: HandleUpdateStatusProps) => {
+  const handleUpdateStatus = async ({ pk, sk, val }: HandleUpdateStatusProps) => {
     setIsUpdating(true);
     //@ts-ignore
-    const { data } = await axios.post("/api/update-work-order", { pk, sk, status: value, email: deconstructKey(user.pk) });
+    const { data } = await axios.post("/api/update-work-order", { pk, sk, status: val.value, email: deconstructKey(user.pk) });
     const updatedWorkOrder = JSON.parse(data.response);
     if (updatedWorkOrder) {
       const newWorkOrders = workOrders.map(wo => wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo);
@@ -62,6 +65,13 @@ export const WorkOrdersCards = () => {
     }
     setIsUpdating(false);
   };
+
+  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any }) => (
+    <div className="flex flex-row items-center">
+      {icon}
+      <span className="ml-1 text-sm">{label}</span>
+    </div>
+  );
 
   return (
     <>
@@ -74,11 +84,8 @@ export const WorkOrdersCards = () => {
       <div className={`mt-8 ${isMobile ? " pb-24" : "pb-0"}`}>
         <div className="grid gap-y-3">
           {workOrders?.map((workOrder, index) => {
-            const { status } = workOrder;
-            const allStatuses: IWorkOrder["status"][] = ["TO_DO", "COMPLETE"];
-            const options = allStatuses.map(o => ({ label: o, value: o })) as { label: string; value: string; }[];
-
-            const assignedToString = setToShortenedString(workOrder.assignedTo);
+            const { status, assignedTo } = workOrder;
+            const assignedToString = setToShortenedString(assignedTo);
             return (
               <div
                 className="py-4 px-2 bg-gray-100 rounded w-full shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]"
@@ -91,19 +98,18 @@ export const WorkOrdersCards = () => {
                   rounded 
                   p-1 
                   w-48
-                  ${status === "TO_DO" ? "bg-yellow-200" : "bg-green-200"} 
+                  ${status === STATUS.TO_DO ? "bg-yellow-200" : "bg-green-200"} 
                 `}
-                  value={{ label: status }}
-                  isClearable={false}
+                  value={StatusOptions.find((o) => o.value === status)}
                   blurInputOnSelect={false}
+                  formatOptionLabel={formattedStatusOptions}
                   onChange={(v) => {
                     if (v) {
                       //@ts-ignore
-                      handleUpdateStatus({ pk: workOrder.pk, sk: workOrder.sk, value: v.value });
+                      handleUpdateStatus({ pk: workOrder.pk, sk: workOrder.sk, val: v });
                     }
                   }}
-                  //@ts-ignore
-                  options={options}
+                  options={StatusOptions}
                 />
                 <p className="text-sm font-light">{(workOrder.address.address + " " + (workOrder?.address?.unit ?? ""))} </p>
                 <p className="text-sm font-light">Permission to Enter: {workOrder.permissionToEnter}</p>
@@ -118,7 +124,7 @@ export const WorkOrdersCards = () => {
               </div>
             );
           })}
-        </div >
+        </div>
       </div>
     </>
   );

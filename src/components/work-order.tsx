@@ -3,7 +3,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import { useDevice } from '@/hooks/use-window-size';
-import { toTitleCase, deconstructKey } from '@/utils';
+import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey } from '@/utils';
 import { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
@@ -14,7 +14,9 @@ import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { STATUS } from '@/constants';
-import { toast } from 'react-toastify';
+import { BsPersonFill } from 'react-icons/bs';
+import { IoLocationSharp } from 'react-icons/io5';
+import { BiTimeFive } from 'react-icons/bi';
 
 const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -188,75 +190,102 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
             {workOrderId && <div className="hidden md:inline text-lg ml-4 text-gray-300"># {deconstructKey(workOrderId)}</div>}
           </div>
           <hr className="w-full mt-2" />
-          <div className="pt-3 text-md my-auto flex text-gray-600">
-            <button disabled={isUpdatingStatus} onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)} className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
-              <GoTasklist />
-              <span className="text-xs">Todo</span>
-            </button>
-            <button disabled={isUpdatingStatus} onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)} className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
-              <AiOutlineCheck />
-              <span className="text-xs">Complete</span>
-            </button>
-          </div>
-            <div className='flex md:flex-row flex-col items-center align-middle justify-center w-3/4 md:h-12 mt-4'>
-              <span className='md:mr-8 pb-2 md:p-0 text-lg'>Assigned To: </span>
-              <AsyncSelect
-                placeholder={loadingAssignedTechnicians ? "Loading..." : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
-                menuPosition="fixed"
-                className={'md:w-2/5 w-full mb-4 md:my-auto'}
-                closeMenuOnSelect={false}
-                isMulti
-                defaultOptions={technicianOptions}
-                value={assignedTechnicians}
-                captureMenuScroll={true}
-                loadOptions={searchTechnicians}
-                isLoading={loadingAssignedTechnicians}
-                onChange={handleAssignTechnician}
-                isClearable={false}
-                onMenuOpen={() => setAssignedTechniciansMenuOpen(true)}
-                onMenuClose={() => setAssignedTechniciansMenuOpen(false)}
-              />
+          <div className="w-full md:grid md:grid-cols-2 md:grid-rows-1">
+            <div className="md:col-auto flex flex-col w-full">
+              <div className="font-bold mt-4 md:ml-12 text-center md:text-start">Status</div>
+              <div className="mt-4 text-md flex flex-row ml-16 text-gray-600">
+                <button
+                  disabled={isUpdatingStatus}
+                  onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
+                  className={`${
+                    workOrder.status === STATUS.TO_DO && 'bg-blue-200'
+                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+                  <GoTasklist />
+                  <span className="text-xs">Todo</span>
+                </button>
+                <button
+                  disabled={isUpdatingStatus}
+                  onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
+                  className={`${
+                    workOrder.status === STATUS.COMPLETE && 'bg-blue-200'
+                  } rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+                  <AiOutlineCheck />
+                  <span className="text-xs">Complete</span>
+                </button>
+              </div>
+              <div className="font-bold mt-4 md:ml-12 text-center md:text-start">Assigned To</div>
+              <div className="md:ml-16 md:mt-4 w-full">
+                <AsyncSelect
+                  placeholder={
+                    loadingAssignedTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'
+                  }
+                  menuPosition="fixed"
+                  className={'md:w-3/5 w-5/6 mb-4 md:mt-0 mt-4 md:my-auto mx-auto md:mx-0'}
+                  closeMenuOnSelect={false}
+                  isMulti
+                  defaultOptions={technicianOptions}
+                  value={assignedTechnicians}
+                  captureMenuScroll={true}
+                  loadOptions={searchTechnicians}
+                  isLoading={loadingAssignedTechnicians}
+                  onChange={handleAssignTechnician}
+                  isClearable={false}
+                  onMenuOpen={() => setAssignedTechniciansMenuOpen(true)}
+                  onMenuClose={() => setAssignedTechniciansMenuOpen(false)}
+                />
+              </div>
             </div>
+
+            <div className="md:col-auto flex-col w-full text-lg mt-4 hidden md:flex">
+              <div className="font-bold text-base mb-1">Details</div>
+              <div className="flex flex-row items-center ml-4 mb-1">
+                <BsPersonFill className="mr-2" />
+                {workOrder.tenantName}({workOrder.tenantEmail})
+              </div>
+              <div className="flex flex-row items-center ml-4 mb-1">
+                <IoLocationSharp className="mr-2" />{' '}
+                {generateAddressKey({ address: workOrder?.address?.address, unit: workOrder?.address?.unit ?? '' })}
+              </div>
+              <div className="flex flex-row items-center ml-4 mb-1">
+                <BiTimeFive className="mr-2" />
+                {createdToFormattedDateTime(workOrder.created).join(' @ ')}
+              </div>
+            </div>
+          </div>
         </div>
         <div className="flex md:flex-row flex-col md:mt-4 w-full justify-center align-middle">
           <div className="text-xl text-gray-600 mr-4 text-center">Work Order History:</div>
           <button
             className="bg-blue-200 p-1 text-gray-600 hover:bg-blue-300 mx-auto md:mx-0 rounded disabled:opacity-25 h-8 w-32"
             onClick={() => setOpenAddCommentModal(true)}
-            disabled={assignedTechniciansMenuOpen}
-            >
+            disabled={assignedTechniciansMenuOpen}>
             + Comment
           </button>
         </div>
         <div className="h-full">
-            {isLoadingEvents && <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
+          {isLoadingEvents && (
+            <div className="flex mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-3 py-3 px-4 text-left">
               <div className="dot animate-loader"></div>
               <div className="dot animate-loader animation-delay-200"></div>
               <div className="dot animate-loader animation-delay-400"></div>
-            </div>}
-            {events ?
-              events.map((event: IEvent | null, i: number) => {
+            </div>
+          )}
+          {events
+            ? events.map((event: IEvent | null, i: number) => {
                 if (event) {
-                  const date = new Date(event.created);
-
-                  const formattedDate = [date.getMonth() + 1, date.getDate(), date.getFullYear()].join('/');
-                  let hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
-                  const minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
-                  const AM_PM = date.getHours() >= 12 ? 'PM' : 'AM';
-                  hours = hours < 10 ? 0 + hours : hours;
-                  const formattedTime = hours + ':' + minutes + ' ' + AM_PM;
-
+                  const formattedDateTime = createdToFormattedDateTime(event.created);
                   return (
                     <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
                       <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
                       <div className="text-sm text-gray-500">
-                        {formattedDate} @{formattedTime}
+                        {formattedDateTime[0]} @{formattedDateTime[1]}
                       </div>
                       <div className="break-words">{event.updateDescription}</div>
                     </div>
                   );
                 }
-              }): 'No events found'}
+              })
+            : 'No events found'}
         </div>
       </div>
     );

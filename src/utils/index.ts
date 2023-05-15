@@ -161,3 +161,19 @@ export function setToShortenedString(set: Set<string>): string {
     const arr = set ? Array.from(set) : []
     return arr.length ? arr.length > 1 ? (arr[0] + ', +' + (arr.length - 1))  : arr[0] : "Unassigned"
 }
+
+/**
+ * @param created string of the date and time the work order was created
+ * @returns list of formatted date in index 0 and formatted time in index 1
+ */
+export function createdToFormattedDateTime(created: string) {
+    const date = new Date(created);
+    const formattedDate = [date.getMonth() + 1, date.getDate(), date.getFullYear()].join('/');
+    let hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+    const minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
+    const AM_PM = date.getHours() >= 12 ? 'PM' : 'AM';
+    hours = hours < 10 ? 0 + hours : hours;
+    const formattedTime = hours + ':' + minutes + ' ' + AM_PM;
+
+    return [formattedDate, formattedTime];
+}
