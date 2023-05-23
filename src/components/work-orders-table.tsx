@@ -44,20 +44,20 @@ export const WorkOrdersTable = () => {
     }
     setIsFetching(true);
     if (user.userType === 'TECHNICIAN') {
-      const { data } = await axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: user.technicianEmail });
+      const { data } = await axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: deconstructKey(user.pk) });
       const orders: IWorkOrder[] = JSON.parse(data.response);
       console.log({ orders });
       if (orders.length) {
         sessionStorage.setItem('WORK_ORDERS', JSON.stringify(orders));
         setWorkOrders(orders);
       }
-    }
-
-    const { data } = await axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: user.pmEmail });
-    const orders: IWorkOrder[] = JSON.parse(data.response);
-    if (orders.length) {
-      sessionStorage.setItem('', JSON.stringify(orders));
-      setWorkOrders(orders);
+    }else{
+        const { data } = await axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) });
+        const orders: IWorkOrder[] = JSON.parse(data.response);
+        if (orders.length) {
+        sessionStorage.setItem('', JSON.stringify(orders));
+        setWorkOrders(orders);
+        }
     }
 
     setIsFetching(false);

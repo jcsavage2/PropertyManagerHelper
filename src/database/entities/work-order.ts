@@ -182,6 +182,7 @@ export class WorkOrderEntity {
   public async getAllForTechnician({ technicianEmail }: { technicianEmail: string; }) {
     let startKey: StartKey;
     const workOrders: IWorkOrder[] = [];
+
     const pk = generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase());
     do {
       try {
