@@ -18,7 +18,7 @@ import { BsPersonFill } from 'react-icons/bs';
 import { IoLocationSharp } from 'react-icons/io5';
 import { BiTimeFive } from 'react-icons/bi';
 
-const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
+const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -197,18 +197,16 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${
-                    workOrder.status === STATUS.TO_DO && 'bg-blue-200'
-                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+                  className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'
+                    } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
                   <GoTasklist />
                   <span className="text-xs">Todo</span>
                 </button>
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${
-                    workOrder.status === STATUS.COMPLETE && 'bg-blue-200'
-                  } rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
+                  className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'
+                    } rounded px-2 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}>
                   <AiOutlineCheck />
                   <span className="text-xs">Complete</span>
                 </button>
@@ -272,19 +270,19 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
           )}
           {events
             ? events.map((event: IEvent | null, i: number) => {
-                if (event) {
-                  const formattedDateTime = createdToFormattedDateTime(event.created);
-                  return (
-                    <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
-                      <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
-                      <div className="text-sm text-gray-500">
-                        {formattedDateTime[0]} @{formattedDateTime[1]}
-                      </div>
-                      <div className="break-words">{event.updateDescription}</div>
+              if (event) {
+                const formattedDateTime = createdToFormattedDateTime(event.created);
+                return (
+                  <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
+                    <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
+                    <div className="text-sm text-gray-500">
+                      {formattedDateTime[0]} @{formattedDateTime[1]}
                     </div>
-                  );
-                }
-              })
+                    <div className="break-words">{event.updateDescription}</div>
+                  </div>
+                );
+              }
+            })
             : 'No events found'}
         </div>
       </div>

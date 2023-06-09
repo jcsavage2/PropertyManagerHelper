@@ -60,7 +60,7 @@ export default async function handler(
       updateMadeBy: tenantEmail,
     });
 
-    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`
+    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
 
     /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.SENDGRID_API_KEY;
