@@ -4,7 +4,13 @@ import { useRouter } from "next/router";
 
 const Home = () => {
   const router = useRouter();
+  const { query } = router;
   const { login, sessionUser } = useUserContext();
+
+  if (query?.authredirect && !sessionUser) {
+    signIn();
+  }
+
 
   return (
     <>
