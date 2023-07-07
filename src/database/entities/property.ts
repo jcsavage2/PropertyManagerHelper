@@ -4,10 +4,10 @@ import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 
 export interface IProperty {
-  pmEmail: string;
   pk: string;
-  postalCode: string;
   sk: string;
+  pmEmail: string;
+  postalCode: string;
   city: string;
   state: string;
   organizationId: string;
