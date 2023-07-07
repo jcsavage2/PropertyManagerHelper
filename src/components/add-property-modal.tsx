@@ -4,6 +4,7 @@ import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, use
 
 import Modal from 'react-modal';
 import Select from "react-select";
+import { StateSelect } from "./state-select";
 
 export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsOpen }: { addPropetyModalIsOpen: boolean; setAddPropertyModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
   const [isBrowser, setIsBrowser] = useState(false);
@@ -13,7 +14,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
     setIsBrowser(true);
   }, []);
 
-  isBrowser && Modal.setAppElement('#property');
+  isBrowser && Modal.setAppElement('#testing');
 
   const [tenantName, setTenantName] = useState("");
   const [tenantEmail, setTenantEmail] = useState("");
@@ -48,9 +49,6 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
   const handleUnitChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setUnit(e.currentTarget.value);
   }, [setUnit]);
-  const handleStateChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setState(e.currentTarget.value);
-  }, [setState]);
   const handleCityChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setCity(e.currentTarget.value);
   }, [setCity]);
@@ -93,7 +91,8 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
         <form onSubmit={handleCreateNewProperty} style={{ display: "grid" }}>
           <label htmlFor='address'>Address </label>
           <input
-            className='rounded px-1'
+            className='rounded px-1 border-solid border-2 border-slate-200'
+            placeholder="123 some street"
             id="address"
             type={"text"}
             value={address}
@@ -101,24 +100,17 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
           />
           <label htmlFor='address'>Unit*</label>
           <input
-            className='rounded px-1'
-            id="address"
-            placeholder='N/A if not applicable'
+            className='rounded px-1 border-solid border-2 border-slate-200'
+            id="unit"
+            placeholder='1704'
             type={"text"}
             value={unit}
             onChange={handleUnitChange}
           />
-          <label htmlFor='address'>State*</label>
-          <input
-            className='rounded px-1'
-            id="address"
-            type={"text"}
-            value={state}
-            onChange={handleStateChange}
-          />
+          <StateSelect state={state} setState={setState} />
           <label htmlFor='address'>City*</label>
           <input
-            className='rounded px-1'
+            className='rounded px-1 border-solid border-2 border-slate-200'
             id="address"
             type={"text"}
             value={city}
@@ -126,7 +118,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
           />
           <label htmlFor='address'>Zip* </label>
           <input
-            className='rounded px-1'
+            className='rounded px-1 border-solid border-2 border-slate-200'
             id="address"
             type={"text"}
             value={postalCode}

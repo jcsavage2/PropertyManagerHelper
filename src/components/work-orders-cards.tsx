@@ -12,9 +12,9 @@ import { StatusOptions } from "./work-orders-table";
 import { StatusOptionType } from "@/types";
 
 type HandleUpdateStatusProps = {
-    val: SingleValue<StatusOptionType>;
-    pk: string;
-    sk: string;
+  val: SingleValue<StatusOptionType>;
+  pk: string;
+  sk: string;
 };
 
 export const WorkOrdersCards = () => {
@@ -30,10 +30,8 @@ export const WorkOrdersCards = () => {
     }
     setIsFetching(true);
     if (user.userType === "TECHNICIAN") {
-      console.log("FETCHING");
       const { data } = await axios.post("/api/get-all-work-orders-for-technician", { technicianEmail: user.technicianEmail });
       const orders: IWorkOrder[] = JSON.parse(data.response);
-      console.log({ orders });
       if (orders.length) {
         sessionStorage.setItem("WORK_ORDERS", JSON.stringify(orders));
         setWorkOrders(orders);
@@ -66,7 +64,7 @@ export const WorkOrdersCards = () => {
     setIsUpdating(false);
   };
 
-  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any }) => (
+  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any; }) => (
     <div className="flex flex-row items-center">
       {icon}
       <span className="ml-1 text-sm">{label}</span>

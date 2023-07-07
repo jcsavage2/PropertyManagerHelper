@@ -1,10 +1,9 @@
 import { useUserContext } from "@/context/user";
-import { generateAddressKey, toTitleCase } from "@/utils";
+import { toTitleCase } from "@/utils";
 import axios from "axios";
 import { AiOutlineFilter } from "react-icons/ai";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { BiCheckbox, BiCheckboxChecked } from "react-icons/bi";
 import Link from "next/link";
 import { IProperty } from "@/database/entities/property";
 
@@ -29,18 +28,19 @@ export const PropertiesTable = () => {
 
 
   useEffect(() => {
-    async function get() {
-      if (isUpdating) {
-        return;
+    if (user.pmEmail) {
+      async function get() {
+        try {
+          const { data } = await axios.post("/api/get-all-properties-for-pm", { propertyManagerEmail: user.pmEmail });
+          const properties = JSON.parse(data.response);
+          properties.length && setProperties(properties);
+        } catch (e) {
+          console.log({ e });
+        }
       }
-      const { data } = await axios.post("/api/get-all-properties-for-pm", { propertyManagerEmail: user.pmEmail });
-      const properties: IProperty[] = JSON.parse(data.response);
-      if (properties.length) {
-        setProperties(properties);
-      }
+      get();
     }
-    get();
-  }, [user.pmEmail, isUpdating]);
+  }, [user.pmEmail]);
 
 
   const handleSorting = (sortField: keyof IProperty, sortOrder: "asc" | "desc") => {
@@ -81,17 +81,17 @@ export const PropertiesTable = () => {
     };
   });
 
-  const filteredRows = remappedProperties.filter(property => !!cityFilter);
-  const sortedWorkOrders = filteredRows.map((workOrder): any => {
+  const filteredRows = remappedProperties.filter(property => true);
+  const sortedWorkOrders = filteredRows.map((property) => {
     return (
       <tr key={uuid()}>
         {columns.map(({ accessor }, index) => {
-          const workOrderId = `${workOrder.pk}`;
+          const workOrderId = `${property.pk}`;
           //@ts-ignore
-          const tData = workOrder[accessor];
+          const tData = property[accessor];
           return (
             <td className="border px-4 py-1" key={accessor}>
-              <Link key={workOrder.pk + index} href={`/properties/?propertyId=${encodeURIComponent(workOrderId)}`} as={`/properties/?propertyId=${encodeURIComponent(workOrderId)}`}>
+              <Link key={property.pk + index} href={`/properties/?propertyId=${encodeURIComponent(workOrderId)}`} as={`/properties/?propertyId=${encodeURIComponent(workOrderId)}`}>
                 {tData}
               </Link>
             </td>
@@ -149,7 +149,6 @@ export const PropertiesTable = () => {
           Address
         </div>
       )}
-
       <div className="overflow-x-auto">
         <table className='w-full mt-4 border-spacing-x-10 table-auto'>
           <thead className=''>

@@ -46,18 +46,17 @@ export const WorkOrdersTable = () => {
     if (user.userType === 'TECHNICIAN') {
       const { data } = await axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: deconstructKey(user.pk) });
       const orders: IWorkOrder[] = JSON.parse(data.response);
-      console.log({ orders });
       if (orders.length) {
         sessionStorage.setItem('WORK_ORDERS', JSON.stringify(orders));
         setWorkOrders(orders);
       }
-    }else{
-        const { data } = await axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) });
-        const orders: IWorkOrder[] = JSON.parse(data.response);
-        if (orders.length) {
+    } else {
+      const { data } = await axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) });
+      const orders: IWorkOrder[] = JSON.parse(data.response);
+      if (orders.length) {
         sessionStorage.setItem('', JSON.stringify(orders));
         setWorkOrders(orders);
-        }
+      }
     }
 
     setIsFetching(false);
@@ -99,7 +98,7 @@ export const WorkOrdersTable = () => {
     setIsUpdating(false);
   };
 
-  const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
+  const columns: { label: string; accessor: keyof IWorkOrder; width: string; }[] = [
     { label: 'Title', accessor: 'issue', width: 'w-72' },
     { label: 'Status', accessor: 'status', width: 'w-48' },
     { label: 'Address', accessor: 'address', width: '' },
@@ -138,9 +137,8 @@ export const WorkOrdersTable = () => {
         as={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}
         key={`${workOrder.pk}-${workOrder.sk}-${index}`}>
         <div
-          className={`${index !== filteredRows.length && 'mb-3'} ${
-            workOrder.status === STATUS.TO_DO ? 'bg-gray-100' : 'bg-green-50'
-          } hover:cursor-pointer ml-4 py-4 px-3 rounded-sm w-11/12 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]`}>
+          className={`${index !== filteredRows.length && 'mb-3'} ${workOrder.status === STATUS.TO_DO ? 'bg-gray-100' : 'bg-green-50'
+            } hover:cursor-pointer ml-4 py-4 px-3 rounded-sm w-11/12 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]`}>
           <div className="flex flex-row text-2xl items-center text-black">
             {toTitleCase(workOrder.issue)} <p className="ml-4 text-sm text-gray-300">#{workOrderId}</p>
           </div>
@@ -173,7 +171,7 @@ export const WorkOrdersTable = () => {
     );
   });
 
-  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any }) => (
+  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any; }) => (
     <div className="flex flex-row items-center">
       {icon}
       <span className="ml-1 text-sm">{label}</span>
@@ -248,9 +246,8 @@ export const WorkOrdersTable = () => {
 
               <div className={`flex ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
                 <p
-                  className={`py-1 px-3 cursor-pointer flex w-full rounded ${
-                    statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
-                  }`}
+                  className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                    }`}
                   onClick={() => setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE })}>
                   Complete
                 </p>
@@ -268,9 +265,8 @@ export const WorkOrdersTable = () => {
           Filters
         </div>
         <button
-          className={`${
-            tableView ? 'bg-blue-200' : 'bg-gray-200'
-          }  ml-auto md:mt-0  p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center`}
+          className={`${tableView ? 'bg-blue-200' : 'bg-gray-200'
+            }  ml-auto md:mt-0  p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center`}
           onClick={() => setTableView(!tableView)}
           disabled={isFetching || isUpdating}>
           <AiOutlineTable className="text-2xl" />
