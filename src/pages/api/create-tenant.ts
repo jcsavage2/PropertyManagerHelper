@@ -3,6 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
+import { uuid as uuidv4 } from "uuidv4";
 
 
 
@@ -62,6 +63,7 @@ export default async function handler(
         state,
         postalCode,
         unit,
+        uuid: uuidv4()
       });
 
     /** SEND THE EMAIL TO THE USER */

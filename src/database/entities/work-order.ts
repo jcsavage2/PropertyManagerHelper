@@ -279,7 +279,7 @@ export class WorkOrderEntity {
       await this.workOrderEntity.delete({
         pk: key,
         sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
-      })
+      });
 
       const result = await this.workOrderEntity.update({
         pk: key,

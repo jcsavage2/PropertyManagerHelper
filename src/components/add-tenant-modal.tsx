@@ -124,65 +124,58 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
         onClick={closeModal}>X Close</button>
 
       <form onSubmit={handleCreateNewTenant} style={{ display: "grid" }}>
-        <label htmlFor='name'>Tenant Name*</label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="name"
-          placeholder="John Doe"
+          placeholder="Tenant Full Name*"
           type={"text"}
           value={tenantName}
           onChange={handleTenantNameChange}
         />
-        <label className='mt-5' htmlFor='email'>Email* </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="email"
-          placeholder="someEmail@gmail.com"
+          placeholder="Tenant Email*"
           type={"email"}
           value={tenantEmail}
           onChange={handleEmailChange}
         />
-        <label className='mt-5' htmlFor='address'>Address* </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="address"
-          placeholder="123 Test St"
+          placeholder="Street Address*"
           type={"text"}
           value={address}
           onChange={handleAddressChange}
         />
-        <label className='mt-5' htmlFor='address'>Unit </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="address"
-          placeholder='207'
+          placeholder='Unit Number'
           type={"text"}
           value={unit}
           onChange={handleUnitChange}
         />
-        <label className='mt-5' htmlFor='state'>State* </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="state"
-          placeholder="FL"
+          placeholder="State*"
           type={"text"}
           value={state}
           onChange={handleStateChange}
         />
-        <label className='mt-5' htmlFor='city'>City* </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="city"
-          placeholder="Miami"
+          placeholder="City*"
           type={"text"}
           value={city}
           onChange={handleCityChange}
         />
-        <label className='mt-5' htmlFor='postalCode'>Zip* </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="postalCode"
-          placeholder="33131"
+          placeholder="Zip*"
           type={"text"}
           value={postalCode}
           onChange={handlePostalCodeChange}
