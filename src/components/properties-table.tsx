@@ -7,15 +7,23 @@ import { v4 as uuid } from "uuid";
 import Link from "next/link";
 import { IProperty } from "@/database/entities/property";
 import { PartialProperty, SortConfig } from "@/hooks/use-sortable-data";
+import { LoadingSpinner } from "./loading-spinner/loading-spinner";
 
 
-export const PropertiesTable = ({ items, sortConfig, requestSort, filteredData }:
+export const PropertiesTable = ({ items, isLoading, sortConfig, requestSort, filteredData }:
   {
     items: PartialProperty[];
+    isLoading: boolean;
     filteredData: PartialProperty[];
     sortConfig: SortConfig | null;
     requestSort: (key: "address" | "city" | "state" | "postalCode" | "unit") => void;
   }) => {
+  if (isLoading) {
+    return (<LoadingSpinner />);
+  }
+  if (!items.length) {
+    return null;
+  }
   return (
     <table className={`w-full border-spacing-x-10 table-auto`}>
       <thead>

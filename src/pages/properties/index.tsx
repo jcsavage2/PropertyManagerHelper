@@ -11,6 +11,7 @@ import { AddPropertyModal } from "@/components/add-property-modal";
 import React from "react";
 import { PartialProperty, useSortableData } from "@/hooks/use-sortable-data";
 import { IProperty } from "@/database/entities/property";
+import { PropertiesCards } from "@/components/properties-cards";
 
 
 
@@ -19,6 +20,7 @@ const Properties = () => {
   const [addPropetyModalIsOpen, setAddPropertyModalIsOpen] = useState(false);
   const [properties, setProperties] = useState<PartialProperty[]>([]);
   const { isMobile } = useDevice();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [query, setQuery] = useState<string>("");
   const { items, requestSort, sortConfig } = useSortableData(properties);
@@ -37,6 +39,7 @@ const Properties = () => {
             unit: p.unit ?? ""
           }));
           partialProperties.length && setProperties(partialProperties);
+          setIsLoading(false);
         } catch (e) {
           console.log({ e });
         }
@@ -74,18 +77,17 @@ const Properties = () => {
           >+ New Property</button>
         </div>
         <input
-          className="mt-4"
+          className="my-5 rounded px-1 border-solid border-2 border-slate-200"
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter..."
+          placeholder="Filter Properties..."
         />
-
-        {items.length && !isMobile && (
-          <PropertiesTable sortConfig={sortConfig} items={items} requestSort={requestSort} filteredData={filteredData} />
+        {!isMobile && (
+          <PropertiesTable isLoading={isLoading} sortConfig={sortConfig} items={items} requestSort={requestSort} filteredData={filteredData} />
         )}
-        {items.length && isMobile && (
-          <PropertiesTable sortConfig={sortConfig} items={items} requestSort={requestSort} filteredData={filteredData} />
+        {isMobile && (
+          <PropertiesCards isLoading={isLoading} sortConfig={sortConfig} items={items} requestSort={requestSort} filteredData={filteredData} />
         )}
       </div>
       <AddPropertyModal
