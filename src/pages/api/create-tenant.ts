@@ -11,12 +11,11 @@ export type CreateTenantBody = {
   tenantEmail: string;
   tenantName: string;
   pmEmail: string;
-  organization: string;
   address: string;
   unit?: string;
   state: string;
   city: string;
-  country: string;
+  country: "US" | "CA";
   postalCode: string;
 };
 
@@ -31,12 +30,11 @@ export default async function handler(
   try {
     const body = req.body as CreateTenantBody;
     const {
-      organization,
       pmEmail,
       tenantEmail,
       tenantName,
       address,
-      country,
+      country = "US",
       city,
       state,
       postalCode,

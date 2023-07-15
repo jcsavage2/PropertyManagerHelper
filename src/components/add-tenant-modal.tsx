@@ -4,6 +4,7 @@ import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, use
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CSSTransition } from 'react-transition-group';
+import { CreateTenantBody } from "@/pages/api/create-tenant";
 
 const customStyles = {
   content: {
@@ -81,22 +82,24 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
         throw new Error("user needs to be a Property Manager.");
       }
 
-      const { data } = await axios.post("/api/create-tenant", {
+      const body: CreateTenantBody = {
         tenantEmail,
         tenantName,
         pmEmail: user.pmEmail,
-        organization: user.organization ?? "",
         address,
         unit,
         state,
         city,
+        country: "US",
         postalCode,
-      });
+      };
+
+      const { data } = await axios.post("/api/create-tenant", { ...body });
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
-        toast.success("Tenant Created");
         onSuccessfulAdd();
+        toast.success("Tenant Created");
         setTenantModalIsOpen(false);
       }
     } catch (err) {
