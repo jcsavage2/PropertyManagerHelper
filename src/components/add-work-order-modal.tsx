@@ -166,9 +166,13 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
       closeTimeoutMS={200}
       style={customStyles}
     >
-      <button
-        className="w-full text-right"
-        onClick={closeModal}>X Close</button>
+      <div className="w-full text-right">
+        <button
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}>
+          X Close
+        </button>
+      </div>
 
       <form onSubmit={handleCreateWorkOrder} style={{ display: "grid" }}>
         {!selectedProperty && (
@@ -244,7 +248,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
               onClick={() => setSelectedProperty(o)}
               className="bg-gray-200 rounded mt-1 p-1"
             >
-              <p className="text-sm text-gray-800">{o.address.trim() + " " + o.unit} </p>
+              <p className="text-sm text-gray-800">{o?.address?.trim() + " " + o.unit} </p>
               <p className="text-sm font-light">{o.city + ", " + o.state + " " + o.postalCode} </p>
             </div>);
         })}
@@ -264,11 +268,6 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
               value={issueDescription}
               onChange={handleIssueDescriptionChange}
             />
-
-
-
-
-
           </div>)
         }
 

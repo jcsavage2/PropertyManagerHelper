@@ -95,9 +95,13 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       contentLabel="Add New Technician Modal"
       style={customStyles}
     >
-      <button
-        className="w-full text-right"
-        onClick={closeModal}>X Close</button>
+      <div className="w-full text-right">
+        <button
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}>
+          X Close
+        </button>
+      </div>
 
       <form onSubmit={handleCreateNewTechnician} style={{ display: "grid" }}>
         <input

@@ -3,6 +3,7 @@ import axios from "axios";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
+import { CSSTransition } from 'react-transition-group';
 
 const customStyles = {
   content: {
@@ -31,6 +32,10 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
   useEffect(() => {
     setIsBrowser(true);
   }, []);
+
+  const [stage, setStage] = useState(0);
+  const nextStage = () => setStage(prevStage => prevStage + 1);
+  const prevStage = () => setStage(prevStage => prevStage - 1);
 
   isBrowser && Modal.setAppElement('#testing');
 
@@ -119,74 +124,112 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
       closeTimeoutMS={200}
       style={customStyles}
     >
-      <button
-        className="w-full text-right"
-        onClick={closeModal}>X Close</button>
-
-      <form onSubmit={handleCreateNewTenant} style={{ display: "grid" }}>
-        <input
-          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
-          id="name"
-          placeholder="Tenant Full Name*"
-          type={"text"}
-          value={tenantName}
-          onChange={handleTenantNameChange}
-        />
-        <input
-          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
-          id="email"
-          placeholder="Tenant Email*"
-          type={"email"}
-          value={tenantEmail}
-          onChange={handleEmailChange}
-        />
-        <input
-          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
-          id="address"
-          placeholder="Street Address*"
-          type={"text"}
-          value={address}
-          onChange={handleAddressChange}
-        />
-        <input
-          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
-          id="address"
-          placeholder='Unit Number'
-          type={"text"}
-          value={unit}
-          onChange={handleUnitChange}
-        />
-        <input
-          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
-          id="state"
-          placeholder="State*"
-          type={"text"}
-          value={state}
-          onChange={handleStateChange}
-        />
-        <input
-          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
-          id="city"
-          placeholder="City*"
-          type={"text"}
-          value={city}
-          onChange={handleCityChange}
-        />
-        <input
-          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
-          id="postalCode"
-          placeholder="Zip*"
-          type={"text"}
-          value={postalCode}
-          onChange={handlePostalCodeChange}
-        />
+      <div className="w-full text-right">
         <button
-          className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          type="submit"
-          disabled={!tenantName || !tenantEmail || !address || !state || !city || !postalCode}
-        >
-          Add Tenant
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}>
+          X Close
         </button>
+      </div>
+
+      <form onSubmit={handleCreateNewTenant}>
+        <CSSTransition
+          in={stage === 0}
+          timeout={500}
+          classNames="slide"
+          unmountOnExit
+          style={{ display: "grid" }}
+        >
+          <div>
+            <input
+              className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
+              id="name"
+              placeholder="Tenant Full Name*"
+              type={"text"}
+              value={tenantName}
+              onChange={handleTenantNameChange}
+            />
+            <input
+              className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
+              id="email"
+              placeholder="Tenant Email*"
+              type={"email"}
+              value={tenantEmail}
+              onChange={handleEmailChange}
+            />
+            <button
+              onClick={nextStage}
+              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+              type="button"
+              disabled={!tenantName || !tenantEmail}
+            >
+              Next
+            </button>
+          </div>
+        </CSSTransition>
+        <CSSTransition
+          in={stage === 1}
+          timeout={500}
+          classNames="slide"
+          unmountOnExit
+          style={{ display: "grid" }}
+        >
+          <div>
+            <input
+              className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
+              id="address"
+              placeholder="Street Address*"
+              type={"text"}
+              value={address}
+              onChange={handleAddressChange}
+            />
+            <input
+              className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
+              id="address"
+              placeholder='Unit Number'
+              type={"text"}
+              value={unit}
+              onChange={handleUnitChange}
+            />
+            <input
+              className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
+              id="city"
+              placeholder="City*"
+              type={"text"}
+              value={city}
+              onChange={handleCityChange}
+            />
+            <input
+              className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
+              id="state"
+              placeholder="State*"
+              type={"text"}
+              value={state}
+              onChange={handleStateChange}
+            />
+            <input
+              className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
+              id="postalCode"
+              placeholder="Zip*"
+              type={"text"}
+              value={postalCode}
+              onChange={handlePostalCodeChange}
+            />
+            <button
+              onClick={prevStage}
+              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+              type="button"
+              disabled={!tenantName || !tenantEmail}
+            >Previous</button>
+            <button
+              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+              type="submit"
+              disabled={!tenantName || !tenantEmail || !address || !state || !city || !postalCode}
+            >
+              Add Tenant
+            </button>
+          </div>
+        </CSSTransition>
       </form>
     </Modal >
   );
