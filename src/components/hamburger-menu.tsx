@@ -3,6 +3,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
+import { userIsPropertyManager, userIsTenant } from "@/utils/user-types";
 
 const HamburgerMenu = () => {
   const { user, logOut, sessionUser } = useUserContext();
@@ -33,8 +34,9 @@ const HamburgerMenu = () => {
         >
           <div className="mt-4 flex flex-col h-12">
             <Link className={linkStyle} href={"/"}>Home</Link>
-            {user.pk.startsWith("PM") && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
-            {user.pk.startsWith("T") && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
+            {userIsPropertyManager(user) && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
+            {userIsTenant(user) && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
+            {userIsTenant(user) && <Link className={linkStyle} href={"/tenant-work-orders"}>Work Orders</Link>}
             {sessionUser?.email && (<Link onClick={handleClick} className={linkStyle} href={"/"}>{"Sign Out"}</Link>)}
             {!sessionUser?.email && (<Link onClick={() => signIn()} className={linkStyle} href={"/"}>{"Sign In"}</Link>)}
 
