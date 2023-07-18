@@ -15,7 +15,6 @@ const Tenants = () => {
   const { user } = useUserContext();
   const [tenants, setTenants] = useState([]);
   const { isMobile } = useDevice();
-  const router = useRouter();
 
 
   useEffect(() => {

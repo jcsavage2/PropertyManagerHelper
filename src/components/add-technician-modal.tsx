@@ -95,26 +95,28 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       contentLabel="Add New Technician Modal"
       style={customStyles}
     >
-      <button
-        className="w-full text-right"
-        onClick={closeModal}>X Close</button>
+      <div className="w-full text-right">
+        <button
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}>
+          X Close
+        </button>
+      </div>
 
       <form onSubmit={handleCreateNewTechnician} style={{ display: "grid" }}>
-        <label htmlFor='name'>Technician Name*</label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="name"
-          placeholder="John Doe"
+          placeholder="Technician Full Name*"
           type={"text"}
           value={name}
           onChange={handleNameChange}
         />
-        <label className='mt-5' htmlFor='email'>Email* </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
           id="email"
-          placeholder="someEmail@gmail.com"
-          type={"email"}
+          placeholder="Technician Email*"
+          type="email"
           value={email}
           onChange={handleEmailChange}
         />

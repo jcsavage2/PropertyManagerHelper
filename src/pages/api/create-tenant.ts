@@ -3,6 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
+import { uuid as uuidv4 } from "uuidv4";
 
 
 
@@ -10,12 +11,11 @@ export type CreateTenantBody = {
   tenantEmail: string;
   tenantName: string;
   pmEmail: string;
-  organization: string;
   address: string;
   unit?: string;
   state: string;
   city: string;
-  country: string;
+  country: "US" | "CA";
   postalCode: string;
 };
 
@@ -30,12 +30,11 @@ export default async function handler(
   try {
     const body = req.body as CreateTenantBody;
     const {
-      organization,
       pmEmail,
       tenantEmail,
       tenantName,
       address,
-      country,
+      country = "US",
       city,
       state,
       postalCode,
@@ -62,6 +61,7 @@ export default async function handler(
         state,
         postalCode,
         unit,
+        uuid: uuidv4()
       });
 
     /** SEND THE EMAIL TO THE USER */

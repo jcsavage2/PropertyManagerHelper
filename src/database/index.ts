@@ -37,9 +37,9 @@ const translateConfig = { marshallOptions, unmarshallOptions };
 export const DocumentClient = DynamoDBDocument.from(new DynamoDB({ ...DynamoDBClientConfig }), translateConfig);
 
 export const INDEXES = {
-  GSI1: 'GSI1PK-GSI1SK-index',
-  GSI2: 'tenant-index',
-  GSI3: 'technician-index',
+  GSI1: 'GSI1PK-GSI1SK-index', // property manager index
+  GSI2: 'tenant-index', // tenant index
+  GSI3: 'technician-index', // technician index
 } as const;
 
 export const PillarDynamoTable = new Table({

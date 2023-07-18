@@ -11,7 +11,7 @@ type BaseUser = {
   sk: string;
 };
 
-type PropertyManager = BaseUser & {
+export type PropertyManager = BaseUser & {
   pmName: string,
   pmEmail: string,
   organization: string,
@@ -20,7 +20,7 @@ type PropertyManager = BaseUser & {
   tenantName?: never;
 };
 
-type Tenant = BaseUser & {
+export type Tenant = BaseUser & {
   tenantEmail: string;
   tenantName: string;
   pmEmail?: string | null,
@@ -32,11 +32,11 @@ type Tenant = BaseUser & {
   organization?: never;
 };
 
-type Technician = BaseUser & ITechnician & {
+export type Technician = BaseUser & ITechnician & {
   pmEmail?: never;
 };
 
-type UserType = Tenant | PropertyManager | Technician;
+export type UserType = Tenant | PropertyManager | Technician;
 
 export type UserContext = {
   user: UserType,

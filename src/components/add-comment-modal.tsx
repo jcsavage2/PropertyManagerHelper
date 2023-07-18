@@ -27,12 +27,12 @@ const customStyles = {
   }
 };
 
-export type AddCommentModalProps = { 
-    addCommentModalIsOpen: boolean;
-    workOrderId: string;
-    setAddCommentModalIsOpen: Dispatch<SetStateAction<boolean>>; 
-    onSuccessfulAdd: () => void; 
-}
+export type AddCommentModalProps = {
+  addCommentModalIsOpen: boolean;
+  workOrderId: string;
+  setAddCommentModalIsOpen: Dispatch<SetStateAction<boolean>>;
+  onSuccessfulAdd: () => void;
+};
 
 export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddCommentModalIsOpen, onSuccessfulAdd }: AddCommentModalProps) => {
 
@@ -88,9 +88,13 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
       contentLabel="Add New Technician Modal"
       style={customStyles}
     >
-      <button
-        className="w-full text-right"
-        onClick={closeModal}>X Close</button>
+      <div className="w-full text-right">
+        <button
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}>
+          X Close
+        </button>
+      </div>
 
       <form onSubmit={handleCreateNewComment} style={{ display: "grid" }}>
         <label htmlFor='name'>What would you like to say? </label>

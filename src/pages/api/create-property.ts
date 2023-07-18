@@ -2,6 +2,7 @@ import { Data } from "@/database";
 import { PropertyEntity } from "@/database/entities/property";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { NextApiRequest, NextApiResponse } from "next";
+import { uuid as uuidv4 } from "uuidv4";
 
 
 
@@ -31,7 +32,8 @@ export default async function handler(
     const propertyEntity = new PropertyEntity();
 
     // Create Property
-    const newProperty = await propertyEntity.create({ address: streetAddress, country, city, state, unit: unitNumber, postalCode, propertyManagerEmail });
+    const uuid = uuidv4();
+    const newProperty = await propertyEntity.create({ address: streetAddress, country, city, state, unit: unitNumber, postalCode, propertyManagerEmail, uuid });
     await propertyManagerEntity.createPropertyCompanionRow({ email: propertyManagerEmail, organization: "", addressPk: newProperty.pk, addressSk: newProperty.sk });
 
     return res.status(200).json({ response: JSON.stringify(newProperty) });
