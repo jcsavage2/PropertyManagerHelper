@@ -7,8 +7,15 @@ const Home = () => {
   const { query } = router;
   const { login, sessionUser } = useUserContext();
 
+
   if (query?.authredirect && !sessionUser) {
-    signIn();
+    const alreadyRedirected = localStorage.getItem("PILLAR::REDIRECT");
+    if (!alreadyRedirected) {
+      localStorage.setItem("PILLAR::REDIRECT", "true");
+      signIn("", { callbackUrl: `${window.location.origin}/` });
+    } else {
+      router.push("/");
+    }
   }
 
 

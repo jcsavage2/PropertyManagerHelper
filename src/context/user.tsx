@@ -117,7 +117,7 @@ export const UserContextProvider = (props: any) => {
    * 3. Remove the user in state.
    */
   const logOut = () => {
-    window.localStorage.clear();
+    localStorage.clear();
     signOut();
     setUser(initialState);
   };
