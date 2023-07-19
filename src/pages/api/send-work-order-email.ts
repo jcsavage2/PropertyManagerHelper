@@ -10,26 +10,13 @@ import sendgrid from "@sendgrid/mail";
 import { NextApiRequest, NextApiResponse } from "next";
 import { uuid } from "uuidv4";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as SendEmailApiRequest;
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
-    const {
-      address,
-      city,
-      permissionToEnter,
-      country,
-      postalCode,
-      state,
-      tenantEmail,
-      tenantName,
-      unit,
-    } = body;
+    const { address, city, permissionToEnter, country, postalCode, state, tenantEmail, tenantName, unit } = body;
 
     const woId = uuid();
 
@@ -41,6 +28,8 @@ export default async function handler(
       permissionToEnter,
       country: country ?? "US",
       issue: body.issueDescription || "No Issue Description",
+      location: body.issueLocation || "No Issue Location",
+      additionalDetails: body.additionalDetails || "No Additional Details",
       postalCode,
       propertyManagerEmail: body.pmEmail,
       state,
@@ -132,7 +121,11 @@ export default async function handler(
             </tr>
             <tr>
               <td>Issue Location</td>
-              <td>${body.issueLocation}</td>
+              <td>${body.issueLocation ?? "None provided"}</td>
+            </tr>
+            <tr>
+              <td>Additional Details</td>
+              <td>${body.additionalDetails ?? "None provided"}</td>
             </tr>
             <tr>
               <td>Permission To Enter</td>
@@ -161,7 +154,7 @@ export default async function handler(
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
-            ${body.messages?.map(m => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`).join(" ")}
+            ${body.messages?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`).join(" ")}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -169,7 +162,7 @@ export default async function handler(
           </p>
         </div>
       </body>
-      </html>`
+      </html>`,
     });
   } catch (error: any) {
     console.log({ error });

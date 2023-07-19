@@ -11,6 +11,7 @@ const config = new Configuration({
   apiKey: process.env.OPEN_AI_API_KEY,
 });
 const openai = new OpenAIApi(config);
+const gpt_model = 'gpt-4-0613'
 
 /**
  * Handles back and forth communication between openAI API and the user messages.
@@ -28,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
-      model: "gpt-3.5-turbo",
+      model: gpt_model,
       messages: [
         prompt,
         ...messages,
@@ -56,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       console.log(chalk.red("\n Is Refetching...  =============\n"));
       const newResponse = await openai.createChatCompletion({
         max_tokens: 1000,
-        model: "gpt-3.5-turbo",
+        model: gpt_model,
         messages: [
           prompt,
           ...messages,
@@ -79,7 +80,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         let incompleteResponse: AiJSONResponse = {
           issueDescription: workOrderData.issueDescription ?? "",
           issueLocation: workOrderData.issueLocation ?? "",
-          aiMessage: aiResponse
+          aiMessage: aiResponse,
+          additionalDetails: workOrderData.additionalDetails ?? "",
         };
         processedResponse = JSON.stringify(incompleteResponse);
       }

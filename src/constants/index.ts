@@ -5,6 +5,7 @@ export const findIssueSample: AiJSONResponse = {
   aiMessage: "<your AI generated conversational response>",
   issueDescription: "<value of the issueDescription>",
   issueLocation: "<value of issueLocation>",
+  additionalDetails: "<value of additionalDetails>"
 };
 
 export const issueCategoryToTypes = {
