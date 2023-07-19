@@ -185,6 +185,33 @@ export class WorkOrderEntity {
   /**
    * @returns All work orders for a given property manager
    */
+  public async getAllForTenant({ tenantEmail }: { tenantEmail: string; }) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
+    const GSI2PK = generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase());
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          GSI2PK,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            index: INDEXES.GSI2,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return workOrders;
+  }
+
+  /**
+   * @returns All work orders for a given property manager
+   */
   public async getAllForTechnician({ technicianEmail }: { technicianEmail: string; }) {
     let startKey: StartKey;
     const workOrders: IWorkOrder[] = [];
@@ -279,7 +306,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string }) {
+  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
     try {
       await this.workOrderEntity.delete({
