@@ -228,19 +228,19 @@ export default function WorkOrderChatbot() {
                           </p>
                           {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
                             <>
-                              <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
+                              <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "0rem", marginTop: "1rem" }}>
                                 {!hasConnectionWithGPT ||
                                   (submitAnywaysSkip && (
                                     <>
                                       <label htmlFor="issueDescription">Issue Details* </label>
                                       <input className="rounded px-1" id="issueDescription" type={"text"} value={issueDescription} onChange={handleIssueDescriptionChange} />
-                                      <label htmlFor="issueLocation">Issue Location* </label>
+                                      <label className="mt-3" htmlFor="issueLocation">Issue Location* </label>
                                       <input className="rounded px-1" id="issueLocation" type={"text"} value={issueLocation} onChange={handleIssueLocationChange} />
-                                      <label htmlFor="additionalDetails">Additional Details </label>
+                                      <label className="mt-3" htmlFor="additionalDetails">Additional Details </label>
                                       <input className="rounded px-1" id="additionalDetails" type={"text"} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
                                     </>
                                   ))}
-                                <label htmlFor="address">Address* </label>
+                                <label className="mt-3" htmlFor="address">Address* </label>
                                 <Select
                                   onChange={(v) => {
                                     //@ts-ignore
@@ -337,7 +337,7 @@ export default function WorkOrderChatbot() {
             </div>
           </div>
         </div>
-      </main>
+      </main >
     </>
   );
 }

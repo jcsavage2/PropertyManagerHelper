@@ -51,11 +51,20 @@ export const WorkOrdersTable = () => {
         setWorkOrders(orders);
       }
     } else {
-      const { data } = await axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) });
-      const orders: IWorkOrder[] = JSON.parse(data.response);
-      if (orders.length) {
-        sessionStorage.setItem('', JSON.stringify(orders));
-        setWorkOrders(orders);
+      if (user.userType === "PROPERTY_MANAGER") {
+        const { data } = await axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) });
+        const orders: IWorkOrder[] = JSON.parse(data.response);
+        if (orders.length) {
+          sessionStorage.setItem('', JSON.stringify(orders));
+          setWorkOrders(orders);
+        }
+      } else {
+        const { data } = await axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: deconstructKey(user.pk) });
+        const orders: IWorkOrder[] = JSON.parse(data.response);
+        if (orders.length) {
+          sessionStorage.setItem('', JSON.stringify(orders));
+          setWorkOrders(orders);
+        }
       }
     }
 
