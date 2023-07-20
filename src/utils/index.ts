@@ -8,7 +8,7 @@ export const hasAllIssueInfo = (workOrder: WorkOrder, isUsingAI: boolean) => {
   if (!isUsingAI) {
     return !!workOrder.issueDescription;
   }
-  return !!workOrder.issueDescription && !!workOrder.issueLocation && !!workOrder.additionalDetails;
+  return !!workOrder.issueDescription && !!workOrder.issueLocation;
 };
 
 export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder, aiResponse: AiJSONResponse; }) => {
@@ -82,12 +82,13 @@ export const generatePrompt = (workOrder: WorkOrder): ChatCompletionRequestMessa
         If you have found the "issueLocation" do not ask the user about the "issueLocation" again.`}
         If there is already an "issueLocation" value in ${JSON.stringify(workOrder)}, do not ask the user about the issue location.
 
-        After you have determined the issue description and issue location, you can ask the user if they would like to provide any additional details. Let them know this is optional. \
-        This information will go in the "additionalDetails" key. If the user does not want to provide any additionalDetails, set the value for the key "additionalDetails" to "None provided".\
+        If the user provides additional details, record as the value for the "additionalDetails" key. If the user doesn't provide additional details, set the value of "additionalDetails" to "". \
+        Let the user know that the "additionalDetails" field is optional.
        
         If the user won't provide a value for "issueLocation", "issueDescription", or "additionalDetails", then set the value for the key to "None provided" and move on.\
         The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key.
-        If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.`
+        If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again.
+        Your responses to the user should always ask a single question or prompt them to provide more information about one thing.`
   };
 };
 
