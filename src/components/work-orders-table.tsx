@@ -26,12 +26,13 @@ export const StatusOptions: StatusOptionType[] = [
 
 interface IWorkOrdersTableProps {
   workOrders: IWorkOrder[];
+  fetchWorkOrders: () => Promise<void>;
+  isFetching: boolean;
 }
 
-export const WorkOrdersTable = ({ workOrders }: IWorkOrdersTableProps) => {
+export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWorkOrdersTableProps) => {
   const [sortField, setSortField] = useState<string>('status');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
   const [tableView, setTableView] = useState<boolean>(true);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [statusFilter, setStatusFilter] = useState<Record<IWorkOrder['status'], boolean>>({
@@ -41,15 +42,6 @@ export const WorkOrdersTable = ({ workOrders }: IWorkOrdersTableProps) => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const { user } = useUserContext();
 
-  const fetchWorkOrders = useCallback(async () => {
-    if (isUpdating || (!user.pmEmail && !user.userType)) {
-      return;
-    }
-  }, [isUpdating, user]);
-
-  useEffect(() => {
-    fetchWorkOrders();
-  }, [fetchWorkOrders]);
 
   const handleSorting = (sortField: keyof IWorkOrder, sortOrder: 'asc' | 'desc') => {
     if (sortField) {
@@ -197,6 +189,9 @@ export const WorkOrdersTable = ({ workOrders }: IWorkOrdersTableProps) => {
       </tr>
     );
   });
+  const fetcher = useCallback(async () => {
+    await fetchWorkOrders();
+  }, []);
 
   const handleSortingChange = (accessor: keyof IWorkOrder) => {
     const sortOrder = accessor === sortField && order === 'asc' ? 'desc' : 'asc';

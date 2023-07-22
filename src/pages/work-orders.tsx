@@ -19,7 +19,7 @@ const WorkOrders = () => {
   const [isBrowser, setIsBrowser] = useState(false);
   const [workOrderModalIsOpen, setWorkOrderModalIsOpen] = useState(false);
   const { isMobile } = useDevice();
-  const [isUpdating, setIsUpdating] = useState(false);
+
   const [isFetching, setIsFetching] = useState(false);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
 
@@ -33,7 +33,7 @@ const WorkOrders = () => {
 
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(async () => {
-    if (isUpdating || (!user.userType)) {
+    if (isFetching || (!user.userType)) {
       return;
     }
     setIsFetching(true);
@@ -51,11 +51,11 @@ const WorkOrders = () => {
     }
 
     setIsFetching(false);
-  }, [isUpdating, user]);
+  }, [isFetching, user]);
 
   useEffect(() => {
-
     fetchWorkOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -78,8 +78,8 @@ const WorkOrders = () => {
               onClick={() => setWorkOrderModalIsOpen(true)}
             >+ New Work Order</button>
           </div>
-          {!isMobile && <WorkOrdersTable workOrders={workOrders} />}
-          {isMobile && <WorkOrdersCards />}
+          {!isMobile && <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
+          {isMobile && <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
           <AddWorkOrderModal
             workOrderModalIsOpen={workOrderModalIsOpen}
             setWorkOrderModalIsOpen={setWorkOrderModalIsOpen}
