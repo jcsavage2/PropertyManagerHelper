@@ -14,11 +14,15 @@ const TenantWorkOrders = () => {
   const [isBrowser, setIsBrowser] = useState(false);
   const { isMobile } = useDevice();
 
+  /** Work Order Modal Logic */
+  isBrowser && Modal.setAppElement('#workOrder');
   useEffect(() => {
     setIsBrowser(true);
   }, []);
 
-  isBrowser && Modal.setAppElement('#workOrder');
+  /** Fetch Work Orders For User Type */
+
+
 
   return (
     <>
@@ -36,7 +40,7 @@ const TenantWorkOrders = () => {
           <div style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             <h1 className="text-4xl">{`Work Orders`}</h1>
           </div>
-          {!isMobile && <WorkOrdersTable />}
+          {!isMobile && <WorkOrdersTable workOrders={workOrders} />}
           {isMobile && <WorkOrdersCards />}
           {isMobile && <BottomNavigationPanel />}
         </div>

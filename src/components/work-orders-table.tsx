@@ -24,8 +24,11 @@ export const StatusOptions: StatusOptionType[] = [
   { value: STATUS.COMPLETE, label: 'Complete', icon: <AiOutlineCheck className="text-green-500" /> },
 ];
 
-export const WorkOrdersTable = () => {
-  const [workOrders, setWorkOrders] = useState<Array<IWorkOrder>>([]);
+interface IWorkOrdersTableProps {
+  workOrders: IWorkOrder[];
+}
+
+export const WorkOrdersTable = ({ workOrders }: IWorkOrdersTableProps) => {
   const [sortField, setSortField] = useState<string>('status');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -42,33 +45,6 @@ export const WorkOrdersTable = () => {
     if (isUpdating || (!user.pmEmail && !user.userType)) {
       return;
     }
-    setIsFetching(true);
-    if (user.userType === 'TECHNICIAN') {
-      const { data } = await axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: deconstructKey(user.pk) });
-      const orders: IWorkOrder[] = JSON.parse(data.response);
-      if (orders.length) {
-        sessionStorage.setItem('WORK_ORDERS', JSON.stringify(orders));
-        setWorkOrders(orders);
-      }
-    } else {
-      if (user.userType === "PROPERTY_MANAGER") {
-        const { data } = await axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) });
-        const orders: IWorkOrder[] = JSON.parse(data.response);
-        if (orders.length) {
-          sessionStorage.setItem('', JSON.stringify(orders));
-          setWorkOrders(orders);
-        }
-      } else {
-        const { data } = await axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: deconstructKey(user.pk) });
-        const orders: IWorkOrder[] = JSON.parse(data.response);
-        if (orders.length) {
-          sessionStorage.setItem('', JSON.stringify(orders));
-          setWorkOrders(orders);
-        }
-      }
-    }
-
-    setIsFetching(false);
   }, [isUpdating, user]);
 
   useEffect(() => {
@@ -84,7 +60,7 @@ export const WorkOrdersTable = () => {
           }) * (sortOrder === 'asc' ? 1 : -1)
         );
       });
-      setWorkOrders(sorted);
+      // setWorkOrders(sorted);
     }
   };
 
@@ -102,7 +78,7 @@ export const WorkOrdersTable = () => {
             }) * (order === 'asc' ? 1 : -1)
           );
         });
-      setWorkOrders(newWorkOrders);
+      // setWorkOrders(newWorkOrders);
     }
     setIsUpdating(false);
   };
