@@ -36,17 +36,24 @@ export const WorkOrdersCards = () => {
         sessionStorage.setItem("WORK_ORDERS", JSON.stringify(orders));
         setWorkOrders(orders);
       }
-    }
-
-    const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
-    const orders: IWorkOrder[] = JSON.parse(data.response);
-    if (orders.length) {
-      sessionStorage.setItem("", JSON.stringify(orders));
-      setWorkOrders(orders);
+    } else if (user.userType === "PROPERTY_MANAGER") {
+      const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
+      const orders: IWorkOrder[] = JSON.parse(data.response);
+      if (orders.length) {
+        sessionStorage.setItem("", JSON.stringify(orders));
+        setWorkOrders(orders);
+      }
+    } else {
+      const { data } = await axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: deconstructKey(user.pk) });
+      const orders: IWorkOrder[] = JSON.parse(data.response);
+      if (orders.length) {
+        sessionStorage.setItem('', JSON.stringify(orders));
+        setWorkOrders(orders);
+      }
     }
 
     setIsFetching(false);
-  }, [isUpdating, user.pmEmail, user, user.userType]);
+  }, [isUpdating, user]);
 
   useEffect(() => {
     fetchWorkOrders();

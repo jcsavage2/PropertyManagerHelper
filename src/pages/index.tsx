@@ -10,8 +10,15 @@ const Home = () => {
   const { login, sessionUser } = useUserContext();
   const [showNotice, setShowNotice] = useState(false);
 
+
   if (query?.authredirect && !sessionUser) {
-    signIn();
+    const alreadyRedirected = localStorage.getItem("PILLAR::REDIRECT");
+    if (!alreadyRedirected) {
+      localStorage.setItem("PILLAR::REDIRECT", "true");
+      signIn("", { callbackUrl: `${window.location.origin}/` });
+    } else {
+      router.push("/");
+    }
   }
 
   useEffect(() => {

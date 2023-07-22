@@ -1,7 +1,7 @@
-import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, ENTITY_KEY, StartKey } from '.';
-import { INDEXES, PillarDynamoTable } from '..';
-import { generateKey } from '@/utils';
+import { Entity } from "dynamodb-toolbox";
+import { ENTITIES, ENTITY_KEY, StartKey } from ".";
+import { INDEXES, PillarDynamoTable } from "..";
+import { generateKey } from "@/utils";
 
 export type WorkOrderStatus = "COMPLETE" | "TO_DO";
 type CreateWorkOrderProps = {
@@ -11,7 +11,7 @@ type CreateWorkOrderProps = {
   tenantName: string;
   unit?: string;
   createdBy: string;
-  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN",
+  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
   state: string;
   permissionToEnter: "yes" | "no";
   city: string;
@@ -20,6 +20,8 @@ type CreateWorkOrderProps = {
   propertyManagerEmail: string;
   status: WorkOrderStatus;
   issue: string;
+  location: string;
+  additionalDetails: string;
 };
 
 export type PropertyAddress = {
@@ -32,35 +34,37 @@ export type PropertyAddress = {
 };
 
 type AssignTechnicianProps = {
-  technicianEmail: string,
-  workOrderId: string,
-  address: PropertyAddress,
-  status: IWorkOrder["status"],
-  issueDescription: string,
-  permissionToEnter: "yes" | "no",
-  pmEmail: string,
+  technicianEmail: string;
+  workOrderId: string;
+  address: PropertyAddress;
+  status: IWorkOrder["status"];
+  issueDescription: string;
+  permissionToEnter: "yes" | "no";
+  pmEmail: string;
 };
 
 export interface IWorkOrder {
-  pk: string,
-  sk: string,
-  created: string,
-  GSI1PK: string,
-  GSI1SK: string,
-  GSI2PK: string,
-  GSI2SK: string,
+  pk: string;
+  sk: string;
+  created: string;
+  GSI1PK: string;
+  GSI1SK: string;
+  GSI2PK: string;
+  GSI2SK: string;
   /** Technician Email */
-  GSI3PK: string,
+  GSI3PK: string;
   /** Work Order ID */
-  GSI3SK: string,
-  pmEmail: string,
-  issue: string,
-  permissionToEnter: "yes" | "no",
-  tenantEmail: string,
-  createdBy: string,
-  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN",
-  tenantName: string,
-  address: PropertyAddress,
+  GSI3SK: string;
+  pmEmail: string;
+  issue: string;
+  location: string;
+  additionalDetails: string;
+  permissionToEnter: "yes" | "no";
+  tenantEmail: string;
+  createdBy: string;
+  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
+  tenantName: string;
+  address: PropertyAddress;
   status: WorkOrderStatus;
   assignedTo: Set<string>;
 };
@@ -81,9 +85,11 @@ export class WorkOrderEntity {
         GSI3PK: { type: "string" }, //Technician email
         GSI3SK: { type: "string" },
         permissionToEnter: { type: "string" },
-        pmEmail: { type: 'string' },
+        pmEmail: { type: "string" },
         issue: { type: "string" },
-        tenantEmail: { type: 'string' },
+        location: { type: "string" },
+        additionalDetails: { type: "string" },
+        tenantEmail: { type: "string" },
         tenantName: { type: "string" },
         address: { type: "map" },
         status: { type: "string" },
@@ -91,7 +97,7 @@ export class WorkOrderEntity {
         createdByType: { type: "string" },
         assignedTo: { type: "set" },
       },
-      table: PillarDynamoTable
+      table: PillarDynamoTable,
     } as const);
   }
 
@@ -165,6 +171,33 @@ export class WorkOrderEntity {
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
             index: INDEXES.GSI1,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return workOrders;
+  }
+
+  /**
+   * @returns All work orders for a given property manager
+   */
+  public async getAllForTenant({ tenantEmail }: { tenantEmail: string; }) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
+    const GSI2PK = generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase());
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          GSI2PK,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            index: INDEXES.GSI2,
           }
         ));
         startKey = LastEvaluatedKey as StartKey;
@@ -281,13 +314,16 @@ export class WorkOrderEntity {
         sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       });
 
-      const result = await this.workOrderEntity.update({
-        pk: key,
-        sk: key,
-        assignedTo: {
-          $delete: [technicianEmail.toLowerCase()]
-        }
-      }, { returnValues: "ALL_NEW" });
+      const result = await this.workOrderEntity.update(
+        {
+          pk: key,
+          sk: key,
+          assignedTo: {
+            $delete: [technicianEmail.toLowerCase()],
+          },
+        },
+        { returnValues: "ALL_NEW" }
+      );
       return result;
     } catch (err) {
       console.log({ err });

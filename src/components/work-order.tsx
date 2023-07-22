@@ -17,6 +17,7 @@ import { STATUS } from '@/constants';
 import { BsPersonFill } from 'react-icons/bs';
 import { IoLocationSharp } from 'react-icons/io5';
 import { BiTimeFive } from 'react-icons/bi';
+import { userIsTenant } from '@/utils/user-types';
 
 const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -217,6 +218,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                   placeholder={
                     loadingAssignedTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'
                   }
+                  isDisabled={userIsTenant(user)}
                   menuPosition="fixed"
                   className={'md:w-3/5 w-5/6 mb-4 md:mt-0 mt-4 md:my-auto mx-auto md:mx-0'}
                   closeMenuOnSelect={false}
