@@ -50,7 +50,7 @@ const Tenants = () => {
             onClick={() => setTenantModalIsOpen(true)}
           >+ New Tenant</button>
         </div>
-        {!isMobile && <TenantsTable />}
+        {!isMobile && <TenantsTable tenants={tenants} />}
         {isMobile && <TenantsCards />}
       </div>
       <AddTenantModal tenantModalIsOpen={tenantModalIsOpen} setTenantModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={refetch} />

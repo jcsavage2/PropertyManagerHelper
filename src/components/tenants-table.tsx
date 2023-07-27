@@ -8,11 +8,13 @@ import Link from "next/link";
 import { ITenant } from "@/database/entities/tenant";
 
 
-export const TenantsTable = () => {
-  const [tenants, setTenants] = useState<Array<ITenant>>([]);
+interface ITenantsTableProps {
+  tenants: ITenant[];
+}
+
+export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
 
   const [sortField, setSortField] = useState<keyof ITenant>("tenantName");
-  const [isUpdating, setIsUpdating] = useState(false);
   const [order, setOrder] = useState<"asc" | "desc">("asc");
 
   const [cityFilter, setCityFilter] = useState<string | null | undefined>(null);
@@ -24,22 +26,6 @@ export const TenantsTable = () => {
   const [stateFilter, setStateFilter] = useState<string | null | undefined>(null);
   const [showStateFilter, setShowStateFilter] = useState(false);
 
-  const { user } = useUserContext();
-
-
-  useEffect(() => {
-    async function get() {
-      if (isUpdating || !user.pmEmail) {
-        return;
-      }
-      const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
-      const tenants: ITenant[] = JSON.parse(data.response);
-      if (tenants.length) {
-        setTenants(tenants);
-      }
-    }
-    get();
-  }, [user.pmEmail, isUpdating]);
 
 
 
@@ -82,26 +68,7 @@ export const TenantsTable = () => {
     );
   });
 
-  const handleSorting = (sortField: keyof ITenant, sortOrder: "asc" | "desc") => {
-    if (sortField) {
-      const sorted = tenants.sort((a, b) => {
-        return (
-          a[sortField].toString().localeCompare(b[sortField].toString(), "en", {
-            numeric: true,
-          }) * (sortOrder === "asc" ? 1 : -1)
-        );
-      });
-      setTenants(sorted);
-    }
-  };
 
-  const handleSortingChange = (accessor: keyof ITenant) => {
-    const sortOrder =
-      accessor === sortField && order === "asc" ? "desc" : "asc";
-    setSortField(accessor);
-    setOrder(sortOrder);
-    handleSorting(accessor, sortOrder);
-  };
 
 
   return (
