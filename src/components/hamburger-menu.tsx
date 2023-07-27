@@ -36,7 +36,7 @@ const HamburgerMenu = () => {
             <Link className={linkStyle} href={"/"}>Home</Link>
             {userIsPropertyManager(user) && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
             {userIsTenant(user) && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
-            {userIsTenant(user) && <Link className={linkStyle} href={"/tenant-work-orders"}>Work Orders</Link>}
+            {userIsTenant(user) && <Link className={linkStyle} href={"/work-orders"}>Work Orders</Link>}
             {sessionUser?.email && (<Link onClick={handleClick} className={linkStyle} href={"/"}>{"Sign Out"}</Link>)}
             {!sessionUser?.email && (<Link onClick={() => signIn()} className={linkStyle} href={"/"}>{"Sign In"}</Link>)}
 

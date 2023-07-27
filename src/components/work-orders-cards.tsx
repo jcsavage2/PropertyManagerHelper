@@ -17,47 +17,18 @@ type HandleUpdateStatusProps = {
   sk: string;
 };
 
-export const WorkOrdersCards = () => {
-  const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
+interface IWorkOrdersCardsProps {
+  workOrders: IWorkOrder[];
+  fetchWorkOrders: () => Promise<void>;
+  isFetching: boolean;
+}
+
+export const WorkOrdersCards = ({ workOrders }: IWorkOrdersCardsProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const { user } = useUserContext();
   const { isMobile } = useDevice();
 
-  const fetchWorkOrders = useCallback(async () => {
-    if (isUpdating || (!user.pmEmail && !user.userType)) {
-      return;
-    }
-    setIsFetching(true);
-    if (user.userType === "TECHNICIAN") {
-      const { data } = await axios.post("/api/get-all-work-orders-for-technician", { technicianEmail: user.technicianEmail });
-      const orders: IWorkOrder[] = JSON.parse(data.response);
-      if (orders.length) {
-        sessionStorage.setItem("WORK_ORDERS", JSON.stringify(orders));
-        setWorkOrders(orders);
-      }
-    } else if (user.userType === "PROPERTY_MANAGER") {
-      const { data } = await axios.post("/api/get-all-work-orders-for-pm", { propertyManagerEmail: user.pmEmail });
-      const orders: IWorkOrder[] = JSON.parse(data.response);
-      if (orders.length) {
-        sessionStorage.setItem("", JSON.stringify(orders));
-        setWorkOrders(orders);
-      }
-    } else {
-      const { data } = await axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: deconstructKey(user.pk) });
-      const orders: IWorkOrder[] = JSON.parse(data.response);
-      if (orders.length) {
-        sessionStorage.setItem('', JSON.stringify(orders));
-        setWorkOrders(orders);
-      }
-    }
-
-    setIsFetching(false);
-  }, [isUpdating, user]);
-
-  useEffect(() => {
-    fetchWorkOrders();
-  }, [fetchWorkOrders]);
 
   const handleUpdateStatus = async ({ pk, sk, val }: HandleUpdateStatusProps) => {
     setIsUpdating(true);
@@ -65,8 +36,7 @@ export const WorkOrdersCards = () => {
     const { data } = await axios.post("/api/update-work-order", { pk, sk, status: val.value, email: deconstructKey(user.pk) });
     const updatedWorkOrder = JSON.parse(data.response);
     if (updatedWorkOrder) {
-      const newWorkOrders = workOrders.map(wo => wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo);
-      setWorkOrders(newWorkOrders);
+      // replace the existing work order in the array of work orders
     }
     setIsUpdating(false);
   };
@@ -81,7 +51,7 @@ export const WorkOrdersCards = () => {
   return (
     <>
       <button className="mt-2 ml-2 md:mt-0 bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center"
-        onClick={fetchWorkOrders}
+        // onClick={fetchWorkOrders}
         disabled={isFetching || isUpdating}
       >
         <BiRefresh className='text-2xl' />

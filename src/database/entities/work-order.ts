@@ -188,7 +188,7 @@ export class WorkOrderEntity {
   public async getAllForTenant({ tenantEmail }: { tenantEmail: string; }) {
     let startKey: StartKey;
     const workOrders: IWorkOrder[] = [];
-    const GSI2PK = generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase());
+    const GSI2PK = generateKey(ENTITY_KEY.TENANT, tenantEmail?.toLowerCase());
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(

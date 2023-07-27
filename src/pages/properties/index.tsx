@@ -52,6 +52,7 @@ const Properties = () => {
 
   useEffect(() => {
     setProperties(items);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredData = items?.filter((item) =>
