@@ -45,14 +45,13 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
 
   const handleSorting = (sortField: keyof IWorkOrder, sortOrder: 'asc' | 'desc') => {
     if (sortField) {
-      const sorted = workOrders.sort((a, b) => {
+      workOrders.sort((a, b) => {
         return (
           a[sortField].toString().localeCompare(b[sortField].toString(), 'en', {
             numeric: true,
           }) * (sortOrder === 'asc' ? 1 : -1)
         );
       });
-      // setWorkOrders(sorted);
     }
   };
 
