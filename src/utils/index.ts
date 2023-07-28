@@ -142,7 +142,7 @@ export function toTitleCase(str: string) {
 /**
  * @returns A key for use in DDB tables; {firstIdentifier}#{secondIdentifier}
  */
-export function generateKey(entityIdentifier: EntityTypeValues, secondIdentifier: string) {
+export function generateKey(entityIdentifier: EntityTypeValues | string, secondIdentifier: string) {
   return [entityIdentifier, secondIdentifier].join('#');
 }
 
@@ -165,8 +165,8 @@ export function generateKSUID() {
  * @returns string of the first item in the set and the remaining appended in shorthand, or "Unassigned" if the set is empty
  */
 export function setToShortenedString(set: Set<string>): string {
-    const arr = set ? Array.from(set) : []
-    return arr.length ? arr.length > 1 ? (arr[0] + ', +' + (arr.length - 1))  : arr[0] : "Unassigned"
+  const arr = set ? Array.from(set) : [];
+  return arr.length ? arr.length > 1 ? (arr[0] + ', +' + (arr.length - 1)) : arr[0] : "Unassigned";
 }
 
 /**
@@ -174,13 +174,13 @@ export function setToShortenedString(set: Set<string>): string {
  * @returns list of formatted date in index 0 and formatted time in index 1
  */
 export function createdToFormattedDateTime(created: string) {
-    const date = new Date(created);
-    const formattedDate = [date.getMonth() + 1, date.getDate(), date.getFullYear()].join('/');
-    let hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
-    const minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
-    const AM_PM = date.getHours() >= 12 ? 'PM' : 'AM';
-    hours = hours < 10 ? 0 + hours : hours;
-    const formattedTime = hours + ':' + minutes + ' ' + AM_PM;
+  const date = new Date(created);
+  const formattedDate = [date.getMonth() + 1, date.getDate(), date.getFullYear()].join('/');
+  let hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+  const minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
+  const AM_PM = date.getHours() >= 12 ? 'PM' : 'AM';
+  hours = hours < 10 ? 0 + hours : hours;
+  const formattedTime = hours + ':' + minutes + ' ' + AM_PM;
 
-    return [formattedDate, formattedTime];
+  return [formattedDate, formattedTime];
 }

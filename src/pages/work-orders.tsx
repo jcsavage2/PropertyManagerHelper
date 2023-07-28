@@ -37,6 +37,7 @@ const WorkOrders = () => {
       return;
     }
     setIsFetching(true);
+
     const promise = user.userType === "PROPERTY_MANAGER"
       ? axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) })
       : user.userType === "TECHNICIAN"

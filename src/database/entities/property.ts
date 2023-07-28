@@ -67,9 +67,9 @@ export class PropertyEntity {
     const result = await this.propertyEntity.update({
       pk: propertyId,
       sk: this.generateSk({ address, country, city, state, postalCode, unit }),
-      GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
+      GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()),
       GSI1SK: this.generateSk({ address, country, city, state, postalCode, unit }),
-      ...(tenantEmail && { GSI2PK: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()) }),
+      ...(tenantEmail && { GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail.toLowerCase()) }),
       ...(tenantEmail && { GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit }) }),
       tenantEmail: tenantEmail?.toLowerCase(),
       country: country.toUpperCase(),
@@ -107,7 +107,7 @@ export class PropertyEntity {
    * @returns all properties that a given property manager is assigned to.
    */
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail?.toLowerCase());
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, propertyManagerEmail?.toLowerCase());
     let startKey: StartKey;
     const properties: IProperty[] = [];
     do {
@@ -135,7 +135,7 @@ export class PropertyEntity {
   public async getAllForTenant({ tenantEmail }: { tenantEmail: string; }) {
     let startKey: StartKey;
     const properties: IProperty[] = [];
-    const GSI2PK = generateKey(ENTITY_KEY.TENANT, tenantEmail?.toLowerCase());
+    const GSI2PK = generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail?.toLowerCase());
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
