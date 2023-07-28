@@ -155,7 +155,7 @@ export class PropertyManagerEntity {
     }
   }
 
-  //Add technician to property manager technicians map
+  // Add technician to property manager technicians map
   public async addTechnician(
     { pmEmail, technicianEmail }:
       { pmEmail: string; technicianEmail: string; }) {

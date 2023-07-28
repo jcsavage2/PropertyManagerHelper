@@ -61,7 +61,7 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
     const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: deconstructKey(user.pk) });
     const updatedWorkOrder = JSON.parse(data.response);
     if (updatedWorkOrder) {
-      const newWorkOrders = workOrders
+      workOrders
         .map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo))
         .sort((a, b) => {
           return (
@@ -70,7 +70,7 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
             }) * (order === 'asc' ? 1 : -1)
           );
         });
-      // setWorkOrders(newWorkOrders);
+      fetchWorkOrders();
     }
     setIsUpdating(false);
   };

@@ -47,7 +47,7 @@ export class EventEntity {
       updateType,
       updateDescription,
       updateMadeBy
-    }, { returnValues: "ALL_NEW"});
+    }, { returnValues: "ALL_NEW" });
     //@ts-ignore
     return result.Attributes;
   }
@@ -61,7 +61,7 @@ export class EventEntity {
       const result = (await this.eventEntity.query(
         generateKey(ENTITY_KEY.EVENT, woId),
         {
-            reverse: true,
+          reverse: true,
         }
       ));
       return result.Items ?? [];
