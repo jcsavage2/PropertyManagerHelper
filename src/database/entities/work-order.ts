@@ -125,9 +125,9 @@ export class WorkOrderEntity {
     const result = await this.workOrderEntity.put({
       pk: workOrderIdKey,
       sk: workOrderIdKey,
-      GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
+      GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, propertyManagerEmail.toLowerCase()),
       GSI1SK: workOrderIdKey,
-      GSI2PK: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
+      GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
       GSI2SK: workOrderIdKey,
       permissionToEnter,
       pmEmail: propertyManagerEmail.toLowerCase(),
@@ -161,7 +161,7 @@ export class WorkOrderEntity {
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     let startKey: StartKey;
     const workOrders: IWorkOrder[] = [];
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase());
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, propertyManagerEmail.toLowerCase());
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
@@ -183,13 +183,40 @@ export class WorkOrderEntity {
   }
 
   /**
+   * @returns All work orders for a given tenant
+   */
+  public async getAllForTenant({ tenantEmail }: { tenantEmail: string; }) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
+    const GSI2PK = generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail?.toLowerCase());
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          GSI2PK,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            index: INDEXES.GSI2,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return workOrders;
+  }
+
+  /**
    * @returns All work orders for a given property manager
    */
   public async getAllForTechnician({ technicianEmail }: { technicianEmail: string; }) {
     let startKey: StartKey;
     const workOrders: IWorkOrder[] = [];
 
-    const pk = generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase());
+    const pk = generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase());
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
@@ -253,9 +280,9 @@ export class WorkOrderEntity {
       // Create companion row for the technician
       await this.workOrderEntity.update({
         pk: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
-        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
         address: this.generateAddress(address),
-        GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
         GSI3SK: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
@@ -279,12 +306,12 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string }) {
+  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
     try {
       await this.workOrderEntity.delete({
         pk: key,
-        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
       });
 
       const result = await this.workOrderEntity.update(

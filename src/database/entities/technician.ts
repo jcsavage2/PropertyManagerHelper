@@ -104,7 +104,7 @@ export class TechnicianEntity {
 
       // Create Companion Row
       await this.technicianEntity.update({
-        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail?.toLowerCase()),
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail?.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, email.toLowerCase()),
         technicianEmail: email.toLowerCase(),
         technicianName: toTitleCase(name)
@@ -160,7 +160,7 @@ export class TechnicianEntity {
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     try {
       const result = await PillarDynamoTable.query(
-        generateKey(ENTITY_KEY.PROPERTY_MANAGER, propertyManagerEmail.toLowerCase()),
+        generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, propertyManagerEmail.toLowerCase()),
         {
           limit: 20,
           reverse: true,

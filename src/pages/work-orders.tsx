@@ -1,13 +1,17 @@
 import { WorkOrdersTable } from '@/components/work-orders-table';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import WorkOrder from '@/components/work-order';
+import axios from 'axios';
 import Modal from "react-modal";
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import { AddWorkOrderModal } from '@/components/add-work-order-modal';
+import { IWorkOrder } from '@/database/entities/work-order';
+import { useUserContext } from '@/context/user';
+import { deconstructKey } from '@/utils';
 
 
 const WorkOrders = () => {
@@ -16,11 +20,44 @@ const WorkOrders = () => {
   const [workOrderModalIsOpen, setWorkOrderModalIsOpen] = useState(false);
   const { isMobile } = useDevice();
 
+  const [isFetching, setIsFetching] = useState(false);
+  const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
+
+  const { user } = useUserContext();
+
+  /** Work Order Modal Logic */
+  isBrowser && Modal.setAppElement('#workOrder');
   useEffect(() => {
     setIsBrowser(true);
   }, []);
 
-  isBrowser && Modal.setAppElement('#workOrder');
+  /** Fetch Work Orders For User Type */
+  const fetchWorkOrders = useCallback(async () => {
+    if (isFetching || (!user.userType)) {
+      return;
+    }
+    setIsFetching(true);
+
+    const promise = user.userType === "PROPERTY_MANAGER"
+      ? axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) })
+      : user.userType === "TECHNICIAN"
+        ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: deconstructKey(user.pk) })
+        : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: deconstructKey(user.pk) });
+
+    const { data } = await promise;
+    const orders: IWorkOrder[] = JSON.parse(data.response);
+    if (orders.length) {
+      sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
+      setWorkOrders(orders);
+    }
+
+    setIsFetching(false);
+  }, [isFetching, user]);
+
+  useEffect(() => {
+    fetchWorkOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -42,8 +79,8 @@ const WorkOrders = () => {
               onClick={() => setWorkOrderModalIsOpen(true)}
             >+ New Work Order</button>
           </div>
-          {!isMobile && <WorkOrdersTable />}
-          {isMobile && <WorkOrdersCards />}
+          {!isMobile && <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
+          {isMobile && <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
           <AddWorkOrderModal
             workOrderModalIsOpen={workOrderModalIsOpen}
             setWorkOrderModalIsOpen={setWorkOrderModalIsOpen}

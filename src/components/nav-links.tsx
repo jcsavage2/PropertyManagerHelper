@@ -51,7 +51,7 @@ export const NavLinks = () => {
           <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>
           {sessionUser?.email && (<Link onClick={handleClick} className='hover:text-gray-500 text-lg' href={"/"}>{"Sign Out"}</Link>)}
           {userIsTenant(user) && <Link className='hover:text-gray-500 text-lg' href={"/work-order-chatbot"}>New Work Order</Link>}
-          {userIsTenant(user) && <Link className='hover:text-gray-500 text-lg' href={"/tenant-work-orders"}>Work Orders</Link>}
+          {userIsTenant(user) && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Work Orders</Link>}
           {userIsPropertyManager(user) && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Admin Portal</Link>}
         </div>
       </div>

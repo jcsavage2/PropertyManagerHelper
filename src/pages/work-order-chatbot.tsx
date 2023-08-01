@@ -237,7 +237,7 @@ export default function WorkOrderChatbot() {
                           </p>
                           {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
                             <>
-                              <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", rowGap: "0.3rem", marginTop: "1rem" }}>
+                              <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "0rem", marginTop: "1rem" }}>
                                 {!hasConnectionWithGPT ||
                                   (submitAnywaysSkip && (
                                     <>
@@ -346,7 +346,7 @@ export default function WorkOrderChatbot() {
             </div>
           </div>
         </div>
-      </main>
+      </main >
     </>
   );
 }

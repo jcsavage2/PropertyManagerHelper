@@ -11,7 +11,6 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    // TBU
     const body = req.body as GetPropertiesForPropertyManagerApiRequest;
     const tenantEntity = new TenantEntity();
     const propertyManagerEmail = body.propertyManagerEmail;
