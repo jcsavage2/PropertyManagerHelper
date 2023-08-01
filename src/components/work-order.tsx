@@ -198,7 +198,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
               {workOrder.additionalDetails && workOrder.additionalDetails.length && (
                 <div className="md:hidden mt-2">
                   <div className="font-bold text-center text-base">Additional Info</div>
-                  <div className="text-base text-center text-gray-600 ml-4">"{workOrder.additionalDetails}"</div>
+                  <div className="text-base text-center text-gray-600 ml-4">&quot;{workOrder.additionalDetails}&quot;</div>
                 </div>
               )}
               <div className="font-bold md:mt-4 mt-2 md:ml-12 text-center md:text-start">Status</div>
@@ -246,7 +246,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
               {workOrder.additionalDetails && workOrder.additionalDetails.length && (
                 <div className='mb-4'>
                   <div className="font-bold text-base">Additional Info</div>
-                  <div className="text-base text-gray-600 ml-4">"{workOrder.additionalDetails}"</div>
+                  <div className="text-base text-gray-600 ml-4">&quot;{workOrder.additionalDetails}&quot;</div>
                 </div>
               )}
               <div className="font-bold text-base mb-1">Other Details</div>
