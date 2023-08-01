@@ -23,9 +23,9 @@ interface IWorkOrdersCardsProps {
   isFetching: boolean;
 }
 
-export const WorkOrdersCards = ({ workOrders }: IWorkOrdersCardsProps) => {
+export const WorkOrdersCards = ({ workOrders, fetchWorkOrders, isFetching }: IWorkOrdersCardsProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
+  //const [isFetching, setIsFetching] = useState(false);
   const { user } = useUserContext();
   const { isMobile } = useDevice();
 
@@ -51,7 +51,7 @@ export const WorkOrdersCards = ({ workOrders }: IWorkOrdersCardsProps) => {
   return (
     <>
       <button className="mt-2 ml-2 md:mt-0 bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center"
-        // onClick={fetchWorkOrders}
+        onClick={fetchWorkOrders}
         disabled={isFetching || isUpdating}
       >
         <BiRefresh className='text-2xl' />

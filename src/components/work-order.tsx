@@ -189,19 +189,19 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
           <div>{workOrderId && <div className="inline md:hidden text-xs text-gray-400"># {deconstructKey(workOrderId)}</div>}</div>
           <div className="w-full md:grid md:grid-cols-2">
             <div className="md:col-auto flex flex-col w-full">
-              <div className="font-bold text-center md:text-left text-base mt-4 md:ml-12">Location</div>
+              <div className="font-bold text-center md:text-left text-base md:mt-4 mt-2 md:ml-12">Location</div>
               {workOrder.location && workOrder.location.length ? (
                 <div className="text-md text-center md:text-left md:ml-16 text-gray-600">{workOrder.location}</div>
               ) : (
                 <div className="text-md text-center md:text-left md:ml-16 text-gray-600 italic">None provided</div>
               )}
               {workOrder.additionalDetails && workOrder.additionalDetails.length && (
-                <div className="md:hidden">
+                <div className="md:hidden mt-2">
                   <div className="font-bold text-center text-base">Additional Info</div>
-                  <div className="text-base text-center text-gray-600 ml-4">{workOrder.additionalDetails}</div>
+                  <div className="text-base text-center text-gray-600 ml-4">"{workOrder.additionalDetails}"</div>
                 </div>
               )}
-              <div className="font-bold mt-4 md:ml-12 text-center md:text-start">Status</div>
+              <div className="font-bold md:mt-4 mt-2 md:ml-12 text-center md:text-start">Status</div>
               <div className="mt-1 text-md flex flex-row mx-auto text-gray-600">
                 <button
                   disabled={isUpdatingStatus}
@@ -242,14 +242,14 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
               </div>
             </div>
 
-            <div className="md:col-auto flex-col w-full text-lg mt-4 hidden md:flex">
+            <div className="md:col-auto flex-col w-full text-lg hidden md:flex mt-4">
               {workOrder.additionalDetails && workOrder.additionalDetails.length && (
-                <>
+                <div className='mb-4'>
                   <div className="font-bold text-base">Additional Info</div>
-                  <div className="text-base text-gray-600 ml-4">{workOrder.additionalDetails}</div>
-                </>
+                  <div className="text-base text-gray-600 ml-4">"{workOrder.additionalDetails}"</div>
+                </div>
               )}
-              <div className="font-bold text-base mb-1 mt-2">Other Details</div>
+              <div className="font-bold text-base mb-1">Other Details</div>
               <div className="flex flex-row items-center ml-4 mb-1">
                 <BsPersonFill className="mr-2" />
                 {workOrder.tenantName}({workOrder.tenantEmail})

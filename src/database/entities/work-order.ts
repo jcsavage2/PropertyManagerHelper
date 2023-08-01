@@ -118,6 +118,8 @@ export class WorkOrderEntity {
     propertyManagerEmail,
     status,
     issue,
+    location,
+    additionalDetails,
     tenantName,
     tenantEmail
   }: CreateWorkOrderProps) {
@@ -138,6 +140,8 @@ export class WorkOrderEntity {
       tenantName,
       address: this.generateAddress({ address, country, city, state, postalCode, unit }),
       issue: issue.toLowerCase(),
+      location,
+      additionalDetails,
     });
     return result.Item;
   }
