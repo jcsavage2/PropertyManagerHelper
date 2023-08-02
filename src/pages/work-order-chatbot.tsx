@@ -6,22 +6,27 @@ import { hasAllIssueInfo } from "@/utils";
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from "@/types";
 import { useUserContext } from "@/context/user";
 import Select from "react-select";
+import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
+import { useDevice } from '@/hooks/use-window-size';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState("");
   const [lastUserMessage, setLastUserMessage] = useState("");
   const { user } = useUserContext();
+  const { isMobile } = useDevice();
 
   if (user.userType !== "TENANT") {
     throw new Error("User Must be a Tenant.");
   }
 
-  const addressesOptions = useMemo(() => Object.values(user?.addresses)?.map((address: any) => (
-    {
-      label: `${address?.address} ${address?.unit}`.trim(),
-      value: JSON.stringify(address)
-    }
-  )) ?? [], [user.addresses]);
+  const addressesOptions = useMemo(
+    () =>
+      Object.values(user?.addresses)?.map((address: any) => ({
+        label: `${address?.address} ${address?.unit}`.trim(),
+        value: JSON.stringify(address),
+      })) ?? [],
+    [user.addresses]
+  );
 
   const [isUsingAI, _setIsUsingAI] = useState(true);
 
@@ -39,6 +44,7 @@ export default function WorkOrderChatbot() {
   const [isResponding, setIsResponding] = useState(false);
   const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
+  const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
 
   useEffect(() => {
     user?.pmEmail && setPmEmail(user.pmEmail);
@@ -55,13 +61,16 @@ export default function WorkOrderChatbot() {
     }
   }, [messages, permissionToEnter]);
 
-  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback((e) => {
-    if (isUsingAI) {
-      setUserMessage(e.currentTarget.value);
-    } else {
-      setIssueDescription(e.currentTarget.value);
-    }
-  }, [setUserMessage, setIssueDescription, isUsingAI]);
+  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
+    (e) => {
+      if (isUsingAI) {
+        setUserMessage(e.currentTarget.value);
+      } else {
+        setIssueDescription(e.currentTarget.value);
+      }
+    },
+    [setUserMessage, setIssueDescription, isUsingAI]
+  );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
@@ -89,6 +98,7 @@ export default function WorkOrderChatbot() {
   );
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
+    setSubmittingWorkOrderLoading(true);
     const parsedAddress = JSON.parse(JSON.parse(selectedAddress));
     const body: SendEmailApiRequest = {
       issueDescription,
@@ -113,6 +123,7 @@ export default function WorkOrderChatbot() {
       toast.error("Error Submitting Work Order. Please Try Again", {
         position: toast.POSITION.TOP_CENTER,
       });
+      setSubmittingWorkOrderLoading(false);
       return;
     }
     setMessages([]);
@@ -120,6 +131,7 @@ export default function WorkOrderChatbot() {
     setIssueLocation("");
     setAdditionalDetails("");
     setSubmitAnywaysSkip(false);
+    setSubmittingWorkOrderLoading(false);
     return;
   };
 
@@ -131,7 +143,11 @@ export default function WorkOrderChatbot() {
     e.preventDefault();
     try {
       if (!isUsingAI) {
-        setMessages([...messages, { role: "user", content: issueDescription }, { role: "assistant", content: "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request." }]);
+        setMessages([
+          ...messages,
+          { role: "user", content: issueDescription },
+          { role: "assistant", content: "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request." },
+        ]);
       }
 
       if (userMessage === "") return;
@@ -179,7 +195,7 @@ export default function WorkOrderChatbot() {
       <main style={{ height: "92dvh" }} className="text-center">
         <div>
           <div>
-            <div id="container" style={{ margin: "1dvh auto 0 auto " }} className="w-11/12 sm:w-6/12 mx-auto">
+            <div id="container" style={{ margin: "1dvh auto 0 auto " }} className="w-11/12 lg:w-6/12 md:w-7/12 sm:w-9/12 mx-auto">
               <div className="shadow-xl rounded-lg">
                 <div id="chatbox-header" style={{ padding: "0.5dvh 0" }} className="text-left bg-blue-200 rounded-t-lg">
                   <h3 className="text-xl my-auto text-gray-600 text-center">PILLAR Chat</h3>
@@ -202,24 +218,17 @@ export default function WorkOrderChatbot() {
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
                         <div className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? "bg-gray-200 text-left" : "bg-blue-100 text-right"}`}>
-                          {workOrder.issueDescription && index === lastSystemMessageIndex && (
+                          {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
                               <h3 className="text-left font-semibold">
                                 Issue: <span className="font-normal">{`${workOrder.issueDescription}`}</span>
                               </h3>
                             </div>
                           )}
-                          {workOrder.issueLocation && index === lastSystemMessageIndex && (
+                          {workOrder.issueLocation && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
                               <h3 className="text-left font-semibold">
                                 Issue Location: <span className="font-normal">{workOrder.issueLocation}</span>
-                              </h3>
-                            </div>
-                          )}
-                          {workOrder.additionalDetails && index === lastSystemMessageIndex && (
-                            <div className="text-left mb-4 text-gray-700">
-                              <h3 className="text-left font-semibold">
-                                Additional Details: <span className="font-normal">{workOrder.additionalDetails}</span>
                               </h3>
                             </div>
                           )}
@@ -232,15 +241,15 @@ export default function WorkOrderChatbot() {
                                 {!hasConnectionWithGPT ||
                                   (submitAnywaysSkip && (
                                     <>
-                                      <label htmlFor="issueDescription">Issue Details* </label>
+                                      <label htmlFor="issueDescription">{isMobile ? "Issue*" : "Issue Details*"}</label>
                                       <input className="rounded px-1" id="issueDescription" type={"text"} value={issueDescription} onChange={handleIssueDescriptionChange} />
-                                      <label className="mt-3" htmlFor="issueLocation">Issue Location* </label>
+                                      <label htmlFor="issueLocation">{isMobile ? "Location*" : "Issue Location*"}</label>
                                       <input className="rounded px-1" id="issueLocation" type={"text"} value={issueLocation} onChange={handleIssueLocationChange} />
-                                      <label className="mt-3" htmlFor="additionalDetails">Additional Details </label>
-                                      <input className="rounded px-1" id="additionalDetails" type={"text"} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
                                     </>
                                   ))}
-                                <label className="mt-3" htmlFor="address">Address* </label>
+                                <label htmlFor="additionalDetails">{isMobile ? "Details*" : "Additional Details*"}</label>
+                                <input className="rounded px-1" id="additionalDetails" type={"text"} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
+                                <label htmlFor="address" className="flex items-center">Address* </label>
                                 <Select
                                   onChange={(v) => {
                                     //@ts-ignore
@@ -298,10 +307,10 @@ export default function WorkOrderChatbot() {
                   {((hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && messages.length > 1) || !hasConnectionWithGPT ? (
                     <button
                       onClick={handleSubmitWorkOrder}
-                      disabled={permissionToEnter === "no" || issueDescription.length === 0}
+                      disabled={permissionToEnter === "no" || issueDescription.length === 0 || submittingWorkOrderLoading}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {permissionToEnter === "yes" ? "Submit Work Order" : "Need Permission To Enter"}
+                      {submittingWorkOrderLoading ? <LoadingSpinner containerClass={null} /> : permissionToEnter === "yes" ? "Submit Work Order" : "Need Permission To Enter"}
                     </button>
                   ) : (
                     <form
