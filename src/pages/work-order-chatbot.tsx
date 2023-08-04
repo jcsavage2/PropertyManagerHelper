@@ -247,7 +247,7 @@ export default function WorkOrderChatbot() {
                                       <input className="rounded px-1" id="issueLocation" type={"text"} value={issueLocation} onChange={handleIssueLocationChange} />
                                     </>
                                   ))}
-                                <label htmlFor="additionalDetails">{isMobile ? "Details*" : "Additional Details*"}</label>
+                                <label htmlFor="additionalDetails">{isMobile ? "Details" : "Additional Details"}</label>
                                 <input className="rounded px-1" id="additionalDetails" type={"text"} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
                                 <label htmlFor="address" className="flex items-center">Address* </label>
                                 <Select
