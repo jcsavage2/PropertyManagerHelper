@@ -33,7 +33,7 @@ export default async function handler(
 
     // Create Property
     const uuid = uuidv4();
-    const newProperty = await propertyEntity.create({ address: streetAddress, country, city, state, unit: unitNumber, postalCode, propertyManagerEmail, uuid });
+    const newProperty = await propertyEntity.create({ address: streetAddress, country, city, state, unit: unitNumber, postalCode, propertyManagerEmail, uuid, beds: null, baths: null });
     await propertyManagerEntity.createPropertyCompanionRow({ email: propertyManagerEmail, organization: "", addressPk: newProperty.pk, addressSk: newProperty.sk });
 
     return res.status(200).json({ response: JSON.stringify(newProperty) });
