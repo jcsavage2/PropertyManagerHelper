@@ -258,7 +258,7 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
         </button>
       </div>
 
-      <div className="overflow-x-auto mb-8 border-collapse">
+      <div className="mb-8 border-collapse h-screen">
         {tableView ? (
           <table className={`w-full border-spacing-x-10 table-auto ${isUpdating || (isFetching && 'opacity-25 pointer-events-none')}`}>
             <thead className="">
