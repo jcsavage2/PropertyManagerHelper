@@ -17,6 +17,8 @@ export type CreateTenantBody = {
   city: string;
   country: "US" | "CA";
   postalCode: string;
+  numBeds: number | null;
+  numBaths: number | null;
 };
 
 /**
@@ -38,15 +40,16 @@ export default async function handler(
       city,
       state,
       postalCode,
-      unit
+      unit,
+      numBeds,
+      numBaths
     } = body;
 
     const tenantEntity = new TenantEntity();
     const propertyEntity = new PropertyEntity();
 
-
-    // CreateTenant 
-    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
+    // Create Tenant 
+    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit, beds: numBeds, baths: numBaths });
     // Create Companion Row
     await tenantEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
 
@@ -61,7 +64,9 @@ export default async function handler(
         state,
         postalCode,
         unit,
-        uuid: uuidv4()
+        uuid: uuidv4(),
+        beds: numBeds,
+        baths: numBaths
       });
 
     /** SEND THE EMAIL TO THE USER */

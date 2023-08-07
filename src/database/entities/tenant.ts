@@ -27,6 +27,8 @@ export type CreateTenantProps = {
   city: string;
   state: string;
   postalCode: string;
+  beds: number | null;
+  baths: number | null;
   unit?: string;
 };
 
@@ -58,20 +60,24 @@ export class TenantEntity {
     state,
     postalCode,
     unit,
-    isPrimary
+    isPrimary,
+    numBeds,
+    numBaths
   }: {
     address: string;
     country: string;
     city: string;
     state: string;
     postalCode: string;
-    unit?: string;
     isPrimary: boolean;
+    unit?: string;
+    numBeds?: number;
+    numBaths?: number;
   }) {
     const unitString = unit ? `- ${unit?.toLowerCase()}` : "";
     const key = `${address.toLowerCase()} ${unitString}`;
     return {
-      [key]: { address, unit, city, state, postalCode, country, isPrimary }
+      [key]: { address, unit, city, state, postalCode, country, isPrimary, numBeds, numBaths }
     };
   }
 
@@ -88,7 +94,9 @@ export class TenantEntity {
       city,
       state,
       postalCode,
-      unit
+      unit,
+      beds,
+      baths
     }: CreateTenantProps) {
     try {
       const result = await this.tenant.update({
@@ -108,7 +116,9 @@ export class TenantEntity {
           state,
           postalCode,
           unit,
-          isPrimary: true
+          isPrimary: true,
+          ...(beds && { numBeds: beds }),
+          ...(baths && { numBaths: baths }),
         }),
       }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
       return result;

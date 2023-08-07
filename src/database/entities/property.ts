@@ -15,7 +15,8 @@ export interface IProperty {
   address: string;
   tenants: Map<string, string>; // tenant email, tenant name
   unit: string;
-
+  beds: number;
+  baths: number;
 }
 
 type CreatePropertyProps = {
@@ -28,6 +29,8 @@ type CreatePropertyProps = {
   tenantEmail?: string;
   unit?: string;
   uuid: string;
+  beds: number | null;
+  baths: number | null;
 };
 export class PropertyEntity {
   private propertyEntity: Entity;
@@ -52,6 +55,8 @@ export class PropertyEntity {
         state: { type: 'string' },
         postalCode: { type: 'string' },
         workOrders: { type: 'list' },
+        beds: { type: 'number' },
+        baths: { type: 'number' },
       },
       table: PillarDynamoTable
     } as const);
@@ -62,7 +67,7 @@ export class PropertyEntity {
     return [ENTITY_KEY.PROPERTY, "ADDRESS", address.toUpperCase(), "COUNTRY", country.toUpperCase(), "CITY", city.toUpperCase(), "STATE", state.toUpperCase(), "POSTAL", postalCode.toUpperCase(), "UNIT", unit ? unit?.toUpperCase() : ""].join("#");
   }
 
-  public async create({ address, country = "US", tenantEmail, city, state, postalCode, unit, propertyManagerEmail, uuid }: CreatePropertyProps) {
+  public async create({ address, country = "US", tenantEmail, city, state, postalCode, unit, propertyManagerEmail, uuid, beds, baths }: CreatePropertyProps) {
     const propertyId = generateKey(ENTITY_KEY.PROPERTY, uuid);
     const result = await this.propertyEntity.update({
       pk: propertyId,
@@ -79,6 +84,8 @@ export class PropertyEntity {
       postalCode: postalCode.toUpperCase(),
       pmEmail: propertyManagerEmail.toLowerCase(),
       unit: unit?.toUpperCase() ?? "",
+      ...(beds && { beds: beds }),
+      ...(baths && { baths: baths }),
     }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
 
     //@ts-ignore
