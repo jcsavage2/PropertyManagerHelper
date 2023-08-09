@@ -1,17 +1,20 @@
-import { useUserContext } from "@/context/user";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Modal from 'react-modal';
+import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
 
 const Home = () => {
   const router = useRouter();
   const { query } = router;
-  const { login, sessionUser } = useUserContext();
+  const session = useSession();
+  const sessionUser = session.data?.user ?? null;
+  const sessionStatus = session.status;
   const [showNotice, setShowNotice] = useState(false);
 
 
-  if (query?.authredirect && !sessionUser) {
+  if (query?.authredirect && !sessionUser && sessionStatus === "unauthenticated") {
     const alreadyRedirected = localStorage.getItem("PILLAR::REDIRECT");
     if (!alreadyRedirected) {
       localStorage.setItem("PILLAR::REDIRECT", "true");
@@ -34,6 +37,9 @@ const Home = () => {
 
   function closeModal() {
     setShowNotice(false);
+  }
+  if (sessionStatus === "loading") {
+    return <LoadingSpinner containerClass={"mt-4"} />;
   }
 
   const customStyles = {
@@ -73,17 +79,14 @@ const Home = () => {
           <div className="" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "2em" }}>
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
-              onClick={async () => {
-                await login({ email: sessionUser.email ?? "", userType: "TENANT", name: sessionUser.name ?? "" });
+              onClick={() => {
                 router.push("/work-order-chatbot");
-              }
-              }
+              }}
             >Continue as Tenant</button>
 
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={async () => {
-                await login({ email: sessionUser.email ?? "", userType: "PROPERTY_MANAGER", name: sessionUser.name ?? "" });
                 router.push("/work-orders");
               }}>Continue as Property Manager</button>
             <button
