@@ -46,17 +46,18 @@ export default NextAuth({
         async session({ session, user }) {
             if (user.email) {
                 const userEntity = new UserEntity();
-                //@ts-ignore
-                const existingUser = await userEntity.get({ email: user.email })?.Item ?? null;
-                if (existingUser) {
-                    session.user = { ...session.user, ...existingUser };
-                } else {
-                    const newUser = await userEntity.create({ email: user.email });
-                    if (newUser) {
-                        // @ts-ignore
-                        session.user = { ...session.user, ...newUser?.Attributes };
+                // @ts-ignore
+                await userEntity.get({ email: user.email }).then(async ({ Item }) => {
+                    if (Item) {
+                        session.user = { ...session.user, ...Item };
+                    } else if (user.email) {
+                        const newUser = await userEntity.createBaseUser({ email: user.email });
+                        if (newUser) {
+                            // @ts-ignore
+                            session.user = { ...session.user, ...newUser?.Attributes };
+                        }
                     }
-                }
+                });
             }
             return session;
         },
