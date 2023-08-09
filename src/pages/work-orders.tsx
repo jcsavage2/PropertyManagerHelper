@@ -12,18 +12,21 @@ import { AddWorkOrderModal } from '@/components/add-work-order-modal';
 import { IWorkOrder } from '@/database/entities/work-order';
 import { deconstructKey } from '@/utils';
 import { useSession } from 'next-auth/react';
+import { useUserContext } from '@/context/user';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 
 const WorkOrders = () => {
-  const router = useRouter();
   const [isBrowser, setIsBrowser] = useState(false);
   const [workOrderModalIsOpen, setWorkOrderModalIsOpen] = useState(false);
   const { isMobile } = useDevice();
+  const { userType } = useUserContext();
+  const router = useRouter();
+  const { user } = useSessionUser();
 
   const [isFetching, setIsFetching] = useState(false);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
 
-  const user: any = useSession().data?.user ?? null;
 
   /** Work Order Modal Logic */
   isBrowser && Modal.setAppElement('#workOrder');
@@ -33,16 +36,16 @@ const WorkOrders = () => {
 
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(async () => {
-    if (isFetching || (!user?.userType)) {
+    if (isFetching || (!userType) || !user) {
       return;
     }
     setIsFetching(true);
 
-    const promise = user.userType === "PROPERTY_MANAGER"
-      ? axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) })
-      : user.userType === "TECHNICIAN"
-        ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: deconstructKey(user.pk) })
-        : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: deconstructKey(user.pk) });
+    const promise = userType === "PROPERTY_MANAGER"
+      ? axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: user.email })
+      : userType === "TECHNICIAN"
+        ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: user.email })
+        : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: user.email });
 
     const { data } = await promise;
     const orders: IWorkOrder[] = JSON.parse(data.response);

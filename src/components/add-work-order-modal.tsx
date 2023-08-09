@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { IProperty } from "@/database/entities/property";
 import Select from "react-select";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 const customStyles = {
   content: {
@@ -29,7 +30,7 @@ const customStyles = {
 
 export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpen, onSuccessfulAdd }: { workOrderModalIsOpen: boolean; setWorkOrderModalIsOpen: Dispatch<SetStateAction<boolean>>; onSuccessfulAdd: () => void; }) => {
 
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -61,7 +62,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
 
   useEffect(() => {
     async function getProperties() {
-      if (!user.pmEmail) {
+      if (!user?.pmEmail) {
         return;
       }
       const { data } = await axios.post('/api/get-all-properties-for-pm', {
@@ -73,12 +74,12 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
       }
     }
     getProperties();
-  }, [user.pmEmail]);
+  }, [user?.pmEmail]);
 
   const handleCreateWorkOrder: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      if (!user.pmEmail) {
+      if (!user?.pmEmail) {
         throw new Error("user needs to be a Property Manager.");
       }
       // const { data } = await axios.post("/api/sent-wo", {

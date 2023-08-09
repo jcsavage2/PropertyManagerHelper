@@ -8,31 +8,34 @@ import { useUserContext } from "@/context/user";
 import Select from "react-select";
 import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
 import { useDevice } from '@/hooks/use-window-size';
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState("");
   const [lastUserMessage, setLastUserMessage] = useState("");
-  const { user } = useUserContext();
+  const { user, sessionStatus } = useSessionUser();
+
   const { isMobile } = useDevice();
 
-  if (user.userType !== "TENANT") {
-    throw new Error("User Must be a Tenant.");
-  }
 
   const addressesOptions = useMemo(
-    () =>
-      Object.values(user?.addresses)?.map((address: any) => ({
+    () => {
+      if (!user?.addresses) {
+        return [];
+      }
+      return Object.values(user.addresses)?.map((address: any) => ({
         label: `${address?.address} ${address?.unit}`.trim(),
         value: JSON.stringify(address),
-      })) ?? [],
-    [user.addresses]
+      })) ?? [];
+    },
+    [user?.addresses]
   );
 
   const [isUsingAI, _setIsUsingAI] = useState(true);
 
-  const [pmEmail, setPmEmail] = useState(user.pmEmail ?? "");
-  const [tenantName, setTenantName] = useState(user.tenantName);
-  const [tenantEmail, setTenantEmail] = useState(user.tenantEmail);
+  const [pmEmail, setPmEmail] = useState(user?.pmEmail ?? "");
+  const [tenantName, setTenantName] = useState(user?.tenantName);
+  const [tenantEmail, setTenantEmail] = useState(user?.tenantEmail);
   const [selectedAddress, setSelectedAddress] = useState<string>(addressesOptions?.[0]?.value ?? "");
 
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
@@ -100,6 +103,9 @@ export default function WorkOrderChatbot() {
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
     const parsedAddress = JSON.parse(JSON.parse(selectedAddress));
+    if (!tenantEmail || !tenantName) {
+      return;
+    }
     const body: SendEmailApiRequest = {
       issueDescription,
       issueLocation,
@@ -189,6 +195,14 @@ export default function WorkOrderChatbot() {
     issueLocation,
     additionalDetails,
   };
+
+  if (sessionStatus === "loading") {
+    return <LoadingSpinner containerClass={"mt-4"} />;
+  }
+
+  if (!user?.roles?.includes("TENANT")) {
+    return (<p className="p-4">User Must have the tenant Role assigned to them by a property manager or Owner.</p>);
+  }
 
   return (
     <>

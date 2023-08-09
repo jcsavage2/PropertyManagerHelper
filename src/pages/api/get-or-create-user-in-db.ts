@@ -35,7 +35,7 @@ export default async function handler(
     if (existingUser) {
       return res.status(200).json({ response: JSON.stringify(existingUser) });
     } else {
-      const newUser = await userEntity.create({ email });
+      const newUser = await userEntity.createBaseUser({ email });
       if (newUser) {
         //@ts-ignore
         return res.status(200).json({ response: JSON.stringify(newUser?.Attributes) });

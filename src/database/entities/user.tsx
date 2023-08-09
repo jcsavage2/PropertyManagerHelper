@@ -7,6 +7,7 @@ import { generateKey } from '@/utils';
 interface IBaseUser {
   pk: string;
   sk: string;
+  email: string;
 }
 
 interface ICreatePMUser extends IBaseUser {
@@ -17,6 +18,23 @@ interface ICreatePMUser extends IBaseUser {
 
 interface ICreateUser {
   email: string;
+}
+
+export interface IUser extends IBaseUser {
+  GSI1PK?: string, //PM email
+  GSI1SK?: string,
+  addresses: Record<string, any>;
+  organization?: string,
+  pmEmail?: string;
+  pmName?: string;
+  roles: Array<"TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN">,
+  status?: string;
+  technicianName?: string;
+  technicians: { type: "map"; },
+  tenantEmail?: string;
+  tenantName?: string;
+  tenants: { type: "map"; },
+  userType?: string;
 }
 
 
@@ -60,15 +78,16 @@ export class UserEntity {
 
 
   /**
-   * Creates as new property manager user entity.
+   * Creates as new base user entity with no permissions.
    */
-  public async create(
+  public async createBaseUser(
     { email }: ICreateUser) {
     try {
       const result = await this.userEntity.update({
         pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-        roles: [roles.PROPERTY_MANAGER],
+        roles: [],
+        status: "JOINED"
       }, { returnValues: "ALL_NEW" });
       return result;
     } catch (err) {
@@ -76,34 +95,42 @@ export class UserEntity {
     }
   }
 
+  /**
+   * Creates as new property manager user entity.
+   */
+  public async createTenantUser(
+    { email }: ICreateUser) {
+    try {
+      const result = await this.userEntity.update({
+        pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        roles: [roles.TENANT],
+        status: "INVITED"
+      }, { returnValues: "ALL_NEW" });
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+
+
+  /**
+   * 
+   * @param email {string} users email that you wish to return
+   * @returns User Object.
+   */
   public async get({ email }: { email: string; }) {
     try {
       const params = {
-        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, email.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER)
+        pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER)
       };
       const result = await this.userEntity.get(params, { consistent: true });
       return result;
     } catch (err) {
       console.log({ err });
-    }
-  }
-
-  public async update(
-    { email, name, organization, tenants, properties }:
-      { email: string; name?: string; organization?: string; tenants?: string[], properties?: string[]; }) {
-    try {
-      const result = await this.userEntity.update({
-        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, email.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
-        pmEmail: email.toLowerCase(),
-        ...(name && { name, }),
-        ...(organization && { organization }),
-        userType: ENTITIES.PROPERTY_MANAGER
-      }, { returnValues: "ALL_NEW" });
-      return result;
-    } catch (err) {
-      console.log({ err });
+      return null;
     }
   }
 }

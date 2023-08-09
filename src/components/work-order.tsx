@@ -16,10 +16,10 @@ import { STATUS } from "@/constants";
 import { BsPersonFill } from "react-icons/bs";
 import { IoLocationSharp } from "react-icons/io5";
 import { BiTimeFive } from "react-icons/bi";
-import { userIsTenant } from "@/utils/user-types";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
-const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
+const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -29,7 +29,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   const [assignedTechnicians, setAssignedTechnicians] = useState<OptionType[]>([]);
   const [loadingAssignedTechnicians, setLoadingAssignedTechnicians] = useState(true);
   const [assignedTechniciansMenuOpen, setAssignedTechniciansMenuOpen] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
+  const { userType } = useUserContext();
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
         return;
       }
       const { data } = await axios.post("/api/get-all-technicians-for-pm", {
-        propertyManagerEmail: user.pmEmail,
+        propertyManagerEmail: userType === "PROPERTY_MANAGER" ? user?.email : user?.pmEmail,
       });
       if (data.response) {
         const parsed = JSON.parse(data.response) as ITechnician[];
@@ -123,7 +124,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
   }, [workOrderId]);
 
   const handleUpdateStatus = async (e: any, status: string) => {
-    if (!workOrder) return;
+    if (!workOrder || !user) return;
+
     setIsUpdatingStatus(true);
     const { data } = await axios.post("/api/update-work-order", {
       pk: workOrder.pk,
@@ -141,6 +143,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
 
   const handleAssignTechnician = async (assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
     setLoadingAssignedTechnicians(true);
+    if (!user) return;
+
     const actionType = actionMeta.action;
     if (actionType === "select-option") {
       const selectedTechnician = actionMeta.option as OptionType;
@@ -224,7 +228,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
               <div className="md:ml-16 md:mt-4 w-full">
                 <AsyncSelect
                   placeholder={loadingAssignedTechnicians ? "Loading..." : assignedTechnicians.length === 0 ? "Unassigned" : "Assign technicians..."}
-                  isDisabled={userIsTenant(user)}
+                  isDisabled={userType === "TENANT"}
                   menuPosition="fixed"
                   className={"md:w-3/5 w-5/6 mb-6 md:mt-0 mt-2 md:my-auto mx-auto md:mx-0"}
                   closeMenuOnSelect={false}
@@ -283,19 +287,19 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string }) => {
           )}
           {events
             ? events.map((event: IEvent | null, i: number) => {
-                if (event) {
-                  const formattedDateTime = createdToFormattedDateTime(event.created);
-                  return (
-                    <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
-                      <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
-                      <div className="text-sm text-gray-500">
-                        {formattedDateTime[0]} @{formattedDateTime[1]}
-                      </div>
-                      <div className="break-words">{event.updateDescription}</div>
+              if (event) {
+                const formattedDateTime = createdToFormattedDateTime(event.created);
+                return (
+                  <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
+                    <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
+                    <div className="text-sm text-gray-500">
+                      {formattedDateTime[0]} @{formattedDateTime[1]}
                     </div>
-                  );
-                }
-              })
+                    <div className="break-words">{event.updateDescription}</div>
+                  </div>
+                );
+              }
+            })
             : "No events found"}
         </div>
       </div>

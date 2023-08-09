@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Modal from 'react-modal';
 import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
+import { useUserContext } from "@/context/user";
 
 const Home = () => {
   const router = useRouter();
   const { query } = router;
   const session = useSession();
+  const { setUserType } = useUserContext();
   const sessionUser = session.data?.user ?? null;
   const sessionStatus = session.status;
   const [showNotice, setShowNotice] = useState(false);
@@ -80,6 +82,7 @@ const Home = () => {
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={() => {
+                setUserType("TENANT");
                 router.push("/work-order-chatbot");
               }}
             >Continue as Tenant</button>
@@ -87,12 +90,13 @@ const Home = () => {
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={async () => {
+                setUserType("PROPERTY_MANAGER");
                 router.push("/work-orders");
               }}>Continue as Property Manager</button>
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={async () => {
-                await login({ email: sessionUser.email ?? "", userType: "TECHNICIAN", name: sessionUser.name ?? "" });
+                setUserType("TECHNICIAN");
                 router.push("/work-orders");
               }}>Continue as Technician</button>
           </div>
