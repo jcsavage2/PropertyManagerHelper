@@ -10,8 +10,8 @@ import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import { AddWorkOrderModal } from '@/components/add-work-order-modal';
 import { IWorkOrder } from '@/database/entities/work-order';
-import { useUserContext } from '@/context/user';
 import { deconstructKey } from '@/utils';
+import { useSession } from 'next-auth/react';
 
 
 const WorkOrders = () => {
@@ -23,7 +23,7 @@ const WorkOrders = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
 
-  const { user } = useUserContext();
+  const user: any = useSession().data?.user ?? null;
 
   /** Work Order Modal Logic */
   isBrowser && Modal.setAppElement('#workOrder');
@@ -33,7 +33,7 @@ const WorkOrders = () => {
 
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(async () => {
-    if (isFetching || (!user.userType)) {
+    if (isFetching || (!user?.userType)) {
       return;
     }
     setIsFetching(true);
@@ -57,7 +57,7 @@ const WorkOrders = () => {
   useEffect(() => {
     fetchWorkOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   return (
     <>

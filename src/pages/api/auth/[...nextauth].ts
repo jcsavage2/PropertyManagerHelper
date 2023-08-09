@@ -5,6 +5,8 @@ import { DynamoDBAdapter } from '@next-auth/dynamodb-adapter';
 import { DynamoDBClientConfig } from '@/database';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { PropertyManagerEntity } from '@/database/entities/property-manager';
+import { UserEntity } from '@/database/entities/user';
 
 const clientId = process.env.GOOGLE_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -38,6 +40,27 @@ export default NextAuth({
             clientSecret,
         }),
     ],
+    callbacks: {
+        // Send user properties to the client.
+        // Creates the user if the user does not already exist in the database. 
+        async session({ session, user }) {
+            if (user.email) {
+                const userEntity = new UserEntity();
+                //@ts-ignore
+                const existingUser = await userEntity.get({ email: user.email })?.Item ?? null;
+                if (existingUser) {
+                    session.user = { ...session.user, ...existingUser };
+                } else {
+                    const newUser = await userEntity.create({ email: user.email });
+                    if (newUser) {
+                        // @ts-ignore
+                        session.user = { ...session.user, ...newUser?.Attributes };
+                    }
+                }
+            }
+            return session;
+        },
+    },
     adapter: DynamoDBAdapter(client),
     secret: process.env.JWT_SECRET,
 });
