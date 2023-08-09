@@ -166,7 +166,7 @@ export class TenantEntity {
         pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT)
       };
-      const result = await this.tenant.get(params, { consistent: true });
+      const result = await this.tenant.get(params, { consistent: false });
       return result;
     } catch (err) {
       console.log({ err });

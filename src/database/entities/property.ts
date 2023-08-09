@@ -99,7 +99,7 @@ export class PropertyEntity {
       pk: generateKey(ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()), // can query all properties for a given property manager
       sk: this.generateSk({ address, country, city, state, postalCode, unit })
     };
-    const result = await this.propertyEntity.get(params, { consistent: true });
+    const result = await this.propertyEntity.get(params, { consistent: false });
     return result;
   }
 

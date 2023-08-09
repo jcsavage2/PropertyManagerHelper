@@ -155,7 +155,7 @@ export class WorkOrderEntity {
       pk,
       sk,
     };
-    const result = await this.workOrderEntity.get(params, { consistent: true });
+    const result = await this.workOrderEntity.get(params, { consistent: false });
     return result;
   }
 

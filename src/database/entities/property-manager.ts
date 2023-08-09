@@ -130,7 +130,7 @@ export class PropertyManagerEntity {
         pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, email.toLowerCase()),
         sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER)
       };
-      const result = await this.propertyManagerEntity.get(params, { consistent: true });
+      const result = await this.propertyManagerEntity.get(params, { consistent: false });
       return result;
     } catch (err) {
       console.log({ err });

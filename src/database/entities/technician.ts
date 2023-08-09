@@ -122,7 +122,7 @@ export class TechnicianEntity {
         pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       };
-      const result = await this.technicianEntity.get(params, { consistent: true });
+      const result = await this.technicianEntity.get(params, { consistent: false });
       //@ts-ignore
       return result.Item ?? null;
     } catch (err) {
