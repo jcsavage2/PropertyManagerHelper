@@ -4,7 +4,7 @@ import { createContext, Dispatch, SetStateAction, useCallback, useContext, useEf
 
 export type UserContext = {
   userType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN" | null;
-  setUserType: Dispatch<SetStateAction<"TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN" | null>>;
+  setUserType: (type: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN") => void;
   logOut: () => void;
 };
 
@@ -19,9 +19,23 @@ export const UserContext = createContext<UserContext>({
 export const UserContextProvider = (props: any) => {
   const { user } = useSessionUser();
   const defaultState = user?.roles.length === 1 ? user.roles[0] : null;
-  const [userType, setUserType] = useState(defaultState);
+  const [userType, setType] = useState(defaultState);
 
+  useEffect(() => {
+    const localUserType = localStorage.getItem("PILLAR:USER_TYPE");
+    if (user?.roles?.length === 1 && !userType && !localUserType) {
 
+      setType(user?.roles[0]);
+    }
+    if (localUserType && !userType) {
+      setType(localUserType as any);
+    }
+  }, [user, userType]);
+
+  const setUserType = useCallback((type: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN") => {
+    localStorage.setItem("PILLAR:USER_TYPE", type);
+    setType(type);
+  }, []);
 
   /**
    * 1. Clear local storage - including user data.
@@ -32,7 +46,6 @@ export const UserContextProvider = (props: any) => {
     localStorage.clear();
     signOut();
   };
-
 
   return (
     <UserContext.Provider
