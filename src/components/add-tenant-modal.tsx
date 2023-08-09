@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CSSTransition } from 'react-transition-group';
 import { CreateTenantBody } from "@/pages/api/create-tenant";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 const customStyles = {
   content: {
@@ -28,7 +29,7 @@ const customStyles = {
 
 export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSuccessfulAdd }: { tenantModalIsOpen: boolean; setTenantModalIsOpen: Dispatch<SetStateAction<boolean>>; onSuccessfulAdd: () => void; }) => {
 
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -78,14 +79,12 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
   const handleCreateNewTenant: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      if (!user.pmEmail) {
-        throw new Error("user needs to be a Property Manager.");
-      }
-
+      if (!user) return;
       const body: CreateTenantBody = {
         tenantEmail,
         tenantName,
-        pmEmail: user.pmEmail,
+
+        pmEmail: user.email,
         address,
         unit,
         state,

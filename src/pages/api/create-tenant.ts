@@ -4,6 +4,7 @@ import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
 import { uuid as uuidv4 } from "uuidv4";
+import { UserEntity } from "@/database/entities/user";
 
 
 
@@ -41,14 +42,15 @@ export default async function handler(
       unit
     } = body;
 
-    const tenantEntity = new TenantEntity();
+    const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
 
 
     // CreateTenant 
-    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
+    const newTenant = await userEntity.createTenant({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
+
     // Create Companion Row
-    await tenantEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
+    await userEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
 
     // Create Property
     await propertyEntity.create(
