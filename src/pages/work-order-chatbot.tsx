@@ -127,8 +127,9 @@ export default function WorkOrderChatbot() {
       additionalDetails,
       messages,
       pmEmail,
-      tenantEmail,
-      tenantName,
+      createdByType: "TENANT",
+      creatorEmail: tenantEmail,
+      creatorName: tenantName,
       permissionToEnter,
       address: parsedAddress.address,
       state: parsedAddress.state,
@@ -348,10 +349,10 @@ export default function WorkOrderChatbot() {
                   {((hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && messages.length > 1) || !hasConnectionWithGPT ? (
                     <button
                       onClick={handleSubmitWorkOrder}
-                      disabled={permissionToEnter === "no" || issueDescription.length === 0 || submittingWorkOrderLoading}
+                      disabled={issueDescription.length === 0 || submittingWorkOrderLoading}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? <LoadingSpinner containerClass={null} /> : permissionToEnter === "yes" ? "Submit Work Order" : "Need Permission To Enter"}
+                      {submittingWorkOrderLoading ? <LoadingSpinner containerClass={null} /> : "Submit Work Order"}
                     </button>
                   ) : (
                     <form

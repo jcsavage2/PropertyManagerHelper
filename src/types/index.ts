@@ -28,9 +28,12 @@ export type UserInfo = {
   city: string;
   country?: string;
   postalCode: string;
-  tenantEmail: string;
-  tenantName: string;
+  creatorEmail: string;
+  creatorName: string;
+  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN"  
   permissionToEnter: "yes" | "no";
+  tenantEmail?: string;
+  tenantName?: string;
 };
 
 export type IssueInformation = {

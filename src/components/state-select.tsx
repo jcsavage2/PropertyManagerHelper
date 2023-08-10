@@ -1,6 +1,6 @@
 import { ChangeEventHandler, SetStateAction } from "react";
 
-export const StateSelect = ({ state, setState }: { state: string, setState: React.Dispatch<SetStateAction<string>>; }) => {
+export const StateSelect = ({ state, setState, label, placeholder }: { state: string, setState: React.Dispatch<SetStateAction<string>>; label: string | null; placeholder: string }) => {
 
 	const handleSelectChange: ChangeEventHandler<HTMLSelectElement> = (event) => {
 		setState(event.target.value);
@@ -59,13 +59,13 @@ export const StateSelect = ({ state, setState }: { state: string, setState: Reac
 		{ label: "Wyoming", value: "WY" }
 	];
 	return (
-		<div>
-			<label htmlFor='address'>State*</label>
+		<div className="flex flex-col align-center">
+			{label && <label htmlFor='address' className="mr-2">{label}</label>}
 			<select
-				className='rounded px-1 border-solid border-2 border-slate-200'
+				className={`rounded border-solid border-2 border-slate-200 ${state.length === 0 && 'text-gray-400'}`}
 				value={state}
 				onChange={handleSelectChange}>
-				<option value="">Select...</option>
+				<option value="" disabled>{placeholder}</option>
 				{stateOptions.map((option, index) => (
 					<option key={index} value={option.value}>{option.label}</option>
 				))}

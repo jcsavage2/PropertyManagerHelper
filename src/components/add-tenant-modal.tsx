@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import Modal from "react-modal";
 import { CSSTransition } from "react-transition-group";
 import { CreateTenantBody } from "@/pages/api/create-tenant";
+import { StateSelect } from "./state-select";
 
 const customStyles = {
   content: {
@@ -56,8 +57,6 @@ export const AddTenantModal = ({
   const [postalCode, setPostalCode] = useState("");
   const [numBeds, setNumBeds] = useState(1);
   const [numBaths, setNumBaths] = useState(1);
-  const [floorPlanEditable, setFloorPlanEditable] = useState(false);
-
 
   const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setTenantName(e.currentTarget.value);
@@ -110,8 +109,8 @@ export const AddTenantModal = ({
           city,
           country: "US",
           postalCode,
-          numBeds: floorPlanEditable ? numBeds : null,
-          numBaths: floorPlanEditable ? numBaths : null,
+          numBeds,
+          numBaths,
         };
 
         const { data } = await axios.post("/api/create-tenant", { ...body });
@@ -119,18 +118,30 @@ export const AddTenantModal = ({
         const parsedUser = JSON.parse(response);
         if (parsedUser.modified) {
           onSuccessfulAdd();
-          toast.success("Tenant Created");
+          toast.success("Tenant Created!", {
+            position: toast.POSITION.TOP_CENTER,
+          });
           setTenantModalIsOpen(false);
         }
       } catch (err) {
         console.log({ err });
+        toast.error("Error Creating Tenant. Please Try Again", {
+          position: toast.POSITION.TOP_CENTER,
+        });
       }
     },
-    [user, onSuccessfulAdd, tenantEmail, tenantName, setTenantModalIsOpen, address, unit, state, city, postalCode, floorPlanEditable, numBeds, numBaths]
+    [user, onSuccessfulAdd, tenantEmail, tenantName, setTenantModalIsOpen, address, unit, state, city, postalCode, numBeds, numBaths]
   );
 
   return (
-    <Modal isOpen={tenantModalIsOpen} onAfterOpen={() => {}} onRequestClose={closeModal} contentLabel="Example Modal" closeTimeoutMS={200} style={customStyles}>
+    <Modal
+      isOpen={tenantModalIsOpen}
+      onAfterOpen={() => {}}
+      onRequestClose={closeModal}
+      contentLabel="Add Tenant Modal"
+      closeTimeoutMS={200}
+      style={customStyles}
+    >
       <div className="w-full text-right">
         <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
           X Close
@@ -140,9 +151,28 @@ export const AddTenantModal = ({
       <form onSubmit={handleCreateNewTenant}>
         <CSSTransition in={stage === 0} timeout={500} classNames="slide" unmountOnExit style={{ display: "grid" }}>
           <div>
-            <input className="rounded px-1 border-solid border-2 border-slate-200 mt-5" id="name" placeholder="Tenant Full Name*" type={"text"} value={tenantName} onChange={handleTenantNameChange} />
-            <input className="rounded px-1 border-solid border-2 border-slate-200 mt-5" id="email" placeholder="Tenant Email*" type={"email"} value={tenantEmail} onChange={handleEmailChange} />
-            <button onClick={nextStage} className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="button" disabled={!tenantName || !tenantEmail}>
+            <input
+              className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
+              id="name"
+              placeholder="Tenant Full Name*"
+              type={"text"}
+              value={tenantName}
+              onChange={handleTenantNameChange}
+            />
+            <input
+              className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
+              id="email"
+              placeholder="Tenant Email*"
+              type={"email"}
+              value={tenantEmail}
+              onChange={handleEmailChange}
+            />
+            <button
+              onClick={nextStage}
+              className="bg-blue-200 p-3 mt-7 text-gray-500 hover:bg-blue-300 rounded disabled:opacity-25"
+              type="button"
+              disabled={!tenantName || !tenantEmail}
+            >
               Next
             </button>
           </div>
@@ -157,9 +187,26 @@ export const AddTenantModal = ({
               value={address}
               onChange={handleAddressChange}
             />
-            <input className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full" id="address" placeholder="Unit Number" type={"text"} value={unit} onChange={handleUnitChange} />
-            <input className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full" id="city" placeholder="City*" type={"text"} value={city} onChange={handleCityChange} />
-            <input className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full" id="state" placeholder="State*" type={"text"} value={state} onChange={handleStateChange} />
+            <input
+              className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full"
+              id="address"
+              placeholder="Unit Number"
+              type={"text"}
+              value={unit}
+              onChange={handleUnitChange}
+            />
+            <input
+              className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full"
+              id="city"
+              placeholder="City*"
+              type={"text"}
+              value={city}
+              onChange={handleCityChange}
+            />
+            <div className="w-5/6 mt-5">
+              <StateSelect label={null} placeholder="State*" state={state} setState={setState} />
+            </div>
+
             <input
               className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full"
               id="postalCode"
@@ -168,16 +215,10 @@ export const AddTenantModal = ({
               value={postalCode}
               onChange={handlePostalCodeChange}
             />
-            <div className="mt-5 flex flex-row items-center">
-              <label className="text-gray-600 mr-2" htmlFor="floorPlanEditable">
-                Set Floorplan?{" "}
-              </label>
-              <input type="checkbox" id="floorPlanEditable" checked={floorPlanEditable} onChange={() => setFloorPlanEditable((prev) => !prev)} />
-            </div>
 
-            <div className={`flex flex-row w-5/6 mt-2 items-center sm:w-full ${!floorPlanEditable && "opacity-40"}`}>
+            <div className={`flex flex-row w-5/6 mt-4 items-center sm:w-full`}>
               <label className="text-gray-600 text-center mr-4" htmlFor="beds">
-                Beds:{" "}
+                Beds*:{" "}
               </label>
               <input
                 className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto"
@@ -188,10 +229,9 @@ export const AddTenantModal = ({
                 max={10}
                 value={numBeds}
                 onChange={handleNumBedsChange}
-                disabled={!floorPlanEditable}
               />
               <label className="text-gray-600 text-center ml-2 mr-4" htmlFor="beds">
-                Baths:{" "}
+                Baths*:{" "}
               </label>
               <input
                 className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto"
@@ -202,7 +242,6 @@ export const AddTenantModal = ({
                 step={0.5}
                 value={numBaths}
                 onChange={handleNumBathsChange}
-                disabled={!floorPlanEditable}
               />
             </div>
             <button

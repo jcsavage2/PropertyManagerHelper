@@ -46,7 +46,7 @@ const Properties = () => {
       }
       get();
     }
-  }, [user.pmEmail]);
+  }, [user.pmEmail, addPropetyModalIsOpen]);
 
 
 

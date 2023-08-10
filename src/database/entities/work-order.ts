@@ -257,7 +257,6 @@ export class WorkOrderEntity {
 
       let result = null;
       for (const workOrder of workOrders) {
-        console.log({ workOrder });
         result = await this.workOrderEntity.update({
           pk: workOrder.pk,
           sk: workOrder.sk,
