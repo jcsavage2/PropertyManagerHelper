@@ -62,7 +62,7 @@ export const StateSelect = ({ state, setState, label, placeholder }: { state: st
 		<div className="flex flex-col align-center">
 			{label && <label htmlFor='state' className="mr-2">{label}</label>}
 			<select
-				className={`rounded border-solid border-2 border-slate-200 ${state.length === 0 && 'text-gray-400'}`}
+				className={`rounded border-solid border-2 border-slate-200 py-1 ${state.length === 0 && 'text-gray-400'}`}
 				value={state}
         name="state"
 				onChange={handleSelectChange}>

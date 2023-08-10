@@ -13,27 +13,6 @@ import { uuid as uuidv4 } from "uuidv4";
 import { deconstructKey } from "@/utils";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
 
-const customStyles = {
-  content: {
-    top: "50%",
-    left: "50%",
-    right: "auto",
-    bottom: "auto",
-    transform: "translate(-50%, -50%)",
-    width: "75%",
-    maxHeight: "90%",
-    backgroundColor: "rgba(255, 255, 255)",
-  },
-  overLay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(25, 255, 255, 0.75)",
-  },
-};
-
 export const AddTenantModal = ({
   tenantModalIsOpen,
   setTenantModalIsOpen,
@@ -49,6 +28,27 @@ export const AddTenantModal = ({
   useEffect(() => {
     setIsBrowser(true);
   }, []);
+
+  const customStyles = {
+    content: {
+      top: "50%",
+      left: "50%",
+      right: "auto",
+      bottom: "auto",
+      transform: "translate(-50%, -50%)",
+      width: isMobile ? "90%" : "60%",
+      maxHeight: "90%",
+      backgroundColor: "rgba(255, 255, 255)",
+    },
+    overLay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(25, 255, 255, 0.75)",
+    },
+  };
 
   const [stage, setStage] = useState(0);
 
@@ -224,12 +224,12 @@ export const AddTenantModal = ({
         </CSSTransition>
         <CSSTransition in={stage === 1} timeout={500} classNames="slide" unmountOnExit style={{ display: "grid" }}>
           <div>
-            <div className="flex mt-2 flex-row items-center md:w-3/4 w-5/6 md:mx-auto justify-center">
+            <div className="flex mt-2 flex-row items-center md:w-3/4 w-full mx-auto justify-center">
               <div
                 onClick={() => {
                   setCreateNewProperty(true);
                 }}
-                className={`rounded md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
+                className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
                   createNewProperty && "bg-blue-200 border-blue-200"
                 }`}
               >
@@ -247,9 +247,9 @@ export const AddTenantModal = ({
               </div>
             </div>
             {createNewProperty ? (
-              <>
+              <div className="w-full">
                 <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full"
+                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
                   id="address"
                   placeholder="Street Address*"
                   type={"text"}
@@ -257,7 +257,7 @@ export const AddTenantModal = ({
                   onChange={handleAddressChange}
                 />
                 <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full"
+                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
                   id="address"
                   placeholder="Unit Number"
                   type={"text"}
@@ -265,19 +265,19 @@ export const AddTenantModal = ({
                   onChange={handleUnitChange}
                 />
                 <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full"
+                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
                   id="city"
                   placeholder="City*"
                   type={"text"}
                   value={city}
                   onChange={handleCityChange}
                 />
-                <div className="w-5/6 md:w-full mt-5">
+                <div className="w-full mt-5">
                   <StateSelect label={null} placeholder="State*" state={state} setState={setState} />
                 </div>
 
                 <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-5/6 sm:w-full"
+                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
                   id="postalCode"
                   placeholder="Zip*"
                   type={"text"}
@@ -285,7 +285,7 @@ export const AddTenantModal = ({
                   onChange={handlePostalCodeChange}
                 />
 
-                <div className={`flex flex-row w-5/6 mt-4 items-center sm:w-full`}>
+                <div className={`flex flex-row mt-4 items-center w-full`}>
                   <label className="text-gray-600 text-center mr-4" htmlFor="beds">
                     Beds*:{" "}
                   </label>
@@ -313,21 +313,21 @@ export const AddTenantModal = ({
                     onChange={handleNumBathsChange}
                   />
                 </div>
-              </>
+              </div>
             ) : (
-              <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user.pmEmail ?? ""} />
+              <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user.pmEmail ?? ""} /> 
             )}
 
             <button
               onClick={() => setStage(0)}
-              className="bg-blue-200 p-3 mt-7 text-gray-600 w-5/6 sm:w-full hover:bg-blue-300 rounded disabled:opacity-25"
+              className="bg-blue-200 p-3 mt-7 text-gray-600 w-full hover:bg-blue-300 rounded disabled:opacity-25"
               type="button"
               disabled={!tenantName || !tenantEmail}
             >
               Previous
             </button>
             <button
-              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 w-5/6 sm:w-full rounded disabled:opacity-25"
+              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 w-full rounded disabled:opacity-25"
               type="submit"
               disabled={
                 createNewTenantLoading ||

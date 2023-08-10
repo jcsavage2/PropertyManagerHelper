@@ -2,6 +2,7 @@ import { IProperty } from "@/database/entities/property";
 import axios from "axios";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Select from "react-select";
+import { LoadingSpinner } from "./loading-spinner/loading-spinner";
 
 const PropertySelector = ({
   selectedProperty,
@@ -10,7 +11,7 @@ const PropertySelector = ({
 }: {
   selectedProperty: IProperty | null;
   setSelectedProperty: Dispatch<SetStateAction<IProperty | null>>;
-  email: string
+  email: string;
 }) => {
   const [properties, setProperties] = useState<IProperty[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
@@ -18,12 +19,14 @@ const PropertySelector = ({
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [selectedZip, setSelectedZip] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function getProperties() {
       if (!email || !email.length) {
         return;
       }
+      setLoading(true);
 
       const { data } = await axios.post("/api/get-all-properties-for-pm", {
         propertyManagerEmail: email,
@@ -32,6 +35,7 @@ const PropertySelector = ({
         const parsed: IProperty[] = JSON.parse(data.response);
         setProperties(parsed);
       }
+      setLoading(false);
     }
     getProperties();
   }, [email]);
@@ -75,9 +79,9 @@ const PropertySelector = ({
   }, []);
 
   return (
-    <>
+    <div className={`mt-2 mx-auto ${!selectedProperty ? "w-full" : "w-1/2"}`}>
       {!selectedProperty && (
-        <>
+        <div className="w-full">
           <label className="mt-5" htmlFor="address">
             Street Address*{" "}
           </label>
@@ -149,9 +153,9 @@ const PropertySelector = ({
             name="zip"
             options={zipOptions as { value: string; label: string }[]}
           />
-        </>
+        </div>
       )}
-      <div className="flex flex-row items-center mb-2 mt-4">
+      <div className="flex flex-row items-center justify-center mb-2 mt-4">
         <p className="font-bold mr-2"> {selectedProperty ? `Selected Property: ` : `Select Property* `} </p>
         {selectedProperty && (
           <p>
@@ -159,24 +163,32 @@ const PropertySelector = ({
           </p>
         )}
       </div>
-      {!selectedProperty &&
-        filteredOptions.map((o: IProperty) => {
-          return (
-            <div key={o.pk + o.sk} onClick={() => setSelectedProperty(o)} className="bg-gray-200 rounded mt-1 p-1 cursor-pointer">
-              <p className="text-sm text-gray-800">
-                {o.address.trim()} {o.unit ? " " + o.unit : ""}
-              </p>
-              <p className="text-sm font-light">{o.city + ", " + o.state + " " + o.postalCode}</p>
-            </div>
-          );
-        })}
+
+      {loading && !selectedProperty ? (
+        <LoadingSpinner containerClass={null} />
+      ) : (
+        <>
+          {!selectedProperty
+            ? filteredOptions.map((o: IProperty) => {
+                return (
+                  <div key={o.pk + o.sk} onClick={() => setSelectedProperty(o)} className="bg-gray-200 rounded mt-1 p-1 cursor-pointer">
+                    <p className="text-sm text-gray-800">
+                      {o.address.trim()} {o.unit ? " " + o.unit : ""}
+                    </p>
+                    <p className="text-sm font-light">{o.city + ", " + o.state + " " + o.postalCode}</p>
+                  </div>
+                );
+              })
+            : null}
+        </>
+      )}
 
       {selectedProperty && (
-        <button className="bg-slate-200 py-1 px-2 rounded w-1/2" onClick={() => setSelectedProperty(null)}>
+        <button className="bg-slate-200 py-1 px-2 rounded w-full hover:bg-slate-300" onClick={() => setSelectedProperty(null)}>
           Select Other Property
         </button>
       )}
-    </>
+    </div>
   );
 };
 
