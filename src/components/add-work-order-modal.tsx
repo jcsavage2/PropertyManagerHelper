@@ -47,7 +47,6 @@ export const AddWorkOrderModal = ({
 
   isBrowser && Modal.setAppElement("#workOrder");
 
-  const [properties, setProperties] = useState<IProperty[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<IProperty | null>(null);
   const [issueDescription, setIssueDescription] = useState("");
   const [issueLocation, setIssueLocation] = useState("");
@@ -57,23 +56,6 @@ export const AddWorkOrderModal = ({
   function closeModal() {
     setWorkOrderModalIsOpen(false);
   }
-
-  useEffect(() => {
-    async function getProperties() {
-      if (!user.pmEmail) {
-        return;
-      }
-
-      const { data } = await axios.post("/api/get-all-properties-for-pm", {
-        propertyManagerEmail: user.pmEmail,
-      });
-      if (data.response) {
-        const parsed: IProperty[] = JSON.parse(data.response);
-        setProperties(parsed);
-      }
-    }
-    getProperties();
-  }, [user.pmEmail]);
 
   const handleCreateWorkOrder: FormEventHandler<HTMLFormElement> = useCallback(
     async (event) => {
@@ -109,7 +91,7 @@ export const AddWorkOrderModal = ({
           tenantEmail,
           tenantName: tenant.tenantName,
         };
-        
+
         const res = await axios.post("/api/send-work-order-email", body);
         if (res.status !== 200) throw new Error("Error creating and sending WO email");
 
@@ -167,7 +149,7 @@ export const AddWorkOrderModal = ({
         </button>
       </div>
 
-      <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} properties={properties} />
+      <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user.pmEmail ?? ""} />
 
       <form onSubmit={handleCreateWorkOrder} className="flex flex-col">
         {selectedProperty && (

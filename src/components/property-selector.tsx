@@ -1,21 +1,40 @@
 import { IProperty } from "@/database/entities/property";
-import { Dispatch, SetStateAction, useState } from "react";
+import axios from "axios";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Select from "react-select";
 
 const PropertySelector = ({
   selectedProperty,
   setSelectedProperty,
-  properties,
+  email,
 }: {
   selectedProperty: IProperty | null;
   setSelectedProperty: Dispatch<SetStateAction<IProperty | null>>;
-  properties: IProperty[];
+  email: string
 }) => {
+  const [properties, setProperties] = useState<IProperty[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [selectedZip, setSelectedZip] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getProperties() {
+      if (!email || !email.length) {
+        return;
+      }
+
+      const { data } = await axios.post("/api/get-all-properties-for-pm", {
+        propertyManagerEmail: email,
+      });
+      if (data.response) {
+        const parsed: IProperty[] = JSON.parse(data.response);
+        setProperties(parsed);
+      }
+    }
+    getProperties();
+  }, [email]);
 
   const addressSet = new Set();
   const unitSet = new Set();
@@ -132,7 +151,7 @@ const PropertySelector = ({
           />
         </>
       )}
-      <div className="flex flex-row items-center mb-2">
+      <div className="flex flex-row items-center mb-2 mt-4">
         <p className="font-bold mr-2"> {selectedProperty ? `Selected Property: ` : `Select Property* `} </p>
         {selectedProperty && (
           <p>
@@ -143,7 +162,7 @@ const PropertySelector = ({
       {!selectedProperty &&
         filteredOptions.map((o: IProperty) => {
           return (
-            <div key={o.pk + o.sk} onClick={() => setSelectedProperty(o)} className="bg-gray-200 rounded mt-1 p-1">
+            <div key={o.pk + o.sk} onClick={() => setSelectedProperty(o)} className="bg-gray-200 rounded mt-1 p-1 cursor-pointer">
               <p className="text-sm text-gray-800">
                 {o.address.trim()} {o.unit ? " " + o.unit : ""}
               </p>
@@ -153,7 +172,7 @@ const PropertySelector = ({
         })}
 
       {selectedProperty && (
-        <button className="bg-slate-200 py-1 px-2 rounded" onClick={() => setSelectedProperty(null)}>
+        <button className="bg-slate-200 py-1 px-2 rounded w-1/2" onClick={() => setSelectedProperty(null)}>
           Select Other Property
         </button>
       )}

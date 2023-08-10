@@ -60,10 +60,11 @@ export const StateSelect = ({ state, setState, label, placeholder }: { state: st
 	];
 	return (
 		<div className="flex flex-col align-center">
-			{label && <label htmlFor='address' className="mr-2">{label}</label>}
+			{label && <label htmlFor='state' className="mr-2">{label}</label>}
 			<select
 				className={`rounded border-solid border-2 border-slate-200 ${state.length === 0 && 'text-gray-400'}`}
 				value={state}
+        name="state"
 				onChange={handleSelectChange}>
 				<option value="" disabled>{placeholder}</option>
 				{stateOptions.map((option, index) => (
