@@ -3,36 +3,35 @@ import { PortalLeftPanel } from '@/components/portal-left-panel';
 import TechnicianTable from './technician-table';
 import { useCallback, useEffect, useState } from 'react';
 import { AddTechnicianModal } from '@/components/add-technician-modal';
-import { useUserContext } from '@/context/user';
 import axios from 'axios';
 import { ITechnician } from '@/database/entities/technician';
 import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import { TechnicianCards } from './technician-cards';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { useUserContext } from '@/context/user';
 
 const Technicians = () => {
   const [technicianModalIsOpen, setTenantModalIsOpen] = useState(false);
   const { user } = useSessionUser();
+  const { userType } = useUserContext();
   const { isMobile } = useDevice();
   const [technicians, setTechnicians] = useState<ITechnician[]>([]);
 
   useEffect(() => {
     async function get() {
-      if (!user?.pmEmail) {
-        return;
+      if (!user?.email || userType !== "PROPERTY_MANAGER") return;
+      const { data } = await axios.post("/api/get-all-technicians-for-pm", { pmEmail: user.email });
+      if (data.response) {
+        const techs: ITechnician[] = JSON.parse(data.response);
+        techs.length && setTechnicians(techs);
       }
-      const { data } = await axios.post("/api/get-all-technicians-for-pm", { propertyManagerEmail: user.pmEmail });
-      const techs: ITechnician[] = JSON.parse(data.response);
-      techs.length && setTechnicians(techs);
     }
     get();
-  }, [user?.pmEmail]);
+  }, [user, userType]);
 
   const refetch = useCallback(async () => {
-    if (!user?.pmEmail) {
-      return;
-    }
+    if (!user?.pmEmail) return;
     const { data } = await axios.post("/api/get-all-technicians-for-pm", { propertyManagerEmail: user.pmEmail });
     const techs = JSON.parse(data.response);
     techs.length && setTechnicians(techs);

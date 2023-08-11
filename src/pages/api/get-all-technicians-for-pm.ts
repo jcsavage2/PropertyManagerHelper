@@ -1,9 +1,9 @@
 import { Data } from "@/database";
-import { TechnicianEntity } from "@/database/entities/technician";
+import { UserEntity } from "@/database/entities/user";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type GetTechniciansForPropertyManagerApiRequest = {
-  propertyManagerEmail: "string";
+  pmEmail: string;
 };
 
 export default async function handler(
@@ -12,12 +12,11 @@ export default async function handler(
 ) {
   try {
     const body = req.body as GetTechniciansForPropertyManagerApiRequest;
-    const techEntity = new TechnicianEntity();
-    const propertyManagerEmail = body.propertyManagerEmail;
-    const techs = await techEntity.getAllForPropertyManager({ propertyManagerEmail });
+    const userEntity = new UserEntity();
+    const techs = await userEntity.getAllTechniciansForProperyManager({ pmEmail: body.pmEmail });
     return res.status(200).json({ response: JSON.stringify(techs) });;
-
   } catch (error) {
     console.log({ error });
+    return res.status(200).json({ response: JSON.stringify([]) });;
   }
 }

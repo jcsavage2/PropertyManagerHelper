@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { generateKey } from '@/utils';
+import { generateKey, toTitleCase } from '@/utils';
 
 
 interface IBaseUser {
@@ -15,6 +15,14 @@ interface ICreatePMUser extends IBaseUser {
   pmName: string;
   organization: string;
 }
+
+export interface ICreateTechnician {
+  technicianName: string;
+  technicianEmail: string;
+  status?: "JOINED" | "INVITED";
+  pmEmail: string;
+  organization: string;
+};
 
 interface ICreateUser {
   email: string;
@@ -41,6 +49,7 @@ export interface IUser extends IBaseUser {
   pmName?: string;
   roles: Array<"TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN">,
   status?: string;
+  technicianEmail?: { type: "string"; };
   technicianName?: string;
   technicians: { type: "map"; },
   tenantEmail?: string;
@@ -115,6 +124,46 @@ export class UserEntity {
     }
   }
 
+  public async createTechnician(
+    { technicianName, technicianEmail, pmEmail, organization }: ICreateTechnician) {
+    try {
+      /**
+       * We first need to attempt to create the Technician.
+       * If the technician already exists, we must only update the value of the propertyManager map and the GSI1PK/GSI1SK.
+       * We need one consistent profile though so that when the technician comes to the app, 
+       * they are able to fetch their profile with pk and sk (with their email alone).
+       * We must additionally create a companion row with the Property Manager email as the SK
+       * so we are able to perform the getAll technicians for 
+       */
+      const { Attributes } = await this.userEntity.update({
+        pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail?.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail?.toLowerCase()),
+        organization,
+        ...(pmEmail && {
+          propertyManagers: {
+            $add: [pmEmail.toLowerCase()]
+          }
+        }),
+        status: "INVITED",
+        technicianEmail: technicianEmail.toLowerCase(),
+        technicianName: toTitleCase(technicianName),
+        userType: "TECHNICIAN",
+      }, { returnValues: "ALL_NEW" });
+
+
+      // Create Companion Row
+      await this.userEntity.update({
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail?.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        technicianEmail: technicianEmail.toLowerCase(),
+        technicianName: toTitleCase(technicianName)
+      });
+      return Attributes ?? null;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
 
   /**
    * @returns User entity
@@ -157,6 +206,28 @@ export class UserEntity {
     return tenants;
   }
 
+  public async getAllTechniciansForProperyManager({ pmEmail }: { pmEmail: string; }) {
+    let startKey: StartKey;
+    const technicians = [];
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = await this.userEntity.query(
+          generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail?.toLowerCase()),
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
+          }
+        );
+        console.log({ Items });
+        startKey = LastEvaluatedKey as StartKey;
+        Items?.length && technicians.push(...Items);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return technicians;
+  }
 
   private generateAddress({ address,
     country,
@@ -196,6 +267,7 @@ export class UserEntity {
       roles: { type: "set", required: true },
       status: { type: "string", required: true },
       technicianName: { type: "string" },
+      technicianEmail: { type: "string" },
       technicians: { type: "map" },
       tenantEmail: { type: "string" },
       tenantName: { type: "string" },

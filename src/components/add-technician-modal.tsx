@@ -35,7 +35,7 @@ export type AddTechnicianModalProps = {
 
 export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIsOpen, onSuccessfulAdd }: AddTechnicianModalProps) => {
 
-  const { user } = useSessionUser();
+  const { user, sessionStatus } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -64,13 +64,13 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   const handleCreateNewTechnician: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      if (!user?.email || user?.roles?.includes("PROPERTY_MANAGER") || userType !== "PROPERTY_MANAGER") {
+      if (!user?.email || !user?.roles?.includes("PROPERTY_MANAGER") || userType !== "PROPERTY_MANAGER") {
         throw new Error("user needs to be a Property Manager.");
       }
       const { data } = await axios.post("/api/create-technician", {
         technicianEmail: email,
         technicianName: name,
-        pmEmail: user.pmEmail,
+        pmEmail: user.email,
         organization: user.organization ?? "",
       } as CreateTechnicianBody);
       const { response } = data;

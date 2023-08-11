@@ -46,7 +46,7 @@ export default NextAuth({
 		async session({ session, user }) {
 			if (user.email) {
 				const userEntity = new UserEntity();
-				const databaseUser = userEntity.get({ email: user.email });
+				const databaseUser = await userEntity.get({ email: user.email });
 				if (databaseUser) {
 					session.user = { ...session.user, ...databaseUser };
 				} else {
