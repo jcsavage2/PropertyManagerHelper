@@ -12,6 +12,7 @@ import { GoTasklist } from 'react-icons/go';
 import Select, { SingleValue } from 'react-select';
 import { StatusOptionType } from '@/types';
 import { IoLocationSharp } from 'react-icons/io5';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
@@ -40,7 +41,7 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
     COMPLETE: true,
   });
   const [showStatusFilter, setShowStatusFilter] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
 
 
   const handleSorting = (sortField: keyof IWorkOrder, sortOrder: 'asc' | 'desc') => {
@@ -56,8 +57,9 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
   };
 
   const handleUpdateStatus = async ({ val, pk, sk }: HandleUpdateStatusProps) => {
+    if (!user) return;
     setIsUpdating(true);
-    const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: deconstructKey(user.pk) });
+    const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user?.email });
     const updatedWorkOrder = JSON.parse(data.response);
     if (updatedWorkOrder) {
       workOrders

@@ -1,11 +1,12 @@
 import { useUserContext } from "@/context/user";
 import axios from "axios";
-import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
+import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CSSTransition } from 'react-transition-group';
 import { CreateTenantBody } from "@/pages/api/create-tenant";
 import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { LoadingSpinner } from "./loading-spinner/loading-spinner";
 
 const customStyles = {
   content: {
@@ -48,6 +49,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
 
   const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
@@ -80,10 +82,10 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
     try {
       event.preventDefault();
       if (!user) return;
+      setIsLoading(true);
       const body: CreateTenantBody = {
         tenantEmail,
         tenantName,
-
         pmEmail: user.email,
         address,
         unit,
@@ -96,11 +98,12 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
       const { data } = await axios.post("/api/create-tenant", { ...body });
       const { response } = data;
       const parsedUser = JSON.parse(response);
-      if (parsedUser.modified) {
+      if (parsedUser) {
         onSuccessfulAdd();
         toast.success("Tenant Created");
         setTenantModalIsOpen(false);
       }
+      setIsLoading(false);
     } catch (err) {
       console.log({ err });
     }
@@ -142,7 +145,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
           unmountOnExit
           style={{ display: "grid" }}
         >
-          <div>
+          <div >
             <input
               className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
               id="name"
@@ -150,6 +153,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
               type={"text"}
               value={tenantName}
               onChange={handleTenantNameChange}
+
             />
             <input
               className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
@@ -158,12 +162,14 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
               type={"email"}
               value={tenantEmail}
               onChange={handleEmailChange}
+
             />
             <button
               onClick={nextStage}
               className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
               type="button"
               disabled={!tenantName || !tenantEmail}
+
             >
               Next
             </button>
@@ -176,7 +182,7 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
           unmountOnExit
           style={{ display: "grid" }}
         >
-          <div>
+          <div >
             <input
               className='rounded px-1 border-solid border-2 border-slate-200 mt-5'
               id="address"
@@ -222,14 +228,21 @@ export const AddTenantModal = ({ tenantModalIsOpen, setTenantModalIsOpen, onSucc
               className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
               type="button"
               disabled={!tenantName || !tenantEmail}
-            >Previous</button>
-            <button
-              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-              type="submit"
-              disabled={!tenantName || !tenantEmail || !address || !state || !city || !postalCode}
             >
-              Add Tenant
+              Previous
             </button>
+            {isLoading
+              ? (<LoadingSpinner />)
+              : (
+                <button
+                  className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                  type="submit"
+                  disabled={!tenantName || !tenantEmail || !address || !state || !city || !postalCode}
+                >
+                  Add Tenant
+                </button>
+              )
+            }
           </div>
         </CSSTransition>
       </form>

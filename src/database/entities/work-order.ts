@@ -70,39 +70,35 @@ export interface IWorkOrder {
 };
 
 export class WorkOrderEntity {
-  private workOrderEntity: Entity;
-
-  constructor() {
-    this.workOrderEntity = new Entity({
-      name: ENTITIES.WORK_ORDER,
-      attributes: {
-        pk: { partitionKey: true },
-        sk: { sortKey: true },
-        GSI1PK: { type: "string" }, //PM email
-        GSI1SK: { type: "string" },
-        GSI2PK: { type: "string" }, //Tenant email
-        GSI2SK: { type: "string" },
-        GSI3PK: { type: "string" }, //Technician email
-        GSI3SK: { type: "string" },
-        permissionToEnter: { type: "string" },
-        pmEmail: { type: "string" },
-        issue: { type: "string" },
-        location: { type: "string" },
-        additionalDetails: { type: "string" },
-        tenantEmail: { type: "string" },
-        tenantName: { type: "string" },
-        address: { type: "map" },
-        status: { type: "string" },
-        createdBy: { type: "string" },
-        createdByType: { type: "string" },
-        assignedTo: { type: "set" },
-      },
-      table: PillarDynamoTable,
-    } as const);
-  }
+  private workOrderEntity = new Entity({
+    name: ENTITIES.WORK_ORDER,
+    attributes: {
+      pk: { partitionKey: true },
+      sk: { sortKey: true },
+      GSI1PK: { type: "string" }, //PM email
+      GSI1SK: { type: "string" },
+      GSI2PK: { type: "string" }, //Tenant email
+      GSI2SK: { type: "string" },
+      GSI3PK: { type: "string" }, //Technician email
+      GSI3SK: { type: "string" },
+      permissionToEnter: { type: "string" },
+      pmEmail: { type: "string" },
+      issue: { type: "string" },
+      location: { type: "string" },
+      additionalDetails: { type: "string" },
+      tenantEmail: { type: "string" },
+      tenantName: { type: "string" },
+      address: { type: "map" },
+      status: { type: "string" },
+      createdBy: { type: "string" },
+      createdByType: { type: "string" },
+      assignedTo: { type: "set" },
+    },
+    table: PillarDynamoTable,
+  } as const);
 
   /**
-   * Creates a work order entity.
+   * Create a work order entity.
    */
   public async create({
     uuid,
@@ -124,7 +120,7 @@ export class WorkOrderEntity {
     tenantEmail
   }: CreateWorkOrderProps) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
-    const result = await this.workOrderEntity.put({
+    const result = await this.workOrderEntity.update({
       pk: workOrderIdKey,
       sk: workOrderIdKey,
       GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, propertyManagerEmail.toLowerCase()),
@@ -142,8 +138,8 @@ export class WorkOrderEntity {
       issue: issue.toLowerCase(),
       location,
       additionalDetails,
-    });
-    return result.Item;
+    }, { returnValues: "ALL_NEW" });
+    return result.Attributes;
   }
 
   /**
@@ -162,10 +158,10 @@ export class WorkOrderEntity {
   /**
    * @returns All work orders for a given property manager
    */
-  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+  public async getAllForPropertyManager({ pmEmail }: { pmEmail: string; }) {
     let startKey: StartKey;
-    const workOrders: IWorkOrder[] = [];
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, propertyManagerEmail.toLowerCase());
+    const workOrders = [];
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail?.toLowerCase());
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
@@ -178,7 +174,7 @@ export class WorkOrderEntity {
           }
         ));
         startKey = LastEvaluatedKey as StartKey;
-        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+        Items?.length && workOrders.push(...Items);
       } catch (err) {
         console.log({ err });
       }
@@ -257,7 +253,6 @@ export class WorkOrderEntity {
 
       let result = null;
       for (const workOrder of workOrders) {
-        console.log({ workOrder });
         result = await this.workOrderEntity.update({
           pk: workOrder.pk,
           sk: workOrder.sk,

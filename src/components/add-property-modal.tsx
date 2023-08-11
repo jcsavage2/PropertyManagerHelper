@@ -5,10 +5,11 @@ import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, use
 import Modal from 'react-modal';
 import Select from "react-select";
 import { StateSelect } from "./state-select";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsOpen }: { addPropetyModalIsOpen: boolean; setAddPropertyModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
   const [isBrowser, setIsBrowser] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
 
   useEffect(() => {
     setIsBrowser(true);
@@ -62,6 +63,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
 
   const handleCreateNewProperty: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
+      if (!user?.email) return;
       event.preventDefault();
       const { data } = await axios.post("/api/create-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.pmEmail });
       const { response } = data;

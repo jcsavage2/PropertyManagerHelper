@@ -36,13 +36,11 @@ const WorkOrders = () => {
 
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(async () => {
-    if (isFetching || (!userType) || !user) {
-      return;
-    }
-    setIsFetching(true);
+    if (isFetching || (!userType) || !user) return;
 
+    setIsFetching(true);
     const promise = userType === "PROPERTY_MANAGER"
-      ? axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: user.email })
+      ? axios.post('/api/get-all-work-orders-for-pm', { pmEmail: user.email })
       : userType === "TECHNICIAN"
         ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: user.email })
         : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: user.email });
@@ -55,7 +53,7 @@ const WorkOrders = () => {
     }
 
     setIsFetching(false);
-  }, [isFetching, user]);
+  }, [isFetching, user, userType]);
 
   useEffect(() => {
     fetchWorkOrders();

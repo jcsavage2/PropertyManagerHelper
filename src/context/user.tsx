@@ -18,7 +18,7 @@ export const UserContext = createContext<UserContext>({
 
 export const UserContextProvider = (props: any) => {
   const { user } = useSessionUser();
-  const defaultState = user?.roles.length === 1 ? user.roles[0] : null;
+  const defaultState = user?.roles?.length === 1 ? user?.roles[0] : null;
   const [userType, setType] = useState(defaultState);
 
   useEffect(() => {

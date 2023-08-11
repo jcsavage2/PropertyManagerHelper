@@ -18,50 +18,45 @@ const smtpPort = 'apikey'; // <- don't replace "apikey" it's the actual username
 const emailPassword = process.env.SMTP_PASSWORD;
 
 if (!clientId || !clientSecret || !region) {
-    throw new Error('Missing Auth Credentials!');
+	throw new Error('Missing Auth Credentials!');
 }
 
 const client = DynamoDBDocument.from(new DynamoDB(DynamoDBClientConfig), {
-    marshallOptions: {
-        convertEmptyValues: true,
-        removeUndefinedValues: true,
-        convertClassInstanceToMap: true,
-    },
+	marshallOptions: {
+		convertEmptyValues: true,
+		removeUndefinedValues: true,
+		convertClassInstanceToMap: true,
+	},
 });
 
 export default NextAuth({
-    providers: [
-        Email({
-            server: `smtp://${emailUsername}:${emailPassword}@${emailHost}:${smtpPort}`,
-            from: 'dylan@pillarhq.co',
-        }),
-        GoogleProvider({
-            clientId,
-            clientSecret,
-        }),
-    ],
-    callbacks: {
-        // Send user properties to the client.
-        // Creates the user if the user does not already exist in the database. 
-        async session({ session, user }) {
-            if (user.email) {
-                const userEntity = new UserEntity();
-                // @ts-ignore
-                await userEntity.get({ email: user.email }).then(async ({ Item }) => {
-                    if (Item) {
-                        session.user = { ...session.user, ...Item };
-                    } else if (user.email) {
-                        const newUser = await userEntity.createBaseUser({ email: user.email });
-                        if (newUser) {
-                            // @ts-ignore
-                            session.user = { ...session.user, ...newUser?.Attributes };
-                        }
-                    }
-                });
-            }
-            return session;
-        },
-    },
-    adapter: DynamoDBAdapter(client),
-    secret: process.env.JWT_SECRET,
+	providers: [
+		Email({
+			server: `smtp://${emailUsername}:${emailPassword}@${emailHost}:${smtpPort}`,
+			from: 'dylan@pillarhq.co',
+		}),
+		GoogleProvider({
+			clientId,
+			clientSecret,
+		}),
+	],
+	callbacks: {
+		// Send user properties to the client.
+		// Creates the user if the user does not already exist in the database. 
+		async session({ session, user }) {
+			if (user.email) {
+				const userEntity = new UserEntity();
+				const databaseUser = userEntity.get({ email: user.email });
+				if (databaseUser) {
+					session.user = { ...session.user, ...databaseUser };
+				} else {
+					const newUser = await userEntity.createBaseUser({ email: user.email });
+					session.user = { ...session.user, ...newUser };
+				}
+			}
+			return session;
+		},
+	},
+	adapter: DynamoDBAdapter(client),
+	secret: process.env.JWT_SECRET,
 });

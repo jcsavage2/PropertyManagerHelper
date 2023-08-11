@@ -7,6 +7,7 @@ import { BottomNavigationPanel } from "@/components/bottom-navigation-panel";
 import { TenantsTable } from "@/components/tenants-table";
 import TenantsCards from "./tenant-cards";
 import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { GetPropertiesForPropertyManagerApiRequest } from '../api/get-all-tenants-for-pm';
 
 const Tenants = () => {
   const [tenantModalIsOpen, setTenantModalIsOpen] = useState(false);
@@ -14,17 +15,15 @@ const Tenants = () => {
   const [tenants, setTenants] = useState([]);
   const { isMobile } = useDevice();
 
-
   useEffect(() => {
     async function get() {
       if (!user) return;
-      const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.email });
+      const body: GetPropertiesForPropertyManagerApiRequest = { pmEmail: user.email };
+      const { data } = await axios.post("/api/get-all-tenants-for-pm", body);
       const tenants = JSON.parse(data.response);
       tenants.length && setTenants(tenants);
     }
     get();
-
-
   }, [user]);
 
   /**
@@ -32,7 +31,7 @@ const Tenants = () => {
    */
   const refetch = useCallback(async () => {
     if (!user) return;
-    const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
+    const { data } = await axios.post("/api/get-all-tenants-for-pm", { pmEmail: user?.pmEmail });
     const tenants = JSON.parse(data.response);
     tenants.length && setTenants(tenants);
   }, [user]);

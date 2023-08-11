@@ -1,7 +1,7 @@
 import { deconstructKey, setToShortenedString, toTitleCase } from "@/utils";
 import { IWorkOrder } from "@/database/entities/work-order";
-import { useEffect, useState, useCallback } from "react";
-import { useUserContext } from "@/context/user";
+import { useState } from "react";
+
 import axios from "axios";
 import Link from "next/link";
 import { useDevice } from "@/hooks/use-window-size";
@@ -10,6 +10,7 @@ import { BiRefresh } from "react-icons/bi";
 import { STATUS } from "@/constants";
 import { StatusOptions } from "./work-orders-table";
 import { StatusOptionType } from "@/types";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
@@ -26,7 +27,7 @@ interface IWorkOrdersCardsProps {
 export const WorkOrdersCards = ({ workOrders, fetchWorkOrders, isFetching }: IWorkOrdersCardsProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   //const [isFetching, setIsFetching] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const { isMobile } = useDevice();
 
 

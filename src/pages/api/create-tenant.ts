@@ -47,21 +47,28 @@ export default async function handler(
 
 
     // CreateTenant 
-    const newTenant = await userEntity.createTenant({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
-
-    // Create Companion Row
-    await userEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
+    const newTenant = await userEntity.createTenant({
+      address,
+      city,
+      country,
+      pmEmail,
+      postalCode,
+      state,
+      tenantEmail,
+      tenantName,
+      unit
+    });
 
     // Create Property
     await propertyEntity.create(
       {
-        tenantEmail,
-        propertyManagerEmail: pmEmail,
         address,
-        country,
         city,
-        state,
+        country,
         postalCode,
+        propertyManagerEmail: pmEmail,
+        state,
+        tenantEmail,
         unit,
         uuid: uuidv4()
       });
@@ -136,9 +143,7 @@ export default async function handler(
     });
 
 
-
-    //@ts-ignore
-    return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
+    return res.status(200).json({ response: JSON.stringify(newTenant) });
 
 
   } catch (error) {

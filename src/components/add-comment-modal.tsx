@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CreateCommentBody } from "@/pages/api/create-comment";
 import { deconstructKey } from "@/utils";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 const customStyles = {
   content: {
@@ -36,7 +37,7 @@ export type AddCommentModalProps = {
 
 export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddCommentModalIsOpen, onSuccessfulAdd }: AddCommentModalProps) => {
 
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -58,9 +59,10 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
   const handleCreateNewComment: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
+      if (!user?.email) return;
       const { data } = await axios.post("/api/create-comment", {
         comment,
-        email: deconstructKey(user.pk),
+        email: user?.email?.toLowerCase(),
         workOrderId: deconstructKey(workOrderId)
       } as CreateCommentBody);
       const { response } = data;
