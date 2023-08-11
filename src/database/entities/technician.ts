@@ -153,23 +153,4 @@ export class TechnicianEntity {
       console.log({ err });
     }
   }
-
-  /**
-   * @returns All technicians for a given property manager
-   */
-  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    try {
-      const result = await PillarDynamoTable.query(
-        generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, propertyManagerEmail.toLowerCase()),
-        {
-          limit: 20,
-          reverse: true,
-          beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
-        }
-      );
-      return result.Items ?? [];
-    } catch (err) {
-      console.log({ err });
-    }
-  }
 }

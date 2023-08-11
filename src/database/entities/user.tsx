@@ -219,7 +219,6 @@ export class UserEntity {
             beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
           }
         );
-        console.log({ Items });
         startKey = LastEvaluatedKey as StartKey;
         Items?.length && technicians.push(...Items);
       } catch (err) {

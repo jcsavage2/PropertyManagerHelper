@@ -54,7 +54,7 @@ export class EventEntity {
     { woId: string; }) {
     try {
       const result = await this.eventEntity.query(
-        generateKey(ENTITY_KEY.EVENT, woId), { reverse: true, }
+        generateKey(ENTITY_KEY.EVENT, woId), { reverse: true }
       );
       return result.Items ?? [];
     } catch (err) {

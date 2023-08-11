@@ -28,10 +28,13 @@ const Properties = () => {
 
   useEffect(() => {
     if (!user) return;
+    console.log("RUNNING");
     async function get() {
       try {
-        const { data } = await axios.post("/api/get-all-properties-for-pm", { propertyManagerEmail: user?.pmEmail });
+        console.log("RUNNING");
+        const { data } = await axios.post("/api/get-all-properties-for-pm", { pmEmail: user?.email });
         const properties = JSON.parse(data.response) as IProperty[];
+        console.log({ properties });
         const partialProperties: PartialProperty[] = properties.map((p) => ({
           address: p.address ?? "",
           city: p.city ?? "",

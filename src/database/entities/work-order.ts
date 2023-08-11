@@ -167,6 +167,7 @@ export class WorkOrderEntity {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
           GSI1PK,
           {
+            startKey,
             limit: 20,
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
@@ -194,6 +195,7 @@ export class WorkOrderEntity {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
           GSI2PK,
           {
+            startKey,
             limit: 20,
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
@@ -222,6 +224,7 @@ export class WorkOrderEntity {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
           pk,
           {
+            startKey,
             limit: 20,
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
@@ -243,7 +246,12 @@ export class WorkOrderEntity {
     try {
       do {
         try {
-          const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(pk);
+          const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(pk, {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.TENANT}#`,
+            startKey
+          });
           startKey = LastEvaluatedKey as StartKey;
           workOrders.push(...(Items ?? []) as IWorkOrder[]);
         } catch (err) {
