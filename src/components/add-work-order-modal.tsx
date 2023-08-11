@@ -62,19 +62,16 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
 
   useEffect(() => {
     async function getProperties() {
-      if (!user?.pmEmail) {
-        return;
-      }
-      const { data } = await axios.post('/api/get-all-properties-for-pm', {
-        propertyManagerEmail: user.pmEmail,
-      });
+      if (!user?.email) return;
+      const { data } = await axios.post('/api/get-all-properties-for-pm', { pmEmail: user.email });
+      console.log({ data });
       if (data.response) {
         const parsed: IProperty[] = JSON.parse(data.response);
         setProperties(parsed);
       }
     }
     getProperties();
-  }, [user?.pmEmail]);
+  }, [user]);
 
   const handleCreateWorkOrder: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
@@ -103,18 +100,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
     } catch (err) {
       console.log({ err });
     }
-  }, [
-    user,
-    onSuccessfulAdd,
-    tenantEmail,
-    tenantName,
-    setWorkOrderModalIsOpen,
-    address,
-    unit,
-    state,
-    city,
-    postalCode
-  ]);
+  }, [user]);
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIssueDescription(e.currentTarget.value);
