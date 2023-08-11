@@ -9,16 +9,17 @@ import { ITechnician } from '@/database/entities/technician';
 import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import { TechnicianCards } from './technician-cards';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 const Technicians = () => {
   const [technicianModalIsOpen, setTenantModalIsOpen] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const { isMobile } = useDevice();
   const [technicians, setTechnicians] = useState<ITechnician[]>([]);
 
   useEffect(() => {
     async function get() {
-      if (!user.pmEmail) {
+      if (!user?.pmEmail) {
         return;
       }
       const { data } = await axios.post("/api/get-all-technicians-for-pm", { propertyManagerEmail: user.pmEmail });
@@ -26,16 +27,16 @@ const Technicians = () => {
       techs.length && setTechnicians(techs);
     }
     get();
-  }, [user.pmEmail]);
+  }, [user?.pmEmail]);
 
   const refetch = useCallback(async () => {
-    if (!user.pmEmail) {
+    if (!user?.pmEmail) {
       return;
     }
     const { data } = await axios.post("/api/get-all-technicians-for-pm", { propertyManagerEmail: user.pmEmail });
     const techs = JSON.parse(data.response);
     techs.length && setTechnicians(techs);
-  }, [user.pmEmail]);
+  }, [user]);
 
   const customStyles = isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" };
 
