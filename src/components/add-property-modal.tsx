@@ -17,6 +17,8 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
 
   isBrowser && Modal.setAppElement('#testing');
 
+  const { userType } = useUserContext();
+
   const [tenantName, setTenantName] = useState("");
   const [tenantEmail, setTenantEmail] = useState("");
   const [address, setAddress] = useState("");
@@ -63,9 +65,9 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
 
   const handleCreateNewProperty: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
-      if (!user?.email) return;
+      if (!user?.email || userType !== "PROPERTY_MANAGER") return;
       event.preventDefault();
-      const { data } = await axios.post("/api/create-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.pmEmail });
+      const { data } = await axios.post("/api/create-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.email });
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
@@ -74,7 +76,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
     } catch (err) {
       console.log({ err });
     }
-  }, [user, tenantEmail]);
+  }, [user, userType, tenantEmail]);
 
   return (
     <div>

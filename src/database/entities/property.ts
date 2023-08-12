@@ -107,7 +107,6 @@ export class PropertyEntity {
     let startKey: StartKey;
     const properties = [];
     do {
-      console.log("counting...");
       try {
         const { Items, LastEvaluatedKey } = await this.propertyEntity.query(
           GSI1PK,

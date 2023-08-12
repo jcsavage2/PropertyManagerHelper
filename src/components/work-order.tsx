@@ -137,28 +137,29 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
     setIsUpdatingStatus(false);
   };
 
-  const handleAssignTechnician = async (assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
+  const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
     setLoadingAssignedTechnicians(true);
-    if (!user) return;
-
+    console.log({ user, workOrder });
+    if (!user?.email || !workOrder || userType !== "PROPERTY_MANAGER") return;
     const actionType = actionMeta.action;
     if (actionType === "select-option") {
       const selectedTechnician = actionMeta.option as OptionType;
-      await axios.post("/api/assign-technician", {
+      const body: AssignTechnicianBody = {
         workOrderId,
-        pmEmail: user.pmEmail,
+        pmEmail: user.email,
         technicianEmail: selectedTechnician.value,
         technicianName: selectedTechnician.label,
-        address: workOrder?.address,
+        address: workOrder.address,
         status: workOrder?.status,
         permissionToEnter: workOrder?.permissionToEnter,
         issueDescription: workOrder?.issue,
-      } as AssignTechnicianBody);
+      };
+      await axios.post("/api/assign-technician", body);
     } else if (actionType === "remove-value") {
       const removedTechnician = actionMeta.removedValue as OptionType;
       await axios.post("/api/remove-technician", {
         workOrderId,
-        pmEmail: user.pmEmail,
+        pmEmail: user.email,
         technicianEmail: removedTechnician.value,
         technicianName: removedTechnician.label,
       } as AssignTechnicianBody);

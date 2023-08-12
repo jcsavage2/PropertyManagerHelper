@@ -293,7 +293,7 @@ export class WorkOrderEntity {
         }
       }, { returnValues: "ALL_NEW" });
 
-      return result;
+      return result.Attributes ?? null;
 
 
     } catch (err) {

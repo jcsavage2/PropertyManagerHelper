@@ -31,11 +31,11 @@ const Technicians = () => {
   }, [user, userType]);
 
   const refetch = useCallback(async () => {
-    if (!user?.pmEmail) return;
+    if (!user?.email || userType !== "TECHNICIAN") return;
     const { data } = await axios.post("/api/get-all-technicians-for-pm", { propertyManagerEmail: user.pmEmail });
     const techs = JSON.parse(data.response);
     techs.length && setTechnicians(techs);
-  }, [user]);
+  }, [user, userType]);
 
   const customStyles = isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" };
 
