@@ -24,10 +24,8 @@ export const UserContextProvider = (props: any) => {
   useEffect(() => {
     const localUserType = localStorage.getItem("PILLAR:USER_TYPE");
     if (user?.roles?.length === 1 && !userType && !localUserType) {
-
       setType(user?.roles[0]);
-    }
-    if (localUserType && !userType) {
+    } else if (localUserType && !userType) {
       setType(localUserType as any);
     }
   }, [user, userType]);

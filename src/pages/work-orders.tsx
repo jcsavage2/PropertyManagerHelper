@@ -1,17 +1,24 @@
-import { WorkOrdersTable } from '@/components/work-orders-table';
-import { PortalLeftPanel } from '@/components/portal-left-panel';
-import WorkOrder from '@/components/work-order';
+// External dependencies
 import axios from 'axios';
 import Modal from "react-modal";
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-import { useDevice } from '@/hooks/use-window-size';
+
+// Local components
+import { WorkOrdersTable } from '@/components/work-orders-table';
+import { PortalLeftPanel } from '@/components/portal-left-panel';
+import WorkOrder from '@/components/work-order';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import { AddWorkOrderModal } from '@/components/add-work-order-modal';
-import { IWorkOrder } from '@/database/entities/work-order';
+
+// Hooks and context
+import { useDevice } from '@/hooks/use-window-size';
 import { useUserContext } from '@/context/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
+
+// Types
+import { IWorkOrder } from '@/database/entities/work-order';
 
 
 const WorkOrders = () => {
@@ -34,8 +41,7 @@ const WorkOrders = () => {
 
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(async () => {
-    if (isFetching || (!userType) || !user || router.query.workOrderId) return;
-
+    if (!userType || !user) return;
     setIsFetching(true);
     const promise = userType === "PROPERTY_MANAGER"
       ? axios.post('/api/get-all-work-orders-for-pm', { pmEmail: user.email })
@@ -51,13 +57,20 @@ const WorkOrders = () => {
     }
 
     setIsFetching(false);
-  }, [isFetching, router.query, user, userType]);
+  }, [user, userType]);
 
+
+  /**
+   * We want to fetch workOrders on the initial work-orders page render, when the user is available.
+   * We don't want to fetch all of them if we're just looking at one.
+   */
   useEffect(() => {
+    if (router.query.workOrderId || !user) return;
     if (!workOrders.length) {
       fetchWorkOrders();
     }
-  }, [user, router.query.workOrderId, workOrders.length, fetchWorkOrders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, router.query.workOrderId]);
 
   return (
     <>
@@ -80,8 +93,10 @@ const WorkOrders = () => {
               onClick={() => setWorkOrderModalIsOpen(true)}
             >+ New Work Order</button>
           </div>
-          {!isMobile && <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
-          {isMobile && <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
+          {isMobile ?
+            <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} /> :
+            <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />
+          }
           <AddWorkOrderModal
             workOrderModalIsOpen={workOrderModalIsOpen}
             setWorkOrderModalIsOpen={setWorkOrderModalIsOpen}

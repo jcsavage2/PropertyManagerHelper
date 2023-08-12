@@ -3,7 +3,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import { createdToFormattedDateTime, deconstructKey, generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
 import axios from 'axios';
 import { AiOutlineCheck, AiOutlineFilter, AiOutlineTable } from 'react-icons/ai';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BiCheckbox, BiCheckboxChecked, BiRefresh, BiTimeFive } from 'react-icons/bi';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ import Select, { SingleValue } from 'react-select';
 import { StatusOptionType } from '@/types';
 import { IoLocationSharp } from 'react-icons/io5';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
@@ -190,9 +191,6 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
       </tr>
     );
   });
-  const fetcher = useCallback(async () => {
-    await fetchWorkOrders();
-  }, []);
 
   const handleSortingChange = (accessor: keyof IWorkOrder) => {
     const sortOrder = accessor === sortField && order === 'asc' ? 'desc' : 'asc';
