@@ -139,7 +139,6 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
 
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
     setLoadingAssignedTechnicians(true);
-    console.log({ user, workOrder });
     if (!user?.email || !workOrder || userType !== "PROPERTY_MANAGER") return;
     const actionType = actionMeta.action;
     if (actionType === "select-option") {
