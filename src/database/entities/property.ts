@@ -120,7 +120,6 @@ export class PropertyEntity {
         );
         startKey = LastEvaluatedKey as StartKey;
         Items?.length && properties.push(...Items);
-        console.log({ Items: Items?.length });
       } catch (err) {
         console.log({ err });
       }
