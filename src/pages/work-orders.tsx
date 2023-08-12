@@ -10,8 +10,6 @@ import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import { AddWorkOrderModal } from '@/components/add-work-order-modal';
 import { IWorkOrder } from '@/database/entities/work-order';
-import { deconstructKey } from '@/utils';
-import { useSession } from 'next-auth/react';
 import { useUserContext } from '@/context/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 

@@ -44,7 +44,7 @@ export const UserContextProvider = (props: any) => {
    */
   const logOut = () => {
     localStorage.clear();
-    signOut();
+    signOut({ callbackUrl: window.location.origin });
   };
 
   return (

@@ -58,12 +58,12 @@ export interface IUser extends IBaseUser {
   userType?: string;
 }
 
-const userRoles = {
-  TECHNICIAN: "technician", // Ability to update Work Orders
-  PROPERTY_MANAGER: "propertyManager", // Ability to Add New Tenants, 
-  TENANT: "tenant", // Ability to Create and Modify Work Orders
-  ORG_OWNER: "orgOwner" // Ability to add PMs, See Org-View of outstanding Work Orders, Technicians, etc. 
-};
+export const userRoles = {
+  TECHNICIAN: "TECHNICIAN", // Ability to update Work Orders
+  PROPERTY_MANAGER: "PROPERTY_MANAGER", // Ability to Add New Tenants, 
+  TENANT: "TENANT", // Ability to Create and Modify Work Orders
+  ORG_OWNER: "ORG_OWNER" // Ability to add PMs, See Org-View of outstanding Work Orders, Technicians, etc. 
+} as const;
 
 
 export class UserEntity {

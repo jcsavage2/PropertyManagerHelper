@@ -34,12 +34,6 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
 
   useEffect(() => {
-    getWorkOrder();
-    getWorkOrderEvents();
-    getTechnicians();
-  }, []);
-
-  useEffect(() => {
     setLoadingAssignedTechnicians(true);
     //set assigned technicians name + email using technicianOptions
     setAssignedTechnicians([]);
@@ -56,11 +50,11 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
 
   async function getTechnicians() {
     try {
-      if (!workOrderId) {
+      if (!workOrderId || userType !== "PROPERTY_MANAGER") {
         return;
       }
       const { data } = await axios.post("/api/get-all-technicians-for-pm", {
-        propertyManagerEmail: userType === "PROPERTY_MANAGER" ? user?.email : user?.pmEmail,
+        propertyManagerEmail: user?.email
       });
       if (data.response) {
         const parsed = JSON.parse(data.response) as ITechnician[];
@@ -125,15 +119,17 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
 
   const handleUpdateStatus = async (e: any, status: string) => {
     if (!workOrder || !user) return;
-
     setIsUpdatingStatus(true);
+
     const { data } = await axios.post("/api/update-work-order", {
       pk: workOrder.pk,
       sk: workOrder.sk,
       status: status,
-      email: deconstructKey(user.pk),
+      email: user.email,
     });
+
     const updatedWorkOrder = JSON.parse(data.response);
+
     if (updatedWorkOrder) {
       setWorkOrder(updatedWorkOrder.Attributes);
     }
@@ -171,6 +167,12 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
     await getWorkOrderEvents();
     setLoadingAssignedTechnicians(false);
   };
+
+  useEffect(() => {
+    getWorkOrder();
+    getWorkOrderEvents();
+    getTechnicians();
+  }, []);
 
   if (workOrder && !isLoading) {
     return (

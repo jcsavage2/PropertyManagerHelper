@@ -8,14 +8,14 @@ import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { PropertyManagerEntity } from '@/database/entities/property-manager';
 import { UserEntity } from '@/database/entities/user';
 
-const clientId = process.env.GOOGLE_CLIENT_ID;
-const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-const region = process.env.REGION;
+const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const clientSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;
+const region = process.env.NEXT_PUBLIC_REGION;
 
 const emailHost = 'smtp.sendgrid.net';
 const emailUsername = 'apikey'; // <- don't replace "apikey" it's the actual username
 const smtpPort = 'apikey'; // <- don't replace "apikey" it's the actual username
-const emailPassword = process.env.SMTP_PASSWORD;
+const emailPassword = process.env.NEXT_PUBLIC_SMTP_PASSWORD;
 
 if (!clientId || !clientSecret || !region) {
 	throw new Error('Missing Auth Credentials!');
@@ -46,7 +46,7 @@ export default NextAuth({
 		async session({ session, user }) {
 			if (user.email) {
 				const userEntity = new UserEntity();
-				const databaseUser = await userEntity.get({ email: user.email });
+				const databaseUser = await userEntity.get({ email: user.email.toLowerCase() });
 				if (databaseUser) {
 					session.user = { ...session.user, ...databaseUser };
 				} else {
@@ -58,5 +58,5 @@ export default NextAuth({
 		},
 	},
 	adapter: DynamoDBAdapter(client),
-	secret: process.env.JWT_SECRET,
+	secret: process.env.NEXT_PUBLIC_JWT_SECRET,
 });

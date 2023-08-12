@@ -4,17 +4,16 @@ import { ChatCompletionRequestMessage } from "openai";
 import { toast } from "react-toastify";
 import { hasAllIssueInfo } from "@/utils";
 import { AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from "@/types";
-import { useUserContext } from "@/context/user";
 import Select from "react-select";
 import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
 import { useDevice } from '@/hooks/use-window-size';
 import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { userRoles } from "@/database/entities/user";
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState("");
   const [lastUserMessage, setLastUserMessage] = useState("");
   const { user, sessionStatus } = useSessionUser();
-
   const { isMobile } = useDevice();
 
 
@@ -23,7 +22,7 @@ export default function WorkOrderChatbot() {
       if (!user?.addresses) {
         return [];
       }
-      return Object.values(user.addresses)?.map((address: any) => ({
+      return Object.values(user?.addresses)?.map((address: any) => ({
         label: `${address?.address} ${address?.unit}`.trim(),
         value: JSON.stringify(address),
       })) ?? [];
@@ -49,11 +48,12 @@ export default function WorkOrderChatbot() {
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
 
+  console.log({ user });
   useEffect(() => {
     user?.pmEmail && setPmEmail(user.pmEmail);
     user?.tenantName && setTenantName(user.tenantName);
     user?.tenantEmail && setTenantEmail(user.tenantEmail);
-    addressesOptions.length > 0 && setSelectedAddress(JSON.stringify(addressesOptions?.[0]?.value ?? ""));
+    addressesOptions?.length > 0 && setSelectedAddress(JSON.stringify(addressesOptions?.[0]?.value ?? ""));
   }, [user, addressesOptions]);
 
   // Scroll to bottom when new message added
@@ -200,7 +200,7 @@ export default function WorkOrderChatbot() {
     return <LoadingSpinner containerClass={"mt-4"} />;
   }
 
-  if (!user?.roles?.includes("TENANT")) {
+  if (!user?.roles?.includes(userRoles.TENANT)) {
     return (<p className="p-4">User Must have the tenant Role assigned to them by a property manager or Owner.</p>);
   }
 
