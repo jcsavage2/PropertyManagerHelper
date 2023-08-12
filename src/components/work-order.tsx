@@ -18,6 +18,7 @@ import { IoLocationSharp } from "react-icons/io5";
 import { BiTimeFive } from "react-icons/bi";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
 import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { GetTechniciansForPropertyManagerApiRequest } from "@/pages/api/get-all-technicians-for-pm";
 
 const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -49,25 +50,19 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   }, [workOrder, workOrder?.assignedTo, technicianOptions]);
 
   async function getTechnicians() {
+    if (!workOrderId || userType !== "PROPERTY_MANAGER" || !user) return;
     try {
-      if (!workOrderId || userType !== "PROPERTY_MANAGER") {
-        return;
-      }
-      const { data } = await axios.post("/api/get-all-technicians-for-pm", {
-        propertyManagerEmail: user?.email
-      });
+      const body: GetTechniciansForPropertyManagerApiRequest = { pmEmail: user?.email };
+      const { data } = await axios.post("/api/get-all-technicians-for-pm", body);
       if (data.response) {
-        const parsed = JSON.parse(data.response) as ITechnician[];
-        setTechnicianOptions([]);
-        for (let i = 0; i < parsed.length; i++) {
-          setTechnicianOptions((prev) => [
-            ...prev,
-            {
-              value: parsed[i].technicianEmail as string,
-              label: parsed[i].technicianName as string,
-            },
-          ]);
-        }
+        const parsedTechnicians = JSON.parse(data.response) as ITechnician[];
+        const mappedTechnicians = parsedTechnicians.map(technician => {
+          return {
+            value: technician.technicianEmail,
+            label: technician.technicianName
+          };
+        });
+        setTechnicianOptions(mappedTechnicians);
         setLoadingAssignedTechnicians(false);
       }
     } catch (err) {
