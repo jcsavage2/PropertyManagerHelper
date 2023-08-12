@@ -48,7 +48,6 @@ export default function WorkOrderChatbot() {
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
 
-  console.log({ user });
   useEffect(() => {
     user?.pmEmail && setPmEmail(user.pmEmail);
     user?.tenantName && setTenantName(user.tenantName);
