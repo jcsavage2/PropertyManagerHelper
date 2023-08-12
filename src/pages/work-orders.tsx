@@ -34,7 +34,7 @@ const WorkOrders = () => {
 
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(async () => {
-    if (isFetching || (!userType) || !user) return;
+    if (isFetching || (!userType) || !user || router.query.workOrderId) return;
 
     setIsFetching(true);
     const promise = userType === "PROPERTY_MANAGER"
@@ -51,23 +51,25 @@ const WorkOrders = () => {
     }
 
     setIsFetching(false);
-  }, [isFetching, user, userType]);
+  }, [isFetching, router.query, user, userType]);
 
   useEffect(() => {
-    fetchWorkOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    if (!workOrders.length) {
+      fetchWorkOrders();
+    }
+  }, [user, router.query.workOrderId, workOrders.length, fetchWorkOrders]);
 
   return (
     <>
       <Modal
         isOpen={!!router.query.workOrderId}
-        onRequestClose={() => router.push('/work-orders')}
+        onRequestClose={() => router.push('/work-orders')
+        }
         contentLabel="Post modal"
         closeTimeoutMS={200}
       >
         <WorkOrder workOrderId={router.query.workOrderId as string} />
-      </Modal>
+      </Modal >
       <div id="workOrder" className="mx-4 mt-4" style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
         {!isMobile && <PortalLeftPanel />}
         <div className="lg:max-w-5xl">

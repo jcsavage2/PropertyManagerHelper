@@ -20,7 +20,7 @@ export default async function handler(
     }
     const workOrderEntity = new WorkOrderEntity();
     const workOrder = await workOrderEntity.get({ pk, sk });
-    return res.status(200).json({ response: JSON.stringify(workOrder) });
+    return res.status(200).json({ response: JSON.stringify(workOrder.Item) });
   } catch (error) {
     console.error(error);
   }

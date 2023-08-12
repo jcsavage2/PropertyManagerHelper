@@ -90,8 +90,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
         sk: workOrderId,
       });
       if (data.response) {
-        const parsed = JSON.parse(data.response);
-        const workOrder: IWorkOrder = parsed.Item;
+        const workOrder: IWorkOrder = JSON.parse(data.response);
         setWorkOrder(workOrder);
         setIsLoading(false);
       }
