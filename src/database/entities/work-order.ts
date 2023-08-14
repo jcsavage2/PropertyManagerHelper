@@ -237,7 +237,7 @@ export class WorkOrderEntity {
           const { Items, LastEvaluatedKey } = await this.workOrderEntity.query(pk, {
             limit: 20,
             reverse: true,
-            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}`,
             startKey
           });
           startKey = LastEvaluatedKey as StartKey;
@@ -274,13 +274,16 @@ export class WorkOrderEntity {
     try {
       // Create companion row for the technician
       await this.workOrderEntity.update({
-        pk: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
-        sk: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
+        pk: workOrderIdKey,
+        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
         address: this.generateAddress(address),
         GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
-        GSI3SK: generateKey(ENTITY_KEY.WORK_ORDER, workOrderId),
+        GSI3SK: workOrderIdKey,
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
+        assignedTo: {
+          $add: [technicianEmail.toLowerCase()]
+        },
         pmEmail,
         status
       });
@@ -306,7 +309,7 @@ export class WorkOrderEntity {
     try {
       await this.workOrderEntity.delete({
         pk: key,
-        sk: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       });
 
       const result = await this.workOrderEntity.update(

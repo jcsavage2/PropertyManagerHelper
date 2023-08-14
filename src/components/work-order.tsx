@@ -224,7 +224,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
               <div className="md:ml-16 md:mt-4 w-full">
                 <AsyncSelect
                   placeholder={loadingAssignedTechnicians ? "Loading..." : assignedTechnicians.length === 0 ? "Unassigned" : "Assign technicians..."}
-                  isDisabled={userType === "TENANT"}
+                  isDisabled={userType !== "PROPERTY_MANAGER"} // potentially could have logic for technicians to "self assign"
                   menuPosition="fixed"
                   className={"md:w-3/5 w-5/6 mb-6 md:mt-0 mt-2 md:my-auto mx-auto md:mx-0"}
                   closeMenuOnSelect={false}

@@ -66,9 +66,7 @@ const WorkOrders = () => {
    */
   useEffect(() => {
     if (router.query.workOrderId || !user) return;
-    if (!workOrders.length) {
-      fetchWorkOrders();
-    }
+    fetchWorkOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router.query.workOrderId]);
 
