@@ -4,6 +4,7 @@ import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
 import { uuid as uuidv4 } from "uuidv4";
+import { UserEntity } from "@/database/entities/user";
 
 
 
@@ -41,31 +42,39 @@ export default async function handler(
       unit
     } = body;
 
-    const tenantEntity = new TenantEntity();
+    const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
 
 
     // CreateTenant 
-    const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
-    // Create Companion Row
-    await tenantEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
+    const newTenant = await userEntity.createTenant({
+      address,
+      city,
+      country,
+      pmEmail,
+      postalCode,
+      state,
+      tenantEmail,
+      tenantName,
+      unit
+    });
 
     // Create Property
     await propertyEntity.create(
       {
-        tenantEmail,
-        propertyManagerEmail: pmEmail,
         address,
-        country,
         city,
-        state,
+        country,
         postalCode,
+        propertyManagerEmail: pmEmail,
+        state,
+        tenantEmail,
         unit,
         uuid: uuidv4()
       });
 
     /** SEND THE EMAIL TO THE USER */
-    const apiKey = process.env.SENDGRID_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
       throw new Error("missing SENDGRID_API_KEY env variable.");
     }
@@ -134,9 +143,7 @@ export default async function handler(
     });
 
 
-
-    //@ts-ignore
-    return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
+    return res.status(200).json({ response: JSON.stringify(newTenant) });
 
 
   } catch (error) {

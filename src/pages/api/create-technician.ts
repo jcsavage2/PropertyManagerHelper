@@ -1,5 +1,6 @@
 import { Data } from "@/database";
 import { TechnicianEntity } from "@/database/entities/technician";
+import { UserEntity } from "@/database/entities/user";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export type CreateTechnicianBody = {
@@ -26,12 +27,11 @@ export default async function handler(
       pmEmail,
     } = body;
 
-    const technicianEntity = new TechnicianEntity();
+    const userEntity = new UserEntity();
 
-    const newTechnician = await technicianEntity.create({ name: technicianName, email: technicianEmail, organization, pmEmail });
+    const newTechnician = await userEntity.createTechnician({ technicianName, technicianEmail, organization, pmEmail });
 
-    //@ts-ignore
-    return res.status(200).json({ response: JSON.stringify(newTechnician.Attributes) });
+    return res.status(200).json({ response: JSON.stringify(newTechnician) });
   } catch (error) {
     console.log({ error });
   }

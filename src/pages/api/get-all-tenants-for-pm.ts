@@ -1,9 +1,9 @@
 import { Data } from "@/database";
-import { TenantEntity } from "@/database/entities/tenant";
+import { UserEntity } from "@/database/entities/user";
 import { NextApiRequest, NextApiResponse } from "next";
 
-type GetPropertiesForPropertyManagerApiRequest = {
-  propertyManagerEmail: "string";
+export type GetPropertiesForPropertyManagerApiRequest = {
+  pmEmail: string;
 };
 
 export default async function handler(
@@ -12,9 +12,8 @@ export default async function handler(
 ) {
   try {
     const body = req.body as GetPropertiesForPropertyManagerApiRequest;
-    const tenantEntity = new TenantEntity();
-    const propertyManagerEmail = body.propertyManagerEmail;
-    const tenants = await tenantEntity.getAllForPropertyManager({ propertyManagerEmail });
+    const userEntity = new UserEntity();
+    const tenants = await userEntity.getAllTenantsForProperyManager({ pmEmail: body.pmEmail });
     return res.status(200).json({ response: JSON.stringify(tenants) });
 
   } catch (error) {

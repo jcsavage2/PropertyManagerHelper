@@ -12,11 +12,12 @@ import React from "react";
 import { PartialProperty, useSortableData } from "@/hooks/use-sortable-data";
 import { IProperty } from "@/database/entities/property";
 import { PropertiesCards } from "@/components/properties-cards";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 
 
 const Properties = () => {
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const [addPropetyModalIsOpen, setAddPropertyModalIsOpen] = useState(false);
   const [properties, setProperties] = useState<PartialProperty[]>([]);
   const { isMobile } = useDevice();
@@ -26,27 +27,30 @@ const Properties = () => {
   const { items, requestSort, sortConfig } = useSortableData(properties);
 
   useEffect(() => {
-    if (user.pmEmail) {
-      async function get() {
-        try {
-          const { data } = await axios.post("/api/get-all-properties-for-pm", { propertyManagerEmail: user.pmEmail });
-          const properties = JSON.parse(data.response) as IProperty[];
-          const partialProperties: PartialProperty[] = properties.map((p) => ({
-            address: p.address ?? "",
-            city: p.city ?? "",
-            state: p.state ?? "",
-            postalCode: p.postalCode ?? "",
-            unit: p.unit ?? ""
-          }));
-          partialProperties.length && setProperties(partialProperties);
-          setIsLoading(false);
-        } catch (e) {
-          console.log({ e });
-        }
+    if (!user) return;
+    console.log("RUNNING");
+    async function get() {
+      try {
+        console.log("RUNNING");
+        const { data } = await axios.post("/api/get-all-properties-for-pm", { pmEmail: user?.email });
+        const properties = JSON.parse(data.response) as IProperty[];
+        console.log({ properties });
+        const partialProperties: PartialProperty[] = properties.map((p) => ({
+          address: p.address ?? "",
+          city: p.city ?? "",
+          state: p.state ?? "",
+          postalCode: p.postalCode ?? "",
+          unit: p.unit ?? ""
+        }));
+        partialProperties.length && setProperties(partialProperties);
+        setIsLoading(false);
+      } catch (e) {
+        console.log({ e });
       }
-      get();
     }
-  }, [user.pmEmail]);
+    get();
+
+  }, [user]);
 
 
 

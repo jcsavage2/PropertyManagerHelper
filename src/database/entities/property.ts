@@ -30,32 +30,28 @@ type CreatePropertyProps = {
   uuid: string;
 };
 export class PropertyEntity {
-  private propertyEntity: Entity;
-
-  constructor() {
-    this.propertyEntity = new Entity({
-      name: ENTITIES.PROPERTY,
-      attributes: {
-        pk: { partitionKey: true },
-        sk: { sortKey: true },
-        GSI1PK: { type: "string" },
-        GSI1SK: { type: "string" },
-        GSI2PK: { type: "string" },
-        GSI2SK: { type: "string" },
-        country: { type: 'string' },
-        address: { type: 'string' },
-        pmEmail: { type: "string" },
-        tenantEmail: { type: "string" },
-        tenants: { type: "map" },
-        unit: { type: 'string' },
-        city: { type: 'string', },
-        state: { type: 'string' },
-        postalCode: { type: 'string' },
-        workOrders: { type: 'list' },
-      },
-      table: PillarDynamoTable
-    } as const);
-  }
+  private propertyEntity = new Entity({
+    name: ENTITIES.PROPERTY,
+    attributes: {
+      pk: { partitionKey: true },
+      sk: { sortKey: true },
+      GSI1PK: { type: "string" },
+      GSI1SK: { type: "string" },
+      GSI2PK: { type: "string" },
+      GSI2SK: { type: "string" },
+      country: { type: 'string' },
+      address: { type: 'string' },
+      pmEmail: { type: "string" },
+      tenantEmail: { type: "string" },
+      tenants: { type: "map" },
+      unit: { type: 'string' },
+      city: { type: 'string', },
+      state: { type: 'string' },
+      postalCode: { type: 'string' },
+      workOrders: { type: 'list' },
+    },
+    table: PillarDynamoTable
+  });
 
   private generateSk({ address, country = "US", city, state, postalCode, unit }:
     { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; }) {
@@ -106,23 +102,24 @@ export class PropertyEntity {
   /**
    * @returns all properties that a given property manager is assigned to.
    */
-  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, propertyManagerEmail?.toLowerCase());
+  public async getAllForPropertyManager({ pmEmail }: { pmEmail: string; }) {
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, pmEmail?.toLowerCase());
     let startKey: StartKey;
-    const properties: IProperty[] = [];
+    const properties = [];
     do {
       try {
-        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(
           GSI1PK,
           {
+            startKey,
             limit: 20,
             reverse: true,
             beginsWith: `${ENTITY_KEY.PROPERTY}#`,
             index: INDEXES.GSI1,
           }
-        ));
+        );
         startKey = LastEvaluatedKey as StartKey;
-        properties.push(...(Items ?? []) as IProperty[]);
+        Items?.length && properties.push(...Items);
       } catch (err) {
         console.log({ err });
       }
@@ -142,6 +139,7 @@ export class PropertyEntity {
           GSI2PK,
           {
             limit: 20,
+            startKey,
             reverse: true,
             beginsWith: `${ENTITY_KEY.PROPERTY}#`,
             index: INDEXES.GSI2,

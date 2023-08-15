@@ -1,5 +1,5 @@
 type LoadingSpinnerProps = {
-  containerClass: string | null;
+  containerClass?: string | null;
 };
 
 export const LoadingSpinner = ({ containerClass }: LoadingSpinnerProps) => {

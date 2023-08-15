@@ -1,17 +1,22 @@
-import { useUserContext } from "@/context/user";
+import { useEffect, useState } from "react";
+
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import Modal from 'react-modal';
+
+import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
+import { useUserContext } from "@/context/user";
 
 const Home = () => {
   const router = useRouter();
   const { query } = router;
-  const { login, sessionUser } = useUserContext();
+  const { setUserType } = useUserContext();
+  const { user, sessionStatus } = useSessionUser();
   const [showNotice, setShowNotice] = useState(false);
 
 
-  if (query?.authredirect && !sessionUser) {
+  if (query?.authredirect && !user?.email && sessionStatus === "unauthenticated") {
     const alreadyRedirected = localStorage.getItem("PILLAR::REDIRECT");
     if (!alreadyRedirected) {
       localStorage.setItem("PILLAR::REDIRECT", "true");
@@ -34,6 +39,9 @@ const Home = () => {
 
   function closeModal() {
     setShowNotice(false);
+  }
+  if (sessionStatus === "loading") {
+    return <LoadingSpinner containerClass={"mt-4"} />;
   }
 
   const customStyles = {
@@ -62,34 +70,33 @@ const Home = () => {
       <div className="text-center">
         <h1 className="mt-12 text-3xl">Pillar Property Management</h1>
         <br />
-        {!sessionUser?.email && (
+        {!user?.email && (
           <button
             onClick={() => signIn()}
             className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25">
             Sign In/Sign Up
           </button>
         )}
-        {!!sessionUser?.email && (
+        {!!user?.email && (
           <div className="" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "2em" }}>
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
-              onClick={async () => {
-                await login({ email: sessionUser.email ?? "", userType: "TENANT", name: sessionUser.name ?? "" });
+              onClick={() => {
+                setUserType("TENANT");
                 router.push("/work-order-chatbot");
-              }
-              }
+              }}
             >Continue as Tenant</button>
 
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={async () => {
-                await login({ email: sessionUser.email ?? "", userType: "PROPERTY_MANAGER", name: sessionUser.name ?? "" });
+                setUserType("PROPERTY_MANAGER");
                 router.push("/work-orders");
               }}>Continue as Property Manager</button>
             <button
               className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
               onClick={async () => {
-                await login({ email: sessionUser.email ?? "", userType: "TECHNICIAN", name: sessionUser.name ?? "" });
+                setUserType("TECHNICIAN");
                 router.push("/work-orders");
               }}>Continue as Technician</button>
           </div>

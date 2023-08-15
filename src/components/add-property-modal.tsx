@@ -5,16 +5,19 @@ import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, use
 import Modal from 'react-modal';
 import Select from "react-select";
 import { StateSelect } from "./state-select";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsOpen }: { addPropetyModalIsOpen: boolean; setAddPropertyModalIsOpen: Dispatch<SetStateAction<boolean>>; }) => {
   const [isBrowser, setIsBrowser] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
 
   useEffect(() => {
     setIsBrowser(true);
   }, []);
 
   isBrowser && Modal.setAppElement('#testing');
+
+  const { userType } = useUserContext();
 
   const [tenantName, setTenantName] = useState("");
   const [tenantEmail, setTenantEmail] = useState("");
@@ -62,8 +65,9 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
 
   const handleCreateNewProperty: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
+      if (!user?.email || userType !== "PROPERTY_MANAGER") return;
       event.preventDefault();
-      const { data } = await axios.post("/api/create-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.pmEmail });
+      const { data } = await axios.post("/api/create-property", { email: tenantEmail, userType: "TENANT", propertyManagerEmail: user.email });
       const { response } = data;
       const parsedUser = JSON.parse(response);
       if (parsedUser.modified) {
@@ -72,7 +76,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
     } catch (err) {
       console.log({ err });
     }
-  }, [user, tenantEmail]);
+  }, [user, userType, tenantEmail]);
 
   return (
     <div>

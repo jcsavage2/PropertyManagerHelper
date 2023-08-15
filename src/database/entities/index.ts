@@ -7,6 +7,7 @@ export const ENTITIES = {
   PROPERTY_MANAGER: "PROPERTY_MANAGER",
   TECHNICIAN: "TECHNICIAN",
   EVENT: "EVENT",
+  USER: "USER"
 } as const;
 
 export const ENTITY_KEY = {
@@ -16,6 +17,7 @@ export const ENTITY_KEY = {
   PROPERTY_MANAGER: "PM",
   TECHNICIAN: "E",
   EVENT: "EV",
+  USER: "U"
 } as const;
 
 export type EntityTypeKeys = keyof typeof ENTITY_KEY;

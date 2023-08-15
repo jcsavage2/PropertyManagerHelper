@@ -176,7 +176,7 @@ export class TenantEntity {
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     let startKey: StartKey;
     const tenants: ITenant[] = [];
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, propertyManagerEmail.toLowerCase());
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, propertyManagerEmail?.toLowerCase());
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { IProperty } from "@/database/entities/property";
 import Select from "react-select";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 const customStyles = {
   content: {
@@ -29,7 +30,7 @@ const customStyles = {
 
 export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpen, onSuccessfulAdd }: { workOrderModalIsOpen: boolean; setWorkOrderModalIsOpen: Dispatch<SetStateAction<boolean>>; onSuccessfulAdd: () => void; }) => {
 
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -61,24 +62,20 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
 
   useEffect(() => {
     async function getProperties() {
-      if (!user.pmEmail) {
-        return;
-      }
-      const { data } = await axios.post('/api/get-all-properties-for-pm', {
-        propertyManagerEmail: user.pmEmail,
-      });
+      if (!user?.email) return;
+      const { data } = await axios.post('/api/get-all-properties-for-pm', { pmEmail: user.email });
       if (data.response) {
         const parsed: IProperty[] = JSON.parse(data.response);
         setProperties(parsed);
       }
     }
     getProperties();
-  }, [user.pmEmail]);
+  }, [user]);
 
   const handleCreateWorkOrder: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      if (!user.pmEmail) {
+      if (!user?.pmEmail) {
         throw new Error("user needs to be a Property Manager.");
       }
       // const { data } = await axios.post("/api/sent-wo", {
@@ -102,18 +99,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
     } catch (err) {
       console.log({ err });
     }
-  }, [
-    user,
-    onSuccessfulAdd,
-    tenantEmail,
-    tenantName,
-    setWorkOrderModalIsOpen,
-    address,
-    unit,
-    state,
-    city,
-    postalCode
-  ]);
+  }, [user]);
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIssueDescription(e.currentTarget.value);

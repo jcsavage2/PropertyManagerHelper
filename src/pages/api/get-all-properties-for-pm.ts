@@ -3,7 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type GetPropertiesForPropertyManagerApiRequest = {
-  propertyManagerEmail: "string";
+  pmEmail: string;
 };
 
 export default async function handler(
@@ -13,8 +13,7 @@ export default async function handler(
   try {
     const body = req.body as GetPropertiesForPropertyManagerApiRequest;
     const propertyEntity = new PropertyEntity();
-    const propertyManagerEmail = body.propertyManagerEmail;
-    const properties = await propertyEntity.getAllForPropertyManager({ propertyManagerEmail });
+    const properties = await propertyEntity.getAllForPropertyManager({ pmEmail: body.pmEmail });
     return res.status(200).json({ response: JSON.stringify(properties) });;
 
   } catch (error) {

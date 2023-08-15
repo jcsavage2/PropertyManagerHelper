@@ -3,7 +3,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import { createdToFormattedDateTime, deconstructKey, generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
 import axios from 'axios';
 import { AiOutlineCheck, AiOutlineFilter, AiOutlineTable } from 'react-icons/ai';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BiCheckbox, BiCheckboxChecked, BiRefresh, BiTimeFive } from 'react-icons/bi';
 import Link from 'next/link';
@@ -12,6 +12,8 @@ import { GoTasklist } from 'react-icons/go';
 import Select, { SingleValue } from 'react-select';
 import { StatusOptionType } from '@/types';
 import { IoLocationSharp } from 'react-icons/io5';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
@@ -40,7 +42,7 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
     COMPLETE: true,
   });
   const [showStatusFilter, setShowStatusFilter] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
 
 
   const handleSorting = (sortField: keyof IWorkOrder, sortOrder: 'asc' | 'desc') => {
@@ -56,8 +58,9 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
   };
 
   const handleUpdateStatus = async ({ val, pk, sk }: HandleUpdateStatusProps) => {
+    if (!user) return;
     setIsUpdating(true);
-    const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: deconstructKey(user.pk) });
+    const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user?.email });
     const updatedWorkOrder = JSON.parse(data.response);
     if (updatedWorkOrder) {
       workOrders
@@ -188,9 +191,6 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
       </tr>
     );
   });
-  const fetcher = useCallback(async () => {
-    await fetchWorkOrders();
-  }, []);
 
   const handleSortingChange = (accessor: keyof IWorkOrder) => {
     const sortOrder = accessor === sortField && order === 'asc' ? 'desc' : 'asc';

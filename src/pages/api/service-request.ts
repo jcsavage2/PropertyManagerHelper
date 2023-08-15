@@ -8,10 +8,10 @@ import chalk from "chalk";
 import { Data } from "@/database";
 
 const config = new Configuration({
-  apiKey: process.env.OPEN_AI_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_OPEN_AI_API_KEY,
 });
 const openai = new OpenAIApi(config);
-const gpt_model = 'gpt-4-0613'
+const gpt_model = 'gpt-4-0613';
 
 /**
  * Handles back and forth communication between openAI API and the user messages.
