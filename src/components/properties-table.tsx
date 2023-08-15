@@ -25,7 +25,7 @@ export const PropertiesTable = ({ items, isLoading, sortConfig, requestSort, fil
     return null;
   }
   return (
-    <table className={`w-full border-spacing-x-10 table-auto`}>
+    <table className={`w-full border-spacing-x-10 mb-4 table-auto`}>
       <thead>
         <tr className="text-left text-gray-400">
           {Object.keys(items?.[0])?.map((key) => (

@@ -200,7 +200,7 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
   };
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 mb-4">
       <div className="flex flex-row w-full pb-4">
         <div>
           <button

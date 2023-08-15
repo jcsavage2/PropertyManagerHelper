@@ -72,7 +72,7 @@ export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
 
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 mb-4">
       <div className="flex">
         <div>
           <button className={`py-1 mr-2 px-3 rounded ${!!addressFilter ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowAddressFilter((s) => !s)}>
