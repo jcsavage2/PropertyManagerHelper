@@ -6,14 +6,14 @@ import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import Link from "next/link";
 import { ITenant } from "@/database/entities/tenant";
-
+import { LoadingSpinner } from "../../components/loading-spinner/loading-spinner";
 
 interface ITenantsTableProps {
   tenants: ITenant[];
+  tenantsLoading: boolean;
 }
 
-export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
-
+export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) => {
   const [sortField, setSortField] = useState<keyof ITenant>("tenantName");
   const [order, setOrder] = useState<"asc" | "desc">("asc");
 
@@ -26,15 +26,12 @@ export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
   const [stateFilter, setStateFilter] = useState<string | null | undefined>(null);
   const [showStateFilter, setShowStateFilter] = useState(false);
 
-
-
-
-  const columns: { label: string, accessor: keyof ITenant; width: string; }[] = [
+  const columns: { label: string; accessor: keyof ITenant; width: string }[] = [
     { label: "Name", accessor: "tenantName", width: "w-72" },
     { label: "Email", accessor: "tenantEmail", width: "" },
   ];
 
-  const remappedProperties = tenants.map(tenant => {
+  const remappedProperties = tenants.map((tenant) => {
     const { tenantName, tenantEmail, pk, sk, created, status } = tenant;
     const date = new Date(created);
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -44,11 +41,11 @@ export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
       tenantEmail,
       tenantName,
       status,
-      created: formattedDate
+      created: formattedDate,
     };
   });
 
-  const filteredRows = remappedProperties.filter(property => !!cityFilter);
+  const filteredRows = remappedProperties.filter((property) => !!cityFilter);
   const sortedWorkOrders = filteredRows.map((workOrder): any => {
     return (
       <tr key={uuid()}>
@@ -58,7 +55,11 @@ export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
           const tData = workOrder[accessor];
           return (
             <td className="border px-4 py-1" key={accessor}>
-              <Link key={workOrder.pk + index} href={`/tenants/?tenantId=${encodeURIComponent(workOrderId)}`} as={`/tenants/?tenantId=${encodeURIComponent(workOrderId)}`}>
+              <Link
+                key={workOrder.pk + index}
+                href={`/tenants/?tenantId=${encodeURIComponent(workOrderId)}`}
+                as={`/tenants/?tenantId=${encodeURIComponent(workOrderId)}`}
+              >
                 {tData}
               </Link>
             </td>
@@ -68,14 +69,14 @@ export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
     );
   });
 
-
-
-
   return (
     <div className="mt-8">
       <div className="flex">
         <div>
-          <button className={`py-1 mr-2 px-3 rounded ${!!addressFilter ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowAddressFilter((s) => !s)}>
+          <button
+            className={`py-1 mr-2 px-3 rounded ${!!addressFilter ? "bg-blue-200" : "bg-gray-200"}`}
+            onClick={() => setShowAddressFilter((s) => !s)}
+          >
             Address
           </button>
         </div>
@@ -111,45 +112,43 @@ export const TenantsTable = ({ tenants }: ITenantsTableProps) => {
       )}
 
       <div className="overflow-x-auto">
-        <table className='w-full mt-4 border-spacing-x-10 table-auto'>
-          <thead className=''>
-            <tr className='text-left text-gray-400'>
-              <th className='font-normal'>Name</th>
-              <th className='font-normal'>Email</th>
-              <th className='font-normal'>Status</th>
-              <th className='font-normal'>Primary Address</th>
-              <th className='font-normal'>Created</th>
+        <table className="w-full mt-4 border-spacing-x-10 table-auto">
+          <thead className="">
+            <tr className="text-left text-gray-400">
+              <th className="font-normal">Name</th>
+              <th className="font-normal">Email</th>
+              <th className="font-normal">Status</th>
+              <th className="font-normal">Primary Address</th>
+              <th className="font-normal">Created</th>
             </tr>
           </thead>
-          <tbody className='text-gray-700'>
-            {tenants.map((tenant: any) => {
-              const date = new Date(tenant.created);
-              const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
-              return (
-                <tr
-                  key={`${tenant.pk}-${tenant.sk}`}
-                >
-                  <td className="border px-4 py-1">
-                    {`${toTitleCase(tenant.tenantName)}`}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {`${tenant.tenantEmail}`}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {tenant.status}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {primaryAddress.address + " " + primaryAddress.unit}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {`${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`}
-                  </td>
-                </tr>
-              );
-            })}
+
+          <tbody className="text-gray-700">
+            {!tenantsLoading && (
+              <>
+                {tenants.map((tenant: any) => {
+                  const date = new Date(tenant.created);
+                  const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
+                  return (
+                    <tr key={`${tenant.pk}-${tenant.sk}`}>
+                      <td className="border px-4 py-1">{`${toTitleCase(tenant.tenantName)}`}</td>
+                      <td className="border px-4 py-1">{`${tenant.tenantEmail}`}</td>
+                      <td className="border px-4 py-1">{tenant.status}</td>
+                      <td className="border px-4 py-1">{primaryAddress.address + " " + primaryAddress.unit}</td>
+                      <td className="border px-4 py-1">{`${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`}</td>
+                    </tr>
+                  );
+                })}
+              </>
+            )}
           </tbody>
         </table>
-      </div >
+        {tenantsLoading && (
+          <div className="mt-8">
+            <LoadingSpinner spinnerClass="spinner-large" />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

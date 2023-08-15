@@ -1,28 +1,31 @@
 import { useUserContext } from "@/context/user";
-import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { AddTenantModal } from '@/components/add-tenant-modal';
-import { toTitleCase } from '@/utils';
-import { PortalLeftPanel } from '@/components/portal-left-panel';
+import { AddTenantModal } from "@/components/add-tenant-modal";
+import { PortalLeftPanel } from "@/components/portal-left-panel";
 import { useDevice } from "@/hooks/use-window-size";
 import { BottomNavigationPanel } from "@/components/bottom-navigation-panel";
-import { TenantsTable } from "@/components/tenants-table";
+import { TenantsTable } from "@/pages/tenants/tenants-table";
 import TenantsCards from "./tenant-cards";
+import { ImportTenantsModal } from "@/components/import-tenants-modal";
 
 const Tenants = () => {
-  const [tenantModalIsOpen, setTenantModalIsOpen] = useState(false);
   const { user } = useUserContext();
-  const [tenants, setTenants] = useState([]);
   const { isMobile } = useDevice();
 
+  const [addTenantModalIsOpen, setAddTenantModalIsOpen] = useState(false);
+  const [importTenantModalIsOpen, setImportTenantModalIsOpen] = useState(false);
+  const [tenants, setTenants] = useState([]);
+  const [tenantsLoading, setTenantsLoading] = useState(false);
 
   useEffect(() => {
     if (user.pmEmail) {
       async function get() {
+        setTenantsLoading(true);
         const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
         const tenants = JSON.parse(data.response);
         tenants.length && setTenants(tenants);
+        setTenantsLoading(false);
       }
       get();
     }
@@ -43,19 +46,32 @@ const Tenants = () => {
     <div id="testing" className="mx-4 mt-4" style={{ display: "grid", ...customStyles }}>
       {!isMobile && <PortalLeftPanel />}
       <div className="lg:max-w-3xl">
-        <div style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        <div className={isMobile ? `` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Tenants</h1>
-          <button
-            className="bg-blue-200 mt-2 md:mt-0 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-40 justify-self-end text-center "
-            onClick={() => setTenantModalIsOpen(true)}
-          >+ New Tenant</button>
+          <div className={`justify-self-end ${isMobile && "mt-4"}`}>
+            <button
+              className="bg-blue-200 mr-4 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-36 text-center "
+              onClick={() => !tenantsLoading && setAddTenantModalIsOpen(true)}
+              disabled={tenantsLoading}
+            >
+              + New Tenant
+            </button>
+            <button
+              className="bg-blue-200 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-36 text-center "
+              onClick={() => !tenantsLoading && setImportTenantModalIsOpen(true)}
+              disabled={tenantsLoading}
+            >
+              Import Tenants
+            </button>
+          </div>
         </div>
-        {!isMobile && <TenantsTable tenants={tenants} />}
-        {isMobile && <TenantsCards />}
+        {!isMobile && <TenantsTable tenants={tenants} tenantsLoading={tenantsLoading} />}
+        {isMobile && <TenantsCards tenants={tenants} tenantsLoading={tenantsLoading} />}
       </div>
-      <AddTenantModal tenantModalIsOpen={tenantModalIsOpen} setTenantModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={refetch} />
+      <AddTenantModal tenantModalIsOpen={addTenantModalIsOpen} setTenantModalIsOpen={setAddTenantModalIsOpen} onSuccessfulAdd={refetch} />
+      <ImportTenantsModal modalIsOpen={importTenantModalIsOpen} setModalIsOpen={setImportTenantModalIsOpen} onSuccessfulAdd={refetch} />
       {isMobile && <BottomNavigationPanel />}
-    </div >
+    </div>
   );
 };
 

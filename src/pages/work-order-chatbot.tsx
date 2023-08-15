@@ -310,7 +310,7 @@ export default function WorkOrderChatbot() {
                       disabled={permissionToEnter === "no" || issueDescription.length === 0 || submittingWorkOrderLoading}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? <LoadingSpinner containerClass={null} /> : permissionToEnter === "yes" ? "Submit Work Order" : "Need Permission To Enter"}
+                      {submittingWorkOrderLoading ? <LoadingSpinner /> : permissionToEnter === "yes" ? "Submit Work Order" : "Need Permission To Enter"}
                     </button>
                   ) : (
                     <form

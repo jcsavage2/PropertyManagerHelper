@@ -19,7 +19,7 @@ export const PropertiesTable = ({ items, isLoading, sortConfig, requestSort, fil
     requestSort: (key: "address" | "city" | "state" | "postalCode" | "unit") => void;
   }) => {
   if (isLoading) {
-    return (<LoadingSpinner containerClass={'spinner-container-full'} />);
+    return (<LoadingSpinner containerClass="full-height" spinnerClass="spinner" />);
   }
   if (!items.length) {
     return null;
