@@ -3,6 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
+import { UserEntity } from "@/database/entities/user";
 
 export type CreateTenantBody = {
   tenantEmail: string;
@@ -29,15 +30,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const body = req.body as CreateTenantBody;
     const { pmEmail, tenantEmail, tenantName, address, country = "US", city, state, postalCode, unit, numBeds, numBaths, propertyUUId, createNewProperty } = body;
 
-    if(!pmEmail || !tenantEmail || !tenantName || !address || !city || !state || !postalCode || !numBeds || !numBaths) {
+    if(!pmEmail || !tenantEmail || !tenantName || !address || !city || !state || !postalCode || !numBeds || !numBaths || !propertyUUId) {
       throw new Error("create-tenant Error: Missing required fields.");
     }
 
-    const tenantEntity = new TenantEntity();
+    const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
 
     // Create Tenant
-    const newTenant = await tenantEntity.create({
+    const newTenant = await userEntity.createTenant({
       tenantEmail,
       tenantName,
       pmEmail,
@@ -51,8 +52,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       numBeds,
       numBaths,
     });
-    // Create Companion Row
-    await tenantEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
 
     // Create Property if necessary
     if(createNewProperty) {
@@ -60,10 +59,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         tenantEmail,
         propertyManagerEmail: pmEmail,
         address,
-        country,
         city,
-        state,
+        country,
         postalCode,
+        state,
         unit,
         uuid: propertyUUId,
         numBeds,
@@ -72,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     /** SEND THE EMAIL TO THE USER */
-    const apiKey = process.env.SENDGRID_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
       throw new Error("missing SENDGRID_API_KEY env variable.");
     }
@@ -139,9 +138,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </body>
       </html>`
     });
-    
-    //@ts-ignore
-    return res.status(200).json({ response: JSON.stringify(newTenant.Attributes) });
+
+
+    return res.status(200).json({ response: JSON.stringify(newTenant) });
+
+
   } catch (error: any) {
     console.log({ error });
     return res.status(error.statusCode || 500).json(error);

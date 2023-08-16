@@ -1,4 +1,3 @@
-import { useUserContext } from "@/context/user";
 import axios from "axios";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
@@ -8,6 +7,8 @@ import PropertySelector from "./property-selector";
 import { SendEmailApiRequest } from "@/types";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
 import { ITenant } from "@/database/entities/tenant";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { useUserContext } from "@/context/user";
 
 const customStyles = {
   content: {
@@ -30,16 +31,9 @@ const customStyles = {
   },
 };
 
-export const AddWorkOrderModal = ({
-  workOrderModalIsOpen,
-  setWorkOrderModalIsOpen,
-  onSuccessfulAdd,
-}: {
-  workOrderModalIsOpen: boolean;
-  setWorkOrderModalIsOpen: Dispatch<SetStateAction<boolean>>;
-  onSuccessfulAdd: () => void;
-}) => {
-  const { user } = useUserContext();
+export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpen, onSuccessfulAdd }: { workOrderModalIsOpen: boolean; setWorkOrderModalIsOpen: Dispatch<SetStateAction<boolean>>; onSuccessfulAdd: () => void; }) => {
+  const { user } = useSessionUser();
+  const { userType } = useUserContext();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -61,11 +55,14 @@ export const AddWorkOrderModal = ({
     async (event) => {
       try {
         event.preventDefault();
-        if (!user.pmEmail) {
+        if (!user || !user.pmEmail) {
           throw new Error("user needs to be a Property Manager.");
         }
         if (!selectedProperty) {
           throw new Error("No property selected");
+        }
+        if(!userType){
+          throw new Error("No userType");
         }
         setSubmitWorkOrderLoading(true);
 
@@ -79,10 +76,10 @@ export const AddWorkOrderModal = ({
           issueLocation,
           additionalDetails,
           messages: [],
-          pmEmail: user.pmEmail,
+          pmEmail: user!.pmEmail,
           creatorEmail: user.pmEmail,
           creatorName: user.pmName ?? "",
-          createdByType: user.userType,
+          createdByType: userType,
           permissionToEnter: "no",
           address: selectedProperty.address,
           state: selectedProperty.state,
@@ -149,7 +146,7 @@ export const AddWorkOrderModal = ({
         </button>
       </div>
 
-      <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user.pmEmail ?? ""} />
+      <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user?.pmEmail ?? ""} />
 
       <form onSubmit={handleCreateWorkOrder} className="flex flex-col">
         {selectedProperty && (

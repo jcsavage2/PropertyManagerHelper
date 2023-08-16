@@ -1,6 +1,6 @@
 import { useUserContext } from "@/context/user";
 import axios from "axios";
-import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
+import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Modal from "react-modal";
 import { CSSTransition } from "react-transition-group";
@@ -9,9 +9,10 @@ import { StateSelect } from "./state-select";
 import { useDevice } from "@/hooks/use-window-size";
 import PropertySelector from "./property-selector";
 import { IProperty } from "@/database/entities/property";
-import { uuid as uuidv4 } from "uuidv4";
-import { deconstructKey } from "@/utils";
+import { v4 as uuid } from "uuid";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
+import { deconstructKey } from "@/utils";
 
 export const AddTenantModal = ({
   tenantModalIsOpen,
@@ -22,7 +23,7 @@ export const AddTenantModal = ({
   setTenantModalIsOpen: Dispatch<SetStateAction<boolean>>;
   onSuccessfulAdd: () => void;
 }) => {
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   const { isMobile } = useDevice();
   useEffect(() => {
@@ -67,43 +68,60 @@ export const AddTenantModal = ({
   const [selectedProperty, setSelectedProperty] = useState<IProperty | null>(null);
   const [createNewTenantLoading, setCreateNewTenantLoading] = useState(false);
 
-  const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setTenantName(e.currentTarget.value);
-  }, [setTenantName]);
-  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setTenantEmail(e.currentTarget.value);
-  }, [setTenantEmail]);
-  const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setAddress(e.currentTarget.value);
-  }, [setAddress]);
-  const handleUnitChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setUnit(e.currentTarget.value);
-  }, [setUnit]);
-  const handleStateChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setState(e.currentTarget.value);
-  }, [setState]);
-  const handleCityChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setCity(e.currentTarget.value);
-  }, [setCity]);
-  const handlePostalCodeChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setPostalCode(e.currentTarget.value);
-  }, [setPostalCode]);
-  const handleNumBedsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setNumBeds(Number(e.currentTarget.value) || 1);
-  }, [setCity]);
-  const handleNumBathsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setNumBaths(Number(e.currentTarget.value) || 1);
-  }, [setPostalCode]);
-
-  function closeModal() {
-    setTenantModalIsOpen(false);
-  }
+  const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setTenantName(e.currentTarget.value);
+    },
+    [setTenantName]
+  );
+  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setTenantEmail(e.currentTarget.value);
+    },
+    [setTenantEmail]
+  );
+  const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setAddress(e.currentTarget.value);
+    },
+    [setAddress]
+  );
+  const handleUnitChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setUnit(e.currentTarget.value);
+    },
+    [setUnit]
+  );
+  const handleCityChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setCity(e.currentTarget.value);
+    },
+    [setCity]
+  );
+  const handlePostalCodeChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setPostalCode(e.currentTarget.value);
+    },
+    [setPostalCode]
+  );
+  const handleNumBedsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setNumBeds(Number(e.currentTarget.value) || 1);
+    },
+    [setCity]
+  );
+  const handleNumBathsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setNumBaths(Number(e.currentTarget.value) || 1);
+    },
+    [setPostalCode]
+  );
 
   const handleCreateNewTenant: FormEventHandler<HTMLFormElement> = useCallback(
     async (event) => {
       try {
         event.preventDefault();
-        if (!user.pmEmail) {
+        if (!user) {
           throw new Error("user needs to be a Property Manager.");
         }
         setCreateNewTenantLoading(true);
@@ -113,7 +131,7 @@ export const AddTenantModal = ({
           body = {
             tenantEmail,
             tenantName,
-            pmEmail: user.pmEmail,
+            pmEmail: user.email,
             address,
             unit,
             state,
@@ -123,14 +141,14 @@ export const AddTenantModal = ({
             numBeds,
             numBaths,
             createNewProperty,
-            propertyUUId: uuidv4(),
+            propertyUUId: uuid(),
           };
         } else {
           if (!selectedProperty) throw new Error("No property selected with use existing property option.");
           body = {
             tenantEmail,
             tenantName,
-            pmEmail: user.pmEmail,
+            pmEmail: user.email,
             address: selectedProperty.address,
             unit: selectedProperty.unit,
             state: selectedProperty.state,
@@ -147,7 +165,7 @@ export const AddTenantModal = ({
         const { data } = await axios.post("/api/create-tenant", { ...body });
         const { response } = data;
         const parsedUser = JSON.parse(response);
-        if (parsedUser.modified) {
+        if (parsedUser) {
           onSuccessfulAdd();
           toast.success("Tenant Created!", {
             position: toast.POSITION.TOP_CENTER,
@@ -175,20 +193,38 @@ export const AddTenantModal = ({
         setCreateNewTenantLoading(false);
       }
     },
-    [user, createNewProperty, setStage, onSuccessfulAdd, tenantEmail, tenantName, setTenantModalIsOpen, address, unit, state, city, postalCode, numBeds, numBaths, selectedProperty]
+    [
+      user,
+      createNewProperty,
+      setStage,
+      onSuccessfulAdd,
+      tenantEmail,
+      tenantName,
+      setTenantModalIsOpen,
+      address,
+      unit,
+      state,
+      city,
+      postalCode,
+      numBeds,
+      numBaths,
+      selectedProperty,
+    ]
   );
 
   return (
     <Modal
       isOpen={tenantModalIsOpen}
-      onAfterOpen={() => {}}
-      onRequestClose={closeModal}
+      onRequestClose={() => setTenantModalIsOpen(false)}
       contentLabel="Add Tenant Modal"
       closeTimeoutMS={200}
       style={customStyles}
     >
       <div className="w-full text-right">
-        <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={() => setTenantModalIsOpen(false)}
+        >
           X Close
         </button>
       </div>
@@ -315,9 +351,8 @@ export const AddTenantModal = ({
                 </div>
               </div>
             ) : (
-              <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user.pmEmail ?? ""} /> 
+              <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user?.email ?? ""} />
             )}
-
             <button
               onClick={() => setStage(0)}
               className="bg-blue-200 p-3 mt-7 text-gray-600 w-full hover:bg-blue-300 rounded disabled:opacity-25"
@@ -327,7 +362,7 @@ export const AddTenantModal = ({
               Previous
             </button>
             <button
-              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 w-full rounded disabled:opacity-25"
+              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
               type="submit"
               disabled={
                 createNewTenantLoading ||
@@ -336,7 +371,7 @@ export const AddTenantModal = ({
                 (createNewProperty ? !address || !state || !city || !postalCode : !selectedProperty)
               }
             >
-              {createNewTenantLoading ? <LoadingSpinner containerClass={null} /> : "Add Tenant"}
+              {createNewTenantLoading ? <LoadingSpinner /> : "Add Tenant"}
             </button>
           </div>
         </CSSTransition>

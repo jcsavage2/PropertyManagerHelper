@@ -1,24 +1,28 @@
-import { useUserContext } from "@/context/user";
 import axios from "axios";
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
-import { useDevice } from "@/hooks/use-window-size";
 import Modal from "react-modal";
 import Select, { SingleValue } from "react-select";
 import { StateSelect } from "./state-select";
+import { useDevice } from "@/hooks/use-window-size";
 import { OptionType } from "@/types";
 import { CreatePropertyBody } from "@/pages/api/create-property";
 import { toast } from "react-toastify";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { useUserContext } from "@/context/user";
+import { GetTenantsForPropertyManagerApiRequest } from "@/pages/api/get-all-tenants-for-pm";
 
 export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsOpen }: { addPropetyModalIsOpen: boolean; setAddPropertyModalIsOpen: Dispatch<SetStateAction<boolean>> }) => {
   const [isBrowser, setIsBrowser] = useState(false);
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const { isMobile } = useDevice();
 
   useEffect(() => {
     setIsBrowser(true);
   }, []);
 
-  isBrowser && Modal.setAppElement("#testing");
+  isBrowser && Modal.setAppElement('#testing');
+
+  const { userType } = useUserContext();
 
   const [tenantEmail, setTenantEmail] = useState("");
   const [tenantOptions, setTenantOptions] = useState<OptionType[]>([]);
@@ -95,7 +99,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
       try {
         event.preventDefault();
 
-        if(!user.pmEmail) throw new Error("No PM email found")
+        if(!user || !user.pmEmail) throw new Error("No PM email found")
 
         const response = await axios.post("/api/create-property", { address, city, state, postalCode, unit, pmEmail: user.pmEmail, numBeds, numBaths, tenantEmail } as CreatePropertyBody);
 
@@ -104,6 +108,13 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
           position: toast.POSITION.TOP_CENTER,
         });
         closeModal();
+        setAddress("");
+        setCity("");
+        setState("");
+        setPostalCode("");
+        setUnit("");
+        setNumBeds(1);
+        setNumBaths(1);
       } catch (err: any) {
         console.log({ err });
         toast.error("Error Creating Property. Please Try Again", {
@@ -111,12 +122,13 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
         });
       }
     },
-    [user.pmEmail, tenantEmail, address, city, state, postalCode, unit, numBeds, numBaths]
+    [user, user?.pmEmail, tenantEmail, address, city, state, postalCode, unit, numBeds, numBaths]
   );
 
   const handleGetTenants = useCallback(async () => {
     try {
-      const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
+      if (!user?.email || userType !== "PROPERTY_MANAGER") return;
+      const { data } = await axios.post("/api/get-all-tenants-for-pm", { pmEmail: user.pmEmail } as GetTenantsForPropertyManagerApiRequest);
       const tenants = JSON.parse(data.response);
       if (tenants.length > 0) {
         let processedTenants = tenants.map((tenant: any) => {
@@ -127,7 +139,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
     } catch (err) {
       console.log({ err });
     }
-  }, [user.pmEmail, setTenantOptions]);
+  }, [user, setTenantOptions, userType]);
 
   useEffect(() => {
     if (addPropetyModalIsOpen) {

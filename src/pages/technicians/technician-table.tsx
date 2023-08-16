@@ -35,7 +35,7 @@ export const TechnicianTable = (props: TechnicianTableProps) => {
   });
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 mb-4">
       <div className="overflow-x-auto">
         <table className='w-full mt-4 border-spacing-x-10 table-auto'>
           <thead className=''>

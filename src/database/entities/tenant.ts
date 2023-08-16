@@ -1,7 +1,7 @@
 import { Entity } from "dynamodb-toolbox";
 import { ENTITIES, ENTITY_KEY, StartKey } from ".";
 import { INDEXES, PillarDynamoTable } from "..";
-import { generateKey } from "@/utils";
+import { generateAddress, generateKey } from "@/utils";
 import { GetCommandInput } from "@aws-sdk/lib-dynamodb";
 
 export interface ITenant {
@@ -55,35 +55,6 @@ export class TenantEntity {
     } as const);
   }
 
-  private generateAddress({
-    propertyUUId,
-    address,
-    country,
-    city,
-    state,
-    postalCode,
-    unit,
-    isPrimary,
-    numBeds,
-    numBaths,
-  }: {
-    propertyUUId: string;
-    address: string;
-    country: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    isPrimary: boolean;
-    unit?: string;
-    numBeds?: number;
-    numBaths?: number;
-  }) {
-    const key = `${propertyUUId}`;
-    return {
-      [key]: { address, unit, city, state, postalCode, country, isPrimary, numBeds, numBaths },
-    };
-  }
-
   /**
    * Creates the user record in the Database.
    */
@@ -113,7 +84,7 @@ export class TenantEntity {
           ...(pmEmail && { pmEmail: pmEmail?.toLowerCase() }),
           status: "INVITED",
           userType: ENTITIES.TENANT,
-          addresses: this.generateAddress({
+          addresses: generateAddress({
             propertyUUId,
             address,
             country,
@@ -243,7 +214,7 @@ export class TenantEntity {
         pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
       };
-      const result = await this.tenant.get(params, { consistent: true });
+      const result = await this.tenant.get(params, { consistent: false });
       return result;
     } catch (err) {
       console.log({ err });
@@ -253,7 +224,7 @@ export class TenantEntity {
   public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
     let startKey: StartKey;
     const tenants: ITenant[] = [];
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, propertyManagerEmail.toLowerCase());
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, propertyManagerEmail?.toLowerCase());
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(

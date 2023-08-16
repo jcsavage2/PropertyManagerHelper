@@ -3,6 +3,7 @@ import axios from "axios";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Select from "react-select";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
+import { GetPropertiesForPropertyManagerApiRequest } from "@/pages/api/get-all-properties-for-pm";
 
 const PropertySelector = ({
   selectedProperty,
@@ -29,8 +30,8 @@ const PropertySelector = ({
       setLoading(true);
 
       const { data } = await axios.post("/api/get-all-properties-for-pm", {
-        propertyManagerEmail: email,
-      });
+        pmEmail: email,
+      } as GetPropertiesForPropertyManagerApiRequest);
       if (data.response) {
         const parsed: IProperty[] = JSON.parse(data.response);
         setProperties(parsed);

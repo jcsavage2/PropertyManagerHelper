@@ -1,8 +1,5 @@
-import { useUserContext } from "@/context/user";
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from "axios";
-
-import { toTitleCase } from '@/utils';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { useDevice } from "@/hooks/use-window-size";
 import { BottomNavigationPanel } from "@/components/bottom-navigation-panel";
@@ -12,43 +9,39 @@ import React from "react";
 import { PartialProperty, useSortableData } from "@/hooks/use-sortable-data";
 import { IProperty } from "@/database/entities/property";
 import { PropertiesCards } from "@/components/properties-cards";
-
-
+import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { GetPropertiesForPropertyManagerApiRequest } from '../api/get-all-properties-for-pm';
 
 const Properties = () => {
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const [addPropetyModalIsOpen, setAddPropertyModalIsOpen] = useState(false);
   const [properties, setProperties] = useState<PartialProperty[]>([]);
   const { isMobile } = useDevice();
   const [isLoading, setIsLoading] = useState(true);
-
   const [query, setQuery] = useState<string>("");
   const { items, requestSort, sortConfig } = useSortableData(properties);
 
   useEffect(() => {
-    if (user.pmEmail) {
-      async function get() {
-        try {
-          const { data } = await axios.post("/api/get-all-properties-for-pm", { propertyManagerEmail: user.pmEmail });
-          const properties = JSON.parse(data.response) as IProperty[];
-          const partialProperties: PartialProperty[] = properties.map((p) => ({
-            address: p.address ?? "",
-            city: p.city ?? "",
-            state: p.state ?? "",
-            postalCode: p.postalCode ?? "",
-            unit: p.unit ?? ""
-          }));
-          partialProperties.length && setProperties(partialProperties);
-          setIsLoading(false);
-        } catch (e) {
-          console.log({ e });
-        }
+    if (!user) return;
+    async function get() {
+      try {
+        const { data } = await axios.post("/api/get-all-properties-for-pm", { pmEmail: user?.email } as GetPropertiesForPropertyManagerApiRequest);
+        const properties = JSON.parse(data.response) as IProperty[];
+        const partialProperties: PartialProperty[] = properties.map((p) => ({
+          address: p.address ?? "",
+          city: p.city ?? "",
+          state: p.state ?? "",
+          postalCode: p.postalCode ?? "",
+          unit: p.unit ?? ""
+        }));
+        partialProperties.length && setProperties(partialProperties);
+        setIsLoading(false);
+      } catch (e) {
+        console.log({ e });
       }
-      get();
     }
-  }, [user.pmEmail, addPropetyModalIsOpen]);
-
-
+    get()
+  }, [user?.email, addPropetyModalIsOpen]);
 
   useEffect(() => {
     setProperties(items);

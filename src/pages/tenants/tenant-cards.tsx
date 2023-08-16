@@ -4,28 +4,35 @@ import { ITenant } from "@/database/entities/tenant";
 import axios from "axios";
 import { useUserContext } from "@/context/user";
 import { useDevice } from "@/hooks/use-window-size";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 
 export const TenantsCards = () => {
   const [tenants, setTenants] = useState<Array<ITenant>>([]);
 
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
+  const { userType } = useUserContext();
   const { isMobile } = useDevice();
 
   useEffect(() => {
     async function get() {
-      if (!user.pmEmail) {
-        return;
-      }
-      const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
+      if (!user) return;
+      const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.email });
       const tenants: ITenant[] = JSON.parse(data.response);
       if (tenants.length) {
         setTenants(tenants);
       }
     }
     get();
-  }, [user.pmEmail]);
+  }, [user]);
 
+  if (userType !== "PROPERTY_MANAGER") {
+    return (
+      <p>
+        You must be using the property manager view to see this page, and your account must have the appropriate role.
+      </p>
+    );
+  }
 
   return (
     <div className={`mt-8 ${isMobile ? " pb-24" : "pb-0"}`}>

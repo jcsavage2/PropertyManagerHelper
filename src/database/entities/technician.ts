@@ -122,7 +122,7 @@ export class TechnicianEntity {
         pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       };
-      const result = await this.technicianEntity.get(params, { consistent: true });
+      const result = await this.technicianEntity.get(params, { consistent: false });
       //@ts-ignore
       return result.Item ?? null;
     } catch (err) {
@@ -149,25 +149,6 @@ export class TechnicianEntity {
         userType: ENTITIES.TECHNICIAN
       } as any, { returnValues: "ALL_NEW" });
       return result;
-    } catch (err) {
-      console.log({ err });
-    }
-  }
-
-  /**
-   * @returns All technicians for a given property manager
-   */
-  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    try {
-      const result = await PillarDynamoTable.query(
-        generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, propertyManagerEmail.toLowerCase()),
-        {
-          limit: 20,
-          reverse: true,
-          beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
-        }
-      );
-      return result.Items ?? [];
     } catch (err) {
       console.log({ err });
     }

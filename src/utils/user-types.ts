@@ -1,20 +1,25 @@
-import { PropertyManager, Technician, Tenant, UserType } from "@/context/user";
+import { useUserContext } from "@/context/user";
+import { IUser } from "@/database/entities/user";
+
 
 /**
  * @returns boolean, true if the current user is a tenant user.
  */
-export function userIsTenant(user: UserType): user is Tenant {
-  return user.pk.startsWith("T");
+export function useUserIsTenant(user: IUser): user is IUser {
+  const { userType } = useUserContext();
+  return userType === "TENANT";
 }
 /**
  * @returns boolean, true if the current user is a PropertyManager.
  */
-export function userIsPropertyManager(user: UserType): user is PropertyManager {
-  return user.pk.startsWith("PM");
+export function useUserIsPropertyManager(user: IUser): user is IUser {
+  const { userType } = useUserContext();
+  return userType === "PROPERTY_MANAGER";
 }
 /**
  * @returns boolean, true if the current user is a Technician.
  */
-export function userIsTechnician(user: UserType): user is Technician {
-  return user.pk.startsWith("T");
+export function useUserIsTechnician(user: IUser): user is IUser {
+  const { userType } = useUserContext();
+  return userType === "TECHNICIAN";
 }

@@ -3,7 +3,7 @@ import { IWorkOrder, WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
 
 type GetWorkOrdersForPropertyManagerApiRequest = {
-  propertyManagerEmail: "string";
+  pmEmail: string;
 };
 
 export default async function handler(
@@ -13,8 +13,7 @@ export default async function handler(
   try {
     const body = req.body as GetWorkOrdersForPropertyManagerApiRequest;
     const workOrderEntity = new WorkOrderEntity();
-    const propertyManagerEmail = body.propertyManagerEmail;
-    const workOrders = await workOrderEntity.getAllForPropertyManager({ propertyManagerEmail });
+    const workOrders = await workOrderEntity.getAllForPropertyManager({ pmEmail: body.pmEmail });
     //@ts-ignore
     const sorted = workOrders?.sort((a: IWorkOrder, b: IWorkOrder) => {
       //@ts-ignore

@@ -4,35 +4,36 @@ import { ChatCompletionRequestMessage } from "openai";
 import { toast } from "react-toastify";
 import { hasAllIssueInfo } from "@/utils";
 import { AddressOptionType, AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from "@/types";
-import { useUserContext } from "@/context/user";
 import Select, { SingleValue } from "react-select";
-import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 import { useDevice } from "@/hooks/use-window-size";
+import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
+import { userRoles } from "@/database/entities/user";
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState("");
   const [lastUserMessage, setLastUserMessage] = useState("");
-  const { user } = useUserContext();
+  const { user, sessionStatus } = useSessionUser();
   const { isMobile } = useDevice();
 
-  if (user.userType !== "TENANT") {
-    throw new Error("User Must be a Tenant.");
-  }
-
-  const addressesOptions: AddressOptionType[] = useMemo(
-    () =>
-      Object.values(user?.addresses)?.map((address: any) => ({
-        label: `${address?.address} ${address?.unit}`.trim(),
-        value: address,
-      } as AddressOptionType)) ?? [],
-    [user.addresses]
-  );
+  const addressesOptions: AddressOptionType[] = useMemo(() => {
+    if (!user?.addresses) return [];
+    return (
+      Object.values(user?.addresses)?.map(
+        (address: any) =>
+          ({
+            label: `${address?.address} ${address?.unit}`.trim(),
+            value: address,
+          } as AddressOptionType)
+      ) ?? []
+    );
+  }, [user?.addresses]);
 
   const [isUsingAI, _setIsUsingAI] = useState(true);
 
-  const [pmEmail, setPmEmail] = useState(user.pmEmail ?? "");
-  const [tenantName, setTenantName] = useState(user.tenantName);
-  const [tenantEmail, setTenantEmail] = useState(user.tenantEmail);
+  const [pmEmail, setPmEmail] = useState(user?.pmEmail ?? "");
+  const [tenantName, setTenantName] = useState(user?.tenantName);
+  const [tenantEmail, setTenantEmail] = useState(user?.tenantEmail);
   const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
@@ -55,13 +56,13 @@ export default function WorkOrderChatbot() {
 
   //If the user has only one address, select it automatically
   useEffect(() => {
-    if(addressesOptions && addressesOptions.length === 1){
+    if (addressesOptions && addressesOptions.length === 1) {
       setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(true);
-    }else{
+    } else {
       setAddressHasBeenSelected(false);
     }
-  }, [addressesOptions])
+  }, [addressesOptions]);
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -112,7 +113,7 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    if(!selectedAddress){
+    if (!selectedAddress || !tenantEmail || !tenantName) {
       toast.error("Error Submitting Work Order. Please Try Again", {
         position: toast.POSITION.TOP_CENTER,
       });
@@ -164,7 +165,11 @@ export default function WorkOrderChatbot() {
         setMessages([
           ...messages,
           { role: "user", content: issueDescription },
-          { role: "assistant", content: "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request." },
+          {
+            role: "assistant",
+            content:
+              "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request.",
+          },
         ]);
       }
 
@@ -175,7 +180,12 @@ export default function WorkOrderChatbot() {
       setUserMessage("");
 
       const parsedAddress = selectedAddress.value;
-      const body: ApiRequest = { userMessage, messages, ...workOrder, unitInfo: parsedAddress.numBeds && parsedAddress.numBaths ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms` : ""};
+      const body: ApiRequest = {
+        userMessage,
+        messages,
+        ...workOrder,
+        unitInfo: parsedAddress.numBeds && parsedAddress.numBaths ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms` : "",
+      };
       const res = await axios.post("/api/service-request", body);
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
@@ -226,7 +236,7 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<{ label: string; value: any; }>) => {
+            onChange={(v: SingleValue<{ label: string; value: any }>) => {
               //@ts-ignore
               handleAddressSelectChange(v);
             }}
@@ -245,6 +255,14 @@ export default function WorkOrderChatbot() {
       );
     }
   };
+
+  if (sessionStatus === "loading") {
+    return <LoadingSpinner containerClass={"mt-4"} />;
+  }
+
+  if (!user?.roles?.includes(userRoles.TENANT)) {
+    return <p className="p-4">User must have the tenant Role assigned to them by a property manager or Owner.</p>;
+  }
 
   return (
     <>
@@ -268,7 +286,11 @@ export default function WorkOrderChatbot() {
                   {!!messages?.length &&
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
-                        <div className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? "bg-gray-200 text-left" : "bg-blue-100 text-right"}`}>
+                        <div
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
+                            !!(index % 2) ? "bg-gray-200 text-left" : "bg-blue-100 text-right"
+                          }`}
+                        >
                           {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
                               <h3 className="text-left font-semibold">
@@ -286,46 +308,68 @@ export default function WorkOrderChatbot() {
                           <p data-testid={`response-${index}`} className="whitespace-pre-line break-keep">
                             {message.content}
                           </p>
-                          {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
-                            <>
-                              <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "0rem", marginTop: "1rem" }}>
-                                {!hasConnectionWithGPT ||
-                                  (submitAnywaysSkip && (
-                                    <>
-                                      <label htmlFor="issueDescription">{isMobile ? "Issue*" : "Issue Details*"}</label>
-                                      <input className="rounded px-1" id="issueDescription" type={"text"} value={issueDescription} onChange={handleIssueDescriptionChange} />
-                                      <label htmlFor="issueLocation">{isMobile ? "Location*" : "Issue Location*"}</label>
-                                      <input className="rounded px-1" id="issueLocation" type={"text"} value={issueLocation} onChange={handleIssueLocationChange} />
-                                    </>
-                                  ))}
-                                <label htmlFor="additionalDetails">{isMobile ? "Details" : "Additional Details"}</label>
-                                <input className="rounded px-1" id="additionalDetails" type={"text"} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
-                              </div>
-                              <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : "Property"}* </p>
-                              <div>
-                                <input
-                                  className="rounded px-1"
-                                  id="permission-yes"
-                                  name={"permission"}
-                                  type={"radio"}
-                                  value={"yes"}
-                                  checked={permissionToEnter === "yes"}
-                                  onChange={handlePermissionChange}
-                                />
-                                <label htmlFor="permission-yes">{"Yes"}</label>
-                                <input
-                                  className="rounded px-1 ml-4"
-                                  id="permission-no"
-                                  name={"permission"}
-                                  type={"radio"}
-                                  value={"no"}
-                                  checked={permissionToEnter === "no"}
-                                  onChange={handlePermissionChange}
-                                />
-                                <label htmlFor="permission-no">{"No"}</label>
-                              </div>
-                            </>
-                          )}
+                          {index === lastSystemMessageIndex &&
+                            (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
+                              <>
+                                <div
+                                  data-testid="final-response"
+                                  style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "0rem", marginTop: "1rem" }}
+                                >
+                                  {!hasConnectionWithGPT ||
+                                    (submitAnywaysSkip && (
+                                      <>
+                                        <label htmlFor="issueDescription">{isMobile ? "Issue*" : "Issue Details*"}</label>
+                                        <input
+                                          className="rounded px-1"
+                                          id="issueDescription"
+                                          type={"text"}
+                                          value={issueDescription}
+                                          onChange={handleIssueDescriptionChange}
+                                        />
+                                        <label htmlFor="issueLocation">{isMobile ? "Location*" : "Issue Location*"}</label>
+                                        <input
+                                          className="rounded px-1"
+                                          id="issueLocation"
+                                          type={"text"}
+                                          value={issueLocation}
+                                          onChange={handleIssueLocationChange}
+                                        />
+                                      </>
+                                    ))}
+                                  <label htmlFor="additionalDetails">{isMobile ? "Details" : "Additional Details"}</label>
+                                  <input
+                                    className="rounded px-1"
+                                    id="additionalDetails"
+                                    type={"text"}
+                                    value={additionalDetails}
+                                    onChange={handleAdditionalDetailsChange}
+                                  />
+                                </div>
+                                <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : "Property"}* </p>
+                                <div>
+                                  <input
+                                    className="rounded px-1"
+                                    id="permission-yes"
+                                    name={"permission"}
+                                    type={"radio"}
+                                    value={"yes"}
+                                    checked={permissionToEnter === "yes"}
+                                    onChange={handlePermissionChange}
+                                  />
+                                  <label htmlFor="permission-yes">{"Yes"}</label>
+                                  <input
+                                    className="rounded px-1 ml-4"
+                                    id="permission-no"
+                                    name={"permission"}
+                                    type={"radio"}
+                                    value={"no"}
+                                    checked={permissionToEnter === "no"}
+                                    onChange={handlePermissionChange}
+                                  />
+                                  <label htmlFor="permission-no">{"No"}</label>
+                                </div>
+                              </>
+                            )}
                         </div>
                       </div>
                     ))}

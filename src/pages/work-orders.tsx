@@ -1,28 +1,37 @@
-import { WorkOrdersTable } from "@/components/work-orders-table";
-import { PortalLeftPanel } from "@/components/portal-left-panel";
-import WorkOrder from "@/components/work-order";
-import axios from "axios";
+// External dependencies
+import axios from 'axios';
 import Modal from "react-modal";
-import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
-import { useDevice } from "@/hooks/use-window-size";
-import { BottomNavigationPanel } from "@/components/bottom-navigation-panel";
-import WorkOrdersCards from "@/components/work-orders-cards";
-import { AddWorkOrderModal } from "@/components/add-work-order-modal";
-import { IWorkOrder } from "@/database/entities/work-order";
-import { useUserContext } from "@/context/user";
-import { deconstructKey } from "@/utils";
+import { useRouter } from 'next/router';
+import { useCallback, useEffect, useState } from 'react';
+
+// Local components
+import { WorkOrdersTable } from '@/components/work-orders-table';
+import { PortalLeftPanel } from '@/components/portal-left-panel';
+import WorkOrder from '@/components/work-order';
+import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
+import WorkOrdersCards from '@/components/work-orders-cards';
+import { AddWorkOrderModal } from '@/components/add-work-order-modal';
+
+// Hooks and context
+import { useDevice } from '@/hooks/use-window-size';
+import { useUserContext } from '@/context/user';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
+
+// Types
+import { IWorkOrder } from '@/database/entities/work-order';
+
 
 const WorkOrders = () => {
-  const router = useRouter();
   const [isBrowser, setIsBrowser] = useState(false);
   const [workOrderModalIsOpen, setWorkOrderModalIsOpen] = useState(false);
   const { isMobile } = useDevice();
+  const { userType } = useUserContext();
+  const router = useRouter();
+  const { user } = useSessionUser();
 
   const [isFetching, setIsFetching] = useState(false);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
 
-  const { user } = useUserContext();
 
   /** Work Order Modal Logic */
   isBrowser && Modal.setAppElement("#workOrder");
@@ -32,16 +41,13 @@ const WorkOrders = () => {
 
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(async () => {
-    if (isFetching || (!user.userType)) {
-      return;
-    }
+    if (!userType || !user) return;
     setIsFetching(true);
-
-    const promise = user.userType === "PROPERTY_MANAGER"
-      ? axios.post('/api/get-all-work-orders-for-pm', { propertyManagerEmail: deconstructKey(user.pk) })
-      : user.userType === "TECHNICIAN"
-        ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: deconstructKey(user.pk) })
-        : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: deconstructKey(user.pk) });
+    const promise = userType === "PROPERTY_MANAGER"
+      ? axios.post('/api/get-all-work-orders-for-pm', { pmEmail: user.email })
+      : userType === "TECHNICIAN"
+        ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: user.email })
+        : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: user.email });
 
     const { data } = await promise;
     const orders: IWorkOrder[] = JSON.parse(data.response);
@@ -51,18 +57,24 @@ const WorkOrders = () => {
     }
 
     setIsFetching(false);
-  }, [isFetching, user]);
+  }, [user, userType]);
 
+
+  /**
+   * We want to fetch workOrders on the initial work-orders page render, when the user is available.
+   * We don't want to fetch all of them if we're just looking at one.
+   */
   useEffect(() => {
+    if (router.query.workOrderId || !user) return;
     fetchWorkOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user, router.query.workOrderId]);
 
   return (
     <>
       <Modal isOpen={!!router.query.workOrderId} onRequestClose={() => router.push("/work-orders")} contentLabel="Post modal" closeTimeoutMS={200}>
         <WorkOrder workOrderId={router.query.workOrderId as string} />
-      </Modal>
+      </Modal >
       <div id="workOrder" className="mx-4 mt-4" style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
         {!isMobile && <PortalLeftPanel />}
         <div className="lg:max-w-5xl">
@@ -75,8 +87,10 @@ const WorkOrders = () => {
               + New Work Order
             </button>
           </div>
-          {!isMobile && <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
-          {isMobile && <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />}
+          {isMobile ?
+            <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} /> :
+            <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />
+          }
           <AddWorkOrderModal
             workOrderModalIsOpen={workOrderModalIsOpen}
             setWorkOrderModalIsOpen={setWorkOrderModalIsOpen}

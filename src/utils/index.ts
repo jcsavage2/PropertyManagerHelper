@@ -176,3 +176,32 @@ export function createdToFormattedDateTime(created: string) {
 
   return [formattedDate, formattedTime];
 }
+
+export function generateAddress({
+  propertyUUId,
+  address,
+  country,
+  city,
+  state,
+  postalCode,
+  unit,
+  isPrimary,
+  numBeds,
+  numBaths,
+}: {
+  propertyUUId: string;
+  address: string;
+  country: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  isPrimary: boolean;
+  unit?: string;
+  numBeds?: number;
+  numBaths?: number;
+}) {
+  const key = `${propertyUUId}`;
+  return {
+    [key]: { address, unit, city, state, postalCode, country, isPrimary, numBeds, numBaths },
+  };
+}

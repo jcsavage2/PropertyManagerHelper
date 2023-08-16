@@ -2,7 +2,7 @@ import { Data } from "@/database";
 import { IWorkOrder, WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
 
-type GetWorkOrdersForTechnicianApiRequest = {
+export type GetWorkOrdersForTechnicianApiRequest = {
   technicianEmail: string;
 };
 

@@ -107,30 +107,31 @@ export class PropertyEntity {
       pk: generateKey(ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()), // can query all properties for a given property manager
       sk: this.generateSk({ address, country, city, state, postalCode, unit })
     };
-    const result = await this.propertyEntity.get(params, { consistent: true });
+    const result = await this.propertyEntity.get(params, { consistent: false });
     return result;
   }
 
   /**
    * @returns all properties that a given property manager is assigned to.
    */
-  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, propertyManagerEmail?.toLowerCase());
+  public async getAllForPropertyManager({ pmEmail }: { pmEmail: string; }) {
+    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, pmEmail?.toLowerCase());
     let startKey: StartKey;
-    const properties: IProperty[] = [];
+    const properties = [];
     do {
       try {
-        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(
           GSI1PK,
           {
+            startKey,
             limit: 20,
             reverse: true,
             beginsWith: `${ENTITY_KEY.PROPERTY}#`,
             index: INDEXES.GSI1,
           }
-        ));
+        );
         startKey = LastEvaluatedKey as StartKey;
-        properties.push(...(Items ?? []) as IProperty[]);
+        Items?.length && properties.push(...Items);
       } catch (err) {
         console.log({ err });
       }
@@ -150,6 +151,7 @@ export class PropertyEntity {
           GSI2PK,
           {
             limit: 20,
+            startKey,
             reverse: true,
             beginsWith: `${ENTITY_KEY.PROPERTY}#`,
             index: INDEXES.GSI2,

@@ -30,13 +30,8 @@ export default async function handler(
     }
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
-    await eventEntity.create({
-      workOrderId: deconstructKey(workOrderId),
-      updateType: Events.ASSIGNED_TO_UPDATE,
-      updateDescription: `Assigned ${technicianName}(${technicianEmail}) to the work order`,
-      updateMadeBy: pmEmail,
-    });
-    const response = await workOrderEntity.assignTechnician({
+
+    const assignedTechnician = await workOrderEntity.assignTechnician({
       workOrderId: deconstructKey(workOrderId),
       address,
       technicianEmail,
@@ -46,8 +41,15 @@ export default async function handler(
       pmEmail
     });
 
+    await eventEntity.create({
+      workOrderId: deconstructKey(workOrderId),
+      updateType: Events.ASSIGNED_TO_UPDATE,
+      updateDescription: `Assigned ${technicianName}(${technicianEmail}) to the work order`,
+      updateMadeBy: pmEmail,
+    });
+
     /** SEND THE EMAIL TO THE USER */
-    const apiKey = process.env.SENDGRID_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
       throw new Error("missing SENDGRID_API_KEY env variable.");
     }
@@ -115,7 +117,7 @@ export default async function handler(
       </html>`
     });
 
-    return res.status(200).json({ response: JSON.stringify(response) });
+    return res.status(200).json({ response: JSON.stringify(assignedTechnician) });
   } catch (error) {
     console.error(error);
   }

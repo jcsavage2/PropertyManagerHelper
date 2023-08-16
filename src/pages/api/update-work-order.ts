@@ -8,9 +8,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 type UpdateWorkOrderApiRequest = {
   pk: string;
   sk: string;
+  email: string; //email of the current user who made the update
   status: WorkOrderStatus;
   permissionToEnter?: "yes" | "no";
-  email: string;
 };
 
 export default async function handler(

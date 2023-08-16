@@ -1,7 +1,7 @@
 import { Data } from "@/database";
 import { PropertyEntity } from "@/database/entities/property";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
-import { TenantEntity } from "@/database/entities/tenant";
+import { UserEntity } from "@/database/entities/user";
 import { NextApiRequest, NextApiResponse } from "next";
 import { uuid as uuidv4 } from "uuidv4";
 
@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const propertyManagerEntity = new PropertyManagerEntity();
     const propertyEntity = new PropertyEntity();
-    const tenantEntity = new TenantEntity();
+    const userEntity = new UserEntity();
 
     if(!pmEmail || !address || !city || !state || !postalCode || !numBeds || !numBaths) {
       throw new Error("create-property Error: Missing required fields.");
@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     //Update tenant metadata with new property
     if(tenantEmail && tenantEmail.length) {
-      await tenantEntity.addAddress({
+      await userEntity.addAddress({
         propertyUUId: uuid,
         tenantEmail,
         address,
