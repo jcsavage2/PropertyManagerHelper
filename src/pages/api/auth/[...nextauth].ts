@@ -5,7 +5,6 @@ import { DynamoDBAdapter } from '@next-auth/dynamodb-adapter';
 import { DynamoDBClientConfig } from '@/database';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
-import { PropertyManagerEntity } from '@/database/entities/property-manager';
 import { UserEntity } from '@/database/entities/user';
 
 const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -51,7 +50,7 @@ export default NextAuth({
 					session.user = { ...session.user, ...databaseUser };
 				} else {
 					const newUser = await userEntity.createBaseUser({ email: user.email });
-					session.user = { ...session.user, ...newUser };
+          session.user = { ...session.user, ...newUser };
 				}
 			}
 			return session;

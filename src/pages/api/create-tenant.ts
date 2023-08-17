@@ -3,10 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
-import { uuid as uuidv4 } from "uuidv4";
 import { UserEntity } from "@/database/entities/user";
-
-
 
 export type CreateTenantBody = {
   tenantEmail: string;
@@ -18,60 +15,60 @@ export type CreateTenantBody = {
   city: string;
   country: "US" | "CA";
   postalCode: string;
+  numBeds: number;
+  numBaths: number;
+  createNewProperty: boolean;
+  propertyUUId: string;
 };
 
 /**
- * 
+ *
  * @returns `ContextUser` object.
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as CreateTenantBody;
-    const {
-      pmEmail,
-      tenantEmail,
-      tenantName,
-      address,
-      country = "US",
-      city,
-      state,
-      postalCode,
-      unit
-    } = body;
+    const { pmEmail, tenantEmail, tenantName, address, country = "US", city, state, postalCode, unit, numBeds, numBaths, propertyUUId, createNewProperty } = body;
+
+    if(!pmEmail || !tenantEmail || !tenantName || !address || !city || !state || !postalCode || !numBeds || !numBaths || !propertyUUId) {
+      throw new Error("create-tenant Error: Missing required fields.");
+    }
 
     const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
 
-
-    // CreateTenant 
+    // Create Tenant
     const newTenant = await userEntity.createTenant({
-      address,
-      city,
-      country,
-      pmEmail,
-      postalCode,
-      state,
       tenantEmail,
       tenantName,
-      unit
+      pmEmail,
+      propertyUUId,
+      address,
+      country,
+      city,
+      state,
+      postalCode,
+      unit,
+      numBeds,
+      numBaths,
     });
 
-    // Create Property
-    await propertyEntity.create(
-      {
+    // Create Property if necessary
+    if(createNewProperty) {
+      await propertyEntity.create({
+        tenantEmail,
+        propertyManagerEmail: pmEmail,
         address,
         city,
         country,
         postalCode,
-        propertyManagerEmail: pmEmail,
         state,
-        tenantEmail,
         unit,
-        uuid: uuidv4()
+        uuid: propertyUUId,
+        numBeds,
+        numBaths,
       });
+    }
 
     /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
@@ -146,7 +143,8 @@ export default async function handler(
     return res.status(200).json({ response: JSON.stringify(newTenant) });
 
 
-  } catch (error) {
+  } catch (error: any) {
     console.log({ error });
+    return res.status(error.statusCode || 500).json(error);
   }
 }

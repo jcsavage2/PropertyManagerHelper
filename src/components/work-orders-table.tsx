@@ -13,7 +13,6 @@ import Select, { SingleValue } from 'react-select';
 import { StatusOptionType } from '@/types';
 import { IoLocationSharp } from 'react-icons/io5';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
@@ -83,7 +82,7 @@ export const WorkOrdersTable = ({ workOrders, fetchWorkOrders, isFetching }: IWo
     { label: 'Address', accessor: 'address', width: '' },
     { label: 'Assigned To', accessor: 'assignedTo', width: '' },
     { label: 'Created', accessor: 'created', width: '' },
-    { label: 'Created By', accessor: 'tenantName', width: '' },
+    { label: 'Tenant', accessor: 'tenantName', width: '' },
   ];
 
   const remappedWorkOrders = workOrders.map((wo) => {

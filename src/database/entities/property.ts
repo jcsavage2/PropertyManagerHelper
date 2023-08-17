@@ -14,8 +14,10 @@ export interface IProperty {
   created: string;
   address: string;
   tenants: Map<string, string>; // tenant email, tenant name
+  tenantEmail?: string;
   unit: string;
-
+  numBeds: number;
+  numBaths: number;
 }
 
 type CreatePropertyProps = {
@@ -28,37 +30,45 @@ type CreatePropertyProps = {
   tenantEmail?: string;
   unit?: string;
   uuid: string;
+  numBeds: number;
+  numBaths: number;
 };
 export class PropertyEntity {
-  private propertyEntity = new Entity({
-    name: ENTITIES.PROPERTY,
-    attributes: {
-      pk: { partitionKey: true },
-      sk: { sortKey: true },
-      GSI1PK: { type: "string" },
-      GSI1SK: { type: "string" },
-      GSI2PK: { type: "string" },
-      GSI2SK: { type: "string" },
-      country: { type: 'string' },
-      address: { type: 'string' },
-      pmEmail: { type: "string" },
-      tenantEmail: { type: "string" },
-      tenants: { type: "map" },
-      unit: { type: 'string' },
-      city: { type: 'string', },
-      state: { type: 'string' },
-      postalCode: { type: 'string' },
-      workOrders: { type: 'list' },
-    },
-    table: PillarDynamoTable
-  });
+  private propertyEntity: Entity;
+
+  constructor() {
+    this.propertyEntity = new Entity({
+      name: ENTITIES.PROPERTY,
+      attributes: {
+        pk: { partitionKey: true },
+        sk: { sortKey: true },
+        GSI1PK: { type: "string" },
+        GSI1SK: { type: "string" },
+        GSI2PK: { type: "string" },
+        GSI2SK: { type: "string" },
+        country: { type: 'string' },
+        address: { type: 'string' },
+        pmEmail: { type: "string" },
+        tenantEmail: { type: "string" },
+        tenants: { type: "map" },
+        unit: { type: 'string' },
+        city: { type: 'string', },
+        state: { type: 'string' },
+        postalCode: { type: 'string' },
+        workOrders: { type: 'list' },
+        numBeds: { type: 'number' },
+        numBaths: { type: 'number' },
+      },
+      table: PillarDynamoTable
+    } as const);
+  }
 
   private generateSk({ address, country = "US", city, state, postalCode, unit }:
     { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; }) {
     return [ENTITY_KEY.PROPERTY, "ADDRESS", address.toUpperCase(), "COUNTRY", country.toUpperCase(), "CITY", city.toUpperCase(), "STATE", state.toUpperCase(), "POSTAL", postalCode.toUpperCase(), "UNIT", unit ? unit?.toUpperCase() : ""].join("#");
   }
 
-  public async create({ address, country = "US", tenantEmail, city, state, postalCode, unit, propertyManagerEmail, uuid }: CreatePropertyProps) {
+  public async create({ address, country = "US", tenantEmail, city, state, postalCode, unit, propertyManagerEmail, uuid, numBeds, numBaths }: CreatePropertyProps) {
     const propertyId = generateKey(ENTITY_KEY.PROPERTY, uuid);
     const result = await this.propertyEntity.update({
       pk: propertyId,
@@ -75,6 +85,8 @@ export class PropertyEntity {
       postalCode: postalCode.toUpperCase(),
       pmEmail: propertyManagerEmail.toLowerCase(),
       unit: unit?.toUpperCase() ?? "",
+      ...(numBeds && { numBeds }),
+      ...(numBaths && { numBaths }),
     }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
 
     //@ts-ignore

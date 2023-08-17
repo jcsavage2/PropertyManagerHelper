@@ -30,8 +30,7 @@ const Home = () => {
     const hasSeenNotice = sessionStorage.getItem("PILLAR::NOTICE");
     if (hasSeenNotice) {
       return;
-    }
-    else {
+    } else {
       setShowNotice(true);
       sessionStorage.setItem("PILLAR::NOTICE", "false");
     };

@@ -7,7 +7,7 @@ import { BottomNavigationPanel } from "@/components/bottom-navigation-panel";
 import { TenantsTable } from "@/components/tenants-table";
 import TenantsCards from "./tenant-cards";
 import { useSessionUser } from "@/hooks/auth/use-session-user";
-import { GetPropertiesForPropertyManagerApiRequest } from '../api/get-all-tenants-for-pm';
+import { GetTenantsForPropertyManagerApiRequest } from '../api/get-all-tenants-for-pm';
 
 const Tenants = () => {
   const [tenantModalIsOpen, setTenantModalIsOpen] = useState(false);
@@ -15,25 +15,19 @@ const Tenants = () => {
   const [tenants, setTenants] = useState([]);
   const { isMobile } = useDevice();
 
-  useEffect(() => {
-    async function get() {
-      if (!user) return;
-      const body: GetPropertiesForPropertyManagerApiRequest = { pmEmail: user.email };
-      const { data } = await axios.post("/api/get-all-tenants-for-pm", body);
-      const tenants = JSON.parse(data.response);
-      tenants.length && setTenants(tenants);
-    }
-    get();
-  }, [user]);
-
   /**
    * TODO refetch is not working as expected upon successful
    */
-  const refetch = useCallback(async () => {
+  const fetchTenants = useCallback(async () => {
     if (!user) return;
-    const { data } = await axios.post("/api/get-all-tenants-for-pm", { pmEmail: user?.pmEmail });
+    const body: GetTenantsForPropertyManagerApiRequest = { pmEmail: user.email };
+    const { data } = await axios.post("/api/get-all-tenants-for-pm", body);
     const tenants = JSON.parse(data.response);
     tenants.length && setTenants(tenants);
+  }, [user?.email]);
+
+  useEffect(() => {
+    fetchTenants();
   }, [user]);
 
   const customStyles = isMobile ? {} : { gridTemplateColumns: "1fr 3fr", columnGap: "2rem" };
@@ -49,10 +43,9 @@ const Tenants = () => {
             onClick={() => setTenantModalIsOpen(true)}
           >+ New Tenant</button>
         </div>
-        {!isMobile && <TenantsTable tenants={tenants} />}
-        {isMobile && <TenantsCards />}
+        {isMobile ? <TenantsCards /> : <TenantsTable tenants={tenants} />}
       </div>
-      <AddTenantModal tenantModalIsOpen={tenantModalIsOpen} setTenantModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={refetch} />
+      <AddTenantModal tenantModalIsOpen={tenantModalIsOpen} setTenantModalIsOpen={setTenantModalIsOpen} onSuccessfulAdd={fetchTenants} />
       {isMobile && <BottomNavigationPanel />}
     </div >
   );

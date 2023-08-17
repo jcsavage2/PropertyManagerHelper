@@ -2,7 +2,7 @@ import { Data } from "@/database";
 import { PropertyEntity } from "@/database/entities/property";
 import { NextApiRequest, NextApiResponse } from "next";
 
-type GetPropertiesForPropertyManagerApiRequest = {
+export type GetPropertiesForPropertyManagerApiRequest = {
   pmEmail: string;
 };
 

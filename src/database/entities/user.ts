@@ -1,7 +1,8 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { generateKey, toTitleCase } from '@/utils';
+import { generateAddress, generateKey, toTitleCase } from '@/utils';
+import { GetCommandInput } from '@aws-sdk/lib-dynamodb';
 
 
 interface IBaseUser {
@@ -38,6 +39,9 @@ interface ICreateTenant {
   state: string,
   postalCode: string,
   unit?: string;
+  propertyUUId: string;
+  numBeds: number;
+  numBaths: number;
 }
 
 export interface IUser extends IBaseUser {
@@ -78,7 +82,6 @@ export class UserEntity {
       const result = await this.userEntity.update({
         pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-        roles: [],
         status: "CREATED"
       }, { returnValues: "ALL_NEW" });
       return result.Attributes;
@@ -92,7 +95,7 @@ export class UserEntity {
    * If the user does already exist, update them with the appropriate roles + metadata. 
    */
   public async createTenant(
-    { pmEmail, tenantName, tenantEmail, address, country, city, state, postalCode, unit }: ICreateTenant) {
+    { pmEmail, tenantName, tenantEmail, address, country, city, state, postalCode, unit, propertyUUId, numBeds, numBaths }: ICreateTenant) {
     try {
       const lowerCasePMEmail = pmEmail.toLowerCase();
       const lowerCaseTenantEmail = tenantEmail.toLowerCase();
@@ -107,14 +110,17 @@ export class UserEntity {
         tenantName,
         status: "INVITED",
         userType: ENTITIES.TENANT,
-        addresses: this.generateAddress({
+        addresses: generateAddress({
+          propertyUUId,
           address,
           country,
           city,
           state,
           postalCode,
           unit,
-          isPrimary: true
+          isPrimary: true,
+          numBaths,
+          numBeds
         }),
       }, { returnValues: "ALL_NEW" });
       return tenant.Attributes ?? null;
@@ -228,27 +234,57 @@ export class UserEntity {
     return technicians;
   }
 
-  private generateAddress({ address,
-    country,
+  /**
+   * Adds a new address to the user's address map.
+   */
+  public async addAddress({
+    tenantEmail,
+    propertyUUId,
+    address,
+    country = "US",
     city,
     state,
     postalCode,
     unit,
-    isPrimary
+    numBeds,
+    numBaths,
   }: {
+    tenantEmail: string;
+    propertyUUId: string;
     address: string;
     country: string;
     city: string;
     state: string;
     postalCode: string;
+    numBeds: number;
+    numBaths: number;
     unit?: string;
-    isPrimary: boolean;
   }) {
-    const unitString = unit ? `- ${unit?.toLowerCase()}` : "";
-    const key = `${address.toLowerCase()} ${unitString}`;
-    return {
-      [key]: { address, unit, city, state, postalCode, country, isPrimary }
-    };
+    try {
+      //get current address map
+      const userAccount = await this.get({ email: tenantEmail });
+      if (!userAccount) {
+        throw new Error("tenant.addAddress error: Tenant not found: {" + tenantEmail + "}");
+      }
+      //@ts-ignore
+      let newAddresses: Record<string, any> = userAccount.addresses;
+
+      //Add new address into the map
+      newAddresses[propertyUUId] = { address, unit, city, state, postalCode, country, isPrimary: false, numBeds, numBaths }
+
+      //Add the map with the new address back into the tenant record
+      const result = await this.userEntity.update(
+        {
+          pk: generateKey(ENTITY_KEY.USER, tenantEmail.toLowerCase()),
+          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+          addresses: newAddresses
+        },
+        { returnValues: "ALL_NEW" }
+      );
+      return result;
+    } catch (err) {
+      console.log({ err });
+    }
   }
 
   private userEntity = new Entity({

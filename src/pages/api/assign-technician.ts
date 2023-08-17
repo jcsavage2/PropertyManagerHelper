@@ -23,7 +23,6 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    console.log("TRYING");
     const body = req.body as AssignTechnicianBody;
     const { workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter } = body;
     if (!workOrderId || !pmEmail || !technicianEmail || !technicianName) {

@@ -1,8 +1,9 @@
-import { ChatCompletionRequestMessage } from 'openai';
-import { Events } from '../constants';
+import { ChatCompletionRequestMessage } from "openai";
+import { Events } from "../constants";
 
 export type ApiRequest = WorkOrder & {
   userMessage: string;
+  unitInfo: string;
   messages: ChatCompletionRequestMessage[];
 };
 
@@ -27,9 +28,12 @@ export type UserInfo = {
   city: string;
   country?: string;
   postalCode: string;
-  tenantEmail: string;
-  tenantName: string;
+  creatorEmail: string;
+  creatorName: string;
+  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN"  
   permissionToEnter: "yes" | "no";
+  tenantEmail?: string;
+  tenantName?: string;
 };
 
 export type IssueInformation = {
@@ -40,15 +44,18 @@ export type IssueInformation = {
 
 export type WorkOrder = IssueInformation;
 
-export type EventType = typeof Events[keyof typeof Events];
+export type EventType = (typeof Events)[keyof typeof Events];
 
 export type OptionType = {
   value: string;
   label: string;
 };
 
-export type StatusOptionType = {
-    value: string;
-    label: string;
-    icon: any;
-  };
+export type StatusOptionType = OptionType & {
+  icon: any;
+};
+
+export type AddressOptionType = {
+  label: string;
+  value: any; 
+};

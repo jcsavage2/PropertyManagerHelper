@@ -195,10 +195,18 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
               ) : (
                 <div className="text-md text-center md:text-left md:ml-16 text-gray-600 italic">None provided</div>
               )}
+              <div className="flex flex-row font-bold text-base mt-4 mx-auto md:hidden">
+                <p className="mr-2">PTE?</p>
+                {workOrder.permissionToEnter === "yes" ? (
+                  <p className="text-green-600 font-normal">{toTitleCase(workOrder.permissionToEnter)}</p>
+                ) : (
+                  <p className="text-red-600 font-normal">{toTitleCase(workOrder.permissionToEnter)}</p>
+                )}
+              </div>
               {workOrder.additionalDetails && workOrder.additionalDetails.length && (
                 <div className="md:hidden mt-2">
                   <div className="font-bold text-center text-base">Additional Info</div>
-                  <div className="text-base text-center text-gray-600 ml-4">&quot;{workOrder.additionalDetails}&quot;</div>
+                  <div className="text-base text-center text-gray-600">&quot;{workOrder.additionalDetails}&quot;</div>
                 </div>
               )}
               <div className="font-bold md:mt-4 mt-2 md:ml-12 text-center md:text-start">Status</div>
@@ -206,7 +214,9 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${workOrder.status === STATUS.TO_DO && "bg-blue-200"} rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                  className={`${
+                    workOrder.status === STATUS.TO_DO && "bg-blue-200"
+                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                 >
                   <GoTasklist />
                   <span className="text-xs">Todo</span>
@@ -214,7 +224,9 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${workOrder.status === STATUS.COMPLETE && "bg-blue-200"} rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                  className={`${
+                    workOrder.status === STATUS.COMPLETE && "bg-blue-200"
+                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
                   <span className="text-xs">Complete</span>
@@ -244,18 +256,28 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
 
             <div className="md:col-auto flex-col w-full text-lg hidden md:flex mt-4">
               {workOrder.additionalDetails && workOrder.additionalDetails.length && (
-                <div className='mb-4'>
+                <div>
                   <div className="font-bold text-base">Additional Info</div>
                   <div className="text-base text-gray-600 ml-4">&quot;{workOrder.additionalDetails}&quot;</div>
                 </div>
               )}
-              <div className="font-bold text-base mb-1">Other Details</div>
+              <div className="flex flex-col align-middle font-bold text-base mt-4">
+                <p>Permission to Enter</p>
+                {workOrder.permissionToEnter === "yes" ? (
+                  <p className="text-green-600 font-normal ml-4">{toTitleCase(workOrder.permissionToEnter)}</p>
+                ) : (
+                  <p className="text-red-600 font-normal ml-4">{toTitleCase(workOrder.permissionToEnter)}</p>
+                )}
+              </div>
+
+              <div className="font-bold text-base mb-1 mt-4">Other Details</div>
               <div className="flex flex-row items-center ml-4 mb-1">
                 <BsPersonFill className="mr-2" />
                 {workOrder.tenantName}({workOrder.tenantEmail})
               </div>
               <div className="flex flex-row items-center ml-4 mb-1">
-                <IoLocationSharp className="mr-2" /> {generateAddressKey({ address: workOrder?.address?.address, unit: workOrder?.address?.unit ?? "" })}
+                <IoLocationSharp className="mr-2" />{" "}
+                {generateAddressKey({ address: workOrder?.address?.address, unit: workOrder?.address?.unit ?? "" })}
               </div>
               <div className="flex flex-row items-center ml-4 mb-1">
                 <BiTimeFive className="mr-2" />
@@ -302,7 +324,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
     );
   }
   if (isLoading) {
-    return <LoadingSpinner containerClass={null} />;
+    return <LoadingSpinner />;
   }
   return (
     <div>
