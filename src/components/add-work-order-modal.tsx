@@ -183,7 +183,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
           type="submit"
           disabled={!issueDescription || !selectedProperty || submitWorkOrderLoading}
         >
-          {submitWorkOrderLoading ? <LoadingSpinner containerClass={null} /> : "Add Work Order"}
+          {submitWorkOrderLoading ? <LoadingSpinner /> : "Add Work Order"}
         </button>
       </form>
     </Modal>

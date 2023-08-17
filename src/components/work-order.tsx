@@ -324,7 +324,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
     );
   }
   if (isLoading) {
-    return <LoadingSpinner containerClass={null} />;
+    return <LoadingSpinner />;
   }
   return (
     <div>

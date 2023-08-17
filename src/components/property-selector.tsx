@@ -166,7 +166,7 @@ const PropertySelector = ({
       </div>
 
       {loading && !selectedProperty ? (
-        <LoadingSpinner containerClass={null} />
+        <LoadingSpinner />
       ) : (
         <>
           {!selectedProperty

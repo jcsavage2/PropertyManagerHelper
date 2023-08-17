@@ -396,7 +396,7 @@ export default function WorkOrderChatbot() {
                       disabled={issueDescription.length === 0 || submittingWorkOrderLoading}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? <LoadingSpinner containerClass={null} /> : "Submit Work Order"}
+                      {submittingWorkOrderLoading ? <LoadingSpinner /> : "Submit Work Order"}
                     </button>
                   ) : (
                     <form

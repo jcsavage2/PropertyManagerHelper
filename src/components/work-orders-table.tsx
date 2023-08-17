@@ -13,7 +13,6 @@ import Select, { SingleValue } from 'react-select';
 import { StatusOptionType } from '@/types';
 import { IoLocationSharp } from 'react-icons/io5';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
