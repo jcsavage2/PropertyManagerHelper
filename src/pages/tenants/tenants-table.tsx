@@ -140,7 +140,7 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
                     {primaryAddress.address + " " + primaryAddress.unit}
                   </td>
                   <td className="border px-4 py-1">
-                    {createdToFormattedDateTime(tenant._ct)[0]}
+                    {createdToFormattedDateTime(tenant._ct ?? tenant.created)[0]}
                   </td>
                 </tr>
               );

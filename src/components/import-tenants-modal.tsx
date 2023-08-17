@@ -1,17 +1,17 @@
-import { useUserContext } from "@/context/user";
 import axios from "axios";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import Modal from "react-modal";
 import { useDevice } from "@/hooks/use-window-size";
 import * as xlsx from "xlsx";
-import { CreateTenantProps } from "@/database/entities/tenant";
 import { BiError } from "react-icons/bi";
 import { CreateTenantBody } from "@/pages/api/create-tenant";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
-import { set } from "cypress/types/lodash";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { v4 as uuid } from "uuid";
+import { toTitleCase } from "@/utils";
+import { toast } from "react-toastify";
 
-type ImportTenantObject = CreateTenantProps & {
+type ImportTenantObject = CreateTenantBody & {
   key: number;
   error?: string;
 };
@@ -25,7 +25,7 @@ export const ImportTenantsModal = ({
   setModalIsOpen: Dispatch<SetStateAction<boolean>>;
   onSuccessfulAdd: () => void;
 }) => {
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const { isMobile } = useDevice();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
@@ -42,7 +42,7 @@ export const ImportTenantsModal = ({
       bottom: "auto",
       transform: "translate(-50%, -50%)",
       width: isMobile ? "85%" : "65%",
-      maxHeight: "90%",
+      maxHeight: isMobile ? "80%" : "90%",
       backgroundColor: "rgba(255, 255, 255)",
     },
     overLay: {
@@ -115,8 +115,6 @@ export const ImportTenantsModal = ({
     );
   };
 
-  useEffect(() => {console.log(importTenantsLoading)}, [importTenantsLoading]);
-
   const handleFileUpload = (event: any) => {
     setUploadList([]);
     setFormattingError(false);
@@ -145,7 +143,7 @@ export const ImportTenantsModal = ({
     async (parsed: any[]) => {
       if (!user || !user.pmEmail) return;
       parsed.forEach((row: any, index: number) => {
-        const { NAME: tenantName, UNIT: unit, EMAIL: tenantEmail, ADDRESS: address, CITY: city, STATE: state, "POSTAL CODE": postalCode } = row;
+        const { NAME: tenantName, UNIT: unit, EMAIL: tenantEmail, ADDRESS: address, CITY: city, STATE: state, "POSTAL CODE": postalCode, "BEDS": numBeds, "BATHS": numBaths } = row;
 
         //Construct error message for any missing fields
         let missingFields = "";
@@ -155,19 +153,25 @@ export const ImportTenantsModal = ({
         if (!city) missingFields += "CITY, ";
         if (!state) missingFields += "STATE, ";
         if (!postalCode) missingFields += "POSTAL CODE, ";
+        if (!numBeds) missingFields += "BEDS, ";
+        if (!numBaths) missingFields += "BATHS, ";
         if (missingFields.length) missingFields = missingFields.slice(0, -2);
 
         const tenant: ImportTenantObject = {
           key: index,
-          tenantEmail,
-          tenantName,
+          tenantEmail: tenantEmail?.toLowerCase(),
+          tenantName: tenantName && toTitleCase(tenantName),
           address,
           city,
           state,
-          postalCode,
-          unit,
+          postalCode: postalCode?.toString(),
+          unit: unit?.toString(),
           country: "US",
           pmEmail: user!.pmEmail!,
+          numBeds,
+          numBaths,
+          createNewProperty: true,
+          propertyUUId: uuid(),
           error: missingFields.length > 0 ? `Missing required field(s): {${missingFields}}` : undefined,
         };
         setUploadList((prev) => [...prev, tenant]);
@@ -177,10 +181,11 @@ export const ImportTenantsModal = ({
   );
 
   const handleImportTenants = async () => {
-    //TODO: add error handling
     if (!user || !user.pmEmail) return;
     setImportTenantsLoading(true);
     setImportTenantProgress(0);
+
+    let errorList: ImportTenantObject[] = []
 
     // Loop through the uploadList
     for (let index = 0; index < uploadList.length; index++) {
@@ -190,18 +195,27 @@ export const ImportTenantsModal = ({
         country: "US",
       };
 
-      try {
-        //TODO: unit is being sent to backend as a number, not a string
-        await axios.post("/api/create-tenant", { ...body }).then((res) => {
-          if (res.status === 200) {
-            setImportTenantProgress((prev) => prev + 1);
-          }
-        })
-      } catch (error) {
-        // Handle error here
-      }
+      await axios.post("/api/create-tenant", { ...body }).then((res) => {
+        setImportTenantProgress((prev) => prev + 1);
+      }).catch((err) => {
+        console.log(err);
+        setImportTenantProgress((prev) => prev + 1);
+        errorList.push({...tenant, error: "Error uploading tenant"})
+      })
     }
-
+    
+    if(!errorList.length){
+      onClose();
+      toast.success(`${uploadList.length} tenants successfully created!`, {
+        position: toast.POSITION.TOP_CENTER,
+      });
+    }else{
+      toast.error(`Error uploading ${errorList.length} tenants. Please try again`, {
+        position: toast.POSITION.TOP_CENTER,
+      });
+    }
+    onSuccessfulAdd();
+    setUploadList(errorList);
     setImportTenantsLoading(false);
     setImportTenantProgress(0);
   }
@@ -225,7 +239,7 @@ export const ImportTenantsModal = ({
       <div className="clear-right mt-4">
         <div className="mb-4 flex flex-col justify-center ">
           <p className="text-center text-slate-500 mb-2">Upload a .xls/.xlsx file to bulk import tenants</p>
-          <input className="mx-auto" type="file" name="xlsFile" id="xlsFile" accept=".xls, .xlsx" onChange={(e) => handleFileUpload(e)} />
+          <input className="mx-auto md:w-auto w-3/4" type="file" name="xlsFile" id="xlsFile" accept=".xls, .xlsx" onChange={(e) => handleFileUpload(e)} />
         </div>
 
         <div className="w-full flex flex-col">
@@ -241,10 +255,10 @@ export const ImportTenantsModal = ({
           )}
         </div>
 
-        {importTenantsLoading && (
+        {importTenantsLoading && uploadList.length > 1 && (
           <div className="bg-slate-200 w-full h-6 text-center rounded mt-4">
-            <div className="absolute h-6 w-16 bg-blue-400 rounded-l"></div>
-            <p className="h-full w-full">{formatProgressToPercent(importTenantProgress)} %</p>
+            <div className="absolute h-6 bg-blue-300 rounded" style={{ width: formatProgressToPercent(importTenantProgress).toString() + "%" }}></div>
+            <div className="relative h-full w-full">{formatProgressToPercent(importTenantProgress)} %</div>
           </div>
         )}
 
@@ -258,9 +272,9 @@ export const ImportTenantsModal = ({
           }}
         >
           {importTenantsLoading ? (
-            <LoadingSpinner spinnerClass="spinner" />
+            <LoadingSpinner />
           ) : uploadList.length ? (
-            "Create " + (uploadList.length > 1 ? uploadList.length + " Tenants" : "1 Tenant")
+            "Create " + uploadList.length.toString() + (uploadList.length > 1 ? " Tenants" : " Tenant")
           ) : (
             "Import Tenants"
           )}

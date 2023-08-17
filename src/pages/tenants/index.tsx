@@ -26,7 +26,6 @@ const Tenants = () => {
     const { data } = await axios.post("/api/get-all-tenants-for-pm", body);
     const tenants = JSON.parse(data.response);
     tenants.length && setTenants(tenants);
-    console.log(tenants);
     setTenantsLoading(false);
   }, [user?.email, setTenantsLoading]);
 
