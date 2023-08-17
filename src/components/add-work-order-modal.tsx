@@ -9,6 +9,7 @@ import { LoadingSpinner } from "./loading-spinner/loading-spinner";
 import { ITenant } from "@/database/entities/tenant";
 import { useSessionUser } from "@/hooks/auth/use-session-user";
 import { useUserContext } from "@/context/user";
+import { userRoles } from "@/database/entities/user";
 
 const customStyles = {
   content: {
@@ -55,6 +56,8 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
     async (event) => {
       try {
         event.preventDefault();
+        if(!user?.email || userType !== "PROPERTY_MANAGER" || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error("user must be a property manager")
+
         if (!user || !user.pmEmail) {
           throw new Error("user needs to be a Property Manager.");
         }

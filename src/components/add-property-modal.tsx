@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { useSessionUser } from "@/hooks/auth/use-session-user";
 import { useUserContext } from "@/context/user";
 import { GetTenantsForPropertyManagerApiRequest } from "@/pages/api/get-all-tenants-for-pm";
+import { userRoles } from "@/database/entities/user";
 
 export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsOpen }: { addPropetyModalIsOpen: boolean; setAddPropertyModalIsOpen: Dispatch<SetStateAction<boolean>> }) => {
   const [isBrowser, setIsBrowser] = useState(false);
@@ -99,7 +100,7 @@ export const AddPropertyModal = ({ addPropetyModalIsOpen, setAddPropertyModalIsO
       try {
         event.preventDefault();
 
-        if(!user || !user.pmEmail) throw new Error("No PM email found")
+        if(!user?.email || userType !== "PROPERTY_MANAGER" || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error("user must be a property manager")
 
         const response = await axios.post("/api/create-property", { address, city, state, postalCode, unit, pmEmail: user.pmEmail, numBeds, numBaths, tenantEmail } as CreatePropertyBody);
 
