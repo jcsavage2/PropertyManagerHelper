@@ -4,6 +4,7 @@ import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, use
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CreateTechnicianBody } from "@/pages/api/create-technician";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 const customStyles = {
   content: {
@@ -34,7 +35,7 @@ export type AddTechnicianModalProps = {
 
 export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIsOpen, onSuccessfulAdd }: AddTechnicianModalProps) => {
 
-  const { user } = useUserContext();
+  const { user, sessionStatus } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -44,6 +45,8 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+  const { userType } = useUserContext();
 
   const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setName(e.currentTarget.value);
@@ -61,13 +64,13 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   const handleCreateNewTechnician: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     try {
       event.preventDefault();
-      if (!user.pmEmail) {
+      if (!user?.email || !user?.roles?.includes("PROPERTY_MANAGER") || userType !== "PROPERTY_MANAGER") {
         throw new Error("user needs to be a Property Manager.");
       }
       const { data } = await axios.post("/api/create-technician", {
         technicianEmail: email,
         technicianName: name,
-        pmEmail: user.pmEmail,
+        pmEmail: user.email,
         organization: user.organization ?? "",
       } as CreateTechnicianBody);
       const { response } = data;
@@ -80,12 +83,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
     } catch (err) {
       console.log({ err });
     }
-  }, [
-    user,
-    onSuccessfulAdd,
-    email,
-    name,
-    setTechnicianModalIsOpen]);
+  }, [user, userType, email, name, onSuccessfulAdd, setTechnicianModalIsOpen]);
 
   return (
     <Modal

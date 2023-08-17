@@ -1,4 +1,3 @@
-import { useUserContext } from "@/context/user";
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { AddTenantModal } from "@/components/add-tenant-modal";
@@ -8,9 +7,11 @@ import { BottomNavigationPanel } from "@/components/bottom-navigation-panel";
 import { TenantsTable } from "@/pages/tenants/tenants-table";
 import TenantsCards from "./tenant-cards";
 import { ImportTenantsModal } from "@/components/import-tenants-modal";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { GetTenantsForPropertyManagerApiRequest } from "../api/get-all-tenants-for-pm";
 
 const Tenants = () => {
-  const { user } = useUserContext();
+  const { user } = useSessionUser();
   const { isMobile } = useDevice();
 
   const [addTenantModalIsOpen, setAddTenantModalIsOpen] = useState(false);
@@ -18,27 +19,20 @@ const Tenants = () => {
   const [tenants, setTenants] = useState([]);
   const [tenantsLoading, setTenantsLoading] = useState(false);
 
-  useEffect(() => {
-    if (user.pmEmail) {
-      async function get() {
-        setTenantsLoading(true);
-        const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
-        const tenants = JSON.parse(data.response);
-        tenants.length && setTenants(tenants);
-        setTenantsLoading(false);
-      }
-      get();
-    }
-  }, [user.pmEmail]);
-
-  /**
-   * TODO refetch is not working as expected upon successful
-   */
-  const refetch = useCallback(async () => {
-    const { data } = await axios.post("/api/get-all-tenants-for-pm", { propertyManagerEmail: user.pmEmail });
+  const fetchTenants = useCallback(async () => {
+    if (!user || !user.pmEmail) return;
+    setTenantsLoading(true);
+    const body: GetTenantsForPropertyManagerApiRequest = { pmEmail: user.email };
+    const { data } = await axios.post("/api/get-all-tenants-for-pm", body);
     const tenants = JSON.parse(data.response);
     tenants.length && setTenants(tenants);
-  }, [user.pmEmail]);
+    console.log(tenants);
+    setTenantsLoading(false);
+  }, [user?.email, setTenantsLoading]);
+
+  useEffect(() => {
+    fetchTenants();
+  }, [user]);
 
   const customStyles = isMobile ? {} : { gridTemplateColumns: "1fr 3fr", columnGap: "2rem" };
 
@@ -65,11 +59,14 @@ const Tenants = () => {
             </button>
           </div>
         </div>
-        {!isMobile && <TenantsTable tenants={tenants} tenantsLoading={tenantsLoading} />}
-        {isMobile && <TenantsCards tenants={tenants} tenantsLoading={tenantsLoading} />}
+        {isMobile ? (
+          <TenantsCards tenants={tenants} tenantsLoading={tenantsLoading} />
+        ) : (
+          <TenantsTable tenants={tenants} tenantsLoading={tenantsLoading} />
+        )}
       </div>
-      <AddTenantModal tenantModalIsOpen={addTenantModalIsOpen} setTenantModalIsOpen={setAddTenantModalIsOpen} onSuccessfulAdd={refetch} />
-      <ImportTenantsModal modalIsOpen={importTenantModalIsOpen} setModalIsOpen={setImportTenantModalIsOpen} onSuccessfulAdd={refetch} />
+      <AddTenantModal tenantModalIsOpen={addTenantModalIsOpen} setTenantModalIsOpen={setAddTenantModalIsOpen} onSuccessfulAdd={fetchTenants} />
+      <ImportTenantsModal modalIsOpen={importTenantModalIsOpen} setModalIsOpen={setImportTenantModalIsOpen} onSuccessfulAdd={fetchTenants} />
       {isMobile && <BottomNavigationPanel />}
     </div>
   );

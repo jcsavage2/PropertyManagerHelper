@@ -3,37 +3,38 @@ import axios from "axios";
 import { ChatCompletionRequestMessage } from "openai";
 import { toast } from "react-toastify";
 import { hasAllIssueInfo } from "@/utils";
-import { AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from "@/types";
-import { useUserContext } from "@/context/user";
-import Select from "react-select";
+import { AddressOptionType, AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from "@/types";
+import Select, { SingleValue } from "react-select";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { useDevice } from "@/hooks/use-window-size";
 import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
-import { useDevice } from '@/hooks/use-window-size';
+import { userRoles } from "@/database/entities/user";
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState("");
   const [lastUserMessage, setLastUserMessage] = useState("");
-  const { user } = useUserContext();
+  const { user, sessionStatus } = useSessionUser();
   const { isMobile } = useDevice();
 
-  if (user.userType !== "TENANT") {
-    throw new Error("User Must be a Tenant.");
-  }
-
-  const addressesOptions = useMemo(
-    () =>
-      Object.values(user?.addresses)?.map((address: any) => ({
-        label: `${address?.address} ${address?.unit}`.trim(),
-        value: JSON.stringify(address),
-      })) ?? [],
-    [user.addresses]
-  );
+  const addressesOptions: AddressOptionType[] = useMemo(() => {
+    if (!user?.addresses) return [];
+    return (
+      Object.values(user?.addresses)?.map(
+        (address: any) =>
+          ({
+            label: `${address?.address} ${address?.unit}`.trim(),
+            value: address,
+          } as AddressOptionType)
+      ) ?? []
+    );
+  }, [user?.addresses]);
 
   const [isUsingAI, _setIsUsingAI] = useState(true);
 
-  const [pmEmail, setPmEmail] = useState(user.pmEmail ?? "");
-  const [tenantName, setTenantName] = useState(user.tenantName);
-  const [tenantEmail, setTenantEmail] = useState(user.tenantEmail);
-  const [selectedAddress, setSelectedAddress] = useState<string>(addressesOptions?.[0]?.value ?? "");
+  const [pmEmail, setPmEmail] = useState(user?.pmEmail ?? "");
+  const [tenantName, setTenantName] = useState(user?.tenantName);
+  const [tenantEmail, setTenantEmail] = useState(user?.tenantEmail);
+  const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<"yes" | "no">("yes");
   const [issueDescription, setIssueDescription] = useState("");
@@ -45,13 +46,23 @@ export default function WorkOrderChatbot() {
   const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
+  const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
 
   useEffect(() => {
     user?.pmEmail && setPmEmail(user.pmEmail);
     user?.tenantName && setTenantName(user.tenantName);
     user?.tenantEmail && setTenantEmail(user.tenantEmail);
-    addressesOptions.length > 0 && setSelectedAddress(JSON.stringify(addressesOptions?.[0]?.value ?? ""));
-  }, [user, addressesOptions]);
+  }, [user]);
+
+  //If the user has only one address, select it automatically
+  useEffect(() => {
+    if (addressesOptions && addressesOptions.length === 1) {
+      setSelectedAddress(addressesOptions[0]);
+      setAddressHasBeenSelected(true);
+    } else {
+      setAddressHasBeenSelected(false);
+    }
+  }, [addressesOptions]);
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -96,18 +107,30 @@ export default function WorkOrderChatbot() {
     },
     [setPermissionToEnter]
   );
+  const handleAddressSelectChange = (value: AddressOptionType) => {
+    setSelectedAddress(value);
+  };
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    const parsedAddress = JSON.parse(JSON.parse(selectedAddress));
+    if (!selectedAddress || !tenantEmail || !tenantName) {
+      toast.error("Error Submitting Work Order. Please Try Again", {
+        position: toast.POSITION.TOP_CENTER,
+      });
+      setSubmittingWorkOrderLoading(false);
+      return;
+    }
+
+    const parsedAddress = selectedAddress.value;
     const body: SendEmailApiRequest = {
       issueDescription,
       issueLocation,
       additionalDetails,
       messages,
       pmEmail,
-      tenantEmail,
-      tenantName,
+      createdByType: "TENANT",
+      creatorEmail: tenantEmail,
+      creatorName: tenantName,
       permissionToEnter,
       address: parsedAddress.address,
       state: parsedAddress.state,
@@ -135,10 +158,6 @@ export default function WorkOrderChatbot() {
     return;
   };
 
-  const handleAddressSelectChange = (value: string) => {
-    setSelectedAddress(value);
-  };
-
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     try {
@@ -146,17 +165,27 @@ export default function WorkOrderChatbot() {
         setMessages([
           ...messages,
           { role: "user", content: issueDescription },
-          { role: "assistant", content: "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request." },
+          {
+            role: "assistant",
+            content:
+              "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request.",
+          },
         ]);
       }
 
-      if (userMessage === "") return;
+      if (userMessage === "" || !selectedAddress) return;
       setMessages([...messages, { role: "user", content: userMessage }]);
       setIsResponding(true);
       setLastUserMessage(userMessage);
       setUserMessage("");
 
-      const body: ApiRequest = { userMessage, messages, ...workOrder };
+      const parsedAddress = selectedAddress.value;
+      const body: ApiRequest = {
+        userMessage,
+        messages,
+        ...workOrder,
+        unitInfo: parsedAddress.numBeds && parsedAddress.numBaths ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms` : "",
+      };
       const res = await axios.post("/api/service-request", body);
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
@@ -190,6 +219,51 @@ export default function WorkOrderChatbot() {
     additionalDetails,
   };
 
+  const renderChatHeader = () => {
+    if (addressHasBeenSelected) {
+      return (
+        <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
+          {`Tell me about the issue you are experiencing and I'll generate a work order.`}
+          <br />
+          <br />
+          {` For example: "Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right."`}
+        </p>
+      );
+    } else {
+      return (
+        <div className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
+          {`Please select the address you would like to create a service request for.`}
+          <br />
+          <br />
+          <Select
+            onChange={(v: SingleValue<{ label: string; value: any }>) => {
+              //@ts-ignore
+              handleAddressSelectChange(v);
+            }}
+            value={{ label: addressesOptions?.[0]?.label, value: addressesOptions?.[0]?.value }}
+            options={addressesOptions}
+          />
+          <div className="w-full flex flex-row items-center mt-4 mb-2">
+            <button
+              onClick={() => setAddressHasBeenSelected(true)}
+              className="text-white text-sm mx-auto bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
+            >
+              {"Confirm Address"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  if (sessionStatus === "loading") {
+    return <LoadingSpinner containerClass={"mt-4"} />;
+  }
+
+  if (!user?.roles?.includes(userRoles.TENANT)) {
+    return <p className="p-4">User must have the tenant Role assigned to them by a property manager or Owner.</p>;
+  }
+
   return (
     <>
       <main style={{ height: "92dvh" }} className="text-center">
@@ -208,16 +282,15 @@ export default function WorkOrderChatbot() {
                   }}
                   className="shadow-gray-400 md:filter-none m-0 p-3 overflow-scroll"
                 >
-                  <p className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
-                    {`Tell me about the issue you are experiencing and I'll generate a work order.`}
-                    <br />
-                    <br />
-                    {` For example: "Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right."`}
-                  </p>
+                  {renderChatHeader()}
                   {!!messages?.length &&
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
-                        <div className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? "bg-gray-200 text-left" : "bg-blue-100 text-right"}`}>
+                        <div
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
+                            !!(index % 2) ? "bg-gray-200 text-left" : "bg-blue-100 text-right"
+                          }`}
+                        >
                           {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
                               <h3 className="text-left font-semibold">
@@ -235,55 +308,68 @@ export default function WorkOrderChatbot() {
                           <p data-testid={`response-${index}`} className="whitespace-pre-line break-keep">
                             {message.content}
                           </p>
-                          {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
-                            <>
-                              <div data-testid="final-response" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "0rem", marginTop: "1rem" }}>
-                                {!hasConnectionWithGPT ||
-                                  (submitAnywaysSkip && (
-                                    <>
-                                      <label htmlFor="issueDescription">{isMobile ? "Issue*" : "Issue Details*"}</label>
-                                      <input className="rounded px-1" id="issueDescription" type={"text"} value={issueDescription} onChange={handleIssueDescriptionChange} />
-                                      <label htmlFor="issueLocation">{isMobile ? "Location*" : "Issue Location*"}</label>
-                                      <input className="rounded px-1" id="issueLocation" type={"text"} value={issueLocation} onChange={handleIssueLocationChange} />
-                                    </>
-                                  ))}
-                                <label htmlFor="additionalDetails">{isMobile ? "Details" : "Additional Details"}</label>
-                                <input className="rounded px-1" id="additionalDetails" type={"text"} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
-                                <label htmlFor="address" className="flex items-center">Address* </label>
-                                <Select
-                                  onChange={(v) => {
-                                    //@ts-ignore
-                                    handleAddressSelectChange(v.value);
-                                  }}
-                                  value={{ label: addressesOptions?.[0]?.label, value: addressesOptions?.[0]?.value }}
-                                  options={addressesOptions}
-                                />
-                              </div>
-                              <p className="mt-2">Permission To Enter Property* </p>
-                              <div>
-                                <input
-                                  className="rounded px-1"
-                                  id="permission-yes"
-                                  name={"permission"}
-                                  type={"radio"}
-                                  value={"yes"}
-                                  checked={permissionToEnter === "yes"}
-                                  onChange={handlePermissionChange}
-                                />
-                                <label htmlFor="permission-yes">{"Yes"}</label>
-                                <input
-                                  className="rounded px-1 ml-4"
-                                  id="permission-no"
-                                  name={"permission"}
-                                  type={"radio"}
-                                  value={"no"}
-                                  checked={permissionToEnter === "no"}
-                                  onChange={handlePermissionChange}
-                                />
-                                <label htmlFor="permission-no">{"No"}</label>
-                              </div>
-                            </>
-                          )}
+                          {index === lastSystemMessageIndex &&
+                            (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
+                              <>
+                                <div
+                                  data-testid="final-response"
+                                  style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: "0rem", marginTop: "1rem" }}
+                                >
+                                  {!hasConnectionWithGPT ||
+                                    (submitAnywaysSkip && (
+                                      <>
+                                        <label htmlFor="issueDescription">{isMobile ? "Issue*" : "Issue Details*"}</label>
+                                        <input
+                                          className="rounded px-1"
+                                          id="issueDescription"
+                                          type={"text"}
+                                          value={issueDescription}
+                                          onChange={handleIssueDescriptionChange}
+                                        />
+                                        <label htmlFor="issueLocation">{isMobile ? "Location*" : "Issue Location*"}</label>
+                                        <input
+                                          className="rounded px-1"
+                                          id="issueLocation"
+                                          type={"text"}
+                                          value={issueLocation}
+                                          onChange={handleIssueLocationChange}
+                                        />
+                                      </>
+                                    ))}
+                                  <label htmlFor="additionalDetails">{isMobile ? "Details" : "Additional Details"}</label>
+                                  <input
+                                    className="rounded px-1"
+                                    id="additionalDetails"
+                                    type={"text"}
+                                    value={additionalDetails}
+                                    onChange={handleAdditionalDetailsChange}
+                                  />
+                                </div>
+                                <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : "Property"}* </p>
+                                <div>
+                                  <input
+                                    className="rounded px-1"
+                                    id="permission-yes"
+                                    name={"permission"}
+                                    type={"radio"}
+                                    value={"yes"}
+                                    checked={permissionToEnter === "yes"}
+                                    onChange={handlePermissionChange}
+                                  />
+                                  <label htmlFor="permission-yes">{"Yes"}</label>
+                                  <input
+                                    className="rounded px-1 ml-4"
+                                    id="permission-no"
+                                    name={"permission"}
+                                    type={"radio"}
+                                    value={"no"}
+                                    checked={permissionToEnter === "no"}
+                                    onChange={handlePermissionChange}
+                                  />
+                                  <label htmlFor="permission-no">{"No"}</label>
+                                </div>
+                              </>
+                            )}
                         </div>
                       </div>
                     ))}
@@ -307,10 +393,10 @@ export default function WorkOrderChatbot() {
                   {((hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && messages.length > 1) || !hasConnectionWithGPT ? (
                     <button
                       onClick={handleSubmitWorkOrder}
-                      disabled={permissionToEnter === "no" || issueDescription.length === 0 || submittingWorkOrderLoading}
+                      disabled={issueDescription.length === 0 || submittingWorkOrderLoading}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? <LoadingSpinner /> : permissionToEnter === "yes" ? "Submit Work Order" : "Need Permission To Enter"}
+                      {submittingWorkOrderLoading ? <LoadingSpinner /> : "Submit Work Order"}
                     </button>
                   ) : (
                     <form
@@ -318,7 +404,7 @@ export default function WorkOrderChatbot() {
                       style={{ display: "grid", gridTemplateColumns: "9fr 1fr" }}
                       onKeyDown={(e) => {
                         //Users can press enter to submit the form, enter + shift to add a new line
-                        if (e.key === "Enter" && !e.shiftKey && !isResponding) {
+                        if (e.key === "Enter" && !e.shiftKey && !isResponding && addressHasBeenSelected) {
                           e.preventDefault();
                           handleSubmitText(e);
                         }
@@ -335,7 +421,7 @@ export default function WorkOrderChatbot() {
                         data-testid="send"
                         type="submit"
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                        disabled={isResponding || (isUsingAI ? !userMessage : !issueDescription)}
+                        disabled={isResponding || (isUsingAI ? !userMessage : !issueDescription) || !addressHasBeenSelected}
                       >
                         Send
                       </button>
@@ -346,7 +432,7 @@ export default function WorkOrderChatbot() {
             </div>
           </div>
         </div>
-      </main >
+      </main>
     </>
   );
 }

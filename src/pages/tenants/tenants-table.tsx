@@ -1,8 +1,6 @@
-import { useUserContext } from "@/context/user";
-import { toTitleCase } from "@/utils";
-import axios from "axios";
+import { createdToFormattedDateTime, toTitleCase } from "@/utils";
 import { AiOutlineFilter } from "react-icons/ai";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { v4 as uuid } from "uuid";
 import Link from "next/link";
 import { ITenant } from "@/database/entities/tenant";
@@ -70,7 +68,7 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
   });
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 mb-4">
       <div className="flex">
         <div>
           <button
@@ -122,25 +120,31 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
               <th className="font-normal">Created</th>
             </tr>
           </thead>
-
-          <tbody className="text-gray-700">
-            {!tenantsLoading && (
-              <>
-                {tenants.map((tenant: any) => {
-                  const date = new Date(tenant.created);
-                  const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
-                  return (
-                    <tr key={`${tenant.pk}-${tenant.sk}`}>
-                      <td className="border px-4 py-1">{`${toTitleCase(tenant.tenantName)}`}</td>
-                      <td className="border px-4 py-1">{`${tenant.tenantEmail}`}</td>
-                      <td className="border px-4 py-1">{tenant.status}</td>
-                      <td className="border px-4 py-1">{primaryAddress.address + " " + primaryAddress.unit}</td>
-                      <td className="border px-4 py-1">{`${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`}</td>
-                    </tr>
-                  );
-                })}
-              </>
-            )}
+          <tbody className='text-gray-700'>
+            {tenants.map((tenant: any) => {
+              const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
+              return (
+                <tr
+                  key={`${tenant.pk}-${tenant.sk}`}
+                >
+                  <td className="border px-4 py-1">
+                    {`${toTitleCase(tenant.tenantName)}`}
+                  </td>
+                  <td className="border px-4 py-1">
+                    {`${tenant.tenantEmail}`}
+                  </td>
+                  <td className="border px-4 py-1">
+                    {tenant.status}
+                  </td>
+                  <td className="border px-4 py-1">
+                    {primaryAddress.address + " " + primaryAddress.unit}
+                  </td>
+                  <td className="border px-4 py-1">
+                    {createdToFormattedDateTime(tenant._ct)[0]}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         {tenantsLoading && (

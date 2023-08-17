@@ -3,21 +3,23 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
-import { userIsPropertyManager, userIsTenant } from "@/utils/user-types";
+import { useSessionUser } from "@/hooks/auth/use-session-user";
 
 const HamburgerMenu = () => {
-  const { user, logOut, sessionUser } = useUserContext();
   const [isOpen, setIsOpen] = useState(false);
+  const { logOut } = useUserContext();
+  const { user } = useSessionUser();
+  const { userType } = useUserContext();
   const router = useRouter();
-  const linkStyle = "hover:text-gray-500 my-auto text-3xl text-white cursor-pointer mt-12";
+
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
-    //@ts-ignore
-    if (user.pmEmail || user.tenantEmail || user.userType === "TECHNICIAN") {
-      logOut();
-      router.push("/");
-    }
-  }, [user, logOut, router]);
+
+    logOut();
+    router.push("/");
+  }, [logOut, router]);
+
+  const linkStyle = "hover:text-gray-500 my-auto text-3xl text-white cursor-pointer mt-12";
 
   return (
     <>
@@ -34,11 +36,11 @@ const HamburgerMenu = () => {
         >
           <div className="mt-4 flex flex-col h-12">
             <Link className={linkStyle} href={"/"}>Home</Link>
-            {userIsPropertyManager(user) && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
-            {userIsTenant(user) && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
-            {userIsTenant(user) && <Link className={linkStyle} href={"/work-orders"}>Work Orders</Link>}
-            {sessionUser?.email && (<Link onClick={handleClick} className={linkStyle} href={"/"}>{"Sign Out"}</Link>)}
-            {!sessionUser?.email && (<Link onClick={() => signIn()} className={linkStyle} href={"/"}>{"Sign In"}</Link>)}
+            {userType === "PROPERTY_MANAGER" && <Link className={linkStyle} href={"/work-orders"}>Admin Portal</Link>}
+            {userType === "TENANT" && <Link className={linkStyle} href={"/work-order-chatbot"}>New Work Order</Link>}
+            {userType === "TENANT" && <Link className={linkStyle} href={"/work-orders"}>Work Orders</Link>}
+            {user?.email && (<Link onClick={handleClick} className={linkStyle} href={"/"}>{"Sign Out"}</Link>)}
+            {!user?.email && (<Link onClick={() => signIn()} className={linkStyle} href={"/"}>{"Sign In"}</Link>)}
 
           </div>
         </div>

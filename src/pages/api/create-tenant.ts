@@ -3,9 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
-import { uuid as uuidv4 } from "uuidv4";
-
-
+import { UserEntity } from "@/database/entities/user";
 
 export type CreateTenantBody = {
   tenantEmail: string;
@@ -17,6 +15,10 @@ export type CreateTenantBody = {
   city: string;
   country: "US" | "CA";
   postalCode: string;
+  numBeds: number;
+  numBaths: number;
+  createNewProperty: boolean;
+  propertyUUId: string;
 };
 
 function sleep(milliseconds: any) {
@@ -28,60 +30,66 @@ function sleep(milliseconds: any) {
 }
 
 /**
- * 
+ *
  * @returns `ContextUser` object.
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as CreateTenantBody;
-    const {
-      pmEmail,
-      tenantEmail,
-      tenantName,
-      address,
-      country = "US",
-      city,
-      state,
-      postalCode,
-      unit
-    } = body;
+    const { pmEmail, tenantEmail, tenantName, address, country = "US", city, state, postalCode, unit, numBeds, numBaths, propertyUUId, createNewProperty } = body;
 
-    const tenantEntity = new TenantEntity();
+    if(!pmEmail || !tenantEmail || !tenantName || !address || !city || !state || !postalCode || !numBeds || !numBaths || !propertyUUId) {
+      throw new Error("create-tenant Error: Missing required fields.");
+    }
+
+    const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
 
-
-    // CreateTenant 
-    // const newTenant = await tenantEntity.create({ tenantEmail, tenantName, pmEmail, address, country, city, state, postalCode, unit });
-    // // Create Companion Row
-    // await tenantEntity.createTenantCompanionRow({ pmEmail, tenantEmail });
     console.log(tenantEmail + " unit: ", typeof unit)
     sleep(2000)
 
-    // // Create Property
-    // await propertyEntity.create(
-    //   {
+    // Create Tenant
+    let newTenant
+    // const newTenant = await userEntity.createTenant({
+    //   tenantEmail,
+    //   tenantName,
+    //   pmEmail,
+    //   propertyUUId,
+    //   address,
+    //   country,
+    //   city,
+    //   state,
+    //   postalCode,
+    //   unit,
+    //   numBeds,
+    //   numBaths,
+    // });
+
+    // // Create Property if necessary
+    // if(createNewProperty) {
+    //   await propertyEntity.create({
     //     tenantEmail,
     //     propertyManagerEmail: pmEmail,
     //     address,
-    //     country,
     //     city,
-    //     state,
+    //     country,
     //     postalCode,
+    //     state,
     //     unit,
-    //     uuid: uuidv4()
+    //     uuid: propertyUUId,
+    //     numBeds,
+    //     numBaths,
     //   });
+    // }
 
-    /** SEND THE EMAIL TO THE USER */
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (!apiKey) {
-      throw new Error("missing SENDGRID_API_KEY env variable.");
-    }
-    sendgrid.setApiKey(apiKey);
+    // /** SEND THE EMAIL TO THE USER */
+    // const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
+    // if (!apiKey) {
+    //   throw new Error("missing SENDGRID_API_KEY env variable.");
+    // }
+    // sendgrid.setApiKey(apiKey);
 
-    const authLink = `https://pillarhq.co/?authredirect=true`;
+    // const authLink = `https://pillarhq.co/?authredirect=true`;
     // await sendgrid.send({
     //   to: tenantEmail, // The Property Manager
     //   from: "dylan@pillarhq.co", // The Email from the company
@@ -144,12 +152,11 @@ export default async function handler(
     // });
 
 
-
-    //@ts-ignore
-    return res.status(200).json({ response: JSON.stringify("") });
+    return res.status(200).json({ response: JSON.stringify(newTenant) });
 
 
-  } catch (error) {
+  } catch (error: any) {
     console.log({ error });
+    return res.status(error.statusCode || 500).json(error);
   }
 }

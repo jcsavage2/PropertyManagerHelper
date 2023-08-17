@@ -1,7 +1,5 @@
 import { toTitleCase } from "@/utils";
-import { useEffect, useState } from "react";
 import { ITenant } from "@/database/entities/tenant";
-import axios from "axios";
 import { useUserContext } from "@/context/user";
 import { useDevice } from "@/hooks/use-window-size";
 import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
@@ -11,9 +9,17 @@ interface ITenantCardsProps {
   tenantsLoading: boolean;
 }
 
-export const TenantsCards = ({ tenants, tenantsLoading }: ITenantCardsProps) => {
-  const { user } = useUserContext();
+export const TenantsCards = ({tenants, tenantsLoading}: ITenantCardsProps) => {
+  const { userType } = useUserContext();
   const { isMobile } = useDevice();
+
+  if (userType !== "PROPERTY_MANAGER") {
+    return (
+      <p>
+        You must be using the property manager view to see this page, and your account must have the appropriate role.
+      </p>
+    );
+  }
 
   return (
     <>

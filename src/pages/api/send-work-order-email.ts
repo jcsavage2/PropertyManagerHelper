@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
-    const { address, city, permissionToEnter, country, postalCode, state, tenantEmail, tenantName, unit } = body;
+    const { address, city, permissionToEnter, country, postalCode, state, creatorEmail, creatorName, unit, createdByType, tenantEmail, tenantName } = body;
 
     const woId = uuid();
 
@@ -34,10 +34,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       propertyManagerEmail: body.pmEmail,
       state,
       status: "TO_DO",
-      createdBy: tenantEmail,
-      createdByType: "TENANT",
-      tenantEmail,
-      tenantName,
+      createdBy: creatorEmail,
+      createdByType,
+      // If the tenantEmail/tenantName is not provided, then the WO was created by a tenant and we can use creatorEmail and creatorName
+      tenantEmail: tenantEmail ?? creatorEmail,
+      tenantName: tenantName ?? creatorName,
       unit,
     });
 
@@ -46,13 +47,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       workOrderId: woId,
       updateType: Events.STATUS_UPDATE,
       updateDescription: "Work Order Created",
-      updateMadeBy: tenantEmail,
+      updateMadeBy: creatorEmail,
     });
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
 
     /** SEND THE EMAIL TO THE USER */
-    const apiKey = process.env.SENDGRID_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
       throw new Error("missing SENDGRID_API_KEY env variable.");
     }
@@ -62,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
-      cc: tenantEmail === body.pmEmail ? "mitchposk+emailMatch@gmail.com" : body.tenantEmail.toLowerCase(), // The Tenant
+      cc: creatorEmail === body.pmEmail ? "mitchposk+emailMatch@gmail.com" : creatorEmail.toLowerCase(), // The Tenant
       from: "dylan@pillarhq.co", // The Email from the company
       subject: `Work Order Request for ${body.address}`, // work order for address on MM-DD-YYYY
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

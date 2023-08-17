@@ -2,9 +2,9 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { Table } from 'dynamodb-toolbox';
 
-const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-const region = process.env.REGION;
+const accessKeyId = process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID;
+const secretAccessKey = process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY;
+const region = process.env.NEXT_PUBLIC_REGION;
 
 if (!accessKeyId || !secretAccessKey || !region) {
   throw new Error('missing aws credentials');
@@ -15,12 +15,12 @@ export const DynamoDBClientConfig = {
     accessKeyId: accessKeyId,
     secretAccessKey: secretAccessKey,
   },
-  region: process.env.REGION,
+  region: process.env.NEXT_PUBLIC_REGION,
 };
 
 const marshallOptions = {
   // Whether to automatically convert empty strings, blobs, and sets to `null`.
-  convertEmptyValues: false, // false, by default.
+  convertEmptyValues: true, // false, by default.
   // Whether to remove undefined values while marshalling.
   removeUndefinedValues: true, // false, by default.
   // Whether to convert typeof object to map attribute.

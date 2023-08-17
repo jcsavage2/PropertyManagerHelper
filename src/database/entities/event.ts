@@ -21,21 +21,17 @@ export interface IEvent {
 };
 
 export class EventEntity {
-  private eventEntity: Entity;
-
-  constructor() {
-    this.eventEntity = new Entity({
-      name: ENTITIES.EVENT,
-      attributes: {
-        pk: { partitionKey: true }, //EV:workOrderId
-        sk: { sortKey: true }, //ksuid 
-        updateType: { type: 'string' },
-        updateDescription: { type: "string" },
-        updateMadeBy: { type: 'string' },
-      },
-      table: PillarDynamoTable
-    } as const);
-  }
+  private eventEntity = new Entity({
+    name: ENTITIES.EVENT,
+    attributes: {
+      pk: { partitionKey: true }, //EV:workOrderId
+      sk: { sortKey: true }, //ksuid 
+      updateType: { type: 'string' },
+      updateDescription: { type: "string" },
+      updateMadeBy: { type: 'string' },
+    },
+    table: PillarDynamoTable
+  });
 
   /**
    * Creates a new event for a work order.
@@ -48,7 +44,6 @@ export class EventEntity {
       updateDescription,
       updateMadeBy
     }, { returnValues: "ALL_NEW" });
-    //@ts-ignore
     return result.Attributes;
   }
 
@@ -58,12 +53,9 @@ export class EventEntity {
   public async getEvents({ woId }:
     { woId: string; }) {
     try {
-      const result = (await this.eventEntity.query(
-        generateKey(ENTITY_KEY.EVENT, woId),
-        {
-          reverse: true,
-        }
-      ));
+      const result = await this.eventEntity.query(
+        generateKey(ENTITY_KEY.EVENT, woId), { reverse: true }
+      );
       return result.Items ?? [];
     } catch (err) {
       console.log({ err });

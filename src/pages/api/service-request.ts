@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { findIssueSample } from "@/constants";
-import { generateAdditionalUserContext, generatePrompt, processAiResponse } from "@/utils";
+import { generatePrompt, processAiResponse } from "@/utils";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { AiJSONResponse, ApiRequest } from "@/types";
@@ -8,10 +8,10 @@ import chalk from "chalk";
 import { Data } from "@/database";
 
 const config = new Configuration({
-  apiKey: process.env.OPEN_AI_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_OPEN_AI_API_KEY,
 });
 const openai = new OpenAIApi(config);
-const gpt_model = 'gpt-4-0613'
+const gpt_model = 'gpt-4-0613';
 
 /**
  * Handles back and forth communication between openAI API and the user messages.
@@ -19,13 +19,12 @@ const gpt_model = 'gpt-4-0613'
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const body = req.body as ApiRequest;
-  const { userMessage, messages, ...workOrderData } = body;
+  const { userMessage, messages, unitInfo, ...workOrderData } = body;
   try {
 
 
     console.log(chalk.yellow("\n User Message =============\n"), userMessage);
-    const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData);
-    const additionalUserContext = generateAdditionalUserContext(workOrderData);
+    const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo);
 
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
@@ -35,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         ...messages,
         {
           role: "user",
-          content: userMessage + additionalUserContext
+          content: userMessage
         },
         {
           role: "system",
@@ -61,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         messages: [
           prompt,
           ...messages,
-          { role: "user", content: additionalUserContext + userMessage },
+          { role: "user", content: userMessage },
           { role: "assistant", content: aiResponse },
           {
             role: "system",
