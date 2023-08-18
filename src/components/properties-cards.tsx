@@ -13,7 +13,7 @@ export const PropertiesCards = ({ items, isLoading, sortConfig, requestSort, fil
     requestSort: (key: "address" | "city" | "state" | "postalCode" | "unit") => void;
   }) => {
   if (isLoading) {
-    return (<LoadingSpinner containerClass="full-height" spinnerClass="spinner" />);
+    return (<LoadingSpinner containerClass="full-height" />);
   }
   if (!items.length) {
     return null;

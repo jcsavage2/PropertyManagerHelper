@@ -66,7 +66,6 @@ export const ImportTenantsModal = ({
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
   const [importTenantsLoading, setImportTenantsLoading] = useState<boolean>(false);
   const [importTenantProgress, setImportTenantProgress] = useState<number>(0);
-  const ref = useRef(null);
 
   const onClose = () => {
     setUploadList([]);
@@ -166,6 +165,7 @@ export const ImportTenantsModal = ({
     async (parsed: any[]) => {
       if (!user?.email || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
         alert('User must be a property manager to import tenants');
+        return
       }
       parsed.forEach((row: any, index: number) => {
         const {
@@ -218,13 +218,13 @@ export const ImportTenantsModal = ({
   const handleImportTenants = async () => {
     if (!user?.email || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
       alert('User must be a property manager to import tenants');
+      return
     }
     setImportTenantsLoading(true);
     setImportTenantProgress(0);
 
     let errorList: ImportTenantObject[] = [];
 
-    // Loop through the uploadList
     for (let index = 0; index < uploadList.length; index++) {
       const tenant = uploadList[index];
       const body: CreateTenantBody = {
@@ -306,7 +306,6 @@ export const ImportTenantsModal = ({
               id="fileUpload"
               accept=".xls, .xlsx, .csv"
               onChange={handleFileUpload}
-              ref={ref}
             />
             <button
               onClick={() => {

@@ -21,14 +21,6 @@ export type CreateTenantBody = {
   propertyUUId: string;
 };
 
-function sleep(milliseconds: any) {
-  const date = Date.now();
-  let currentDate = null;
-  do {
-    currentDate = Date.now();
-  } while (currentDate - date < milliseconds);
-}
-
 /**
  *
  * @returns `ContextUser` object.
@@ -78,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    // /** SEND THE EMAIL TO THE USER */
+    /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
       throw new Error("missing SENDGRID_API_KEY env variable.");

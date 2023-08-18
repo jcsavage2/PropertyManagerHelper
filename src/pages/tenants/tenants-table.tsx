@@ -1,10 +1,10 @@
-import { createdToFormattedDateTime, toTitleCase } from "@/utils";
-import { AiOutlineFilter } from "react-icons/ai";
-import { useState } from "react";
-import { v4 as uuid } from "uuid";
-import Link from "next/link";
-import { ITenant } from "@/database/entities/tenant";
-import { LoadingSpinner } from "../../components/loading-spinner/loading-spinner";
+import { createdToFormattedDateTime, toTitleCase } from '@/utils';
+import { AiOutlineFilter } from 'react-icons/ai';
+import { useState } from 'react';
+import { v4 as uuid } from 'uuid';
+import Link from 'next/link';
+import { ITenant } from '@/database/entities/tenant';
+import { LoadingSpinner } from '../../components/loading-spinner/loading-spinner';
 
 interface ITenantsTableProps {
   tenants: ITenant[];
@@ -12,8 +12,8 @@ interface ITenantsTableProps {
 }
 
 export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) => {
-  const [sortField, setSortField] = useState<keyof ITenant>("tenantName");
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const [sortField, setSortField] = useState<keyof ITenant>('tenantName');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
   const [cityFilter, setCityFilter] = useState<string | null | undefined>(null);
   const [showCityFilter, setShowCityFilter] = useState(false);
@@ -25,8 +25,8 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
   const [showStateFilter, setShowStateFilter] = useState(false);
 
   const columns: { label: string; accessor: keyof ITenant; width: string }[] = [
-    { label: "Name", accessor: "tenantName", width: "w-72" },
-    { label: "Email", accessor: "tenantEmail", width: "" },
+    { label: 'Name', accessor: 'tenantName', width: 'w-72' },
+    { label: 'Email', accessor: 'tenantEmail', width: '' },
   ];
 
   const remappedProperties = tenants.map((tenant) => {
@@ -72,14 +72,14 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
       <div className="flex">
         <div>
           <button
-            className={`py-1 mr-2 px-3 rounded ${!!addressFilter ? "bg-blue-200" : "bg-gray-200"}`}
+            className={`py-1 mr-2 px-3 rounded ${!!addressFilter ? 'bg-blue-200' : 'bg-gray-200'}`}
             onClick={() => setShowAddressFilter((s) => !s)}
           >
             Address
           </button>
         </div>
         <div>
-          <button className={`py-1 mr-2 px-3 rounded ${!!cityFilter ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowCityFilter((s) => !s)}>
+          <button className={`py-1 mr-2 px-3 rounded ${!!cityFilter ? 'bg-blue-200' : 'bg-gray-200'}`} onClick={() => setShowCityFilter((s) => !s)}>
             City
           </button>
           {showCityFilter && (
@@ -89,7 +89,7 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
           )}
         </div>
         <div>
-          <button className={`py-1 mr-2 px-3 rounded ${!!cityFilter ? "bg-blue-200" : "bg-gray-200"}`} onClick={() => setShowStateFilter((s) => !s)}>
+          <button className={`py-1 mr-2 px-3 rounded ${!!cityFilter ? 'bg-blue-200' : 'bg-gray-200'}`} onClick={() => setShowStateFilter((s) => !s)}>
             State
           </button>
           {showStateFilter && (
@@ -120,28 +120,16 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
               <th className="font-normal">Created</th>
             </tr>
           </thead>
-          <tbody className='text-gray-700'>
+          <tbody className="text-gray-700">
             {tenants.map((tenant: any) => {
               const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
               return (
-                <tr
-                  key={`${tenant.pk}-${tenant.sk}`}
-                >
-                  <td className="border px-4 py-1">
-                    {`${toTitleCase(tenant.tenantName)}`}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {`${tenant.tenantEmail}`}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {tenant.status}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {primaryAddress.address + " " + primaryAddress.unit}
-                  </td>
-                  <td className="border px-4 py-1">
-                    {createdToFormattedDateTime(tenant._ct ?? tenant.created)[0]}
-                  </td>
+                <tr key={`${tenant.pk}-${tenant.sk}`}>
+                  <td className="border px-4 py-1">{`${toTitleCase(tenant.tenantName)}`}</td>
+                  <td className="border px-4 py-1">{`${tenant.tenantEmail}`}</td>
+                  <td className="border px-4 py-1">{tenant.status}</td>
+                  <td className="border px-4 py-1">{primaryAddress.address + ' ' + primaryAddress.unit}</td>
+                  <td className="border px-4 py-1">{createdToFormattedDateTime(tenant._ct ?? tenant.created)[0]}</td>
                 </tr>
               );
             })}
