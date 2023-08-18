@@ -24,49 +24,6 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
   const [stateFilter, setStateFilter] = useState<string | null | undefined>(null);
   const [showStateFilter, setShowStateFilter] = useState(false);
 
-  const columns: { label: string; accessor: keyof ITenant; width: string }[] = [
-    { label: 'Name', accessor: 'tenantName', width: 'w-72' },
-    { label: 'Email', accessor: 'tenantEmail', width: '' },
-  ];
-
-  const remappedProperties = tenants.map((tenant) => {
-    const { tenantName, tenantEmail, pk, sk, created, status } = tenant;
-    const date = new Date(created);
-    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    return {
-      pk,
-      sk,
-      tenantEmail,
-      tenantName,
-      status,
-      created: formattedDate,
-    };
-  });
-
-  const filteredRows = remappedProperties.filter((property) => !!cityFilter);
-  const sortedWorkOrders = filteredRows.map((workOrder): any => {
-    return (
-      <tr key={uuid()}>
-        {columns.map(({ accessor }, index) => {
-          const workOrderId = `${workOrder.pk}`;
-          //@ts-ignore
-          const tData = workOrder[accessor];
-          return (
-            <td className="border px-4 py-1" key={accessor}>
-              <Link
-                key={workOrder.pk + index}
-                href={`/tenants/?tenantId=${encodeURIComponent(workOrderId)}`}
-                as={`/tenants/?tenantId=${encodeURIComponent(workOrderId)}`}
-              >
-                {tData}
-              </Link>
-            </td>
-          );
-        })}
-      </tr>
-    );
-  });
-
   return (
     <div className="mt-8 mb-4">
       <div className="flex">
@@ -121,7 +78,7 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
             </tr>
           </thead>
           <tbody className="text-gray-700">
-            {tenants.map((tenant: any) => {
+            {tenants && tenants.length > 0 && tenants.map((tenant: any) => {
               const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
               return (
                 <tr key={`${tenant.pk}-${tenant.sk}`}>
