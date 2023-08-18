@@ -144,3 +144,5 @@ export const TenantsTable = ({ tenants, tenantsLoading }: ITenantsTableProps) =>
     </div>
   );
 };
+
+export default TenantsTable;
