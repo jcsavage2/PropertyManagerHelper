@@ -1,6 +1,7 @@
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { Table } from 'dynamodb-toolbox';
+import { S3Client } from '@aws-sdk/client-s3';
 
 const accessKeyId = process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY;
@@ -35,6 +36,7 @@ const unmarshallOptions = {
 const translateConfig = { marshallOptions, unmarshallOptions };
 
 export const DocumentClient = DynamoDBDocument.from(new DynamoDB({ ...DynamoDBClientConfig }), translateConfig);
+export const BucketClient = new S3Client({ ...DynamoDBClientConfig });
 
 export const INDEXES = {
   GSI1: 'GSI1PK-GSI1SK-index', // property manager index

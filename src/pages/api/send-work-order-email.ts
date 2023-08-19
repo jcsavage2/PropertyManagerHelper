@@ -6,9 +6,8 @@ import { WorkOrderEntity } from "@/database/entities/work-order";
 import { SendEmailApiRequest } from "@/types";
 import { generateKey } from "@/utils";
 import sendgrid from "@sendgrid/mail";
-
 import { NextApiRequest, NextApiResponse } from "next";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from "uuid";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {

@@ -3,7 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { UserEntity } from "@/database/entities/user";
 import { NextApiRequest, NextApiResponse } from "next";
-import { uuid as uuidv4 } from "uuidv4";
+import { v4 as uuid } from "uuid"
 
 export type CreatePropertyBody = {
   address: string;
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     // Create Property
-    const uuid = uuidv4();
+    const id = uuid();
     const newProperty = await propertyEntity.create({
       address,
       country,
@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       unit,
       postalCode,
       propertyManagerEmail: pmEmail,
-      uuid,
+      uuid: id,
       numBeds,
       numBaths,
       tenantEmail,
@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     //Update tenant metadata with new property
     if(tenantEmail && tenantEmail.length) {
       await userEntity.addAddress({
-        propertyUUId: uuid,
+        propertyUUId: id,
         tenantEmail,
         address,
         country,

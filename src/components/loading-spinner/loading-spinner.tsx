@@ -1,13 +1,12 @@
 type LoadingSpinnerProps = {
-  containerClass?: string | null;
+  containerClass?: string;
+  spinnerClass?: string;
 };
 
-export const LoadingSpinner = ({ containerClass }: LoadingSpinnerProps) => {
+export const LoadingSpinner = ({ containerClass, spinnerClass }: LoadingSpinnerProps) => {
   return (
-    <div>
-      <div className={`spinner-container ${containerClass ?? ""}`}>
-        <div className="spinner"></div>
-      </div>
+    <div className={`spinner-container flex justify-items-center ${containerClass ?? ""}`}>
+      <div className={`${spinnerClass ?? "spinner"}`}></div>
     </div>
   );
 };
