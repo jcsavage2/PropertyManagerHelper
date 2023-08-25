@@ -18,6 +18,7 @@ export type CreateTenantBody = {
   numBeds: number;
   numBaths: number;
   createNewProperty: boolean;
+  organization?: string;
   propertyUUId: string;
 };
 
@@ -28,9 +29,23 @@ export type CreateTenantBody = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as CreateTenantBody;
-    const { pmEmail, tenantEmail, tenantName, address, country = "US", city, state, postalCode, unit, numBeds, numBaths, propertyUUId, createNewProperty } = body;
+    const { pmEmail,
+      tenantEmail,
+      tenantName,
+      organization,
+      address,
+      country = "US",
+      city,
+      state,
+      postalCode,
+      unit,
+      numBeds,
+      numBaths,
+      propertyUUId,
+      createNewProperty
+    } = body;
 
-    if(!pmEmail || !tenantEmail || !tenantName || !address || !city || !state || !postalCode || !numBeds || !numBaths || !propertyUUId) {
+    if (!pmEmail || !tenantEmail || !tenantName || !address || !city || !state || !postalCode || !numBeds || !numBaths || !propertyUUId) {
       throw new Error("create-tenant Error: Missing required fields.");
     }
 
@@ -49,12 +64,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       state,
       postalCode,
       unit,
+      organization,
       numBeds,
       numBaths,
     });
 
     // Create Property if necessary
-    if(createNewProperty) {
+    if (createNewProperty) {
       await propertyEntity.create({
         tenantEmail,
         propertyManagerEmail: pmEmail,

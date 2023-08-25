@@ -141,6 +141,7 @@ export const AddTenantModal = ({
             numBeds,
             numBaths,
             createNewProperty,
+            organization: user.organization,
             propertyUUId: uuid(),
           };
         } else {
@@ -158,6 +159,7 @@ export const AddTenantModal = ({
             numBeds: selectedProperty.numBeds,
             numBaths: selectedProperty.numBaths,
             createNewProperty,
+            organization: user.organization,
             propertyUUId: deconstructKey(selectedProperty.pk),
           };
         }
@@ -265,9 +267,8 @@ export const AddTenantModal = ({
                 onClick={() => {
                   setCreateNewProperty(true);
                 }}
-                className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
-                  createNewProperty && "bg-blue-200 border-blue-200"
-                }`}
+                className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${createNewProperty && "bg-blue-200 border-blue-200"
+                  }`}
               >
                 {isMobile ? "New Property" : "Create New Property"}
               </div>
@@ -275,9 +276,8 @@ export const AddTenantModal = ({
                 onClick={() => {
                   setCreateNewProperty(false);
                 }}
-                className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
-                  !createNewProperty && "bg-blue-200 border-blue-200"
-                }`}
+                className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${!createNewProperty && "bg-blue-200 border-blue-200"
+                  }`}
               >
                 {isMobile ? "Existing Property" : "Use Existing Property"}
               </div>

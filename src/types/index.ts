@@ -10,6 +10,7 @@ export type ApiRequest = WorkOrder & {
 export type SendEmailApiRequest = UserInfo & IssueInformation & {
   messages: ChatCompletionRequestMessage[];
   pmEmail: string;
+  organization?: string;
 };
 
 export type AiJSONResponse = IssueInformation & {
@@ -23,17 +24,18 @@ export type FinishFormRequest = IssueInformation & {
 
 export type UserInfo = {
   address: string;
-  unit?: string;
-  state: string;
   city: string;
   country?: string;
-  postalCode: string;
+  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
   creatorEmail: string;
   creatorName: string;
-  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN"  
+  organization?: string;
   permissionToEnter: "yes" | "no";
+  postalCode: string;
+  state: string;
   tenantEmail?: string;
   tenantName?: string;
+  unit?: string;
 };
 
 export type IssueInformation = {
@@ -57,5 +59,5 @@ export type StatusOptionType = OptionType & {
 
 export type AddressOptionType = {
   label: string;
-  value: any; 
+  value: any;
 };

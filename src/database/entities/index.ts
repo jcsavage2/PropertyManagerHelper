@@ -1,23 +1,25 @@
 export type StartKey = { pk: string; sk: string; } | undefined;
 
 export const ENTITIES = {
-  PROPERTY: "PROPERTY",
-  TENANT: "TENANT",
-  WORK_ORDER: "WORK_ORDER",
-  PROPERTY_MANAGER: "PROPERTY_MANAGER",
-  TECHNICIAN: "TECHNICIAN",
   EVENT: "EVENT",
-  USER: "USER"
+  ORGANIZATION: "ORG",
+  PROPERTY_MANAGER: "PROPERTY_MANAGER",
+  PROPERTY: "PROPERTY",
+  TECHNICIAN: "TECHNICIAN",
+  TENANT: "TENANT",
+  USER: "USER",
+  WORK_ORDER: "WORK_ORDER",
 } as const;
 
 export const ENTITY_KEY = {
-  PROPERTY: "P",
-  TENANT: "T",
-  WORK_ORDER: "WO",
-  PROPERTY_MANAGER: "PM",
-  TECHNICIAN: "E",
   EVENT: "EV",
-  USER: "U"
+  ORGANIZATION: "ORG",
+  PROPERTY_MANAGER: "PM",
+  PROPERTY: "P",
+  TECHNICIAN: "E",
+  TENANT: "T",
+  USER: "U",
+  WORK_ORDER: "WO",
 } as const;
 
 export type EntityTypeKeys = keyof typeof ENTITY_KEY;
