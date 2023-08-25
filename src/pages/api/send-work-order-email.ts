@@ -4,7 +4,7 @@ import { ENTITY_KEY } from "@/database/entities";
 import { EventEntity } from "@/database/entities/event";
 import { WorkOrderEntity } from "@/database/entities/work-order";
 import { SendEmailApiRequest } from "@/types";
-import { generateKey } from "@/utils";
+import { deconstructKey, generateKey } from "@/utils";
 import sendgrid from "@sendgrid/mail";
 import { NextApiRequest, NextApiResponse } from "next";
 import { v4 as uuid } from "uuid";
@@ -15,7 +15,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
-    const { address, city, permissionToEnter, country, postalCode, state, creatorEmail, creatorName, unit, createdByType, tenantEmail, tenantName } = body;
+    const { address,
+      city,
+      permissionToEnter,
+      country,
+      postalCode,
+      state,
+      creatorEmail,
+      creatorName,
+      unit,
+      createdByType,
+      tenantEmail,
+      organization,
+      tenantName,
+    } = body;
 
     const woId = uuid();
 
@@ -32,6 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       postalCode,
       propertyManagerEmail: body.pmEmail,
       state,
+      ...(organization && { organization: deconstructKey(organization) }),
       status: "TO_DO",
       createdBy: creatorEmail,
       createdByType,

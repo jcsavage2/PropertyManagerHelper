@@ -23,14 +23,14 @@ const Tenants = () => {
   const [tenantsLoading, setTenantsLoading] = useState(false);
 
   const fetchTenants = useCallback(async () => {
-    if (!user?.email || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) return;
+    if (!user?.email || userType !== 'PROPERTY_MANAGER' || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) return;
     setTenantsLoading(true);
     const body: GetTenantsForPropertyManagerApiRequest = { pmEmail: user.email };
     const { data } = await axios.post('/api/get-all-tenants-for-pm', body);
     const tenants = JSON.parse(data.response);
     tenants.length && setTenants(tenants);
     setTenantsLoading(false);
-  }, [user?.email, setTenantsLoading]);
+  }, [user, userType]);
 
   useEffect(() => {
     fetchTenants();

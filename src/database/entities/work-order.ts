@@ -14,6 +14,7 @@ type CreateWorkOrderProps = {
   createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
   state: string;
   permissionToEnter: "yes" | "no";
+  organization?: string;
   city: string;
   country: string;
   postalCode: string;
@@ -81,8 +82,11 @@ export class WorkOrderEntity {
       GSI2SK: { type: "string" },
       GSI3PK: { type: "string" }, //Technician email
       GSI3SK: { type: "string" },
+      GSI4PK: { type: "string" }, //Org Id 
+      GSI4SK: { type: "string" },
       permissionToEnter: { type: "string" },
       pmEmail: { type: "string" },
+      organization: { type: "string" },
       issue: { type: "string" },
       location: { type: "string" },
       additionalDetails: { type: "string" },
@@ -114,6 +118,7 @@ export class WorkOrderEntity {
     propertyManagerEmail,
     status,
     issue,
+    organization,
     location,
     additionalDetails,
     tenantName,
@@ -127,6 +132,8 @@ export class WorkOrderEntity {
       GSI1SK: workOrderIdKey,
       GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
       GSI2SK: workOrderIdKey,
+      ...(organization && { GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, organization) }),
+      ...(organization && { GSI4SK: workOrderIdKey }),
       permissionToEnter,
       pmEmail: propertyManagerEmail.toLowerCase(),
       createdBy: createdBy.toLowerCase(),
@@ -136,6 +143,7 @@ export class WorkOrderEntity {
       tenantName,
       address: this.generateAddress({ address, country, city, state, postalCode, unit }),
       issue: issue.toLowerCase(),
+      organization,
       location,
       additionalDetails,
     }, { returnValues: "ALL_NEW" });
@@ -150,6 +158,34 @@ export class WorkOrderEntity {
     };
     const result = await this.workOrderEntity.get(params, { consistent: false });
     return result;
+  }
+
+  /**
+ * @returns All work orders for a given property manager
+ */
+  public async getAllForOrg({ orgId }: { orgId: string; }) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
+    const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, orgId);
+    console.log({ GSI4PK });
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          GSI4PK,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            index: INDEXES.GSI4,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return workOrders;
   }
 
   public async getAllForPropertyManager({ pmEmail }: { pmEmail: string; }) {

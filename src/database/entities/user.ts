@@ -14,7 +14,7 @@ interface IBaseUser {
 interface ICreatePMUser extends IBaseUser {
   pmEmail: string;
   pmName: string;
-  organization: string;
+  organization?: string;
 }
 
 export interface ICreateTechnician {
@@ -23,6 +23,13 @@ export interface ICreateTechnician {
   status?: "JOINED" | "INVITED";
   pmEmail: string;
   organization: string;
+};
+
+interface ICreatePMUser extends IBaseUser {
+  pmEmail: string;
+  pmName: string;
+  organization?: string;
+  organizationName?: string;
 };
 
 interface ICreateUser {
@@ -34,6 +41,7 @@ interface ICreateTenant {
   tenantEmail: string;
   tenantName: string;
   address: string,
+  organization?: string,
   country: "US" | "CA",
   city: string,
   state: string,
@@ -49,6 +57,7 @@ export interface IUser extends IBaseUser {
   GSI1SK?: string,
   addresses: Record<string, any>;
   organization?: string,
+  organizationName?: string,
   pmEmail?: string;
   pmName?: string;
   roles: Array<"TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN">,
@@ -95,7 +104,7 @@ export class UserEntity {
    * If the user does already exist, update them with the appropriate roles + metadata. 
    */
   public async createTenant(
-    { pmEmail, tenantName, tenantEmail, address, country, city, state, postalCode, unit, propertyUUId, numBeds, numBaths }: ICreateTenant) {
+    { pmEmail, tenantName, organization, tenantEmail, address, country, city, state, postalCode, unit, propertyUUId, numBeds, numBaths }: ICreateTenant) {
     try {
       const lowerCasePMEmail = pmEmail.toLowerCase();
       const lowerCaseTenantEmail = tenantEmail.toLowerCase();
@@ -108,6 +117,7 @@ export class UserEntity {
         GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
         tenantEmail: tenantEmail.toLowerCase(),
         tenantName,
+        organization,
         status: "INVITED",
         userType: ENTITIES.TENANT,
         addresses: generateAddress({
@@ -127,6 +137,23 @@ export class UserEntity {
     } catch (err) {
       console.log({ err });
       return null;
+    }
+  }
+
+  public async createPropertyManager({ pmEmail, pmName, organization, organizationName }: ICreatePMUser) {
+    try {
+      const result = await this.userEntity.update({
+        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
+        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
+        pmEmail: pmEmail.toLowerCase(),
+        pmName,
+        organization,
+        organizationName,
+        userType: ENTITIES.PROPERTY_MANAGER
+      }, { returnValues: "ALL_NEW" });
+      return result.Attributes;
+    } catch (err) {
+      console.log({ err });
     }
   }
 
@@ -270,7 +297,7 @@ export class UserEntity {
       let newAddresses: Record<string, any> = userAccount.addresses;
 
       //Add new address into the map
-      newAddresses[propertyUUId] = { address, unit, city, state, postalCode, country, isPrimary: false, numBeds, numBaths }
+      newAddresses[propertyUUId] = { address, unit, city, state, postalCode, country, isPrimary: false, numBeds, numBaths };
 
       //Add the map with the new address back into the tenant record
       const result = await this.userEntity.update(
@@ -296,6 +323,7 @@ export class UserEntity {
       GSI1PK: { type: "string" }, //PM email
       GSI1SK: { type: "string" },
       organization: { type: "string" },
+      organizationName: { type: "string" },
       pmEmail: { type: "string" },
       pmName: { type: "string" },
       propertyManagers: {},

@@ -21,10 +21,10 @@ export default function WorkOrderChatbot() {
     return (
       Object.values(user?.addresses)?.map(
         (address: any) =>
-          ({
-            label: `${address?.address} ${address?.unit}`.trim(),
-            value: address,
-          } as AddressOptionType)
+        ({
+          label: `${address?.address} ${address?.unit}`.trim(),
+          value: address,
+        } as AddressOptionType)
       ) ?? []
     );
   }, [user?.addresses]);
@@ -110,6 +110,7 @@ export default function WorkOrderChatbot() {
   const handleAddressSelectChange = (value: AddressOptionType) => {
     setSelectedAddress(value);
   };
+  console.log({ user });
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
@@ -132,6 +133,7 @@ export default function WorkOrderChatbot() {
       creatorEmail: tenantEmail,
       creatorName: tenantName,
       permissionToEnter,
+      organization: user?.organization,
       address: parsedAddress.address,
       state: parsedAddress.state,
       city: parsedAddress.city,
@@ -236,7 +238,7 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<{ label: string; value: any }>) => {
+            onChange={(v: SingleValue<{ label: string; value: any; }>) => {
               //@ts-ignore
               handleAddressSelectChange(v);
             }}
@@ -287,9 +289,8 @@ export default function WorkOrderChatbot() {
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
                         <div
-                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
-                            !!(index % 2) ? "bg-gray-200 text-left" : "bg-blue-100 text-right"
-                          }`}
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? "bg-gray-200 text-left" : "bg-blue-100 text-right"
+                            }`}
                         >
                           {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">

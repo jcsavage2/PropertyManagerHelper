@@ -19,6 +19,7 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 // Types
 import { IWorkOrder } from '@/database/entities/work-order';
+import { deconstructKey } from '@/utils';
 
 
 const WorkOrders = () => {
@@ -28,6 +29,7 @@ const WorkOrders = () => {
   const { userType } = useUserContext();
   const router = useRouter();
   const { user } = useSessionUser();
+  const [mode, setMode] = useState<'mine' | "organization">('mine');
 
   const [isFetching, setIsFetching] = useState(false);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
@@ -44,7 +46,9 @@ const WorkOrders = () => {
     if (!userType || !user) return;
     setIsFetching(true);
     const promise = userType === "PROPERTY_MANAGER"
-      ? axios.post('/api/get-all-work-orders-for-pm', { pmEmail: user.email })
+      ? mode === "mine"
+        ? axios.post('/api/get-all-work-orders-for-pm', { pmEmail: user.email })
+        : axios.post('/api/get-all-work-orders-for-org', { orgId: deconstructKey(user.organization ?? "") })
       : userType === "TECHNICIAN"
         ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: user.email })
         : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: user.email });
@@ -54,10 +58,12 @@ const WorkOrders = () => {
     if (orders.length) {
       sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
       setWorkOrders(orders);
+    } else {
+      setWorkOrders([]);
     }
 
     setIsFetching(false);
-  }, [user, userType]);
+  }, [mode, user, userType]);
 
 
   /**
@@ -67,8 +73,9 @@ const WorkOrders = () => {
   useEffect(() => {
     if (router.query.workOrderId || !user) return;
     fetchWorkOrders();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, router.query.workOrderId]);
+  }, [user, router.query.workOrderId, mode]);
 
   return (
     <>
@@ -87,6 +94,12 @@ const WorkOrders = () => {
               + New Work Order
             </button>
           </div>
+          <button
+            className="float-left my-3 md:my-4 bg-blue-200 px-2 py-1 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-56 justify-self-end text-center"
+            onClick={() => setMode(mode === "mine" ? "organization" : "mine")}
+          >
+            {`View ${mode === "mine" ? "organization" : "my"} work orders`}
+          </button>
           {isMobile ?
             <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} /> :
             <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />
