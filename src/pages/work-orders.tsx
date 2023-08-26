@@ -19,6 +19,8 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 // Types
 import { IGetAllWorkOrdersForUserProps, IWorkOrder } from '@/database/entities/work-order';
+import { deconstructKey } from '@/utils';
+
 
 
 const WorkOrders = () => {
@@ -47,7 +49,7 @@ const WorkOrders = () => {
     const body: IGetAllWorkOrdersForUserProps = {
       email: user.email,
       userType,
-      orgId: mode === "organization" ? user.organization : undefined
+      orgId: mode === "organization" ? deconstructKey(user?.organization ?? "") : undefined
     };
     const { data } = await axios.post('/api/get-all-work-orders-for-user', { ...body });
     const orders: IWorkOrder[] = JSON.parse(data.response);
