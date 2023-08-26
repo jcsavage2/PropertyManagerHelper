@@ -3,7 +3,7 @@ import { PropertyEntity } from "@/database/entities/property";
 import { PropertyManagerEntity } from "@/database/entities/property-manager";
 import { UserEntity } from "@/database/entities/user";
 import { NextApiRequest, NextApiResponse } from "next";
-import { v4 as uuid } from "uuid"
+import { v4 as uuid } from "uuid";
 
 export type CreatePropertyBody = {
   address: string;
@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const propertyEntity = new PropertyEntity();
     const userEntity = new UserEntity();
 
-    if(!pmEmail || !address || !city || !state || !postalCode || !numBeds || !numBaths) {
+    if (!pmEmail || !address || !city || !state || !postalCode || !numBeds || !numBaths) {
       throw new Error("create-property Error: Missing required fields.");
     }
 
@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     //Update tenant metadata with new property
-    if(tenantEmail && tenantEmail.length) {
+    if (tenantEmail && tenantEmail.length) {
       await userEntity.addAddress({
         propertyUUId: id,
         tenantEmail,
@@ -64,15 +64,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         numBeds,
         numBaths,
         unit,
-      })
+      });
     }
 
-    await propertyManagerEntity.createPropertyCompanionRow({
-      email: pmEmail,
-      organization: "",
-      addressPk: newProperty.pk,
-      addressSk: newProperty.sk,
-    });
+    if (newProperty) {
+      await propertyManagerEntity.createPropertyCompanionRow({
+        email: pmEmail,
+        organization: "",
+        addressPk: newProperty.pk,
+        addressSk: newProperty.sk,
+      });
+    }
 
     return res.status(200).json({ response: JSON.stringify(newProperty) });
   } catch (error: any) {

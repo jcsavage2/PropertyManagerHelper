@@ -2,7 +2,6 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateAddress, generateKey, toTitleCase } from '@/utils';
-import { GetCommandInput } from '@aws-sdk/lib-dynamodb';
 
 
 interface IBaseUser {
