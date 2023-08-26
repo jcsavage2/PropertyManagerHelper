@@ -33,7 +33,7 @@ export const WorkOrdersCards = ({ workOrders, fetchWorkOrders, isFetching }: IWo
 
   const handleUpdateStatus = async ({ pk, sk, val }: HandleUpdateStatusProps) => {
     setIsUpdating(true);
-    //@ts-ignore
+    // @ts-ignore
     const { data } = await axios.post("/api/update-work-order", { pk, sk, status: val.value, email: deconstructKey(user.pk) });
     const updatedWorkOrder = JSON.parse(data.response);
     if (updatedWorkOrder) {
@@ -51,7 +51,7 @@ export const WorkOrdersCards = ({ workOrders, fetchWorkOrders, isFetching }: IWo
 
   return (
     <>
-      <button className="mt-2 ml-2 md:mt-0 bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center"
+      <button className="mt-2 lg:ml-2 md:mt-0 bg-blue-200 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 text-center w-max flex"
         onClick={fetchWorkOrders}
         disabled={isFetching || isUpdating}
       >
