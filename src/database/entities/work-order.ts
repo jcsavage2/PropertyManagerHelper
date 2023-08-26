@@ -170,7 +170,6 @@ export class WorkOrderEntity {
     let startKey: StartKey;
     const workOrders: IWorkOrder[] = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, orgId);
-    console.log({ GSI4PK });
     do {
       try {
         const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
