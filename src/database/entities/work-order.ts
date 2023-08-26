@@ -164,35 +164,6 @@ export class WorkOrderEntity {
   }
 
   /**
- * @returns All work orders for a given property manager
- */
-  public async getAllForOrg({ orgId }: { orgId: string; }) {
-    let startKey: StartKey;
-    const workOrders: IWorkOrder[] = [];
-    const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, orgId);
-    do {
-      try {
-        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
-          GSI4PK,
-          {
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
-            index: INDEXES.GSI4,
-          }
-        ));
-        startKey = LastEvaluatedKey as StartKey;
-        workOrders.push(...(Items ?? []) as IWorkOrder[]);
-      } catch (err) {
-        console.log({ err });
-      }
-    } while (!!startKey);
-    return workOrders;
-  }
-
-
-
-  /**
    * 
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
@@ -234,82 +205,6 @@ export class WorkOrderEntity {
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
             ...(index && { index }),
-          }
-        ));
-        startKey = LastEvaluatedKey as StartKey;
-        workOrders.push(...(Items ?? []) as IWorkOrder[]);
-      } catch (err) {
-        console.log({ err });
-      }
-    } while (!!startKey);
-    return workOrders;
-  }
-
-  public async getAllForPropertyManager({ pmEmail }: { pmEmail: string; }) {
-    let startKey: StartKey;
-    const workOrders = [];
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail?.toLowerCase());
-    do {
-      try {
-        const { Items, LastEvaluatedKey } = (await this.workOrderEntity.query(
-          GSI1PK,
-          {
-            startKey,
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
-            index: INDEXES.GSI1,
-          }
-        ));
-        startKey = LastEvaluatedKey as StartKey;
-        Items?.length && workOrders.push(...Items);
-      } catch (err) {
-        console.log({ err });
-      }
-    } while (!!startKey);
-    return workOrders;
-  }
-
-  public async getAllForTenant({ tenantEmail }: { tenantEmail: string; }) {
-    let startKey: StartKey;
-    const workOrders = [];
-    const GSI2PK = generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail?.toLowerCase());
-    do {
-      try {
-        const { Items, LastEvaluatedKey } = (await this.workOrderEntity.query(
-          GSI2PK,
-          {
-            startKey,
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
-            index: INDEXES.GSI2,
-          }
-        ));
-        startKey = LastEvaluatedKey as StartKey;
-        Items?.length && workOrders.push(...Items);
-      } catch (err) {
-        console.log({ err });
-      }
-    } while (!!startKey);
-    return workOrders;
-  }
-
-  public async getAllForTechnician({ technicianEmail }: { technicianEmail: string; }) {
-    let startKey: StartKey;
-    const workOrders: IWorkOrder[] = [];
-
-    const GSI3PK = generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase());
-    do {
-      try {
-        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
-          GSI3PK,
-          {
-            startKey,
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
-            index: INDEXES.GSI3
           }
         ));
         startKey = LastEvaluatedKey as StartKey;
