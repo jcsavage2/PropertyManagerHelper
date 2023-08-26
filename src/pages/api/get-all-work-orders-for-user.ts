@@ -11,7 +11,6 @@ export default async function handler(
     const body = req.body as IGetAllWorkOrdersForUserProps;
     const workOrderEntity = new WorkOrderEntity();
     const { email, userType, orgId } = body;
-    console.log(body);
     const workOrders = await workOrderEntity.getAllForUser({ email, userType, orgId });
     const sorted = workOrders?.sort((a: IWorkOrder, b: IWorkOrder) => {
       //@ts-ignore
