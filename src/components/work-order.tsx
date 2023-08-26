@@ -214,9 +214,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${
-                    workOrder.status === STATUS.TO_DO && "bg-blue-200"
-                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                  className={`${workOrder.status === STATUS.TO_DO && "bg-blue-200"
+                    } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                 >
                   <GoTasklist />
                   <span className="text-xs">Todo</span>
@@ -224,9 +223,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${
-                    workOrder.status === STATUS.COMPLETE && "bg-blue-200"
-                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                  className={`${workOrder.status === STATUS.COMPLETE && "bg-blue-200"
+                    } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
                   <span className="text-xs">Complete</span>

@@ -13,7 +13,6 @@ const OrgMethods = () => {
 
   const handleCreateOrganization: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
     event.preventDefault();
-    console.log({ orgName });
     await axios.post("/api/create-org", { name: orgName });
 
     setOrgName("");
