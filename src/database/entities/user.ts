@@ -52,6 +52,8 @@ interface ICreateTenant {
   numBaths: number;
 }
 
+export type UserType = "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
+
 export interface IUser extends IBaseUser {
   GSI1PK?: string, //PM email
   GSI1SK?: string,

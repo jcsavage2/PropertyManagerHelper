@@ -2,6 +2,9 @@ import { Entity } from "dynamodb-toolbox";
 import { ENTITIES, ENTITY_KEY, StartKey } from ".";
 import { INDEXES, PillarDynamoTable } from "..";
 import { generateKey } from "@/utils";
+import { UserType } from "./user";
+
+export interface IGetAllWorkOrdersForUserProps { email: string; userType: UserType; orgId?: string; };
 
 export type WorkOrderStatus = "COMPLETE" | "TO_DO";
 type CreateWorkOrderProps = {
@@ -11,7 +14,7 @@ type CreateWorkOrderProps = {
   tenantName: string;
   unit?: string;
   createdBy: string;
-  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
+  createdByType: UserType;
   state: string;
   permissionToEnter: "yes" | "no";
   organization?: string;
@@ -177,6 +180,61 @@ export class WorkOrderEntity {
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
             index: INDEXES.GSI4,
+          }
+        ));
+        startKey = LastEvaluatedKey as StartKey;
+        workOrders.push(...(Items ?? []) as IWorkOrder[]);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey);
+    return workOrders;
+  }
+
+
+
+  /**
+   * 
+   * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
+   */
+  public async getAllForUser({ email, userType, orgId }: IGetAllWorkOrdersForUserProps) {
+    let startKey: StartKey;
+    const workOrders: IWorkOrder[] = [];
+
+    let pk: string = "";
+    let index: undefined | string;
+
+    if (orgId) {
+      pk = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, orgId);
+      index = INDEXES.GSI4;
+    } else {
+      switch (userType) {
+        case "PROPERTY_MANAGER":
+          pk = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
+          index = INDEXES.GSI1;
+          break;
+        case "TECHNICIAN":
+          pk = generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, email.toLowerCase());
+          index = INDEXES.GSI3;
+          break;
+        case "TENANT":
+          pk = generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
+          index = INDEXES.GSI2;
+          break;
+        default:
+          throw new Error("No user type or organization sent when querying work orders");
+      }
+    }
+
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
+          pk,
+          {
+            limit: 20,
+            reverse: true,
+            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
+            ...(index && { index }),
           }
         ));
         startKey = LastEvaluatedKey as StartKey;

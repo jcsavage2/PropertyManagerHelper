@@ -34,34 +34,31 @@ type CreatePropertyProps = {
   numBaths: number;
 };
 export class PropertyEntity {
-  private propertyEntity: Entity;
+  private propertyEntity = new Entity({
+    name: ENTITIES.PROPERTY,
+    attributes: {
+      pk: { partitionKey: true },
+      sk: { sortKey: true },
+      GSI1PK: { type: "string" },
+      GSI1SK: { type: "string" },
+      GSI2PK: { type: "string" },
+      GSI2SK: { type: "string" },
+      country: { type: 'string' },
+      address: { type: 'string' },
+      pmEmail: { type: "string" },
+      tenantEmail: { type: "string" },
+      tenants: { type: "map" },
+      unit: { type: 'string' },
+      city: { type: 'string', },
+      state: { type: 'string' },
+      postalCode: { type: 'string' },
+      workOrders: { type: 'list' },
+      numBeds: { type: 'number' },
+      numBaths: { type: 'number' },
+    },
+    table: PillarDynamoTable
+  } as const);
 
-  constructor() {
-    this.propertyEntity = new Entity({
-      name: ENTITIES.PROPERTY,
-      attributes: {
-        pk: { partitionKey: true },
-        sk: { sortKey: true },
-        GSI1PK: { type: "string" },
-        GSI1SK: { type: "string" },
-        GSI2PK: { type: "string" },
-        GSI2SK: { type: "string" },
-        country: { type: 'string' },
-        address: { type: 'string' },
-        pmEmail: { type: "string" },
-        tenantEmail: { type: "string" },
-        tenants: { type: "map" },
-        unit: { type: 'string' },
-        city: { type: 'string', },
-        state: { type: 'string' },
-        postalCode: { type: 'string' },
-        workOrders: { type: 'list' },
-        numBeds: { type: 'number' },
-        numBaths: { type: 'number' },
-      },
-      table: PillarDynamoTable
-    } as const);
-  }
 
   private generateSk({ address, country = "US", city, state, postalCode, unit }:
     { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; }) {
@@ -88,8 +85,6 @@ export class PropertyEntity {
       ...(numBeds && { numBeds }),
       ...(numBaths && { numBaths }),
     }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
-
-    //@ts-ignore
     return result.Attributes;
   }
 
@@ -176,8 +171,6 @@ export class PropertyEntity {
       pk: pk,
       sk: this.generateSk({ address, country, city, state, postalCode, unit }),
     }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
-
-    //@ts-ignore
     return result.Attributes;
   }
 

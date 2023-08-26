@@ -18,7 +18,7 @@ import { useUserContext } from '@/context/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 // Types
-import { IWorkOrder } from '@/database/entities/work-order';
+import { IGetAllWorkOrdersForUserProps, IWorkOrder } from '@/database/entities/work-order';
 import { deconstructKey } from '@/utils';
 
 
@@ -45,15 +45,12 @@ const WorkOrders = () => {
   const fetchWorkOrders = useCallback(async () => {
     if (!userType || !user) return;
     setIsFetching(true);
-    const promise = userType === "PROPERTY_MANAGER"
-      ? mode === "mine"
-        ? axios.post('/api/get-all-work-orders-for-pm', { pmEmail: user.email })
-        : axios.post('/api/get-all-work-orders-for-org', { orgId: deconstructKey(user.organization ?? "") })
-      : userType === "TECHNICIAN"
-        ? axios.post('/api/get-all-work-orders-for-technician', { technicianEmail: user.email })
-        : axios.post('/api/get-all-work-orders-for-tenant', { tenantEmail: user.email });
-
-    const { data } = await promise;
+    const body: IGetAllWorkOrdersForUserProps = {
+      email: user.email,
+      userType,
+      orgId: mode === "organization" ? user.organization : undefined
+    };
+    const { data } = await axios.post('/api/get-all-work-orders-for-user', { ...body });
     const orders: IWorkOrder[] = JSON.parse(data.response);
     if (orders.length) {
       sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
@@ -94,12 +91,12 @@ const WorkOrders = () => {
               + New Work Order
             </button>
           </div>
-          <button
+          {userType !== "TENANT" && (<button
             className="float-left my-3 md:my-4 bg-blue-200 px-2 py-1 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-56 justify-self-end text-center"
             onClick={() => setMode(mode === "mine" ? "organization" : "mine")}
           >
             {`View ${mode === "mine" ? "organization" : "my"} work orders`}
-          </button>
+          </button>)}
           {isMobile ?
             <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} /> :
             <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />
