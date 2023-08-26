@@ -19,7 +19,6 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 // Types
 import { IGetAllWorkOrdersForUserProps, IWorkOrder } from '@/database/entities/work-order';
-import { deconstructKey } from '@/utils';
 
 
 const WorkOrders = () => {
@@ -81,7 +80,7 @@ const WorkOrders = () => {
       </Modal >
       <div id="workOrder" className="mx-4 mt-4" style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 3fr", columnGap: "2rem" }}>
         {!isMobile && <PortalLeftPanel />}
-        <div className="lg:max-w-5xl">
+        <div className="lg:max-w-5xl grid">
           <div style={isMobile ? {} : { display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             <h1 className="text-4xl">{`Work Orders`}</h1>
             <button
@@ -91,12 +90,14 @@ const WorkOrders = () => {
               + New Work Order
             </button>
           </div>
-          {userType !== "TENANT" && (<button
-            className="float-left my-3 md:my-4 bg-blue-200 px-2 py-1 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-56 justify-self-end text-center"
-            onClick={() => setMode(mode === "mine" ? "organization" : "mine")}
-          >
-            {`View ${mode === "mine" ? "organization" : "my"} work orders`}
-          </button>)}
+          <div>
+            {userType !== "TENANT" && (<button
+              className="float-left my-3 md:my-4 bg-blue-200 px-2 py-1 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-56 justify-self-end text-center"
+              onClick={() => setMode(mode === "mine" ? "organization" : "mine")}
+            >
+              {`View ${mode === "mine" ? "organization" : "my"} work orders`}
+            </button>)}
+          </div>
           {isMobile ?
             <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} /> :
             <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} fetchWorkOrders={fetchWorkOrders} />
