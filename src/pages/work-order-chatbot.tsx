@@ -139,7 +139,7 @@ export default function WorkOrderChatbot() {
       city: parsedAddress.city,
       postalCode: parsedAddress.postalCode,
     };
-    const res = await axios.post("/api/send-work-order-email", body);
+    const res = await axios.post("/api/create-work-order", body);
     if (res.status === 200) {
       toast.success("Successfully Submitted Work Order!", {
         position: toast.POSITION.TOP_CENTER,
