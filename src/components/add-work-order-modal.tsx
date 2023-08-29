@@ -56,7 +56,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
     async (event) => {
       try {
         event.preventDefault();
-        if(!user?.email || userType !== "PROPERTY_MANAGER" || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error("user must be a property manager")
+        if (!user?.email || userType !== "PROPERTY_MANAGER" || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error("user must be a property manager");
 
         if (!user || !user.pmEmail) {
           throw new Error("user needs to be a Property Manager.");
@@ -64,7 +64,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
         if (!selectedProperty) {
           throw new Error("No property selected");
         }
-        if(!userType){
+        if (!userType) {
           throw new Error("No userType");
         }
         setSubmitWorkOrderLoading(true);
@@ -92,7 +92,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
           tenantName: tenant.tenantName,
         };
 
-        const res = await axios.post("/api/send-work-order-email", body);
+        const res = await axios.post("/api/create-work-order", body);
         if (res.status !== 200) throw new Error("Error creating and sending WO email");
 
         toast.success("Successfully Submitted Work Order!", {
@@ -137,7 +137,7 @@ export const AddWorkOrderModal = ({ workOrderModalIsOpen, setWorkOrderModalIsOpe
   return (
     <Modal
       isOpen={workOrderModalIsOpen}
-      onAfterOpen={() => {}}
+      onAfterOpen={() => { }}
       onRequestClose={closeModal}
       contentLabel="Example Modal"
       closeTimeoutMS={200}
