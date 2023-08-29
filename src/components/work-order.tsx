@@ -168,6 +168,16 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
     getTechnicians();
   }, []);
 
+  const sortedEvents = events.sort((a, b) => {
+    console.log({ a, b });
+    if (a?.created && b?.created) {
+      //@ts-ignore
+      return new Date(b.created) - new Date(a.created);
+    } else {
+      return 0;
+    }
+  });
+
   if (workOrder && !isLoading) {
     return (
       <div id="work-order">
@@ -301,8 +311,8 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
               <div className="dot animate-loader animation-delay-400"></div>
             </div>
           )}
-          {events
-            ? events.map((event: IEvent | null, i: number) => {
+          {sortedEvents
+            ? sortedEvents.map((event: IEvent | null, i: number) => {
               if (event) {
                 const formattedDateTime = createdToFormattedDateTime(event.created);
                 return (

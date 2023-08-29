@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const woId = uuid();
 
     /** CREATE THE WORK ORDER */
-    await workOrderEntity.create({
+    const workOrder = await workOrderEntity.create({
       uuid: woId,
       address,
       city,
@@ -55,13 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       unit,
     });
 
-    /** CREATE THE FIRST EVENT FOR THE WO */
-    await eventEntity.create({
-      workOrderId: woId,
-      updateType: Events.STATUS_UPDATE,
-      updateDescription: "Work Order Created",
-      updateMadeBy: creatorEmail,
-    });
+
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
 
@@ -73,6 +67,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     sendgrid.setApiKey(apiKey);
 
     body.messages.pop();
+
+    /** CREATE THE FIRST EVENT FOR THE WO */
+    await eventEntity.create({
+      workOrderId: woId,
+      updateType: Events.STATUS_UPDATE,
+      updateDescription: "Work Order Created",
+      updateMadeBy: creatorEmail,
+    });
+
+
+    for (const message of body.messages) {
+      // Create a comment for each existing comment so the Work Order has context.
+      await eventEntity.create({
+        workOrderId: deconstructKey(workOrder?.pk),
+        updateType: Events.COMMENT_UPDATE,
+        updateDescription: message.content ?? "",
+        updateMadeBy: message.role === "user" ? body.tenantEmail ?? "" : message.role
+      });
+    }
 
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
