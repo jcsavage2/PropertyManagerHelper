@@ -15,7 +15,6 @@ const Home = () => {
   const { user, sessionStatus } = useSessionUser();
   const [showNotice, setShowNotice] = useState(false);
 
-
   if (query?.authredirect && !user?.email && sessionStatus === "unauthenticated") {
     const alreadyRedirected = localStorage.getItem("PILLAR::REDIRECT");
     if (!alreadyRedirected) {
