@@ -4,10 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Select from 'react-select';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
-import { PTE, STATUS } from '@/constants';
+import { PTE, STATUS, Status } from '@/constants';
 import { StatusOptions } from './work-orders-table';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { HandleUpdateStatusProps } from '.';
+import { HandleUpdateStatusProps } from '../pages/work-orders';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
 
 interface IWorkOrdersCardsProps {
@@ -15,8 +15,8 @@ interface IWorkOrdersCardsProps {
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   isFetching: boolean;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
-  statusFilter: Record<IWorkOrder['status'], boolean>;
-  setStatusFilter: (statusFilter: Record<IWorkOrder['status'], boolean>) => void;
+  statusFilter: Record<Status, boolean>;
+  setStatusFilter: (statusFilter: Record<Status, boolean>) => void;
 }
 
 export const WorkOrdersCards = ({

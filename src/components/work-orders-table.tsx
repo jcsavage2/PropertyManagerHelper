@@ -5,12 +5,12 @@ import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import Link from 'next/link';
-import { STATUS } from '@/constants';
+import { STATUS, Status } from '@/constants';
 import { GoTasklist } from 'react-icons/go';
 import { StatusOptionType } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { HandleUpdateStatusProps } from '.';
 import Select from 'react-select';
+import { HandleUpdateStatusProps } from '@/pages/work-orders';
 
 export const StatusOptions: StatusOptionType[] = [
   { value: STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
@@ -20,8 +20,8 @@ export const StatusOptions: StatusOptionType[] = [
 interface IWorkOrdersTableProps {
   workOrders: IWorkOrder[];
   isFetching: boolean;
-  statusFilter: Record<IWorkOrder['status'], boolean>;
-  setStatusFilter: (statusFilter: Record<IWorkOrder['status'], boolean>) => void;
+  statusFilter: Record<Status, boolean>;
+  setStatusFilter: (statusFilter: Record<Status, boolean>) => void;
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
 }
@@ -44,7 +44,7 @@ export const WorkOrdersTable = ({
     { label: 'Tenant', accessor: 'tenantName', width: '' },
   ];
 
-  const remappedWorkOrders = workOrders.map((wo) => {
+  const remappedWorkOrders = workOrders && workOrders.length ? workOrders.map((wo) => {
     const { address, tenantEmail, created, tenantName, permissionToEnter, assignedTo } = wo;
     const date = new Date(created);
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -62,9 +62,9 @@ export const WorkOrdersTable = ({
       assignedTo: assignedToString,
       permissionToEnter,
     };
-  });
+  }) : [];
 
-  const sortedWorkOrderTable = remappedWorkOrders.map((workOrder): any => {
+  const sortedWorkOrderTable = remappedWorkOrders && remappedWorkOrders.length ? remappedWorkOrders.map((workOrder): any => {
     return (
       <tr key={uuid()} className="h-20">
         {columns.map(({ accessor }, index) => {
@@ -101,7 +101,7 @@ export const WorkOrdersTable = ({
         })}
       </tr>
     );
-  });
+  }) : [];
 
   return (
     <div className="z-1 mb-2">

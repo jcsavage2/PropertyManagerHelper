@@ -1,7 +1,7 @@
-import { Events, PTE_Type } from '@/constants';
+import { Events, PTE_Type, Status } from '@/constants';
 import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
-import { IWorkOrder, PropertyAddress, WorkOrderEntity } from '@/database/entities/work-order';
+import { PropertyAddress, WorkOrderEntity } from '@/database/entities/work-order';
 import { deconstructKey } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
@@ -11,7 +11,7 @@ export type AssignTechnicianBody = {
   technicianName: string;
   workOrderId: string;
   address: PropertyAddress;
-  status: IWorkOrder['status'];
+  status: Status;
   issueDescription: string;
   permissionToEnter: PTE_Type;
   pmEmail: string;

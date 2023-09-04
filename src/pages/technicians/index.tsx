@@ -114,7 +114,7 @@ const Technicians = () => {
         confirmationModalIsOpen={confirmDeleteModalIsOpen}
         setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
         onConfirm={() => handleDeleteTech(toDelete)}
-        children={<div className="text-center">Are you sure you want to delete the technician record for {toDelete.name}?</div>}
+        childrenComponents={<div className="text-center">Are you sure you want to delete the technician record for {toDelete.name}?</div>}
         onCancel={() => setToDelete({ pk: '', sk: '', name: '', roles: [] })}
       />
       <div className="lg:max-w-5xl">

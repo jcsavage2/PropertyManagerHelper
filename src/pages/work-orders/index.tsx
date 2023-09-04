@@ -5,11 +5,9 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 
 // Local components
-import { WorkOrdersTable } from '@/pages/work-orders/work-orders-table';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import WorkOrder from '@/components/work-order';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
-import WorkOrdersCards from '@/pages/work-orders/work-orders-cards';
 import { AddWorkOrderModal } from '@/components/add-work-order-modal';
 
 // Hooks and context
@@ -23,6 +21,9 @@ import { deconstructKey, getPageLayout } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
 import { StatusOptionType } from '@/types';
+import { Status } from '@/constants';
+import WorkOrdersCards from '@/components/work-orders-cards';
+import WorkOrdersTable from '@/components/work-orders-table';
 
 export type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
@@ -42,7 +43,7 @@ const WorkOrders = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState<Record<IWorkOrder['status'], boolean>>({
+  const [statusFilter, setStatusFilter] = useState<Record<Status, boolean>>({
     TO_DO: true,
     COMPLETE: true,
   });

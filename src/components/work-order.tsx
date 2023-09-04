@@ -229,7 +229,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
           confirmationModalIsOpen={confirmDeleteModalIsOpen}
           setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
           onConfirm={() => deleteWorkOrder(workOrderId)}
-          children={
+          childrenComponents={
             <div className="flex flex-col text-center mt-2">
               <div>Are you sure you want to delete this work order?</div>
               <div className="italic mt-2">This action is NOT reversable.</div>

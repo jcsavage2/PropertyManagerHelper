@@ -10,7 +10,7 @@ export interface IGetAllWorkOrdersForUserProps {
   userType: UserType;
   orgId?: string;
   startKey: StartKey;
-  statusFilter: Record<IWorkOrder['status'], boolean>;
+  statusFilter: Record<Status, boolean>;
 }
 
 type CreateWorkOrderProps = {
@@ -47,7 +47,7 @@ type AssignTechnicianProps = {
   technicianEmail: string;
   workOrderId: string;
   address: PropertyAddress;
-  status: IWorkOrder['status'];
+  status: Status;
   issueDescription: string;
   permissionToEnter: PTE_Type;
   pmEmail: string;
