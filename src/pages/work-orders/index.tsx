@@ -59,7 +59,6 @@ const WorkOrders = () => {
     setIsFetching(true);
     const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user?.email });
     const updatedWorkOrder = JSON.parse(data.response);
-    console.log({ updatedWorkOrder });
     if (updatedWorkOrder) {
       setWorkOrders(workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)));
     }

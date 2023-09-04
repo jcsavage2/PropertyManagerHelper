@@ -109,7 +109,6 @@ export default function WorkOrderChatbot() {
   const handleAddressSelectChange = (value: AddressOptionType) => {
     setSelectedAddress(value);
   };
-  console.log({ user });
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);

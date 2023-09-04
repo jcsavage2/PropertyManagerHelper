@@ -75,14 +75,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         throw new Error('Invalid entity type');
     }
 
+    //TODO: might want to change delete entire entity to making a WO, for example, of type "DELETED" so that Pms can go back and see it after deletion
     if (deleteEntireEntity) {
-      console.log('Deleteing an entire record: ', { pk, sk, roleToDelete });
       await dbEntity.delete({ pk, sk });
     } else {
       if (!roleToDelete || entity !== ENTITIES.USER) {
         throw new Error("Can't delete user record unless the entity to delete is a user");
       }
-      console.log('Deleteing a single role: ', { pk, sk, roleToDelete });
       //@ts-ignore
       await dbEntity.deleteRole({ pk, sk, roleToDelete, existingRoles: currentUserRoles });
     }

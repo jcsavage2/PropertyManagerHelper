@@ -103,10 +103,6 @@ const Technicians = () => {
     [user, userType, techs]
   );
 
-  useEffect(() => {
-    console.log('Search: ', toDelete);
-  }, [toDelete]);
-
   if (user && !user.organization && userType !== 'PROPERTY_MANAGER') {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
