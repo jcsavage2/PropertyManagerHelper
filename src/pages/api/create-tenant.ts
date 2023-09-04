@@ -1,9 +1,8 @@
-import { Data } from "@/database";
-import { PropertyEntity } from "@/database/entities/property";
-import { TenantEntity } from "@/database/entities/tenant";
-import { NextApiRequest, NextApiResponse } from "next";
-import sendgrid from "@sendgrid/mail";
-import { UserEntity } from "@/database/entities/user";
+import { Data } from '@/database';
+import { PropertyEntity } from '@/database/entities/property';
+import { NextApiRequest, NextApiResponse } from 'next';
+import sendgrid from '@sendgrid/mail';
+import { UserEntity } from '@/database/entities/user';
 
 export type CreateTenantBody = {
   tenantEmail: string;
@@ -13,12 +12,13 @@ export type CreateTenantBody = {
   unit?: string;
   state: string;
   city: string;
-  country: "US" | "CA";
+  country: 'US' | 'CA';
   postalCode: string;
   numBeds: number;
   numBaths: number;
   createNewProperty: boolean;
-  organization?: string;
+  organization: string;
+  organizationName: string;
   propertyUUId: string;
 };
 
@@ -29,12 +29,14 @@ export type CreateTenantBody = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as CreateTenantBody;
-    const { pmEmail,
+    const {
+      pmEmail,
       tenantEmail,
       tenantName,
       organization,
+      organizationName,
       address,
-      country = "US",
+      country = 'US',
       city,
       state,
       postalCode,
@@ -42,11 +44,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       numBeds,
       numBaths,
       propertyUUId,
-      createNewProperty
+      createNewProperty,
     } = body;
 
-    if (!pmEmail || !tenantEmail || !tenantName || !address || !city || !state || !postalCode || !numBeds || !numBaths || !propertyUUId) {
-      throw new Error("create-tenant Error: Missing required fields.");
+    if (
+      !pmEmail ||
+      !tenantEmail ||
+      !tenantName ||
+      !address ||
+      !city ||
+      !state ||
+      !postalCode ||
+      !numBeds ||
+      !numBaths ||
+      !propertyUUId ||
+      !organization ||
+      !organizationName
+    ) {
+      throw new Error('create-tenant Error: Missing required fields.');
     }
 
     const userEntity = new UserEntity();
@@ -65,6 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       postalCode,
       unit,
       organization,
+      organizationName,
       numBeds,
       numBaths,
     });
@@ -74,6 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       await propertyEntity.create({
         tenantEmail,
         propertyManagerEmail: pmEmail,
+        organization,
         address,
         city,
         country,
@@ -89,14 +106,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
-      throw new Error("missing SENDGRID_API_KEY env variable.");
+      throw new Error('missing SENDGRID_API_KEY env variable.');
     }
     sendgrid.setApiKey(apiKey);
 
     const authLink = `https://pillarhq.co/?authredirect=true`;
     await sendgrid.send({
       to: tenantEmail, // The Property Manager
-      from: "dylan@pillarhq.co", // The Email from the company
+      from: 'dylan@pillarhq.co', // The Email from the company
       subject: `Create Your Account With Pillar Work Order Management`, // work order for address on MM-DD-YYYY
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
@@ -152,12 +169,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           </p>
         </div>
       </body>
-      </html>`
+      </html>`,
     });
 
     return res.status(200).json({ response: JSON.stringify(newTenant) });
-
-
   } catch (error: any) {
     console.log({ error });
     return res.status(error.statusCode || 500).json(error);

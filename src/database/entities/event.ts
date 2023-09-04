@@ -12,54 +12,62 @@ type CreateEventProps = {
 };
 
 export interface IEvent {
-  pk: string,
-  sk: string,
-  created: string,
+  pk: string;
+  sk: string;
+  created: string;
   updateType: EventType;
   updateDescription: string;
   updateMadeBy: string;
-};
+}
 
 export class EventEntity {
   private eventEntity = new Entity({
     name: ENTITIES.EVENT,
     attributes: {
       pk: { partitionKey: true }, //EV:workOrderId
-      sk: { sortKey: true }, //ksuid 
+      sk: { sortKey: true }, //ksuid
       updateType: { type: 'string' },
-      updateDescription: { type: "string" },
+      updateDescription: { type: 'string' },
       updateMadeBy: { type: 'string' },
     },
-    table: PillarDynamoTable
+    table: PillarDynamoTable,
   });
 
   /**
    * Creates a new event for a work order.
    */
   public async create({ workOrderId, updateType, updateDescription, updateMadeBy }: CreateEventProps) {
-    const result = await this.eventEntity.update({
-      pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
-      sk: generateKSUID(),
-      updateType,
-      updateDescription,
-      updateMadeBy
-    }, { returnValues: "ALL_NEW" });
+    const result = await this.eventEntity.update(
+      {
+        pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
+        sk: generateKSUID(),
+        updateType,
+        updateDescription,
+        updateMadeBy,
+      },
+      { returnValues: 'ALL_NEW' }
+    );
     return result.Attributes;
   }
 
   /**
    * @returns All events for a work order
    */
-  public async getEvents({ woId }:
-    { woId: string; }) {
+  public async getEvents({ woId }: { woId: string }) {
     try {
-      const result = await this.eventEntity.query(
-        generateKey(ENTITY_KEY.EVENT, woId), { reverse: true }
-      );
+      const result = await this.eventEntity.query(generateKey(ENTITY_KEY.EVENT, woId), { reverse: true });
       return result.Items ?? [];
     } catch (err) {
       console.log({ err });
     }
   }
 
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
+    const params = {
+      pk,
+      sk,
+    };
+    const result = await this.eventEntity.delete(params);
+    return result;
+  }
 }

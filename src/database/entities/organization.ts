@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, ENTITY_KEY, StartKey } from '.';
-import { INDEXES, PillarDynamoTable } from '..';
-import { generateKey, toTitleCase } from '@/utils';
+import { ENTITIES, ENTITY_KEY } from '.';
+import { PillarDynamoTable } from '..';
+import { generateKey } from '@/utils';
 
 export interface IOrganization {
   pk: string;
@@ -27,27 +27,39 @@ export class OrganizationEntity {
     attributes: {
       pk: { partitionKey: true },
       sk: { sortKey: true },
-      GSI1PK: { type: "string" }, // pm
-      GSI1SK: { type: "string" }, GSI2PK: { type: "string" },
-      GSI2SK: { type: "string" },
-      GSI3PK: { type: "string" }, // technician
-      GSI3SK: { type: "string" },
-      pmEmail: { type: "string" },
-      name: { type: "string" },
-      tenantEmail: { type: "string" },
-      workOrderId: { type: "string" },
+      GSI1PK: { type: 'string' }, // pm
+      GSI1SK: { type: 'string' },
+      GSI2PK: { type: 'string' },
+      GSI2SK: { type: 'string' },
+      GSI3PK: { type: 'string' }, // technician
+      GSI3SK: { type: 'string' },
+      pmEmail: { type: 'string' },
+      name: { type: 'string' },
+      tenantEmail: { type: 'string' },
+      workOrderId: { type: 'string' },
     },
-    table: PillarDynamoTable
+    table: PillarDynamoTable,
   });
-
 
   public async create({ name, uuid }: CreateOrgProps) {
     const orgId = generateKey(ENTITY_KEY.ORGANIZATION, uuid);
-    const result = await this.organizationEntity.update({
-      pk: orgId,
-      sk: orgId,
-      name
-    }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+    const result = await this.organizationEntity.update(
+      {
+        pk: orgId,
+        sk: orgId,
+        name,
+      },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+    );
     return result.Attributes;
+  }
+
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
+    const params = {
+      pk,
+      sk,
+    };
+    const result = await this.organizationEntity.delete(params);
+    return result;
   }
 }
