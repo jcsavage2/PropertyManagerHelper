@@ -22,10 +22,10 @@ export default function WorkOrderChatbot() {
     return (
       Object.values(user?.addresses)?.map(
         (address: any) =>
-          ({
-            label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
-            value: address,
-          } as AddressOptionType)
+        ({
+          label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
+          value: address,
+        } as AddressOptionType)
       ) ?? []
     );
   }, [user?.addresses]);
@@ -47,6 +47,9 @@ export default function WorkOrderChatbot() {
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
   const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
+
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+
 
   useEffect(() => {
     user?.tenantName && setTenantName(user.tenantName);
@@ -166,6 +169,39 @@ export default function WorkOrderChatbot() {
     return;
   };
 
+  const handleSubmitImages: React.FormEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault();
+    if (!selectedFiles) return;
+    const formData = new FormData();
+
+    // Append all selected files to the FormData
+    for (const selectedFile of selectedFiles) {
+      formData.append('image', selectedFile);
+    }
+
+    try {
+      const response = await axios.post('/api/upload-images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+
+      if (response.status === 200) {
+        const workOrderImages = response?.data?.files ?? [];
+        toast.success('Images uploaded successfully!');
+      } else {
+        toast.error('Images upload failed');
+      }
+    } catch (error) {
+      console.error('There was an error uploading the file:', error);
+    }
+  };
+
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    e.preventDefault();
+    console.log({ e: e.target.files });
+    setSelectedFiles(e.target.files);
+  }, []);
+
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     try {
@@ -244,7 +280,7 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<{ label: string; value: any }>) => {
+            onChange={(v: SingleValue<{ label: string; value: any; }>) => {
               //@ts-ignore
               handleAddressSelectChange(v);
             }}
@@ -295,9 +331,8 @@ export default function WorkOrderChatbot() {
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
                         <div
-                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
-                            !!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
-                          }`}
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
+                            }`}
                         >
                           {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
@@ -353,6 +388,15 @@ export default function WorkOrderChatbot() {
                                     onChange={handleAdditionalDetailsChange}
                                   />
                                 </div>
+                                <form className='mt-2' onSubmit={handleSubmitImages}>
+                                  <input
+                                    type="file"
+                                    multiple name="image"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                  />
+                                  <button type="submit">Upload</button>
+                                </form>
                                 <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : 'Property'}* </p>
                                 <div>
                                   <input
