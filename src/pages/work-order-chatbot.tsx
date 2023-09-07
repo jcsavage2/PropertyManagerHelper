@@ -187,18 +187,17 @@ export default function WorkOrderChatbot() {
 
       if (response.status === 200) {
         const workOrderImages = response?.data?.files ?? [];
-        toast.success('Images uploaded successfully!');
+        toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
       } else {
-        toast.error('Images upload failed');
+        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
       }
     } catch (error) {
-      console.error('There was an error uploading the file:', error);
+      toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
     }
   };
 
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     e.preventDefault();
-    console.log({ e: e.target.files });
     setSelectedFiles(e.target.files);
   }, []);
 
