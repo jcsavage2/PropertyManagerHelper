@@ -14,6 +14,7 @@ import { GetUser } from '@/pages/api/get-user';
 import { ENTITIES } from '@/database/entities';
 import { useDevice } from '@/hooks/use-window-size';
 import { PTE } from '@/constants';
+import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -28,6 +29,7 @@ export const AddWorkOrderModal = ({
   const { userType } = useUserContext();
   const { isMobile } = useDevice();
   const [isBrowser, setIsBrowser] = useState(false);
+  const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
   }, []);
@@ -192,22 +194,42 @@ export const AddWorkOrderModal = ({
             />
           </div>
 
-          <label htmlFor="issueLocation">Issue Location </label>
-          <input
-            className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
-            id="issueLocation"
-            type={'text'}
-            value={issueLocation}
-            onChange={handleIssueLocationChange}
-          />
-          <label htmlFor="additionalDetails">Additional Details </label>
-          <input
-            className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
-            id="additionalDetails"
-            type={'text'}
-            value={additionalDetails}
-            onChange={handleAdditionalDetailsChange}
-          />
+          <div
+            className="w-max mx-auto flex flex-row items-center justify-center bg-blue-200 px-4 py-1 cursor-pointer text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+            onClick={() => setShowAdditionalOptions(!showAdditionalOptions)}
+          >
+            {!showAdditionalOptions ? (
+            <>
+              <p>Show more options</p>
+              <MdOutlineKeyboardDoubleArrowDown className="text-2xl ml-1" />
+            </>
+          ) : (
+            <>
+              <p>Hide more options</p>
+              <MdOutlineKeyboardDoubleArrowUp className="text-2xl ml-1" />
+            </>
+          )}
+          </div>
+          {showAdditionalOptions && (
+            <>
+              <label htmlFor="issueLocation">Issue Location </label>
+              <input
+                className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
+                id="issueLocation"
+                type={'text'}
+                value={issueLocation}
+                onChange={handleIssueLocationChange}
+              />
+              <label htmlFor="additionalDetails">Additional Details </label>
+              <input
+                className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
+                id="additionalDetails"
+                type={'text'}
+                value={additionalDetails}
+                onChange={handleAdditionalDetailsChange}
+              />
+            </>
+          )}
         </div>
 
         <button

@@ -3,7 +3,7 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 import { UserType } from './user';
-import { PAGE_SIZE, PTE_Type, STATUS, Status } from '@/constants';
+import { PAGE_SIZE, PTE_Type, STATUS, STATUS_KEY, Status } from '@/constants';
 
 export interface IGetAllWorkOrdersForUserProps {
   email: string;
@@ -84,16 +84,15 @@ export class WorkOrderEntity {
     name: ENTITIES.WORK_ORDER,
     attributes: {
       pk: { partitionKey: true }, //woId
-      //SK Format: "[status]#[is_assigned]"
-      sk: { sortKey: true }, //non GSI sk is woId, bs we want to be able to fetch WO without knowing status
+      sk: { sortKey: true }, //woId
       GSI1PK: { type: 'string' }, //PM email
-      GSI1SK: { type: 'string' },
+      GSI1SK: { type: 'string' }, //Status
       GSI2PK: { type: 'string' }, //Tenant email
-      GSI2SK: { type: 'string' },
+      GSI2SK: { type: 'string' }, //Status
       GSI3PK: { type: 'string' }, //Technician email
-      GSI3SK: { type: 'string' },
+      GSI3SK: { type: 'string' }, //Status
       GSI4PK: { type: 'string' }, //Org Id
-      GSI4SK: { type: 'string' },
+      GSI4SK: { type: 'string' }, //Status
       permissionToEnter: { type: 'string' },
       pmEmail: { type: 'string' },
       organization: { type: 'string' },
@@ -135,23 +134,29 @@ export class WorkOrderEntity {
     tenantEmail,
   }: CreateWorkOrderProps) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
+
+    //Construct status key for TODO or COMPLETE status, we need to be able to separate TODO/COMPLETE from DELETED status
+    //TODO and COMPLETE require a "STATUS#" prefix, while DELETED does not
+    //This allows us to query for all work orders with any valid status, without getting deleted work orders
+    const statusKey = generateKey(STATUS_KEY, status);
+
     const result = await this.workOrderEntity.update(
       {
         pk: workOrderIdKey,
         sk: workOrderIdKey,
         GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail.toLowerCase()),
-        GSI1SK: status,
+        GSI1SK: statusKey,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
-        GSI2SK: status,
+        GSI2SK: statusKey,
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, organization),
-        GSI4SK: status,
+        GSI4SK: statusKey,
         permissionToEnter,
         pmEmail: pmEmail.toLowerCase(),
         createdBy: createdBy.toLowerCase(),
         createdByType,
         tenantEmail,
         tenantName,
-        status,
+        status: statusKey,
         address: this.generateAddress({ address, country, city, state, postalCode, unit }),
         issue: issue.toLowerCase(),
         organization,
@@ -173,11 +178,17 @@ export class WorkOrderEntity {
   }
 
   public async delete({ pk, sk }: { pk: string; sk: string }) {
-    const params = {
-      pk,
-      sk,
-    };
-    const result = await this.workOrderEntity.delete(params);
+    const result = await this.workOrderEntity.update(
+      {
+        pk: pk,
+        sk: sk,
+        status: STATUS.DELETED,
+        GSI1SK: STATUS.DELETED,
+        GSI2SK: STATUS.DELETED,
+        GSI4PK: STATUS.DELETED,
+      },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+    );
     return result;
   }
 
@@ -213,14 +224,13 @@ export class WorkOrderEntity {
     }
 
     let remainingWOToFetch = PAGE_SIZE;
-    if (!statusFilter.COMPLETE && !statusFilter.TO_DO) {
-      return { workOrders: [], startKey: undefined };
-    }
 
     do {
       const options = {
-        ...(statusFilter.COMPLETE && !statusFilter.TO_DO && { eq: STATUS.COMPLETE }),
-        ...(!statusFilter.COMPLETE && statusFilter.TO_DO && { eq: STATUS.TO_DO }),
+        ...(statusFilter.COMPLETE && !statusFilter.TO_DO && { eq: generateKey(STATUS_KEY, STATUS.COMPLETE) }),
+        ...(!statusFilter.COMPLETE && statusFilter.TO_DO && { eq: generateKey(STATUS_KEY, STATUS.TO_DO) }),
+        ...(statusFilter.COMPLETE && statusFilter.TO_DO && { beginsWith: STATUS_KEY }),
+        ...(!statusFilter.COMPLETE && !statusFilter.TO_DO && { eq: STATUS.DELETED }),
         limit: remainingWOToFetch,
         reverse: true,
         ...(index && { index }),
@@ -254,15 +264,16 @@ export class WorkOrderEntity {
       } while (!!startKey);
 
       let result = null;
+      const statusKey = status === STATUS.DELETED ? status : generateKey(STATUS_KEY, status);
       for (const workOrder of workOrders) {
         result = await this.workOrderEntity.update(
           {
             pk: workOrder.pk,
             sk: workOrder.sk,
-            ...(status && { status }),
-            ...(status && { GSI1SK: status }),
-            ...(status && { GSI2SK: status }),
-            ...(status && { GSI4PK: status }),
+            ...(status && { status: statusKey }),
+            ...(status && { GSI1SK: statusKey }),
+            ...(status && { GSI2SK: statusKey }),
+            ...(status && { GSI4PK: statusKey }),
             ...(permissionToEnter && { permissionToEnter }),
           },
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }

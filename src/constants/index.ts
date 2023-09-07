@@ -44,9 +44,12 @@ export const Events = {
   COMMENT_UPDATE: 'COMMENT_UPDATE',
 };
 
+export const STATUS_KEY = "STATUS";
+
 export const STATUS = {
   TO_DO: 'TO_DO',
   COMPLETE: 'COMPLETE',
+  DELETED: 'DELETED',
 };
 
 export const PTE = {
