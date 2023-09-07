@@ -1,22 +1,19 @@
-import { Events } from "@/constants";
-import { Data } from "@/database";
-import { EventEntity } from "@/database/entities/event";
-import { WorkOrderEntity, WorkOrderStatus } from "@/database/entities/work-order";
-import { deconstructKey } from "@/utils";
-import { NextApiRequest, NextApiResponse } from "next";
+import { Events, PTE_Type, Status } from '@/constants';
+import { Data } from '@/database';
+import { EventEntity } from '@/database/entities/event';
+import { WorkOrderEntity } from '@/database/entities/work-order';
+import { deconstructKey } from '@/utils';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 type UpdateWorkOrderApiRequest = {
   pk: string;
   sk: string;
   email: string; //email of the current user who made the update
-  status: WorkOrderStatus;
-  permissionToEnter?: "yes" | "no";
+  status: Status;
+  permissionToEnter?: PTE_Type;
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as UpdateWorkOrderApiRequest;
     const workOrderEntity = new WorkOrderEntity();
@@ -26,7 +23,7 @@ export default async function handler(
       pk,
       sk,
       status,
-      ...(permissionToEnter && { permissionToEnter })
+      ...(permissionToEnter && { permissionToEnter }),
     });
 
     //Spawn new event on status change
@@ -37,8 +34,7 @@ export default async function handler(
       updateMadeBy: email,
     });
 
-    return res.status(200).json({ response: JSON.stringify(newWorkOrder) });;
-
+    return res.status(200).json({ response: JSON.stringify(newWorkOrder?.Attributes) });
   } catch (error) {
     console.log({ error });
   }

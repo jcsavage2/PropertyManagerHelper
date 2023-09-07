@@ -1,26 +1,31 @@
-import { IEvent } from "@/database/entities/event";
-import { IWorkOrder } from "@/database/entities/work-order";
-import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey } from "@/utils";
-import { ActionMeta, MultiValue } from "react-select";
-import { useUserContext } from "@/context/user";
-import { AddCommentModal } from "./add-comment-modal";
-import AsyncSelect from "react-select/async";
-import { OptionType } from "@/types";
-import { ITechnician } from "@/database/entities/technician";
-import { AssignTechnicianBody } from "@/pages/api/assign-technician";
-import { GoTasklist } from "react-icons/go";
-import { AiOutlineCheck } from "react-icons/ai";
-import { STATUS } from "@/constants";
-import { BsPersonFill } from "react-icons/bs";
-import { IoLocationSharp } from "react-icons/io5";
-import { BiTimeFive } from "react-icons/bi";
-import { LoadingSpinner } from "./loading-spinner/loading-spinner";
-import { useSessionUser } from "@/hooks/auth/use-session-user";
-import { GetTechniciansForPropertyManagerApiRequest } from "@/pages/api/get-all-technicians-for-pm";
+import { IEvent } from '@/database/entities/event';
+import { IWorkOrder } from '@/database/entities/work-order';
+import axios from 'axios';
+import { useCallback, useEffect, useState } from 'react';
+import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey } from '@/utils';
+import { ActionMeta, MultiValue } from 'react-select';
+import { useUserContext } from '@/context/user';
+import { AddCommentModal } from './add-comment-modal';
+import AsyncSelect from 'react-select/async';
+import { OptionType } from '@/types';
+import { ITechnician } from '@/database/entities/technician';
+import { AssignTechnicianBody } from '@/pages/api/assign-technician';
+import { GoTasklist } from 'react-icons/go';
+import { AiOutlineCheck } from 'react-icons/ai';
+import { PTE, STATUS } from '@/constants';
+import { BsPersonFill, BsTrashFill } from 'react-icons/bs';
+import { IoLocationSharp } from 'react-icons/io5';
+import { BiTimeFive } from 'react-icons/bi';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
+import ConfirmationModal from './confirmation-modal';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/router';
+import { DeleteRequest } from '@/pages/api/delete';
+import { ENTITIES } from '@/database/entities';
+import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
 
-const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
+const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDelete: () => Promise<void> }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -32,7 +37,9 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   const [assignedTechniciansMenuOpen, setAssignedTechniciansMenuOpen] = useState(false);
   const { user } = useSessionUser();
   const { userType } = useUserContext();
+  const router = useRouter();
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
+  const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
 
   useEffect(() => {
     setLoadingAssignedTechnicians(true);
@@ -50,16 +57,16 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   }, [workOrder, workOrder?.assignedTo, technicianOptions]);
 
   async function getTechnicians() {
-    if (!workOrderId || userType !== "PROPERTY_MANAGER" || !user) return;
+    if (!workOrderId || userType !== 'PROPERTY_MANAGER' || !user || !user.organization) return;
     try {
-      const body: GetTechniciansForPropertyManagerApiRequest = { pmEmail: user?.email };
-      const { data } = await axios.post("/api/get-all-technicians-for-pm", body);
+      const body: GetTechsForOrgRequest = { organization: user.organization, startKey: undefined };
+      const { data } = await axios.post('/api/get-tech-for-org', body);
       if (data.response) {
         const parsedTechnicians = JSON.parse(data.response) as ITechnician[];
-        const mappedTechnicians = parsedTechnicians.map(technician => {
+        const mappedTechnicians = parsedTechnicians.map((technician) => {
           return {
             value: technician.technicianEmail,
-            label: technician.technicianName
+            label: technician.technicianName,
           };
         });
         setTechnicianOptions(mappedTechnicians);
@@ -72,7 +79,11 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
 
   const searchTechnicians = (inputValue: string) =>
     new Promise<OptionType[]>((resolve) => {
-      resolve(technicianOptions.filter((i) => i.label.toLowerCase().includes(inputValue.toLowerCase()) || i.value.toLowerCase().includes(inputValue.toLowerCase())));
+      resolve(
+        technicianOptions.filter(
+          (i) => i.label.toLowerCase().includes(inputValue.toLowerCase()) || i.value.toLowerCase().includes(inputValue.toLowerCase())
+        )
+      );
     });
 
   const getWorkOrder = useCallback(async () => {
@@ -80,7 +91,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
       if (!workOrderId) {
         return;
       }
-      const { data } = await axios.post("/api/get-work-order", {
+      const { data } = await axios.post('/api/get-work-order', {
         pk: workOrderId,
         sk: workOrderId,
       });
@@ -100,7 +111,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
         return;
       }
       setIsLoadingEvents(true);
-      const { data } = await axios.post("/api/get-work-order-events", { workOrderId });
+      const { data } = await axios.post('/api/get-work-order-events', { workOrderId });
       if (data.response) {
         const parsed = JSON.parse(data.response);
         setEvents(parsed);
@@ -115,7 +126,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
     if (!workOrder || !user) return;
     setIsUpdatingStatus(true);
 
-    const { data } = await axios.post("/api/update-work-order", {
+    const { data } = await axios.post('/api/update-work-order', {
       pk: workOrder.pk,
       sk: workOrder.sk,
       status: status,
@@ -123,19 +134,44 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
     });
 
     const updatedWorkOrder = JSON.parse(data.response);
-
     if (updatedWorkOrder) {
-      setWorkOrder(updatedWorkOrder.Attributes);
+      setWorkOrder(updatedWorkOrder);
     }
     await getWorkOrderEvents();
     setIsUpdatingStatus(false);
   };
 
+  const deleteWorkOrder = useCallback(async (workOrderId: string) => {
+    try {
+      if (!workOrderId || workOrder?.status === STATUS.DELETED) return;
+      const params: DeleteRequest = {
+        pk: workOrderId,
+        sk: workOrderId,
+        entity: ENTITIES.WORK_ORDER,
+      };
+      const { data } = await axios.post('/api/delete', params);
+      if (data.response) {
+        router.push('/work-orders');
+        toast.success('Work Order Deleted!', {
+          position: toast.POSITION.TOP_CENTER,
+          draggable: false,
+        });
+        afterDelete();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error Deleting Work Order. Please Try Again', {
+        position: toast.POSITION.TOP_CENTER,
+        draggable: false,
+      });
+    }
+  }, []);
+
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
     setLoadingAssignedTechnicians(true);
-    if (!user?.email || !workOrder || userType !== "PROPERTY_MANAGER") return;
+    if (!user?.email || !workOrder || userType !== 'PROPERTY_MANAGER') return;
     const actionType = actionMeta.action;
-    if (actionType === "select-option") {
+    if (actionType === 'select-option') {
       const selectedTechnician = actionMeta.option as OptionType;
       const body: AssignTechnicianBody = {
         workOrderId,
@@ -147,10 +183,10 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
         permissionToEnter: workOrder?.permissionToEnter,
         issueDescription: workOrder?.issue,
       };
-      await axios.post("/api/assign-technician", body);
-    } else if (actionType === "remove-value") {
+      await axios.post('/api/assign-technician', body);
+    } else if (actionType === 'remove-value') {
       const removedTechnician = actionMeta.removedValue as OptionType;
-      await axios.post("/api/remove-technician", {
+      await axios.post('/api/remove-technician', {
         workOrderId,
         pmEmail: user.email,
         technicianEmail: removedTechnician.value,
@@ -169,7 +205,6 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
   }, []);
 
   const sortedEvents = events.sort((a, b) => {
-    console.log({ a, b });
     if (a?.created && b?.created) {
       //@ts-ignore
       return new Date(b.created) - new Date(a.created);
@@ -190,10 +225,33 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
             getWorkOrderEvents();
           }}
         />
+        <ConfirmationModal
+          confirmationModalIsOpen={confirmDeleteModalIsOpen}
+          setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
+          onConfirm={() => deleteWorkOrder(workOrderId)}
+          childrenComponents={
+            <div className="flex flex-col text-center mt-2">
+              <div>Are you sure you want to delete this work order?</div>
+              <div className="italic mt-2">This action is NOT reversable.</div>
+            </div>
+          }
+        />
         <div className="flex flex-col w-full align-middle items-center">
-          <div className="text-3xl my-auto flex flex-row items-end text-gray-600">
-            {toTitleCase(workOrder?.issue)}
-            {workOrderId && <div className="hidden md:inline text-lg ml-4 text-gray-400"># {deconstructKey(workOrderId)}</div>}
+          <div className="md:text-3xl text-2xl my-auto flex flex-row items-center justify-between text-gray-600 w-full">
+            <div className="md:ml-16">
+              {toTitleCase(workOrder?.issue)}
+              {workOrderId && <div className="hidden md:inline text-lg ml-4 text-gray-400"># {deconstructKey(workOrderId)}</div>}
+            </div>
+            {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
+              <div
+                onClick={() => {
+                  if (workOrder.status === STATUS.DELETED) return;
+                  setConfirmDeleteModalIsOpen(true);
+                }}
+              >
+                <BsTrashFill className="text-gray-600 cursor-pointer hover:text-gray-700  md:mr-8 mr-4 text-2xl" />
+              </div>
+            )}
           </div>
           <hr className="w-full mt-2 mb-1" />
           <div>{workOrderId && <div className="inline md:hidden text-xs text-gray-400"># {deconstructKey(workOrderId)}</div>}</div>
@@ -207,7 +265,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
               )}
               <div className="flex flex-row font-bold text-base mt-4 mx-auto md:hidden">
                 <p className="mr-2">PTE?</p>
-                {workOrder.permissionToEnter === "yes" ? (
+                {workOrder.permissionToEnter === PTE.YES ? (
                   <p className="text-green-600 font-normal">{toTitleCase(workOrder.permissionToEnter)}</p>
                 ) : (
                   <p className="text-red-600 font-normal">{toTitleCase(workOrder.permissionToEnter)}</p>
@@ -220,33 +278,41 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                 </div>
               )}
               <div className="font-bold md:mt-4 mt-2 md:ml-12 text-center md:text-start">Status</div>
-              <div className="mt-1 text-md flex flex-row mx-auto text-gray-600">
-                <button
-                  disabled={isUpdatingStatus}
-                  onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${workOrder.status === STATUS.TO_DO && "bg-blue-200"
-                    } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
-                >
-                  <GoTasklist />
-                  <span className="text-xs">Todo</span>
-                </button>
-                <button
-                  disabled={isUpdatingStatus}
-                  onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${workOrder.status === STATUS.COMPLETE && "bg-blue-200"
-                    } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
-                >
-                  <AiOutlineCheck />
-                  <span className="text-xs">Complete</span>
-                </button>
+              <div className="mt-1 md:mx-0 md:ml-16 mx-auto text-md flex flex-row text-gray-600">
+                {workOrder.status !== STATUS.DELETED ? (
+                  <>
+                    <button
+                      disabled={isUpdatingStatus}
+                      onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
+                      className={`${
+                        deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
+                      } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                    >
+                      <GoTasklist />
+                      <span className="text-xs">Todo</span>
+                    </button>
+                    <button
+                      disabled={isUpdatingStatus}
+                      onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
+                      className={`${
+                        deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
+                      } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                    >
+                      <AiOutlineCheck />
+                      <span className="text-xs">Complete</span>
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-red-600">{STATUS.DELETED}</p>
+                )}
               </div>
               <div className="font-bold mt-4 md:ml-12 text-center md:text-start">Assigned To</div>
               <div className="md:ml-16 md:mt-4 w-full">
                 <AsyncSelect
-                  placeholder={loadingAssignedTechnicians ? "Loading..." : assignedTechnicians.length === 0 ? "Unassigned" : "Assign technicians..."}
-                  isDisabled={userType !== "PROPERTY_MANAGER"} // potentially could have logic for technicians to "self assign"
+                  placeholder={loadingAssignedTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
+                  isDisabled={userType !== 'PROPERTY_MANAGER'} // potentially could have logic for technicians to "self assign"
                   menuPosition="fixed"
-                  className={"md:w-3/5 w-5/6 mb-6 md:mt-0 mt-2 md:my-auto mx-auto md:mx-0"}
+                  className={'md:w-3/5 w-5/6 mb-6 md:mt-0 mt-2 md:my-auto mx-auto md:mx-0'}
                   closeMenuOnSelect={false}
                   isMulti
                   defaultOptions={technicianOptions}
@@ -271,7 +337,7 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
               )}
               <div className="flex flex-col align-middle font-bold text-base mt-4">
                 <p>Permission to Enter</p>
-                {workOrder.permissionToEnter === "yes" ? (
+                {workOrder.permissionToEnter === PTE.YES ? (
                   <p className="text-green-600 font-normal ml-4">{toTitleCase(workOrder.permissionToEnter)}</p>
                 ) : (
                   <p className="text-red-600 font-normal ml-4">{toTitleCase(workOrder.permissionToEnter)}</p>
@@ -284,12 +350,12 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
                 {workOrder.tenantName}({workOrder.tenantEmail})
               </div>
               <div className="flex flex-row items-center ml-4 mb-1">
-                <IoLocationSharp className="mr-2" />{" "}
-                {generateAddressKey({ address: workOrder?.address?.address, unit: workOrder?.address?.unit ?? "" })}
+                <IoLocationSharp className="mr-2" />{' '}
+                {generateAddressKey({ address: workOrder?.address?.address, unit: workOrder?.address?.unit ?? '' })}
               </div>
               <div className="flex flex-row items-center ml-4 mb-1">
                 <BiTimeFive className="mr-2" />
-                {createdToFormattedDateTime(workOrder.created).join(" @ ")}
+                {createdToFormattedDateTime(workOrder.created).join(' @ ')}
               </div>
             </div>
           </div>
@@ -313,20 +379,20 @@ const WorkOrder = ({ workOrderId }: { workOrderId: string; }) => {
           )}
           {sortedEvents
             ? sortedEvents.map((event: IEvent | null, i: number) => {
-              if (event) {
-                const formattedDateTime = createdToFormattedDateTime(event.created);
-                return (
-                  <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
-                    <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
-                    <div className="text-sm text-gray-500">
-                      {formattedDateTime[0]} @{formattedDateTime[1]}
+                if (event) {
+                  const formattedDateTime = createdToFormattedDateTime(event.created);
+                  return (
+                    <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
+                      <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
+                      <div className="text-sm text-gray-500">
+                        {formattedDateTime[0]} @ {formattedDateTime[1]}
+                      </div>
+                      <div className="break-words">{event.updateDescription}</div>
                     </div>
-                    <div className="break-words">{event.updateDescription}</div>
-                  </div>
-                );
-              }
-            })
-            : "No events found"}
+                  );
+                }
+              })
+            : 'No events found'}
         </div>
       </div>
     );

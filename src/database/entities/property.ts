@@ -2,15 +2,15 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
+import { PAGE_SIZE } from '@/constants';
 
 export interface IProperty {
   pk: string;
   sk: string;
-  pmEmail: string;
   postalCode: string;
   city: string;
   state: string;
-  organizationId: string;
+  organization: string;
   created: string;
   address: string;
   tenants: Map<string, string>; // tenant email, tenant name
@@ -25,8 +25,9 @@ type CreatePropertyProps = {
   city: string;
   country: string;
   postalCode: string;
-  propertyManagerEmail: string;
   state: string;
+  organization: string;
+  propertyManagerEmail: string;
   tenantEmail?: string;
   unit?: string;
   uuid: string;
@@ -39,121 +40,204 @@ export class PropertyEntity {
     attributes: {
       pk: { partitionKey: true },
       sk: { sortKey: true },
-      GSI1PK: { type: "string" },
-      GSI1SK: { type: "string" },
-      GSI2PK: { type: "string" },
-      GSI2SK: { type: "string" },
+      GSI1PK: { type: 'string' }, //Search by organization
+      GSI1SK: { type: 'string' },
+      GSI2PK: { type: 'string' },
+      GSI2SK: { type: 'string' },
+      GSI4PK: { type: 'string' },
+      GSI4SK: { type: 'string' },
       country: { type: 'string' },
       address: { type: 'string' },
-      pmEmail: { type: "string" },
-      tenantEmail: { type: "string" },
-      tenants: { type: "map" },
+      organization: { type: 'string' },
+      tenantEmail: { type: 'string' },
+      tenants: { type: 'map' },
       unit: { type: 'string' },
-      city: { type: 'string', },
+      city: { type: 'string' },
       state: { type: 'string' },
       postalCode: { type: 'string' },
       workOrders: { type: 'list' },
       numBeds: { type: 'number' },
       numBaths: { type: 'number' },
     },
-    table: PillarDynamoTable
+    table: PillarDynamoTable,
   } as const);
 
-
-  private generateSk({ address, country = "US", city, state, postalCode, unit }:
-    { address: string; country: string; city: string; state: string; postalCode: string; unit?: string; }) {
-    return [ENTITY_KEY.PROPERTY, "ADDRESS", address.toUpperCase(), "COUNTRY", country.toUpperCase(), "CITY", city.toUpperCase(), "STATE", state.toUpperCase(), "POSTAL", postalCode.toUpperCase(), "UNIT", unit ? unit?.toUpperCase() : ""].join("#");
+  private generateSk({
+    address,
+    country = 'US',
+    city,
+    state,
+    postalCode,
+    unit,
+  }: {
+    address: string;
+    country: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    unit?: string;
+  }) {
+    return [
+      ENTITY_KEY.PROPERTY,
+      'ADDRESS',
+      address.toUpperCase(),
+      'COUNTRY',
+      country.toUpperCase(),
+      'CITY',
+      city.toUpperCase(),
+      'STATE',
+      state.toUpperCase(),
+      'POSTAL',
+      postalCode.toUpperCase(),
+      'UNIT',
+      unit ? unit?.toUpperCase() : '',
+    ].join('#');
   }
 
-  public async create({ address, country = "US", tenantEmail, city, state, postalCode, unit, propertyManagerEmail, uuid, numBeds, numBaths }: CreatePropertyProps) {
+  public async create({
+    address,
+    country = 'US',
+    tenantEmail,
+    city,
+    state,
+    postalCode,
+    unit,
+    organization,
+    propertyManagerEmail,
+    uuid,
+    numBeds,
+    numBaths,
+  }: CreatePropertyProps) {
     const propertyId = generateKey(ENTITY_KEY.PROPERTY, uuid);
-    const result = await this.propertyEntity.update({
-      pk: propertyId,
-      sk: this.generateSk({ address, country, city, state, postalCode, unit }),
-      GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()),
-      GSI1SK: this.generateSk({ address, country, city, state, postalCode, unit }),
-      ...(tenantEmail && { GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail.toLowerCase()) }),
-      ...(tenantEmail && { GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit }) }),
-      tenantEmail: tenantEmail?.toLowerCase(),
-      country: country.toUpperCase(),
-      address: address.toUpperCase(),
-      city: city.toUpperCase(),
-      state: state.toUpperCase(),
-      postalCode: postalCode.toUpperCase(),
-      pmEmail: propertyManagerEmail.toLowerCase(),
-      unit: unit?.toUpperCase() ?? "",
-      ...(numBeds && { numBeds }),
-      ...(numBaths && { numBaths }),
-    }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+    const result = await this.propertyEntity.update(
+      {
+        pk: propertyId,
+        sk: this.generateSk({ address, country, city, state, postalCode, unit }),
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()),
+        GSI1SK: this.generateSk({ address, country, city, state, postalCode, unit }),
+        ...(tenantEmail && { GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail.toLowerCase()) }),
+        ...(tenantEmail && { GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit }) }),
+        GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization),
+        GSI4SK: this.generateSk({ address, country, city, state, postalCode, unit }),
+        tenantEmail: tenantEmail?.toLowerCase(),
+        country: country.toUpperCase(),
+        address: address.toUpperCase(),
+        city: city.toUpperCase(),
+        state: state.toUpperCase(),
+        postalCode: postalCode.toUpperCase(),
+        organization,
+        unit: unit?.toUpperCase() ?? '',
+        ...(numBeds && { numBeds }),
+        ...(numBaths && { numBaths }),
+      },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+    );
     return result.Attributes;
   }
 
-  public async get({ address, country, city, state, postalCode, unit, propertyManagerEmail }:
-    {
-      address: string;
-      country: string;
-      city: string;
-      state: string;
-      postalCode: string;
-      unit?: string;
-      propertyManagerEmail: string;
-    }) {
+  /* Get by property id */
+  public async getById({
+    uuid,
+    address,
+    country,
+    city,
+    state,
+    postalCode,
+    unit,
+  }: {
+    uuid: string;
+    address: string;
+    country: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    unit?: string;
+  }) {
     const params = {
-      pk: generateKey(ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()), // can query all properties for a given property manager
-      sk: this.generateSk({ address, country, city, state, postalCode, unit })
+      pk: generateKey(ENTITY_KEY.PROPERTY, uuid),
+      sk: this.generateSk({ address, country, city, state, postalCode, unit }),
     };
     const result = await this.propertyEntity.get(params, { consistent: false });
+    return result;
+  }
+
+  /* Get by property id */
+  public async getByOrganization({ organization, startKey }: { organization: string; startKey: StartKey }) {
+    let properties: any[] = [];
+    const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization);
+
+    let remainingPropertiesToFetch = PAGE_SIZE;
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI4PK, {
+          ...(startKey && { startKey }),
+          limit: remainingPropertiesToFetch,
+          reverse: true,
+          beginsWith: `${ENTITY_KEY.PROPERTY}#`,
+          index: INDEXES.GSI4,
+        });
+        startKey = LastEvaluatedKey as StartKey;
+        remainingPropertiesToFetch -= Items?.length ?? 0;
+        Items?.length && properties.push(...Items);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey && remainingPropertiesToFetch > 0);
+    return { properties, startKey };
+  }
+
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
+    const params = {
+      pk,
+      sk,
+    };
+    const result = await this.propertyEntity.delete(params);
     return result;
   }
 
   /**
    * @returns all properties that a given property manager is assigned to.
    */
-  public async getAllForPropertyManager({ pmEmail }: { pmEmail: string; }) {
+  public async getAllForPropertyManager({ pmEmail, startKey }: { pmEmail: string; startKey: StartKey }) {
     const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, pmEmail?.toLowerCase());
-    let startKey: StartKey;
-    const properties = [];
+    let properties = [];
+    let remainingPropertiesToFetch = PAGE_SIZE;
     do {
       try {
-        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(
-          GSI1PK,
-          {
-            startKey,
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.PROPERTY}#`,
-            index: INDEXES.GSI1,
-          }
-        );
+        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI1PK, {
+          ...(startKey && { startKey }),
+          limit: remainingPropertiesToFetch,
+          reverse: true,
+          beginsWith: `${ENTITY_KEY.PROPERTY}#`,
+          index: INDEXES.GSI1,
+        });
         startKey = LastEvaluatedKey as StartKey;
+        remainingPropertiesToFetch -= Items?.length ?? 0;
         Items?.length && properties.push(...Items);
       } catch (err) {
         console.log({ err });
       }
-    } while (!!startKey);
-    return properties;
+    } while (!!startKey && remainingPropertiesToFetch > 0);
+    return { properties, startKey };
   }
 
-  // It may make more sense to store properties on the tenant record, and then update the tenant + property row when tenants move away. 
-  // We could also save "historical properties" and "historical tenants" on the user and property entities, respectively. 
-  public async getAllForTenant({ tenantEmail }: { tenantEmail: string; }) {
+  // It may make more sense to store properties on the tenant record, and then update the tenant + property row when tenants move away.
+  // We could also save "historical properties" and "historical tenants" on the user and property entities, respectively.
+  public async getAllForTenant({ tenantEmail }: { tenantEmail: string }) {
     let startKey: StartKey;
     const properties: IProperty[] = [];
     const GSI2PK = generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail?.toLowerCase());
     do {
       try {
-        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
-          GSI2PK,
-          {
-            limit: 20,
-            startKey,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.PROPERTY}#`,
-            index: INDEXES.GSI2,
-          }
-        ));
+        const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(GSI2PK, {
+          limit: PAGE_SIZE,
+          startKey,
+          reverse: true,
+          beginsWith: `${ENTITY_KEY.PROPERTY}#`,
+          index: INDEXES.GSI2,
+        });
         startKey = LastEvaluatedKey as StartKey;
-        properties.push(...(Items ?? []) as IProperty[]);
+        properties.push(...((Items ?? []) as IProperty[]));
       } catch (err) {
         console.log({ err });
       }
@@ -162,16 +246,34 @@ export class PropertyEntity {
   }
 
   /**
-   * 
+   *
    * @param tenantEmails an array of tenant emails.
    * Updates the property entitiy by moving the tenants map to the historical tenants map.
    */
-  public async removeTenantsFromProperty({ pk, address, country, city, state, postalCode, unit }: { pk: string, address: string, country: string, city: string, state: string, postalCode: string, unit: string; }) {
-    const result = await this.propertyEntity.update({
-      pk: pk,
-      sk: this.generateSk({ address, country, city, state, postalCode, unit }),
-    }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+  public async removeTenantsFromProperty({
+    pk,
+    address,
+    country,
+    city,
+    state,
+    postalCode,
+    unit,
+  }: {
+    pk: string;
+    address: string;
+    country: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    unit: string;
+  }) {
+    const result = await this.propertyEntity.update(
+      {
+        pk: pk,
+        sk: this.generateSk({ address, country, city, state, postalCode, unit }),
+      },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+    );
     return result.Attributes;
   }
-
 }

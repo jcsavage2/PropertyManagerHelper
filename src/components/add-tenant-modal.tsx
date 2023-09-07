@@ -124,6 +124,9 @@ export const AddTenantModal = ({
         if (!user) {
           throw new Error("user needs to be a Property Manager.");
         }
+        if(!user.organization || !user.organizationName) {
+          throw new Error("User needs to be part of an organization to add tenants.");
+        }
         setCreateNewTenantLoading(true);
 
         let body: CreateTenantBody;
@@ -142,6 +145,7 @@ export const AddTenantModal = ({
             numBaths,
             createNewProperty,
             organization: user.organization,
+            organizationName: user.organizationName,
             propertyUUId: uuid(),
           };
         } else {
@@ -160,6 +164,7 @@ export const AddTenantModal = ({
             numBaths: selectedProperty.numBaths,
             createNewProperty,
             organization: user.organization,
+            organizationName: user.organizationName,
             propertyUUId: deconstructKey(selectedProperty.pk),
           };
         }
@@ -171,6 +176,7 @@ export const AddTenantModal = ({
           onSuccessfulAdd();
           toast.success("Tenant Created!", {
             position: toast.POSITION.TOP_CENTER,
+            draggable: false,
           });
           setTenantModalIsOpen(false);
         }
@@ -191,6 +197,7 @@ export const AddTenantModal = ({
         console.log({ err });
         toast.error("Error Creating Tenant. Please Try Again", {
           position: toast.POSITION.TOP_CENTER,
+          draggable: false,
         });
         setCreateNewTenantLoading(false);
       }
@@ -351,7 +358,7 @@ export const AddTenantModal = ({
                 </div>
               </div>
             ) : (
-              <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} email={user?.email ?? ""} />
+              <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} orgId={user?.organization ?? ""} />
             )}
             <button
               onClick={() => setStage(0)}
