@@ -11,7 +11,10 @@ import { NavLinks } from '@/components/nav-links';
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
   return (
-    <SessionProvider session={session}>
+    <SessionProvider
+      session={session}
+      refetchInterval={60 * 60} // refresh session every hour
+    >
       <UserContextProvider>
         <Head>
           <title>Pillar</title>

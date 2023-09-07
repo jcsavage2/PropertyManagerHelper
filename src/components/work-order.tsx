@@ -143,7 +143,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
 
   const deleteWorkOrder = useCallback(async (workOrderId: string) => {
     try {
-      if (!workOrderId) return;
+      if (!workOrderId || workOrder?.status === STATUS.DELETED) return;
       const params: DeleteRequest = {
         pk: workOrderId,
         sk: workOrderId,
@@ -242,8 +242,13 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
               {toTitleCase(workOrder?.issue)}
               {workOrderId && <div className="hidden md:inline text-lg ml-4 text-gray-400"># {deconstructKey(workOrderId)}</div>}
             </div>
-            {userType === 'PROPERTY_MANAGER' && (
-              <div onClick={() => setConfirmDeleteModalIsOpen(true)}>
+            {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
+              <div
+                onClick={() => {
+                  if (workOrder.status === STATUS.DELETED) return;
+                  setConfirmDeleteModalIsOpen(true);
+                }}
+              >
                 <BsTrashFill className="text-gray-600 cursor-pointer hover:text-gray-700  md:mr-8 mr-4 text-2xl" />
               </div>
             )}
@@ -273,27 +278,33 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                 </div>
               )}
               <div className="font-bold md:mt-4 mt-2 md:ml-12 text-center md:text-start">Status</div>
-              <div className="mt-1 text-md flex flex-row mx-auto text-gray-600">
-                <button
-                  disabled={isUpdatingStatus}
-                  onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${
-                    workOrder.status === STATUS.TO_DO && 'bg-blue-200'
-                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
-                >
-                  <GoTasklist />
-                  <span className="text-xs">Todo</span>
-                </button>
-                <button
-                  disabled={isUpdatingStatus}
-                  onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${
-                    workOrder.status === STATUS.COMPLETE && 'bg-blue-200'
-                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
-                >
-                  <AiOutlineCheck />
-                  <span className="text-xs">Complete</span>
-                </button>
+              <div className="mt-1 md:mx-0 md:ml-16 mx-auto text-md flex flex-row text-gray-600">
+                {workOrder.status !== STATUS.DELETED ? (
+                  <>
+                    <button
+                      disabled={isUpdatingStatus}
+                      onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
+                      className={`${
+                        deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
+                      } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                    >
+                      <GoTasklist />
+                      <span className="text-xs">Todo</span>
+                    </button>
+                    <button
+                      disabled={isUpdatingStatus}
+                      onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
+                      className={`${
+                        deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
+                      } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                    >
+                      <AiOutlineCheck />
+                      <span className="text-xs">Complete</span>
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-red-600">{STATUS.DELETED}</p>
+                )}
               </div>
               <div className="font-bold mt-4 md:ml-12 text-center md:text-start">Assigned To</div>
               <div className="md:ml-16 md:mt-4 w-full">

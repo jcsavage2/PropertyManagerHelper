@@ -75,7 +75,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         throw new Error('Invalid entity type');
     }
 
-    //TODO: might want to change delete entire entity to making a WO, for example, of type "DELETED" so that Pms can go back and see it after deletion
     if (deleteEntireEntity) {
       await dbEntity.delete({ pk, sk });
     } else {

@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { generateAddress, generateKey, toTitleCase } from '@/utils';
+import { generateAddress, generateKey } from '@/utils';
 import { PAGE_SIZE } from '@/constants';
 import { INVITE_STATUS, InviteStatusType } from '@/utils/user-types';
 

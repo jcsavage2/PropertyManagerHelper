@@ -53,7 +53,7 @@ export const TenantSelect = ({
       <label htmlFor="tenant" className="mt-2">
         {label}
       </label>
-      <Select options={tenantOptions} id="tenant" onChange={(value: SingleValue<OptionType>) => onChange(value)} isClearable={true} />
+      <Select options={tenantOptions} id="tenant" onChange={(value: SingleValue<OptionType>) => onChange(value)} isClearable={true} menuPortalTarget={document.body} />
     </div>
   );
 };

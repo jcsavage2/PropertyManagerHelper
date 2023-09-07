@@ -1,5 +1,5 @@
 import { IWorkOrder } from '@/database/entities/work-order';
-import { generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
+import { deconstructKey, generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
 import { AiOutlineCheck, AiOutlineFilter } from 'react-icons/ai';
 import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
@@ -44,64 +44,74 @@ export const WorkOrdersTable = ({
     { label: 'Tenant', accessor: 'tenantName', width: '' },
   ];
 
-  const remappedWorkOrders = workOrders && workOrders.length ? workOrders.map((wo) => {
-    const { address, tenantEmail, created, tenantName, permissionToEnter, assignedTo } = wo;
-    const date = new Date(created);
-    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    const addressString = generateAddressKey({ address: address?.address, unit: wo?.address?.unit ?? '' });
-    const assignedToString = setToShortenedString(assignedTo);
-    return {
-      pk: wo.pk,
-      sk: wo.sk,
-      issue: toTitleCase(wo.issue),
-      tenantEmail,
-      status: wo.status,
-      address: addressString,
-      created: formattedDate,
-      tenantName: toTitleCase(tenantName),
-      assignedTo: assignedToString,
-      permissionToEnter,
-    };
-  }) : [];
+  const remappedWorkOrders =
+    workOrders && workOrders.length
+      ? workOrders.map((wo) => {
+          const { address, tenantEmail, created, tenantName, permissionToEnter, assignedTo } = wo;
+          const date = new Date(created);
+          const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+          const addressString = generateAddressKey({ address: address?.address, unit: wo?.address?.unit ?? '' });
+          const assignedToString = setToShortenedString(assignedTo);
+          return {
+            pk: wo.pk,
+            sk: wo.sk,
+            issue: toTitleCase(wo.issue),
+            tenantEmail,
+            status: deconstructKey(wo.status) || wo.status, //Don't deconstruct DELETED key
+            address: addressString,
+            created: formattedDate,
+            tenantName: toTitleCase(tenantName),
+            assignedTo: assignedToString,
+            permissionToEnter,
+          };
+        })
+      : [];
 
-  const sortedWorkOrderTable = remappedWorkOrders && remappedWorkOrders.length ? remappedWorkOrders.map((workOrder): any => {
-    return (
-      <tr key={uuid()} className="h-20">
-        {columns.map(({ accessor }, index) => {
-          const workOrderId = `${workOrder.pk}`;
-          //@ts-ignore
-          const tData = workOrder[accessor];
-          if (accessor === 'status') {
-            return (
-              <td key={accessor} className="border px-2">
-                <Select
-                  className={`cursor-pointer rounded p-1 min-w-max ${tData === STATUS.TO_DO && 'bg-yellow-200'} ${
-                    tData === STATUS.COMPLETE && 'bg-green-200'
-                  }`}
-                  value={StatusOptions.find((o) => o.value === tData)!}
-                  onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
-                  formatOptionLabel={formattedStatusOptions}
-                  options={StatusOptions}
-                  menuPortalTarget={document.body}
-                />
-              </td>
-            );
-          }
+  const sortedWorkOrderTable =
+    remappedWorkOrders && remappedWorkOrders.length
+      ? remappedWorkOrders.map((workOrder): any => {
           return (
-            <td className={`border px-4 py-1 ${accessor === 'assignedTo' && 'whitespace-nowrap w-max'}`} key={accessor}>
-              <Link
-                key={workOrder.pk + index}
-                href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}
-                as={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}
-              >
-                {accessor === 'address' ? toTitleCase(tData) : tData}
-              </Link>
-            </td>
+            <tr key={uuid()} className="h-20">
+              {columns.map(({ accessor }, index) => {
+                const workOrderId = `${workOrder.pk}`;
+                //@ts-ignore
+                const tData = workOrder[accessor];
+                if (accessor === 'status') {
+                  return (
+                    <td key={accessor} className="border px-2">
+                      {tData !== STATUS.DELETED ? (
+                        <Select
+                          className={`cursor-pointer rounded p-1 min-w-max ${tData === STATUS.TO_DO && 'bg-yellow-200'} ${
+                            tData === STATUS.COMPLETE && 'bg-green-200'
+                          }`}
+                          value={StatusOptions.find((o) => o.value === tData)!}
+                          onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
+                          formatOptionLabel={formattedStatusOptions}
+                          options={StatusOptions}
+                          menuPortalTarget={document.body}
+                        />
+                      ) : (
+                        <p className="text-red-600 text-center">DELETED</p>
+                      )}
+                    </td>
+                  );
+                }
+                return (
+                  <td className={`border px-4 py-1 ${accessor === 'assignedTo' && 'whitespace-nowrap w-max'}`} key={accessor}>
+                    <Link
+                      key={workOrder.pk + index}
+                      href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}
+                      as={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}
+                    >
+                      {accessor === 'address' ? toTitleCase(tData) : tData}
+                    </Link>
+                  </td>
+                );
+              })}
+            </tr>
           );
-        })}
-      </tr>
-    );
-  }) : [];
+        })
+      : [];
 
   return (
     <div className="z-1 mb-2">
@@ -166,7 +176,7 @@ export const WorkOrdersTable = ({
               <tr className="text-left text-gray-400">
                 {columns.map(({ label, accessor, width }) => {
                   return (
-                    <th className={`font-normal px-4 cursor-pointer ${width}`} key={accessor}>
+                    <th className={`font-normal px-4 ${width}`} key={accessor}>
                       {label}
                     </th>
                   );

@@ -50,11 +50,14 @@ export default NextAuth({
 					session.user = { ...session.user, ...databaseUser };
 				} else {
 					const newUser = await userEntity.createBaseUser({ email: user.email });
-          session.user = { ...session.user, ...newUser };
+					session.user = { ...session.user, ...newUser };
 				}
 			}
 			return session;
 		},
+	},
+	session: {
+		maxAge: 30 * 24 * 60 * 60, // Max Age: 60 days
 	},
 	adapter: DynamoDBAdapter(client),
 	secret: process.env.NEXT_PUBLIC_JWT_SECRET,
