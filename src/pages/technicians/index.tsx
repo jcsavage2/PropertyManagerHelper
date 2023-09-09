@@ -65,8 +65,9 @@ const Technicians = () => {
     fetchTechs(true);
   }, [user]);
 
+  
   const handleDeleteTech = useCallback(
-    async ({ pk, sk, name, roles }: { pk: string; sk: string; name: string; roles: string[] }) => {
+    async ({ pk, sk, name, roles }: { pk: string; sk: string; name: string; roles: string[]; }) => {
       setTechsLoading(true);
       try {
         if (!pk || !sk || !name || !roles) {
@@ -90,6 +91,9 @@ const Technicians = () => {
           });
           setTechs(techs.filter((t) => t.pk !== pk));
         }
+
+        //TODO: delete technician should unassign them from all wo roles
+        //Update this when you add fetching from technician entity to get all assigned WOs
       } catch (err) {
         console.error(err);
         toast.error('Error Deleting Tenant. Please Try Again', {
@@ -216,9 +220,9 @@ const Technicians = () => {
                     {techs.map((tech: any) => {
                       return (
                         <tr key={`${tech.pk}-${tech.sk}`} className="h-20">
-                          <td className="border px-4 py-1">{`${toTitleCase(tech.technicianName!)}`}</td>
-                          <td className="border px-4 py-1">{`${tech.technicianEmail}`}</td>
-                          <td className="border px-4 py-1">{createdToFormattedDateTime(tech._ct ?? tech.created)[0]}</td>
+                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tech.technicianName!)}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${tech.technicianEmail}`}</td>
+                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tech._ct ?? tech.created)[0]}</td>
                           <td className="pl-6 py-1">
                             <CiCircleRemove
                               className="text-3xl text-red-500 cursor-pointer"

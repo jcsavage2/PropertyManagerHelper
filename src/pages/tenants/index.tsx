@@ -241,11 +241,11 @@ const Tenants = () => {
                       const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
                       return (
                         <tr key={`${tenant.pk}-${tenant.sk}`} className="h-20">
-                          <td className="border px-4 py-1">{`${toTitleCase(tenant.tenantName!)}`}</td>
-                          <td className="border px-4 py-1">{`${tenant.tenantEmail}`}</td>
-                          <td className="border px-4 py-1">{tenant.status}</td>
-                          <td className="border px-4 py-1">{toTitleCase(displayAddress)}</td>
-                          <td className="border px-4 py-1">{createdToFormattedDateTime(tenant._ct ?? tenant.created)[0]}</td>
+                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tenant.tenantName!)}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${tenant.tenantEmail}`}</td>
+                          <td className="border-b border-t px-4 py-1">{tenant.status}</td>
+                          <td className="border-b border-t px-4 py-1">{toTitleCase(displayAddress)}</td>
+                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tenant._ct ?? tenant.created)[0]}</td>
                           <td className="pl-6 py-1">
                             <CiCircleRemove
                               className="text-3xl text-red-500 cursor-pointer"
