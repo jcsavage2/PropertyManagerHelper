@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import Select, { SingleValue } from 'react-select';
+import { SingleValue } from 'react-select';
+import AsyncSelect from 'react-select/async';
 import { GetTenantsForOrgRequest } from '@/pages/api/get-all-tenants-for-org';
 import axios from 'axios';
 import { OptionType } from '@/types';
-import { IUser } from '@/database/entities/user';
+import { IUser, userRoles } from '@/database/entities/user';
+import { ENTITIES } from '@/database/entities';
 
 export const TenantSelect = ({
   label,
@@ -19,28 +21,43 @@ export const TenantSelect = ({
   shouldFetch: boolean;
 }) => {
   const [tenantOptions, setTenantOptions] = useState<OptionType[]>([]);
+  const [tenantOptionsLoading, setTenantOptionsLoading] = useState<boolean>(false);
 
-  const handleGetTenants = useCallback(async () => {
-    try {
-      if (!user || !user.email || !user.organization) return;
-
-      const { data } = await axios.post('/api/get-all-tenants-for-org', {
-        organization: user.organization,
-        startKey: undefined,
-        //TOD: add a fetch all items for this so its not limited by the page size
-      } as GetTenantsForOrgRequest);
-      const response = JSON.parse(data.response);
-      const tenants: IUser[] = response.tenants;
-      if (tenants.length > 0) {
-        let processedTenants = tenants.map((tenant: any) => {
+  const handleGetTenants = useCallback(
+    async (_searchString?: string) => {
+      setTenantOptionsLoading(true);
+      try {
+        if (
+          !user ||
+          !user.email ||
+          userType !== ENTITIES.PROPERTY_MANAGER ||
+          !user.roles?.includes(userRoles.PROPERTY_MANAGER) ||
+          !user.organization
+        ) {
+          throw new Error('user must be a property manager in an organization');
+        }
+        const { data } = await axios.post('/api/get-all-tenants-for-org', {
+          organization: user.organization,
+          startKey: undefined,
+          tenantSearchString: _searchString,
+        } as GetTenantsForOrgRequest);
+        const response = JSON.parse(data.response);
+        const processedTenants = response.tenants.map((tenant: any) => {
           return { value: tenant.tenantEmail, label: `${tenant.tenantName} (${tenant.tenantEmail})` };
         });
-        setTenantOptions(processedTenants);
+        if (!_searchString) {
+          setTenantOptions(processedTenants);
+        } else {
+          setTenantOptionsLoading(false);
+          return processedTenants;
+        }
+      } catch (err) {
+        console.log({ err });
       }
-    } catch (err) {
-      console.log({ err });
-    }
-  }, [user, setTenantOptions, userType, setTenantOptions]);
+      setTenantOptionsLoading(false);
+    },
+    [user, setTenantOptions, userType, setTenantOptions]
+  );
 
   useEffect(() => {
     if (shouldFetch) {
@@ -53,7 +70,17 @@ export const TenantSelect = ({
       <label htmlFor="tenant" className="mt-2">
         {label}
       </label>
-      <Select options={tenantOptions} id="tenant" onChange={(value: SingleValue<OptionType>) => onChange(value)} isClearable={true} menuPortalTarget={document.body} />
+      <AsyncSelect
+        placeholder={tenantOptionsLoading ? 'Loading...' : 'Select tenant...'}
+        defaultOptions={tenantOptions}
+        loadOptions={(searchString: string) => handleGetTenants(searchString)}
+        id="tenant"
+        onChange={(value: SingleValue<OptionType>) => onChange(value)}
+        isClearable={true}
+        menuPortalTarget={document.body}
+        captureMenuScroll={false}
+        isLoading={tenantOptionsLoading}
+      />
     </div>
   );
 };

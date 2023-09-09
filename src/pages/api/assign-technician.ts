@@ -7,6 +7,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 
 export type AssignTechnicianBody = {
+  organization: string;
   technicianEmail: string;
   technicianName: string;
   workOrderId: string;
@@ -20,17 +21,19 @@ export type AssignTechnicianBody = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as AssignTechnicianBody;
-    const { workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter } = body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName) {
-      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName' });
+    const { workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization } = body;
+    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization) {
+      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization' });
     }
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
 
     const assignedTechnician = await workOrderEntity.assignTechnician({
+      organization,
       workOrderId: deconstructKey(workOrderId),
       address,
       technicianEmail,
+      technicianName,
       status,
       issueDescription,
       permissionToEnter,
@@ -44,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       updateMadeBy: pmEmail,
     });
 
-    /** SEND THE EMAIL TO THE USER */
+    /** SEND THE EMAIL TO THE TECHNICIAN */
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
       throw new Error('missing SENDGRID_API_KEY env variable.');
@@ -53,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(workOrderId)}`;
     await sendgrid.send({
-      to: technicianEmail, // The Property Manager
+      to: technicianEmail, // The Technician
       from: 'dylan@pillarhq.co', // The Email from the company
       subject: `Work Order Assigned To You`, // work order for address on MM-DD-YYYY
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -103,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h1>You've Been Assigned To A Work Order</h1>
+          <h1>You've Been Assigned To A Work Order by ${pmEmail}</h1>
           <a href="${workOrderLink}">View Work Order in PILLAR</a>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team

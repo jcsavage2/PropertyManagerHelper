@@ -78,7 +78,7 @@ export const WorkOrdersTable = ({
                 const tData = workOrder[accessor];
                 if (accessor === 'status') {
                   return (
-                    <td key={accessor} className="border px-2">
+                    <td key={accessor} className="border-t border-b px-2">
                       {tData !== STATUS.DELETED ? (
                         <Select
                           className={`cursor-pointer rounded p-1 min-w-max ${tData === STATUS.TO_DO && 'bg-yellow-200'} ${
@@ -91,13 +91,13 @@ export const WorkOrdersTable = ({
                           menuPortalTarget={document.body}
                         />
                       ) : (
-                        <p className="text-red-600 text-center">DELETED</p>
+                        <p className="text-red-600 text-center">{STATUS.DELETED}</p>
                       )}
                     </td>
                   );
                 }
                 return (
-                  <td className={`border px-4 py-1 ${accessor === 'assignedTo' && 'whitespace-nowrap w-max'}`} key={accessor}>
+                  <td className={`border-t border-b px-4 py-1 ${accessor === 'assignedTo' && 'whitespace-nowrap w-max'}`} key={accessor}>
                     <Link
                       key={workOrder.pk + index}
                       href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}
@@ -162,10 +162,6 @@ export const WorkOrdersTable = ({
               </div>
             </div>
           )}
-        </div>
-        <div className={`my-auto flex mr-2 ${isFetching && 'opacity-50'}`}>
-          <AiOutlineFilter className="mr-1 my-auto" />
-          Filters
         </div>
       </div>
 

@@ -109,11 +109,11 @@ const Properties = () => {
                     {properties.map((property: IProperty) => {
                       return (
                         <tr key={`${property.pk}-${property.sk}`} className="h-20">
-                          <td className="border px-4 py-1">{toTitleCase(property.address)}</td>
-                          <td className="border px-4 py-1">{toTitleCase(property.city)}</td>
-                          <td className="border px-4 py-1">{toTitleCase(property.state)}</td>
-                          <td className="border px-4 py-1">{toTitleCase(property.postalCode)}</td>
-                          <td className="border px-4 py-1">{toTitleCase(property.unit)}</td>
+                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.address)}</td>
+                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.city)}</td>
+                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.state)}</td>
+                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.postalCode)}</td>
+                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.unit)}</td>
                         </tr>
                       );
                     })}

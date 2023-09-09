@@ -8,7 +8,6 @@ import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
 import { OptionType } from '@/types';
-import { ITechnician } from '@/database/entities/technician';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
@@ -24,6 +23,7 @@ import { useRouter } from 'next/router';
 import { DeleteRequest } from '@/pages/api/delete';
 import { ENTITIES } from '@/database/entities';
 import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
+import { userRoles } from '@/database/entities/user';
 
 const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDelete: () => Promise<void> }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -56,35 +56,43 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
     setLoadingAssignedTechnicians(false);
   }, [workOrder, workOrder?.assignedTo, technicianOptions]);
 
-  async function getTechnicians() {
-    if (!workOrderId || userType !== 'PROPERTY_MANAGER' || !user || !user.organization) return;
-    try {
-      const body: GetTechsForOrgRequest = { organization: user.organization, startKey: undefined };
-      const { data } = await axios.post('/api/get-tech-for-org', body);
-      if (data.response) {
-        const parsedTechnicians = JSON.parse(data.response) as ITechnician[];
-        const mappedTechnicians = parsedTechnicians.map((technician) => {
+  const getTechnicians = useCallback(
+    async (_searchString?: string) => {
+      if (!user || !userType) return;
+      setLoadingAssignedTechnicians(true);
+      try {
+        if (!user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
+          throw new Error('user must be a property manager in an organization');
+        }
+        const body: GetTechsForOrgRequest = {
+          organization: user.organization,
+          startKey: undefined,
+          techSearchString: _searchString,
+        };
+        const { data } = await axios.post('/api/get-techs-for-org', body);
+        const response = JSON.parse(data.response);
+        const mappedTechnicians = response.techs.map((technician: any) => {
           return {
             value: technician.technicianEmail,
             label: technician.technicianName,
           };
         });
-        setTechnicianOptions(mappedTechnicians);
-        setLoadingAssignedTechnicians(false);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
-  const searchTechnicians = (inputValue: string) =>
-    new Promise<OptionType[]>((resolve) => {
-      resolve(
-        technicianOptions.filter(
-          (i) => i.label.toLowerCase().includes(inputValue.toLowerCase()) || i.value.toLowerCase().includes(inputValue.toLowerCase())
-        )
-      );
-    });
+        //When search string is NOT provided then we get all technicians in the org
+        //When search string is provided, we return the filtered list of technicians to the Select input
+        if (!_searchString) {
+          setTechnicianOptions(mappedTechnicians);
+        } else {
+          setLoadingAssignedTechnicians(false);
+          return mappedTechnicians;
+        }
+      } catch (err) {
+        console.log({ err });
+      }
+      setLoadingAssignedTechnicians(false);
+    },
+    [user, userType]
+  );
 
   const getWorkOrder = useCallback(async () => {
     try {
@@ -169,29 +177,40 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
 
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
     setLoadingAssignedTechnicians(true);
-    if (!user?.email || !workOrder || userType !== 'PROPERTY_MANAGER') return;
-    const actionType = actionMeta.action;
-    if (actionType === 'select-option') {
-      const selectedTechnician = actionMeta.option as OptionType;
-      const body: AssignTechnicianBody = {
-        workOrderId,
-        pmEmail: user.email,
-        technicianEmail: selectedTechnician.value,
-        technicianName: selectedTechnician.label,
-        address: workOrder.address,
-        status: workOrder?.status,
-        permissionToEnter: workOrder?.permissionToEnter,
-        issueDescription: workOrder?.issue,
-      };
-      await axios.post('/api/assign-technician', body);
-    } else if (actionType === 'remove-value') {
-      const removedTechnician = actionMeta.removedValue as OptionType;
-      await axios.post('/api/remove-technician', {
-        workOrderId,
-        pmEmail: user.email,
-        technicianEmail: removedTechnician.value,
-        technicianName: removedTechnician.label,
-      } as AssignTechnicianBody);
+    try {
+      if (!user?.email || !workOrder || userType !== 'PROPERTY_MANAGER' || !user.organization) {
+        throw new Error('User must be a property manager in an organization to assign or remove technicians');
+      }
+      const actionType = actionMeta.action;
+      if (actionType === 'select-option') {
+        const selectedTechnician = actionMeta.option as OptionType;
+        const body: AssignTechnicianBody = {
+          organization: user.organization,
+          workOrderId,
+          pmEmail: user.email,
+          technicianEmail: selectedTechnician.value,
+          technicianName: selectedTechnician.label,
+          address: workOrder.address,
+          status: workOrder.status,
+          permissionToEnter: workOrder?.permissionToEnter,
+          issueDescription: workOrder?.issue,
+        };
+        await axios.post('/api/assign-technician', body);
+      } else if (actionType === 'remove-value') {
+        const removedTechnician = actionMeta.removedValue as OptionType;
+        await axios.post('/api/remove-technician', {
+          workOrderId,
+          pmEmail: user.email,
+          technicianEmail: removedTechnician.value,
+          technicianName: removedTechnician.label,
+        } as AssignTechnicianBody);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error assigning or removing Technician. Please Try Again', {
+        position: toast.POSITION.TOP_CENTER,
+        draggable: false,
+      });
     }
     await getWorkOrder();
     await getWorkOrderEvents();
@@ -318,7 +337,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                   defaultOptions={technicianOptions}
                   value={assignedTechnicians}
                   captureMenuScroll={true}
-                  loadOptions={searchTechnicians}
+                  loadOptions={(searchString: string) => getTechnicians(searchString)}
                   isLoading={loadingAssignedTechnicians}
                   onChange={handleAssignTechnician}
                   isClearable={false}
