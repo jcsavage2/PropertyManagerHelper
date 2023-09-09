@@ -1,4 +1,4 @@
-import { setToShortenedString, toTitleCase } from '@/utils';
+import { deconstructKey, setToShortenedString, toTitleCase } from '@/utils';
 import { IWorkOrder } from '@/database/entities/work-order';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -92,7 +92,8 @@ export const WorkOrdersCards = ({
       <div className={`grid gap-y-3 ${isFetching && 'opacity-50'}`}>
         {workOrders.length > 0
           ? workOrders?.map((workOrder, index) => {
-              const { status, assignedTo } = workOrder;
+              const { assignedTo } = workOrder;
+              const status = deconstructKey(workOrder.status);
               const assignedToString = setToShortenedString(assignedTo);
               return (
                 <div
@@ -100,26 +101,31 @@ export const WorkOrdersCards = ({
                   key={`${workOrder.pk}-${workOrder.sk}-${index}`}
                 >
                   <p className="text-lg text-gray-800 ml-1 mb-1.5">{toTitleCase(workOrder.issue)} </p>
-                  <Select
-                    className={`
-                  cursor-pointer
-                  rounded 
-                  p-1 
-                  w-48
-                  ${status === STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
-                `}
-                    value={StatusOptions.find((o) => o.value === status)}
-                    blurInputOnSelect={false}
-                    formatOptionLabel={formattedStatusOptions}
-                    onChange={(v) => {
-                      if (v) {
-                        //@ts-ignore
-                        handleUpdateStatus({ pk: workOrder.pk, sk: workOrder.sk, val: v });
-                      }
-                    }}
-                    options={StatusOptions}
-                    isDisabled={isFetching}
-                  />
+
+                  {workOrder.status !== STATUS.DELETED ? (
+                    <Select
+                      className={`
+                    cursor-pointer
+                    rounded 
+                    p-1 
+                    w-48
+                    ${status === STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
+                  `}
+                      value={StatusOptions.find((o) => o.value === status)}
+                      blurInputOnSelect={false}
+                      formatOptionLabel={formattedStatusOptions}
+                      onChange={(v) => {
+                        if (v) {
+                          //@ts-ignore
+                          handleUpdateStatus({ pk: workOrder.pk, sk: workOrder.sk, val: v });
+                        }
+                      }}
+                      options={StatusOptions}
+                      isDisabled={isFetching}
+                    />
+                  ) : (
+                    <p className="text-red-600 ml-1">{STATUS.DELETED}</p>
+                  )}
                   <p className="ml-1 text-base mt-2 font-light">{workOrder.address.address + ' ' + (workOrder?.address?.unit ?? '')} </p>
                   <div className="ml-1 text-sm mt-1 flex flex-row">
                     Tenant: <p className="font-light ml-1">{workOrder.tenantEmail}</p>
