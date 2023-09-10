@@ -8,6 +8,7 @@ export type CreateTechnicianBody = {
   technicianEmail: string;
   technicianName: string;
   pmEmail: string;
+  pmName: string;
   organization: string;
   organizationName: string;
 };
@@ -24,11 +25,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   try {
     const body = req.body as CreateTechnicianBody;
-    const { technicianEmail, technicianName, organization, organizationName, pmEmail } = body;
+    const { technicianEmail, technicianName, organization, organizationName, pmEmail, pmName } = body;
 
     const userEntity = new UserEntity();
 
-    const newTechnician = await userEntity.createTechnician({ technicianName, technicianEmail, organization, organizationName, pmEmail });
+    const newTechnician = await userEntity.createTechnician({ technicianName, technicianEmail, organization, organizationName, pmEmail, pmName });
 
     return res.status(200).json({ response: JSON.stringify(newTechnician) });
   } catch (error) {

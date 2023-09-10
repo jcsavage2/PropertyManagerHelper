@@ -2,9 +2,6 @@ import { ENTITIES, EntityTypeKeys } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { OrganizationEntity } from '@/database/entities/organization';
 import { PropertyEntity } from '@/database/entities/property';
-import { PropertyManagerEntity } from '@/database/entities/property-manager';
-import { TechnicianEntity } from '@/database/entities/technician';
-import { TenantEntity } from '@/database/entities/tenant';
 import { UserEntity } from '@/database/entities/user';
 import { WorkOrderEntity } from '@/database/entities/work-order';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -37,9 +34,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     let dbEntity:
       | WorkOrderEntity
-      | TenantEntity
-      | PropertyManagerEntity
-      | TechnicianEntity
       | PropertyEntity
       | EventEntity
       | OrganizationEntity
@@ -48,15 +42,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     switch (entity) {
       case ENTITIES.WORK_ORDER:
         dbEntity = new WorkOrderEntity();
-        break;
-      case ENTITIES.TENANT:
-        dbEntity = new TenantEntity();
-        break;
-      case ENTITIES.PROPERTY_MANAGER:
-        dbEntity = new PropertyManagerEntity();
-        break;
-      case ENTITIES.TECHNICIAN:
-        dbEntity = new TechnicianEntity();
         break;
       case ENTITIES.PROPERTY:
         dbEntity = new PropertyEntity();

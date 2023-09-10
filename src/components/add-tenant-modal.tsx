@@ -121,7 +121,7 @@ export const AddTenantModal = ({
     async (event) => {
       try {
         event.preventDefault();
-        if (!user) {
+        if (!user || !user.name || !user.email) {
           throw new Error("user needs to be a Property Manager.");
         }
         if(!user.organization || !user.organizationName) {
@@ -135,6 +135,7 @@ export const AddTenantModal = ({
             tenantEmail,
             tenantName,
             pmEmail: user.email,
+            pmName: user.name,
             address,
             unit,
             state,
@@ -154,6 +155,7 @@ export const AddTenantModal = ({
             tenantEmail,
             tenantName,
             pmEmail: user.email,
+            pmName: user.name,
             address: selectedProperty.address,
             unit: selectedProperty.unit,
             state: selectedProperty.state,

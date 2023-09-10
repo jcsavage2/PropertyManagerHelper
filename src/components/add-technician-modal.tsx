@@ -72,11 +72,13 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       try {
         event.preventDefault();
         if (
-          !user?.email ||
-          !user?.roles?.includes('PROPERTY_MANAGER') ||
+          !user ||
+          !user.email ||
+          !user.roles?.includes('PROPERTY_MANAGER') ||
           userType !== 'PROPERTY_MANAGER' ||
           !user.organization ||
-          !user.organizationName
+          !user.organizationName ||
+          !user.name
         ) {
           throw new Error('user needs to be a Property Manager in an organization');
         }
@@ -84,6 +86,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           technicianEmail: email,
           technicianName: name,
           pmEmail: user.email,
+          pmName: user.name,
           organization: user.organization,
           organizationName: user.organizationName,
         } as CreateTechnicianBody);
