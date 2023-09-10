@@ -378,14 +378,14 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                 {!imagesLoading && images.map(i => {
                   return (
                     <Image
-                      className={`mb-4 mx-auto md:mx-0`}
+                      key={i}
+                      className={`mb-4 mx-auto md:mx-0 cursor-pointer overflow-y-scroll`}
                       alt={"work order image"}
                       onClick={() => {
                         i === fullScreenImage
                           ? setFullScreenImage("")
                           : setFullScreenImage(i);
                       }}
-                      key={i}
                       src={i}
                       width={100}
                       height={40} />
@@ -467,14 +467,19 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
           overlayClassName="fixed inset-0 bg-black bg-opacity-80 z-50 flex justify-center items-center"
           className="w-full h-full"
         >
-          <Image
-            src={fullScreenImage}
-            alt="Description"
-            className="w-full cursor-pointer my-auto"
-            onClick={() => setFullScreenImage("")}
-            width={100}
-            height={40}
-          />
+          <div
+            className='overflow-y-scroll'
+            style={{ width: "100%", height: "100%" }}
+          >
+            <Image
+              src={fullScreenImage}
+              alt="Description"
+              className="w-full cursor-pointer my-auto overflow-y-scroll"
+              onClick={() => setFullScreenImage("")}
+              width={100}
+              height={40}
+            />
+          </div>
         </Modal>
       </div>
     );
