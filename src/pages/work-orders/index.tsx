@@ -133,9 +133,9 @@ const WorkOrders = () => {
             </button>
           </div>
           {userType !== ENTITIES.TENANT && (
-            <div className={`flex flex-row cursor-pointer mb-2 text-slate-700 ${isFetching && 'opacity-50 pointer-events-none'}`}>
+            <div className={`flex flex-row cursor-pointer mb-2 text-slate-700 ${isFetching && 'opacity-50 pointer-events-none '}`}>
               <div
-                className={`p-2 px-3 rounded-l border-r-2 hover:bg-blue-300 ${!orgMode ? 'bg-blue-300' : 'bg-blue-200'}`}
+                className={`p-2 px-3 rounded-l border border-slate-300 hover:bg-blue-100 ${!orgMode ? 'bg-blue-300' : 'bg-blue-200'}`}
                 onClick={() => {
                   if (isFetching) return;
                   setOrgMode(false);
@@ -143,7 +143,7 @@ const WorkOrders = () => {
               >
                 My work orders
               </div>
-              <div className={`p-2 px-3 rounded-r hover:bg-blue-300 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`} onClick={() => setOrgMode(true)}>
+              <div className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`} onClick={() => setOrgMode(true)}>
                 All {user?.organizationName || 'org'} work orders
               </div>
             </div>

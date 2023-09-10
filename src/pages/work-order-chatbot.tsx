@@ -32,9 +32,6 @@ export default function WorkOrderChatbot() {
   }, [user?.addresses]);
 
   const [isUsingAI, _setIsUsingAI] = useState(true);
-
-  const [tenantName, setTenantName] = useState(user?.tenantName);
-  const [tenantEmail, setTenantEmail] = useState(user?.tenantEmail);
   const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
@@ -52,12 +49,6 @@ export default function WorkOrderChatbot() {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [woId, _setWoId] = useState(uuidv4());
   const [uploadedFiles, setUploadedFiles] = useState([]);
-
-
-  useEffect(() => {
-    user?.tenantName && setTenantName(user.tenantName);
-    user?.tenantEmail && setTenantEmail(user.tenantEmail);
-  }, [user]);
 
   //If the user has only one address, select it automatically
   useEffect(() => {
@@ -118,11 +109,11 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    if (!user || !user.organization || !user.pmEmail) {
+    if (!user || !user.organization || !user.pmEmail || !user.name || !user.email) {
       alert('Your user account is not set up properly, please contact your property manager for assistance.');
       return;
     }
-    if (!selectedAddress || !tenantEmail || !tenantName) {
+    if (!selectedAddress) {
       toast.error('Error Submitting Work Order. Please Try Again', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
@@ -138,10 +129,10 @@ export default function WorkOrderChatbot() {
       additionalDetails,
       messages,
       createdByType: 'TENANT',
-      creatorEmail: tenantEmail,
-      creatorName: tenantName,
+      creatorEmail: user.email,
+      creatorName: user.name,
       permissionToEnter,
-      pmEmail: user.email,
+      pmEmail: user.pmEmail,
       organization: user.organization,
       address: parsedAddress.address,
       state: parsedAddress.state,

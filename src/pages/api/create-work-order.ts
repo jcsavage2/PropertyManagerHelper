@@ -76,13 +76,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       updateMadeBy: creatorEmail,
     });
 
+    const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName)
     for (const message of body.messages) {
       // Create a comment for each existing comment so the Work Order has context.
+      console.log(message)
       await eventEntity.create({
         workOrderId: deconstructKey(workOrder?.pk),
         updateType: Events.COMMENT_UPDATE,
         updateDescription: message.content ?? '',
-        updateMadeBy: message.role === 'user' ? body.tenantEmail ?? '' : message.role,
+        updateMadeBy: message.role === 'user' ? tenantDisplayName : "Pillar Assistant",
       });
     }
 
