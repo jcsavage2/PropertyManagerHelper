@@ -17,7 +17,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             Key: `work-order-images/3058d0c3-25b2-4fef-97e6-68225db6893f-1694358697643-IMG_1858.jpg`,
           })
         );
-        console.log({ response });
 
         if (response.Body) {
           const body = await new Promise<Buffer>((resolve, reject) => {
