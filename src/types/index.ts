@@ -12,6 +12,8 @@ export type SendEmailApiRequest = UserInfo &
     messages: ChatCompletionRequestMessage[];
     pmEmail: string;
     organization: string;
+    woId: string;
+    images: string[];
   };
 
 export type AiJSONResponse = IssueInformation & {

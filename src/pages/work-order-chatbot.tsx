@@ -10,6 +10,7 @@ import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { userRoles } from '@/database/entities/user';
 import { PTE, PTE_Type } from '@/constants';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -49,6 +50,8 @@ export default function WorkOrderChatbot() {
   const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
 
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [woId, _setWoId] = useState(uuidv4());
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
 
   useEffect(() => {
@@ -144,6 +147,8 @@ export default function WorkOrderChatbot() {
       state: parsedAddress.state,
       city: parsedAddress.city,
       postalCode: parsedAddress.postalCode,
+      images: uploadedFiles,
+      woId
     };
 
     const res = await axios.post('/api/create-work-order', body);
@@ -178,15 +183,16 @@ export default function WorkOrderChatbot() {
     for (const selectedFile of selectedFiles) {
       formData.append('image', selectedFile);
     }
+    formData.append("uuid", woId);
 
     try {
       const response = await axios.post('/api/upload-images', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-
       if (response.status === 200) {
-        const workOrderImages = response?.data?.files ?? [];
+        setUploadedFiles(response?.data?.files ?? []);
+        console.log({ uploadedFiles });
         toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
       } else {
         toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
@@ -394,7 +400,7 @@ export default function WorkOrderChatbot() {
                                     accept="image/*"
                                     onChange={handleFileChange}
                                   />
-                                  <button type="submit">Upload</button>
+                                  {selectedFiles?.length && (<button type="submit">Upload</button>)}
                                 </form>
                                 <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : 'Property'}* </p>
                                 <div>

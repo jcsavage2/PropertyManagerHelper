@@ -24,11 +24,15 @@ export type GetWorkOrder = {
 
 export default async function handler(req: any, res: any) {
   try {
+
+    let woId = "";
     const files: any[] = await new Promise((resolve, reject) => {
       upload.array('image')(req, res, (error) => {
         if (error) {
           return reject(error);
         }
+
+        woId = req.body.uuid;
         return resolve(req.files);
       });
     });
@@ -39,7 +43,7 @@ export default async function handler(req: any, res: any) {
 
         params: {
           Bucket: "pillar-file-storage",
-          Key: Date.now() + '-' + file.originalname,  // Ensure unique filenames
+          Key: `work-order-images/${woId}-${Date.now()}-${file.originalname}`,  // Ensure unique filenames
           Body: file.buffer
         }
       }).done();

@@ -19,6 +19,7 @@ type CreateWorkOrderProps = {
   tenantEmail: string;
   tenantName: string;
   unit?: string;
+  images: string[];
   createdBy: string;
   createdByType: UserType;
   state: string;
@@ -68,6 +69,7 @@ export interface IWorkOrder {
   pmEmail: string;
   issue: string;
   location: string;
+  images: string[];
   additionalDetails: string;
   permissionToEnter: PTE_Type;
   tenantEmail: string;
@@ -96,6 +98,7 @@ export class WorkOrderEntity {
       permissionToEnter: { type: 'string' },
       pmEmail: { type: 'string' },
       organization: { type: 'string' },
+      images: { type: 'set' },
       issue: { type: 'string' },
       location: { type: 'string' },
       additionalDetails: { type: 'string' },
@@ -127,6 +130,7 @@ export class WorkOrderEntity {
     pmEmail,
     status,
     issue,
+    images,
     organization,
     location,
     additionalDetails,
@@ -156,6 +160,7 @@ export class WorkOrderEntity {
         createdByType,
         tenantEmail,
         tenantName,
+        images,
         status: statusKey,
         address: this.generateAddress({ address, country, city, state, postalCode, unit }),
         issue: issue.toLowerCase(),
@@ -168,7 +173,7 @@ export class WorkOrderEntity {
     return result.Attributes;
   }
 
-  public async get({ pk, sk }: { pk: string; sk: string }) {
+  public async get({ pk, sk }: { pk: string; sk: string; }) {
     const params = {
       pk,
       sk,
@@ -177,7 +182,7 @@ export class WorkOrderEntity {
     return result;
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string }) {
+  public async delete({ pk, sk }: { pk: string; sk: string; }) {
     const result = await this.workOrderEntity.update(
       {
         pk: pk,
@@ -244,7 +249,7 @@ export class WorkOrderEntity {
     return { workOrders, startKey };
   }
 
-  public async update({ pk, status, permissionToEnter }: { pk: string; sk: string; status: Status; permissionToEnter?: PTE_Type }) {
+  public async update({ pk, status, permissionToEnter }: { pk: string; sk: string; status: Status; permissionToEnter?: PTE_Type; }) {
     let startKey: StartKey;
     const workOrders = [];
     try {
@@ -329,7 +334,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string }) {
+  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
     try {
       await this.workOrderEntity.delete({
