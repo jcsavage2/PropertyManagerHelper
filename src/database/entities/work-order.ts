@@ -151,7 +151,7 @@ export class WorkOrderEntity {
         createdByType,
         tenantEmail,
         tenantName,
-        images,
+        ...(images.length && { images }),
         status: statusKey,
         address: this.generateAddress({ address, country, city, state, postalCode, unit }),
         issue: issue.toLowerCase(),
