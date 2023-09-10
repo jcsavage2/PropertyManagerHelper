@@ -39,3 +39,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).send("Internal Server Error");
   }
 }
+export const config = {
+  api: {
+    responseLimit: '10mb',
+  },
+};
