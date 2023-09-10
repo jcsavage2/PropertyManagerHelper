@@ -10,12 +10,7 @@ interface IBaseUser {
   sk: string;
   email: string;
   name: string;
-}
-
-interface ICreatePMUser extends IBaseUser {
-  pmEmail: string;
-  pmName: string;
-  organization?: string;
+  created: string;
 }
 
 export interface ICreateTechnician {
@@ -23,15 +18,17 @@ export interface ICreateTechnician {
   technicianEmail: string;
   status?: InviteStatusType;
   pmEmail: string;
+  pmName: string;
   organization: string;
   organizationName: string;
 }
 
-interface ICreatePMUser extends IBaseUser {
-  pmEmail: string;
-  pmName: string;
-  organization?: string;
-  organizationName?: string;
+export interface ICreatePMUser {
+  userEmail: string;
+  userName: string;
+  organization: string;
+  organizationName: string;
+  isAdmin: boolean;
 }
 
 interface ICreateUser {
@@ -39,6 +36,7 @@ interface ICreateUser {
 }
 
 interface ICreateTenant {
+  pmName: string;
   pmEmail: string;
   tenantEmail: string;
   tenantName: string;
@@ -58,22 +56,24 @@ interface ICreateTenant {
 export type UserType = 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
 
 export interface IUser extends IBaseUser {
-  GSI1PK?: string; //PM email
+  pk: string;
+  sk: string;
+  GSI1PK?: string; //PM tenant
   GSI1SK?: string;
+  GSI2PK?: string; //PM technician
+  GSI2SK?: string;
+  GSI3PK?: string; //Org technician
+  GSI3SK?: string;
+  GSI4PK?: string; //Org tenant
+  GSI4SK?: string;
   addresses: Record<string, any>;
-  organization?: string;
+  organization: string;
   organizationName?: string;
   pmEmail?: string;
   pmName?: string;
   roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
-  status?: InviteStatusType;
-  technicianEmail?: { type: 'string' };
-  technicianName?: string;
-  technicians: { type: 'map' };
-  tenantEmail?: string;
-  tenantName?: string;
-  tenants: { type: 'map' };
-  userType?: string;
+  status: InviteStatusType;
+  isAdmin: boolean;
 }
 
 export const userRoles = {
@@ -109,6 +109,7 @@ export class UserEntity {
    */
   public async createTenant({
     pmEmail,
+    pmName,
     tenantName,
     organization,
     organizationName,
@@ -131,13 +132,14 @@ export class UserEntity {
           pk: generateKey(ENTITY_KEY.USER, lowerCaseTenantEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           pmEmail: lowerCasePMEmail,
+          pmName,
           roles: { $add: [userRoles.TENANT] },
           GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, lowerCasePMEmail),
           GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
           GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization.toLowerCase()),
           GSI4SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          tenantEmail: tenantEmail.toLowerCase(),
-          tenantName,
+          email: lowerCaseTenantEmail,
+          name: tenantName,
           organization,
           organizationName,
           status: INVITE_STATUS.INVITED,
@@ -163,16 +165,22 @@ export class UserEntity {
     }
   }
 
-  //TODO: this isn't set up properly, will need to be updated on ticket where PM view is added
-  public async createPropertyManager({ pmEmail, pmName, organization, organizationName }: ICreatePMUser) {
+  public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: ICreatePMUser) {
     try {
+      const lowerCaseUserEmail = userEmail.toLowerCase();
       const result = await this.userEntity.update(
         {
-          pk: generateKey(ENTITY_KEY.USER, pmEmail.toLowerCase()),
+          pk: generateKey(ENTITY_KEY.USER, lowerCaseUserEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization.toLowerCase()),
+          GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
           roles: { $add: [userRoles.PROPERTY_MANAGER] },
+          email: lowerCaseUserEmail,
+          name: userName,
+          isAdmin,
           organization,
           organizationName,
+          status: INVITE_STATUS.INVITED,
         },
         { returnValues: 'ALL_NEW' }
       );
@@ -182,7 +190,7 @@ export class UserEntity {
     }
   }
 
-  public async createTechnician({ technicianName, technicianEmail, pmEmail, organization, organizationName }: ICreateTechnician) {
+  public async createTechnician({ technicianName, technicianEmail, pmEmail, pmName, organization, organizationName }: ICreateTechnician) {
     try {
       const lowerCasePMEmail = pmEmail.toLowerCase();
       const lowerCaseTechnicianEmail = technicianEmail.toLowerCase();
@@ -191,13 +199,14 @@ export class UserEntity {
           pk: generateKey(ENTITY_KEY.USER, lowerCaseTechnicianEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           pmEmail: lowerCasePMEmail,
+          pmName,
           roles: { $add: [userRoles.TECHNICIAN] },
-          GSI2PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, lowerCasePMEmail),
-          GSI2SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
-          GSI3PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization.toLowerCase()),
-          GSI3SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
-          technicianEmail: lowerCaseTechnicianEmail,
-          technicianName,
+          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, lowerCasePMEmail),
+          GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
+          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization.toLowerCase()),
+          GSI4SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
+          email: lowerCaseTechnicianEmail,
+          name: technicianName,
           organization,
           organizationName,
           status: INVITE_STATUS.INVITED,
@@ -237,31 +246,23 @@ export class UserEntity {
     return result;
   }
 
-  //Delete a role from roles; also fix GSI1 if needed
+  //Delete a role from roles, remove the appropriate indexes, and remove the appropriate metadata
   public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
     const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
-    const shouldDeleteNonPMIndexing: boolean = (roleToDelete === userRoles.TENANT && !isTech) || (roleToDelete === userRoles.TECHNICIAN && !isTenant);
+    const shouldDeleteIndexing: boolean = (roleToDelete === userRoles.TENANT && !isTech) || (roleToDelete === userRoles.TECHNICIAN && !isTenant);
 
     const params = {
       pk,
       sk,
-      ...(shouldDeleteNonPMIndexing && {
+      ...(shouldDeleteIndexing && {
         GSI1PK: null,
         GSI1SK: null,
-        GSI2PK: null,
-        GSI2SK: null,
-        GSI3PK: null,
-        GSI3SK: null,
         GSI4PK: null,
         GSI4SK: null,
         pmEmail: null,
         pmName: null,
-        tenantName: null,
-        tenantEmail: null,
-        technicianName: null,
-        technicianEmail: null,
       }),
       roles: { $delete: [roleToDelete] },
     };
@@ -288,8 +289,8 @@ export class UserEntity {
           reverse: true,
           ...(tenantSearchString && {
             filters: [
-              { attr: 'tenantName', contains: tenantSearchString },
-              { or: true, attr: 'tenantEmail', contains: tenantSearchString },
+              { attr: 'name', contains: tenantSearchString },
+              { or: true, attr: 'email', contains: tenantSearchString },
             ],
           }),
           ...(startKey && { startKey }),
@@ -316,22 +317,22 @@ export class UserEntity {
     startKey: StartKey;
   }) {
     let techs = [];
-    const GSI3PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization);
+    const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization);
     let remainingTechsToFetch = PAGE_SIZE;
     do {
       try {
-        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI3PK, {
+        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
           limit: remainingTechsToFetch,
           reverse: true,
           ...(techSearchString && {
             filters: [
-              { attr: 'technicianName', contains: techSearchString },
-              { or: true, attr: 'technicianEmail', contains: techSearchString },
+              { attr: 'name', contains: techSearchString },
+              { or: true, attr: 'email', contains: techSearchString },
             ],
           }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TECHNICIAN}`,
-          index: INDEXES.GSI3,
+          index: INDEXES.GSI4,
         });
         startKey = LastEvaluatedKey as StartKey;
         remainingTechsToFetch -= Items?.length ?? 0;
@@ -341,6 +342,35 @@ export class UserEntity {
       }
     } while (!!startKey && remainingTechsToFetch > 0);
     return { techs, startKey };
+  }
+
+  public async getAllPMsForOrg({
+    organization,
+    startKey,
+  }: {
+    organization: string;
+    startKey: StartKey;
+  }) {
+    let pms = [];
+    const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization);
+    let remainingTechsToFetch = PAGE_SIZE;
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
+          limit: remainingTechsToFetch,
+          reverse: true,
+          ...(startKey && { startKey }),
+          beginsWith: `${ENTITY_KEY.PROPERTY_MANAGER}`,
+          index: INDEXES.GSI4,
+        });
+        startKey = LastEvaluatedKey as StartKey;
+        remainingTechsToFetch -= Items?.length ?? 0;
+        Items?.length && pms.push(...Items);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey && remainingTechsToFetch > 0);
+    return { pms, startKey };
   }
 
   /**
@@ -402,28 +432,26 @@ export class UserEntity {
       pk: { partitionKey: true },
       sk: { sortKey: true },
       addresses: { type: 'map' },
-      GSI1PK: { type: 'string' }, //PM tenant
+      GSI1PK: { type: 'string' }, //PM
       GSI1SK: { type: 'string' },
-      GSI2PK: { type: 'string' }, //PM technician
+      GSI2PK: { type: 'string' }, //Tenant
       GSI2SK: { type: 'string' },
-      GSI3PK: { type: 'string' }, //Org technician
+      GSI3PK: { type: 'string' }, //Technician
       GSI3SK: { type: 'string' },
-      GSI4PK: { type: 'string' }, //Org tenant
+      GSI4PK: { type: 'string' }, //Org
       GSI4SK: { type: 'string' },
-      organization: { type: 'string' },
-      organizationName: { type: 'string' },
+      organization: { type: 'string', required: true },
+      organizationName: { type: 'string', required: true },
       pmEmail: { type: 'string' },
       pmName: { type: 'string' },
-      propertyManagers: {},
+      email: { type: 'string', required: true },
+      name: { type: 'string', required: true },
+      isAdmin: { type: 'boolean' },
       roles: { type: 'set', required: true },
       status: { type: 'string', required: true },
-      technicianName: { type: 'string' },
-      technicianEmail: { type: 'string' },
       technicians: { type: 'map' },
-      tenantEmail: { type: 'string' },
-      tenantName: { type: 'string' },
       tenants: { type: 'map' },
-      userType: { type: 'string' },
+      propertyManagers: { type: 'map' },
     },
     table: PillarDynamoTable,
   } as const);

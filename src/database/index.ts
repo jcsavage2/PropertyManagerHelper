@@ -42,7 +42,7 @@ export const INDEXES = {
   GSI1: 'GSI1PK-GSI1SK-index', // property manager index
   GSI2: 'tenant-index', // tenant index
   GSI3: 'technician-index', // technician index
-  GSI4: 'org-index'
+  GSI4: 'org-index', // organization index
 } as const;
 
 export const PillarDynamoTable = new Table({
@@ -50,10 +50,10 @@ export const PillarDynamoTable = new Table({
   partitionKey: 'pk',
   sortKey: 'sk',
   indexes: {
-    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' }, // PM Email
-    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' }, // Tenant Email
-    [INDEXES.GSI3]: { partitionKey: 'GSI3PK', sortKey: 'GSI3SK' }, // Technician Email
-    [INDEXES.GSI4]: { partitionKey: 'GSI4PK', sortKey: 'GSI4SK' }, // Org
+    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' }, 
+    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' }, 
+    [INDEXES.GSI3]: { partitionKey: 'GSI3PK', sortKey: 'GSI3SK' }, 
+    [INDEXES.GSI4]: { partitionKey: 'GSI4PK', sortKey: 'GSI4SK' }, 
   },
   removeNullAttributes: true,
   DocumentClient,

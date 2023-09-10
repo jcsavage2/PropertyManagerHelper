@@ -1,11 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { BsFillPersonFill } from 'react-icons/bs';
+import { BsFillPersonFill, BsPersonLinesFill } from 'react-icons/bs';
 import { CiLocationOn } from 'react-icons/ci';
 import { RiFilePaper2Fill } from 'react-icons/ri';
 import { MdEngineering } from 'react-icons/md';
 import { useUserContext } from '@/context/user';
+import { ENTITIES } from '@/database/entities';
 
 export const PortalLeftPanel = () => {
   const router = useRouter();
@@ -23,8 +24,14 @@ export const PortalLeftPanel = () => {
           </Link>
         </div>
 
-        {userType === 'PROPERTY_MANAGER' && (
+        {userType === ENTITIES.PROPERTY_MANAGER && (
           <>
+            <div className="flex flex-row items-center justify-start">
+              <BsPersonLinesFill className={`inline mr-2 my-auto`} />
+              <Link className={`${router.pathname === '/property-managers' ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`} href={'property-managers'}>
+                Property Managers
+              </Link>
+            </div>
             <div className="flex flex-row items-center justify-start">
               <BsFillPersonFill className={`inline mr-2 my-auto`} />
               <Link className={`${router.pathname === '/tenants' ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`} href={'tenants'}>

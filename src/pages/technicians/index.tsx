@@ -50,7 +50,6 @@ const Technicians = () => {
         const { data } = await axios.post('/api/get-techs-for-org', body);
         const response = JSON.parse(data.response);
         const _techs: IUser[] = response.techs;
-        console.log(response);
         setStartKey(response.startKey);
         isInitial ? setTechs(_techs) : setTechs([...techs, ..._techs]);
       } catch (err) {
@@ -85,7 +84,7 @@ const Technicians = () => {
         };
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
-          toast.success('Tenant Deleted!', {
+          toast.success('Technician Deleted!', {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
           });
@@ -96,7 +95,7 @@ const Technicians = () => {
         //Update this when you add fetching from technician entity to get all assigned WOs
       } catch (err) {
         console.error(err);
-        toast.error('Error Deleting Tenant. Please Try Again', {
+        toast.error('Error Deleting Technician. Please Try Again', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });
@@ -187,14 +186,14 @@ const Technicians = () => {
                     } ${index < techs.length - 1 && 'mb-3'}`}
                   >
                     <div className="pl-2 text-gray-800">
-                      <p className="text-2xl ">{toTitleCase(tech.technicianName!)} </p>
-                      <p className="text-sm mt-2">{`${tech.technicianEmail}`} </p>
+                      <p className="text-2xl ">{toTitleCase(tech.name)} </p>
+                      <p className="text-sm mt-2">{`${tech.email}`} </p>
                     </div>
                     <CiCircleRemove
                       className="text-3xl text-red-500 cursor-pointer"
                       onClick={() => {
                         if (techsLoading) return;
-                        setToDelete({ pk: tech.pk, sk: tech.sk, name: tech.technicianName!, roles: tech.roles });
+                        setToDelete({ pk: tech.pk, sk: tech.sk, name: tech.name, roles: tech.roles });
                         setConfirmDeleteModalIsOpen(true);
                       }}
                     />
@@ -217,18 +216,18 @@ const Technicians = () => {
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">
-                    {techs.map((tech: any) => {
+                    {techs.map((tech: IUser) => {
                       return (
                         <tr key={`${tech.pk}-${tech.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tech.technicianName!)}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${tech.technicianEmail}`}</td>
-                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tech._ct ?? tech.created)[0]}</td>
+                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tech.name)}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${tech.email}`}</td>
+                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tech.created)[0]}</td>
                           <td className="pl-6 py-1">
                             <CiCircleRemove
                               className="text-3xl text-red-500 cursor-pointer"
                               onClick={() => {
                                 if (techsLoading) return;
-                                setToDelete({ pk: tech.pk, sk: tech.sk, name: tech.technicianName, roles: tech.roles });
+                                setToDelete({ pk: tech.pk, sk: tech.sk, name: tech.name, roles: tech.roles });
                                 setConfirmDeleteModalIsOpen(true);
                               }}
                             />
