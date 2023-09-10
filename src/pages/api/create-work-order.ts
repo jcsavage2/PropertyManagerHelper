@@ -7,8 +7,15 @@ import { SendEmailApiRequest } from '@/types';
 import { deconstructKey, generateKey } from '@/utils';
 import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as SendEmailApiRequest;
     const workOrderEntity = new WorkOrderEntity();
@@ -76,10 +83,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       updateMadeBy: creatorEmail,
     });
 
-    const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName)
+    const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName);
     for (const message of body.messages) {
       // Create a comment for each existing comment so the Work Order has context.
-      console.log(message)
+      console.log(message);
       await eventEntity.create({
         workOrderId: deconstructKey(workOrder?.pk),
         updateType: Events.COMMENT_UPDATE,

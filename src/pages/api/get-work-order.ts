@@ -1,6 +1,8 @@
 import { Data } from "@/database";
 import { WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth";
+import { options } from "./auth/[...nextauth]";
 
 
 export type GetWorkOrder = {
@@ -12,6 +14,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as GetWorkOrder;
     const { pk, sk } = body;

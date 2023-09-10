@@ -1,6 +1,8 @@
 import multer from "multer";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3 } from "@aws-sdk/client-s3";
+import { getServerSession } from "next-auth";
+import { options } from "./auth/[...nextauth]";
 
 const s3 = new S3({
   region: process.env.NEXT_PUBLIC_REGION,
@@ -23,6 +25,11 @@ export type GetWorkOrder = {
 };
 
 export default async function handler(req: any, res: any) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
 
     let woId = "";

@@ -1,6 +1,8 @@
 import { Data } from '@/database';
 import { UserEntity } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
 
 export type CreateTechnicianBody = {
   technicianEmail: string;
@@ -15,6 +17,11 @@ export type CreateTechnicianBody = {
  * @returns `ContextUser` object.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as CreateTechnicianBody;
     const { technicianEmail, technicianName, organization, organizationName, pmEmail } = body;
