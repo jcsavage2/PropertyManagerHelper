@@ -1,9 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { BucketClient } from '@/database';
+import { getServerSession } from "next-auth/next";
+import { options } from "./auth/[...nextauth]";
 
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
+
   const keys = req.body.keys as string[];  // expect keys to be an array of strings
   try {
     if (!keys?.length) {
