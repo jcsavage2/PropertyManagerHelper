@@ -7,7 +7,6 @@ import { SendEmailApiRequest } from '@/types';
 import { deconstructKey, generateKey } from '@/utils';
 import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { v4 as uuid } from 'uuid';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
@@ -25,14 +24,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       creatorEmail,
       creatorName,
       unit,
+      images,
       createdByType,
       tenantEmail,
       organization,
       tenantName,
       pmEmail,
+      woId
     } = body;
-
-    const woId = uuid();
 
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
@@ -47,6 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       postalCode,
       pmEmail, // If the propertyManagerEmail is provided, then the WO was created by a PM and we can use propertyManagerEmail
       state,
+      images,
       organization,
       status: STATUS.TO_DO,
       createdBy: creatorEmail,
@@ -183,8 +183,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-              .join(' ')}
+          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+          .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
