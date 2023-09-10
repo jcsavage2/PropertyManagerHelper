@@ -10,6 +10,7 @@ import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { userRoles } from '@/database/entities/user';
 import { PTE, PTE_Type } from '@/constants';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -22,10 +23,10 @@ export default function WorkOrderChatbot() {
     return (
       Object.values(user?.addresses)?.map(
         (address: any) =>
-          ({
-            label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
-            value: address,
-          } as AddressOptionType)
+        ({
+          label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
+          value: address,
+        } as AddressOptionType)
       ) ?? []
     );
   }, [user?.addresses]);
@@ -44,6 +45,10 @@ export default function WorkOrderChatbot() {
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
   const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
+
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [woId, _setWoId] = useState(uuidv4());
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   //If the user has only one address, select it automatically
   useEffect(() => {
@@ -104,7 +109,7 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    if (!user || !user.organization || !user.pmEmail  || !user.name || !user.email) {
+    if (!user || !user.organization || !user.pmEmail || !user.name || !user.email) {
       alert('Your user account is not set up properly, please contact your property manager for assistance.');
       return;
     }
@@ -133,6 +138,8 @@ export default function WorkOrderChatbot() {
       state: parsedAddress.state,
       city: parsedAddress.city,
       postalCode: parsedAddress.postalCode,
+      images: uploadedFiles,
+      woId
     };
 
     const res = await axios.post('/api/create-work-order', body);
@@ -157,6 +164,39 @@ export default function WorkOrderChatbot() {
     setSubmittingWorkOrderLoading(false);
     return;
   };
+
+  const handleSubmitImages: React.FormEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault();
+    if (!selectedFiles) return;
+    const formData = new FormData();
+
+    // Append all selected files to the FormData
+    for (const selectedFile of selectedFiles) {
+      formData.append('image', selectedFile);
+    }
+    formData.append("uuid", woId);
+
+    try {
+      const response = await axios.post('/api/upload-images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.status === 200) {
+        setUploadedFiles(response?.data?.files ?? []);
+        console.log({ uploadedFiles });
+        toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
+      } else {
+        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+      }
+    } catch (error) {
+      toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+    }
+  };
+
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
+    e.preventDefault();
+    setSelectedFiles(e.target.files);
+  }, []);
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -236,7 +276,7 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<{ label: string; value: any }>) => {
+            onChange={(v: SingleValue<{ label: string; value: any; }>) => {
               //@ts-ignore
               handleAddressSelectChange(v);
             }}
@@ -287,9 +327,8 @@ export default function WorkOrderChatbot() {
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
                         <div
-                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
-                            !!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
-                          }`}
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
+                            }`}
                         >
                           {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
@@ -345,6 +384,15 @@ export default function WorkOrderChatbot() {
                                     onChange={handleAdditionalDetailsChange}
                                   />
                                 </div>
+                                <form className='mt-2' onSubmit={handleSubmitImages}>
+                                  <input
+                                    type="file"
+                                    multiple name="image"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                  />
+                                  {selectedFiles?.length && (<button type="submit">Upload</button>)}
+                                </form>
                                 <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : 'Property'}* </p>
                                 <div>
                                   <input

@@ -1,5 +1,6 @@
 import { IEvent } from '@/database/entities/event';
 import { IWorkOrder } from '@/database/entities/work-order';
+import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey } from '@/utils';
@@ -23,9 +24,10 @@ import { useRouter } from 'next/router';
 import { DeleteRequest } from '@/pages/api/delete';
 import { ENTITIES } from '@/database/entities';
 import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
+import Modal from 'react-modal';
 import { userRoles } from '@/database/entities/user';
 
-const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDelete: () => Promise<void> }) => {
+const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDelete: () => Promise<void>; }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -40,6 +42,22 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
   const router = useRouter();
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
+  const [fullScreenImage, setFullScreenImage] = useState("");
+
+  const [images, setImages] = useState<string[]>([]);
+  const [imagesLoading, setImagesLoading] = useState<boolean>(true);
+
+  const [isBrowser, setIsBrowser] = useState(false);
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+
+  useEffect(() => {
+    // Set the app element for accessibility once Modal is loaded
+    if (Modal && isBrowser) {
+      Modal.setAppElement('#work-order');
+    }
+  }, []);
 
   useEffect(() => {
     setLoadingAssignedTechnicians(true);
@@ -223,6 +241,17 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
     getTechnicians();
   }, []);
 
+  useEffect(() => {
+    async function getImages() {
+      const imageKeys = workOrder?.images ?? [];
+      const response = await axios.post(`/api/get-images`, { keys: imageKeys });
+      setImages(response.data?.images ?? []);
+      setImagesLoading(false);
+    }
+    getImages();
+  }, [workOrder?.images]);
+
+
   const sortedEvents = events.sort((a, b) => {
     if (a?.created && b?.created) {
       //@ts-ignore
@@ -303,9 +332,8 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                     <button
                       disabled={isUpdatingStatus}
                       onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                      className={`${
-                        deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
-                      } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                      className={`${deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
+                        } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                     >
                       <GoTasklist />
                       <span className="text-xs">Todo</span>
@@ -313,9 +341,8 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                     <button
                       disabled={isUpdatingStatus}
                       onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                      className={`${
-                        deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
-                      } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                      className={`${deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
+                        } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                     >
                       <AiOutlineCheck />
                       <span className="text-xs">Complete</span>
@@ -344,6 +371,26 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                   onMenuOpen={() => setAssignedTechniciansMenuOpen(true)}
                   onMenuClose={() => setAssignedTechniciansMenuOpen(false)}
                 />
+              </div>
+              <div className="font-bold mt-4 md:ml-12 text-center md:text-start">Images</div>
+              <div className="md:ml-16 md:mt-4 w-full flex md:gap-x-4 gap-x-0">
+                {imagesLoading && <LoadingSpinner />}
+                {!imagesLoading && images.map(i => {
+                  return (
+                    <Image
+                      key={i}
+                      className={`mb-4 mx-auto md:mx-0 cursor-pointer overflow-y-scroll`}
+                      alt={"work order image"}
+                      onClick={() => {
+                        i === fullScreenImage
+                          ? setFullScreenImage("")
+                          : setFullScreenImage(i);
+                      }}
+                      src={i}
+                      width={100}
+                      height={40} />
+                  );
+                })}
               </div>
             </div>
 
@@ -398,21 +445,42 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
           )}
           {sortedEvents
             ? sortedEvents.map((event: IEvent | null, i: number) => {
-                if (event) {
-                  const formattedDateTime = createdToFormattedDateTime(event.created);
-                  return (
-                    <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
-                      <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
-                      <div className="text-sm text-gray-500">
-                        {formattedDateTime[0]} @ {formattedDateTime[1]}
-                      </div>
-                      <div className="break-words">{event.updateDescription}</div>
+              if (event) {
+                const formattedDateTime = createdToFormattedDateTime(event.created);
+                return (
+                  <div key={i} className="mx-auto text-gray-800 w-11/12 rounded-md bg-gray-200 mt-4 mb-3 py-2 px-4 text-left">
+                    <div className="text-sm text-gray-500">{event.updateMadeBy}</div>
+                    <div className="text-sm text-gray-500">
+                      {formattedDateTime[0]} @ {formattedDateTime[1]}
                     </div>
-                  );
-                }
-              })
+                    <div className="break-words">{event.updateDescription}</div>
+                  </div>
+                );
+              }
+            })
             : 'No events found'}
         </div>
+        <Modal
+          isOpen={!!fullScreenImage}
+          onRequestClose={() => setFullScreenImage("")}
+          contentLabel="Image Modal"
+          overlayClassName="fixed inset-0 bg-black bg-opacity-80 z-50 flex justify-center items-center"
+          className="w-full h-full"
+        >
+          <div
+            className='overflow-y-scroll'
+            style={{ width: "100%", height: "100%" }}
+          >
+            <Image
+              src={fullScreenImage}
+              alt="Description"
+              className="w-full cursor-pointer my-auto overflow-y-scroll"
+              onClick={() => setFullScreenImage("")}
+              width={100}
+              height={40}
+            />
+          </div>
+        </Modal>
       </div>
     );
   }

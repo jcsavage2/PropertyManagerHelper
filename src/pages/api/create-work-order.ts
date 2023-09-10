@@ -7,9 +7,15 @@ import { SendEmailApiRequest } from '@/types';
 import { deconstructKey, generateKey } from '@/utils';
 import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { v4 as uuid } from 'uuid';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as SendEmailApiRequest;
     const workOrderEntity = new WorkOrderEntity();
@@ -25,14 +31,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       creatorEmail,
       creatorName,
       unit,
+      images,
       createdByType,
       tenantEmail,
       organization,
       tenantName,
       pmEmail,
+      woId
     } = body;
-
-    const woId = uuid();
 
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
@@ -47,6 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       postalCode,
       pmEmail, // If the propertyManagerEmail is provided, then the WO was created by a PM and we can use propertyManagerEmail
       state,
+      images,
       organization,
       status: STATUS.TO_DO,
       createdBy: creatorEmail,
@@ -76,10 +83,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       updateMadeBy: creatorEmail,
     });
 
-    const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName)
+    const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName);
     for (const message of body.messages) {
       // Create a comment for each existing comment so the Work Order has context.
-      console.log(message)
+      console.log(message);
       await eventEntity.create({
         workOrderId: deconstructKey(workOrder?.pk),
         updateType: Events.COMMENT_UPDATE,
@@ -183,8 +190,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-              .join(' ')}
+          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+          .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
