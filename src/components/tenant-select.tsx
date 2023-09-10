@@ -78,7 +78,7 @@ export const TenantSelect = ({
         onChange={(value: SingleValue<OptionType>) => onChange(value)}
         isClearable={true}
         menuPortalTarget={document.body}
-        captureMenuScroll={false}
+        captureMenuScroll={true}
         isLoading={tenantOptionsLoading}
       />
     </div>

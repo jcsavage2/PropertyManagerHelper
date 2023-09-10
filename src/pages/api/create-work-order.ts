@@ -1,10 +1,10 @@
-import { Events, STATUS } from '@/constants';
+import { EVENTS, STATUS, UPDATE_TYPE } from '@/constants';
 import { Data } from '@/database';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
 import { SendEmailApiRequest } from '@/types';
-import { deconstructKey, generateKey } from '@/utils';
+import { generateKey } from '@/utils';
 import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { v4 as uuid } from 'uuid';
@@ -66,25 +66,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     sendgrid.setApiKey(apiKey);
 
-    body.messages.pop();
-
-    /** CREATE THE FIRST EVENT FOR THE WO */
+    //Work order created event
     await eventEntity.create({
       workOrderId: woId,
-      updateType: Events.STATUS_UPDATE,
-      updateDescription: 'Work Order Created',
-      updateMadeBy: creatorEmail,
+      type: EVENTS.UPDATE,
+      updateType: UPDATE_TYPE.CREATED,
+      madeByEmail: creatorEmail,
+      madeByName: creatorName,
+      message: `Work Order Created!`,
     });
 
-    const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName)
     for (const message of body.messages) {
-      // Create a comment for each existing comment so the Work Order has context.
-      console.log(message)
+      // Create an event for each comment from the user's chat
       await eventEntity.create({
-        workOrderId: deconstructKey(workOrder?.pk),
-        updateType: Events.COMMENT_UPDATE,
-        updateDescription: message.content ?? '',
-        updateMadeBy: message.role === 'user' ? tenantDisplayName : "Pillar Assistant",
+        workOrderId: woId,
+        type: EVENTS.CHAT,
+        message: message.content ?? '',
+        madeByEmail: message.role === 'user' ? (tenantEmail ?? creatorEmail) : "Pillar Assistant",
+        madeByName: message.role === 'user' ? (tenantName ?? creatorName) : "Pillar Assistant",
+        date: message.date,
       });
     }
 

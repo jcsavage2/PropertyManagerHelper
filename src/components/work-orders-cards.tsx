@@ -4,19 +4,20 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Select from 'react-select';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
-import { PTE, STATUS, Status } from '@/constants';
+import { PTE, STATUS } from '@/constants';
 import { StatusOptions } from './work-orders-table';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { HandleUpdateStatusProps } from '../pages/work-orders';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
+import { StatusType } from '@/types';
 
 interface IWorkOrdersCardsProps {
   workOrders: IWorkOrder[];
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   isFetching: boolean;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
-  statusFilter: Record<Status, boolean>;
-  setStatusFilter: (statusFilter: Record<Status, boolean>) => void;
+  statusFilter: Record<StatusType, boolean>;
+  setStatusFilter: (statusFilter: Record<StatusType, boolean>) => void;
 }
 
 export const WorkOrdersCards = ({
@@ -160,7 +161,7 @@ export const WorkOrdersCards = ({
           : !isFetching && <div className="text-center font-bold">Sorry, no work orders found.</div>}
         {isFetching && (
           <div className="mt-8">
-            <LoadingSpinner spinnerClass="spinner-large" />
+            <LoadingSpinner containerClass='h-20' spinnerClass="spinner-large" />
           </div>
         )}
       </div>

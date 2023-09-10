@@ -3,13 +3,14 @@ import axios from 'axios';
 import { ChatCompletionRequestMessage } from 'openai';
 import { toast } from 'react-toastify';
 import { hasAllIssueInfo } from '@/utils';
-import { AddressOptionType, AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from '@/types';
+import { AddressOptionType, AiJSONResponse, ApiRequest, AssistantMessage, PTE_Type, SendEmailApiRequest, WorkOrder } from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { userRoles } from '@/database/entities/user';
-import { PTE, PTE_Type } from '@/constants';
+import { PTE } from '@/constants';
+import { ENTITIES } from '@/database/entities';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -38,7 +39,7 @@ export default function WorkOrderChatbot() {
   const [issueLocation, setIssueLocation] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
 
-  const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+  const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
@@ -104,7 +105,7 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    if (!user || !user.organization || !user.pmEmail  || !user.name || !user.email) {
+    if (!user || !user.organization || !user.pmEmail || !user.name || !user.email) {
       alert('Your user account is not set up properly, please contact your property manager for assistance.');
       return;
     }
@@ -123,7 +124,7 @@ export default function WorkOrderChatbot() {
       issueLocation,
       additionalDetails,
       messages,
-      createdByType: 'TENANT',
+      createdByType: ENTITIES.TENANT,
       creatorEmail: user.email,
       creatorName: user.name,
       permissionToEnter,
@@ -160,21 +161,23 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
+    const userMessageDate = new Date().toUTCString();
     try {
       if (!isUsingAI) {
         setMessages([
           ...messages,
-          { role: 'user', content: issueDescription },
+          { role: 'user', content: issueDescription, date: userMessageDate },
           {
             role: 'assistant',
             content:
               "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request.",
+            date: new Date().toUTCString(),
           },
         ]);
       }
 
       if (userMessage === '' || !selectedAddress) return;
-      setMessages([...messages, { role: 'user', content: userMessage }]);
+      setMessages([...messages, { role: 'user', content: userMessage, date: userMessageDate }]);
       setIsResponding(true);
       setLastUserMessage(userMessage);
       setUserMessage('');
@@ -196,7 +199,11 @@ export default function WorkOrderChatbot() {
 
       const newMessage = parsed.aiMessage;
       setIsResponding(false);
-      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
+      setMessages([
+        ...messages,
+        { role: 'user', content: userMessage, date: userMessageDate },
+        { role: 'assistant', content: newMessage, date: parsed.aiMessageDate },
+      ]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
 
@@ -206,7 +213,11 @@ export default function WorkOrderChatbot() {
       }
 
       setIsResponding(false);
-      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: assistantMessage }]);
+      setMessages([
+        ...messages,
+        { role: 'user', content: userMessage, date: userMessageDate },
+        { role: 'assistant', content: assistantMessage, date: new Date().toUTCString() },
+      ]);
       setUserMessage(lastUserMessage);
     }
   };

@@ -80,7 +80,8 @@ export const generatePrompt = (workOrder: WorkOrder, unitInfo: string): ChatComp
        
         The conversational message responses you generate should ALWAYS set the value for the the "aiMessage" key. \
         If the user's response seems unrelated to a service request or you can't understand their issue, cheerfully ask them to try again. \
-        Your responses to the user should always ask a single question or prompt them to provide more information about one thing.`,
+        Your responses to the user should always ask a single question or prompt them to provide more information about one thing.
+        Always leave aiMessageDate empty`,
   };
 };
 
@@ -89,7 +90,15 @@ export const generatePrompt = (workOrder: WorkOrder, unitInfo: string): ChatComp
  * @param response string response from GPT; no format requirements
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
-export const processAiResponse = ({ response, workOrderData }: { response: string; workOrderData: WorkOrder }): string | null => {
+export const processAiResponse = ({
+  response,
+  workOrderData,
+  aiMessageDate,
+}: {
+  response: string;
+  workOrderData: WorkOrder;
+  aiMessageDate: string;
+}): string | null => {
   try {
     let returnValue: string | null = null;
     const jsonStart = response.indexOf('{');
@@ -100,6 +109,7 @@ export const processAiResponse = ({ response, workOrderData }: { response: strin
       const substr = response.substring(jsonStart, jsonEnd + 1);
       const cleanedString = substr.replace(regex, '"').replace('True', 'true').replace('False', 'false').replace('undefined', '""');
       let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse;
+      jsonResponse.aiMessageDate = aiMessageDate;
 
       const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse });
 
@@ -143,6 +153,7 @@ export function generateKey(entityIdentifier: EntityTypeValues | string, secondI
  * @returns The second identifier for a key; the part after the #
  */
 export function deconstructKey(key: string): string {
+  if(!key || key.length === 0) return key;
   return key.split('#')[1];
 }
 

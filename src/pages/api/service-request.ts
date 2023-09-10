@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { findIssueSample } from "@/constants";
-import { generatePrompt, processAiResponse } from "@/utils";
+import {  generatePrompt, processAiResponse } from "@/utils";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { AiJSONResponse, ApiRequest } from "@/types";
@@ -26,12 +26,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     console.log(chalk.yellow("\n User Message =============\n"), userMessage);
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo);
 
+    const messagesForGPT: ChatCompletionRequestMessage[] = messages.map((message) => {
+      return {
+        role: message.role,
+        content: message.content,
+      };
+    })
+
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
       model: gpt_model,
       messages: [
         prompt,
-        ...messages,
+        ...messagesForGPT,
         {
           role: "user",
           content: userMessage
@@ -49,7 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     console.log(chalk.yellow("\n Initial Response=============\n"));
     console.log(aiResponse);
 
-    let processedResponse: string | null = processAiResponse({ response: aiResponse, workOrderData: workOrderData });
+    const aiMessageDate = new Date().toUTCString()
+    let processedResponse: string | null = processAiResponse({ response: aiResponse, workOrderData: workOrderData, aiMessageDate });
     console.log(chalk.yellow("\n Processed Response =============\n"), { processedResponse: processedResponse });
 
     if (!processedResponse) {
@@ -59,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         model: gpt_model,
         messages: [
           prompt,
-          ...messages,
+          ...messagesForGPT,
           { role: "user", content: userMessage },
           { role: "assistant", content: aiResponse },
           {
@@ -72,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const newAiResponse = newResponse.data.choices[0].message?.content ?? "";
 
       console.log("\n New Response... =============\n", newAiResponse);
-      processedResponse = processAiResponse({ response: newAiResponse, workOrderData: workOrderData });
+      processedResponse = processAiResponse({ response: newAiResponse, workOrderData: workOrderData, aiMessageDate });
 
       //If it still doesn't work, return the original aiMessage with other WO data taken from request body
       if (!processedResponse) {
@@ -81,6 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           issueLocation: workOrderData.issueLocation ?? "",
           aiMessage: aiResponse,
           additionalDetails: workOrderData.additionalDetails ?? "",
+          aiMessageDate
         };
         processedResponse = JSON.stringify(incompleteResponse);
       }

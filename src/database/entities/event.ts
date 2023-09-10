@@ -1,49 +1,60 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, ENTITY_KEY } from '.';
+import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
-import { EventType } from '@/types';
+import { EventType, UpdateType } from '@/types';
+import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
+import { EVENTS } from '@/constants';
 
 type CreateEventProps = {
   workOrderId: string;
-  updateType: EventType;
-  updateDescription: string;
-  updateMadeBy: string;
+  type: UpdateType;
+  updateType?: UpdateType;
+  madeByEmail: string;
+  madeByName: string;
+  message?: string;
+  date?: string;
 };
 
 export interface IEvent {
-  pk: string;
-  sk: string;
+  pk: string; //EV:workOrderId
+  sk: string; //ksuid
+  type: EventType;
+  updateType?: UpdateType;
+  madeByEmail: string;
+  madeByName: string;
+  message: string;
   created: string;
-  updateType: EventType;
-  updateDescription: string;
-  updateMadeBy: string;
 }
 
 export class EventEntity {
   private eventEntity = new Entity({
     name: ENTITIES.EVENT,
     attributes: {
-      pk: { partitionKey: true }, //EV:workOrderId
+      pk: { partitionKey: true }, //EV#workOrderId:type
       sk: { sortKey: true }, //ksuid
-      updateType: { type: 'string' },
-      updateDescription: { type: 'string' },
-      updateMadeBy: { type: 'string' },
+      type: { type: 'string' },
+      madeByEmail: { type: 'string' },
+      madeByName: { type: 'string' },
+      message: { type: 'string' },
     },
     table: PillarDynamoTable,
   });
 
   /**
-   * Creates a new event for a work order.
+   * Creates a new event attached to a work order
    */
-  public async create({ workOrderId, updateType, updateDescription, updateMadeBy }: CreateEventProps) {
+  public async create({ workOrderId, type, madeByEmail, madeByName, message, date }: CreateEventProps) {
+    const time = date ?? new Date().toUTCString();
     const result = await this.eventEntity.update(
       {
-        pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
-        sk: generateKSUID(),
-        updateType,
-        updateDescription,
-        updateMadeBy,
+        pk: this.generateEventPK(workOrderId, type),
+        sk: generateKSUID(), //allows us to sort by date
+        type,
+        madeByEmail,
+        madeByName,
+        message,
+        created: time,
       },
       { returnValues: 'ALL_NEW' }
     );
@@ -53,13 +64,13 @@ export class EventEntity {
   /**
    * @returns All events for a work order
    */
-  public async getEvents({ woId }: { woId: string }) {
-    try {
-      const result = await this.eventEntity.query(generateKey(ENTITY_KEY.EVENT, woId), { reverse: true });
-      return result.Items ?? [];
-    } catch (err) {
-      console.log({ err });
-    }
+  public async getEvents({ workOrderId, type, startKey }: GetWorkOrderEvents) {
+    const { Items, LastEvaluatedKey } = await this.eventEntity.query(this.generateEventPK(workOrderId, type), {
+      startKey,
+      reverse: type !== EVENTS.CHAT ? true : false,
+    });
+    startKey = LastEvaluatedKey as StartKey;
+    return {events: Items ?? [], startKey};
   }
 
   public async delete({ pk, sk }: { pk: string; sk: string }) {
@@ -69,5 +80,9 @@ export class EventEntity {
     };
     const result = await this.eventEntity.delete(params);
     return result;
+  }
+
+  private generateEventPK(woId: string, type: EventType) {
+    return generateKey(ENTITY_KEY.EVENT, woId) + ':' + type;
   }
 }

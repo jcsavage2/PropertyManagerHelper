@@ -1,21 +1,22 @@
 import { ChatCompletionRequestMessage } from 'openai';
-import { Events, PTE_Type } from '../constants';
+import { EVENTS, PTE, STATUS, UPDATE_TYPE } from '../constants';
 
 export type ApiRequest = WorkOrder & {
   userMessage: string;
   unitInfo: string;
-  messages: ChatCompletionRequestMessage[];
+  messages: AssistantMessage[];
 };
 
 export type SendEmailApiRequest = UserInfo &
   IssueInformation & {
-    messages: ChatCompletionRequestMessage[];
+    messages: AssistantMessage[];
     pmEmail: string;
     organization: string;
   };
 
 export type AiJSONResponse = IssueInformation & {
   aiMessage: string;
+  aiMessageDate: string;
 };
 
 export type FinishFormRequest = IssueInformation & {
@@ -47,7 +48,9 @@ export type IssueInformation = {
 
 export type WorkOrder = IssueInformation;
 
-export type EventType = (typeof Events)[keyof typeof Events];
+export type EventType = (typeof EVENTS)[keyof typeof EVENTS];
+
+export type UpdateType = (typeof UPDATE_TYPE)[keyof typeof UPDATE_TYPE];
 
 export type OptionType = {
   value: string;
@@ -62,3 +65,9 @@ export type AddressOptionType = {
   label: string;
   value: any;
 };
+
+export type PTE_Type = (typeof PTE)[keyof typeof PTE];
+
+export type StatusType = (typeof STATUS)[keyof typeof STATUS];
+
+export type AssistantMessage = ChatCompletionRequestMessage & { date?: string };

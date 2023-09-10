@@ -20,10 +20,10 @@ import { IGetAllWorkOrdersForUserProps, IWorkOrder } from '@/database/entities/w
 import { deconstructKey, getPageLayout } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
-import { StatusOptionType } from '@/types';
-import { Status } from '@/constants';
+import { StatusOptionType, StatusType } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
+import { toast } from 'react-toastify';
 
 export type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;
@@ -43,10 +43,33 @@ const WorkOrders = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState<Record<Status, boolean>>({
+  const [statusFilter, setStatusFilter] = useState<Record<StatusType, boolean>>({
     TO_DO: true,
     COMPLETE: true,
   });
+
+  const customStyles = {
+    content: {
+      top: isMobile ? '48%' : '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      transform: 'translate(-50%, -50%)',
+      width: isMobile ? '90%' : '80%',
+      height: isMobile ? '87%' : '98%',
+      backgroundColor: 'rgba(255, 255, 255)',
+      padding: isMobile? '0px' : '20px',
+      paddingTop: isMobile? '0px' : '10px',
+    },
+    overLay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(25, 255, 255, 0.75)',
+    },
+  };
 
   /** Work Order Modal Logic */
   isBrowser && Modal.setAppElement('#workOrder');
@@ -56,12 +79,22 @@ const WorkOrders = () => {
 
   /** Update db and cached WO status */
   const handleUpdateStatus = async ({ val, pk, sk }: HandleUpdateStatusProps) => {
-    if (!user) return;
     setIsFetching(true);
-    const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user?.email });
-    const updatedWorkOrder = JSON.parse(data.response);
-    if (updatedWorkOrder) {
-      setWorkOrders(workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)));
+    try {
+      if (!user || !user.name || !user.email) {
+        throw new Error('User not found');
+      }
+      const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user.email, name: user.name });
+      const updatedWorkOrder = JSON.parse(data.response);
+      if (updatedWorkOrder) {
+        setWorkOrders(workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)));
+      }
+    } catch (e) {
+      console.log(e);
+      toast.error('Error updating work order status', {
+        position: 'top-right',
+        draggable: false,
+      });
     }
     setIsFetching(false);
   };
@@ -100,6 +133,10 @@ const WorkOrders = () => {
    */
   useEffect(() => {
     fetchWorkOrders(true);
+    //Prevent scrolling if the WO modal is open
+    if (router.query.workOrderId) {
+      document.body.style.overflow = 'hidden';
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router.query.workOrderId, orgMode, statusFilter]);
 
@@ -112,10 +149,25 @@ const WorkOrders = () => {
 
   return (
     <>
-      <Modal isOpen={!!router.query.workOrderId} onRequestClose={() => router.push('/work-orders')} contentLabel="Post modal" closeTimeoutMS={200}>
-        <WorkOrder workOrderId={router.query.workOrderId as string} afterDelete={() => fetchWorkOrders(true)} />
+      <Modal
+        isOpen={!!router.query.workOrderId}
+        onRequestClose={() => {
+          router.push('/work-orders');
+          fetchWorkOrders(true);
+        }}
+        contentLabel="Post modal"
+        closeTimeoutMS={200}
+        preventScroll={true}
+        style={customStyles}
+      >
+        <WorkOrder
+          workOrderId={router.query.workOrderId as string}
+          afterDelete={() => fetchWorkOrders(true)}
+          handleCloseWorkOrderModal={() => router.push('/work-orders')}
+          isMobile={isMobile}
+        />
       </Modal>
-      <div id="workOrder" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
+      <div id="workOrder" style={getPageLayout(isMobile)} className={`mx-4 mt-4`}>
         {!isMobile && <PortalLeftPanel />}
         <div className={`lg:max-w-5xl`}>
           <div className="flex flex-row justify-between items-center mb-2">
@@ -143,7 +195,10 @@ const WorkOrders = () => {
               >
                 My work orders
               </div>
-              <div className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`} onClick={() => setOrgMode(true)}>
+              <div
+                className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`}
+                onClick={() => setOrgMode(true)}
+              >
                 All {user?.organizationName || 'org'} work orders
               </div>
             </div>
@@ -168,7 +223,7 @@ const WorkOrders = () => {
             />
           )}
           {workOrders.length && startKey && !isFetching ? (
-            <div className="w-full flex items-center justify-center">
+            <div className="w-full flex items-center justify-center mb-8">
               <button
                 disabled={isFetching}
                 onClick={() => fetchWorkOrders(false)}
@@ -177,7 +232,7 @@ const WorkOrders = () => {
                 Load more
               </button>
             </div>
-          ) : null}
+          ) : <div className="mb-8"></div>}
           <AddWorkOrderModal
             addWorkOrderModalIsOpen={addWorkOrderModalIsOpen}
             setAddWorkOrderModalIsOpen={setAddWorkOrderModalIsOpen}
