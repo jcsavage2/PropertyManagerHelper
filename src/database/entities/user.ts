@@ -67,12 +67,12 @@ export interface IUser extends IBaseUser {
   pmName?: string;
   roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
   status?: InviteStatusType;
-  technicianEmail?: { type: 'string' };
+  technicianEmail?: { type: 'string'; };
   technicianName?: string;
-  technicians: { type: 'map' };
+  technicians: { type: 'map'; };
   tenantEmail?: string;
   tenantName?: string;
-  tenants: { type: 'map' };
+  tenants: { type: 'map'; };
   userType?: string;
 }
 
@@ -163,6 +163,10 @@ export class UserEntity {
     }
   }
 
+  public async updateInviteStatus({ pk, sk, status }: { pk: string; sk: string; status: InviteStatusType; }) {
+    return (await this.userEntity.update({ pk, sk, status }, { returnValues: "ALL_NEW" })).Attributes;
+  }
+
   //TODO: this isn't set up properly, will need to be updated on ticket where PM view is added
   public async createPropertyManager({ pmEmail, pmName, organization, organizationName }: ICreatePMUser) {
     try {
@@ -214,7 +218,7 @@ export class UserEntity {
   /**
    * @returns User entity
    */
-  public async get({ email }: { email: string }) {
+  public async get({ email }: { email: string; }) {
     try {
       const params = {
         pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
@@ -228,7 +232,7 @@ export class UserEntity {
     }
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string }) {
+  public async delete({ pk, sk }: { pk: string; sk: string; }) {
     const params = {
       pk,
       sk,
@@ -238,7 +242,7 @@ export class UserEntity {
   }
 
   //Delete a role from roles; also fix GSI1 if needed
-  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
+  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[]; }) {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
     const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
