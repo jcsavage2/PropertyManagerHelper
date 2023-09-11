@@ -21,7 +21,6 @@ export const AddPropertyManagerModal = ({
   const { userType } = useUserContext();
   const { isMobile } = useDevice();
   const [isBrowser, setIsBrowser] = useState(false);
-  const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
   }, []);
@@ -64,8 +63,8 @@ export const AddPropertyManagerModal = ({
         if (!user || !user?.email || !user?.name) throw new Error('user must be logged in');
         if (userType !== 'PROPERTY_MANAGER' || !user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization || !user.organizationName)
           throw new Error('user must be a property manager in an organization');
-        if (!pmEmail) {
-          throw new Error('No tenant selected');
+        if (!pmEmail || !pmName) {
+          throw new Error('Missing params pmEmail or pmName');
         }
         if (!userType) {
           throw new Error('No userType');

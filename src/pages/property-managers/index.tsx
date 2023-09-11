@@ -37,7 +37,6 @@ const Technicians = () => {
         const { data } = await axios.post('/api/get-all-pms-for-org', body);
         const response = JSON.parse(data.response);
         const _pms: IUser[] = response.pms;
-        console.log("Get pms response:", response);
         setStartKey(response.startKey);
         isInitial ? setPMs(_pms) : setPMs([...pms, ..._pms]);
       } catch (err) {

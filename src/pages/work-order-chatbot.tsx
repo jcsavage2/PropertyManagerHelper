@@ -183,7 +183,6 @@ export default function WorkOrderChatbot() {
 
       if (response.status === 200) {
         setUploadedFiles(response?.data?.files ?? []);
-        console.log({ uploadedFiles });
         toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
       } else {
         toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
