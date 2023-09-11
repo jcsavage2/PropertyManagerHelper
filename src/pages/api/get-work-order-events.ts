@@ -3,6 +3,8 @@ import { StartKey } from "@/database/entities";
 import { EventEntity } from "@/database/entities/event";
 import { EventType } from "@/types";
 import { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth";
+import { options } from "./auth/[...nextauth]";
 
 
 export type GetWorkOrderEvents = {
@@ -15,6 +17,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as GetWorkOrderEvents;
     const { workOrderId, type } = body;

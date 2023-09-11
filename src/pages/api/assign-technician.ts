@@ -2,9 +2,10 @@ import { EVENTS, UPDATE_TYPE } from '@/constants';
 import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
 import { PropertyAddress, WorkOrderEntity } from '@/database/entities/work-order';
-import { deconstructKey } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
 import { PTE_Type, StatusType } from '@/types';
 
 export type AssignTechnicianBody = {
@@ -21,6 +22,11 @@ export type AssignTechnicianBody = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as AssignTechnicianBody;
     const { workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName } =

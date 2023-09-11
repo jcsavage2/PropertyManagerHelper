@@ -4,6 +4,8 @@ import { PropertyManagerEntity } from '@/database/entities/property-manager';
 import { UserEntity } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { v4 as uuid } from 'uuid';
+import { options } from './auth/[...nextauth]';
+import { getServerSession } from 'next-auth';
 
 export type CreatePropertyBody = {
   address: string;
@@ -24,6 +26,11 @@ export type CreatePropertyBody = {
  * @returns `ContextUser` object.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as CreatePropertyBody;
     const { address, country = 'US', city, state, postalCode, unit, pmEmail, numBeds, numBaths, tenantEmail, organization } = body;

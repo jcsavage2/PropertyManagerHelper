@@ -5,6 +5,8 @@ import { WorkOrderEntity } from '@/database/entities/work-order';
 import { PTE_Type, StatusType } from '@/types';
 import { deconstructKey } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
 
 type UpdateWorkOrderApiRequest = {
   pk: string;
@@ -16,6 +18,11 @@ type UpdateWorkOrderApiRequest = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as UpdateWorkOrderApiRequest;
     const workOrderEntity = new WorkOrderEntity();

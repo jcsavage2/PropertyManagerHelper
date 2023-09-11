@@ -2,6 +2,8 @@ import { EVENTS } from "@/constants";
 import { Data } from "@/database";
 import { EventEntity } from "@/database/entities/event";
 import { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth";
+import { options } from "./auth/[...nextauth]";
 
 export type CreateCommentBody = {
   comment: string;
@@ -18,6 +20,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as CreateCommentBody;
     const {
@@ -30,7 +37,6 @@ export default async function handler(
     const eventEntity = new EventEntity();
     const newComment = await eventEntity.create({
       workOrderId,
-      type: EVENTS.COMMENT,
       madeByEmail: email,
       madeByName: name,
       message: comment,

@@ -50,16 +50,15 @@ const WorkOrders = () => {
 
   const customStyles = {
     content: {
-      top: isMobile ? '48%' : '50%',
+      top: '50%',
       left: '50%',
       right: 'auto',
       bottom: 'auto',
       transform: 'translate(-50%, -50%)',
-      width: isMobile ? '90%' : '80%',
-      height: isMobile ? '87%' : '98%',
+      width: isMobile ? '90%' : '50%',
+      height: isMobile ? '87%' : '90%',
       backgroundColor: 'rgba(255, 255, 255)',
-      padding: isMobile? '0px' : '20px',
-      paddingTop: isMobile? '0px' : '10px',
+      padding: '0px',
     },
     overLay: {
       position: 'fixed',
@@ -147,14 +146,16 @@ const WorkOrders = () => {
     </div>
   );
 
+  const closeWOModalRefetch = () => {
+    router.push('/work-orders');
+    fetchWorkOrders(true);
+  }
+
   return (
     <>
       <Modal
         isOpen={!!router.query.workOrderId}
-        onRequestClose={() => {
-          router.push('/work-orders');
-          fetchWorkOrders(true);
-        }}
+        onRequestClose={closeWOModalRefetch}
         contentLabel="Post modal"
         closeTimeoutMS={200}
         preventScroll={true}
@@ -163,7 +164,7 @@ const WorkOrders = () => {
         <WorkOrder
           workOrderId={router.query.workOrderId as string}
           afterDelete={() => fetchWorkOrders(true)}
-          handleCloseWorkOrderModal={() => router.push('/work-orders')}
+          handleCloseWorkOrderModal={closeWOModalRefetch}
           isMobile={isMobile}
         />
       </Modal>

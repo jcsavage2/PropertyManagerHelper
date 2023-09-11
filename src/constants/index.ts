@@ -52,18 +52,4 @@ export const PTE = {
   NO: 'No',
 };
 
-export const EVENTS = {
-  CHAT: 'CHAT',
-  UPDATE: 'UPDATE', //Creation, Deletion, Update(Technician, StatusType, etc)
-  COMMENT: 'COMMENT',
-}
-
-export const UPDATE_TYPE = {
-  CREATED: 'CREATED',
-  DELETED: 'DELETED',
-  ASSIGNED_TO: 'ASSIGNED_TO',
-  UNASSIGNED: 'UNASSIGNED',
-  STATUS: 'STATUS',
-}
-
 export const PAGE_SIZE = 20;
