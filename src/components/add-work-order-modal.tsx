@@ -84,7 +84,7 @@ export const AddWorkOrderModal = ({
         setSubmitWorkOrderLoading(true);
 
         //get tenant primary property
-        const getTenantResponse = await axios.post('/api/get-user', { email: tenantEmail, userType: ENTITIES.TENANT } as GetUser);
+        const getTenantResponse = await axios.post('/api/get-user', { email: tenantEmail } as GetUser);
         const tenant = JSON.parse(getTenantResponse.data.response) as ITenant;
         const addressMap: Map<string, any> = tenant.addresses;
         let primaryAddress: any;
