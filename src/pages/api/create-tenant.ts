@@ -1,6 +1,5 @@
 import { Data } from "@/database";
 import { PropertyEntity } from "@/database/entities/property";
-import { TenantEntity } from "@/database/entities/tenant";
 import { NextApiRequest, NextApiResponse } from "next";
 import sendgrid from "@sendgrid/mail";
 import { UserEntity } from "@/database/entities/user";
@@ -13,6 +12,7 @@ export type CreateTenantBody = {
   unit?: string;
   state: string;
   city: string;
+  pmName: string;
   country: "US" | "CA";
   postalCode: string;
   numBeds: number;
@@ -29,7 +29,8 @@ export type CreateTenantBody = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const body = req.body as CreateTenantBody;
-    const { pmEmail,
+    const {
+      pmEmail,
       tenantEmail,
       tenantName,
       organization,
