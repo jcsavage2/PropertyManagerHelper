@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { useDevice } from '@/hooks/use-window-size';
 import * as xlsx from 'xlsx';
@@ -163,9 +163,9 @@ export const ImportTenantsModal = ({
 
   const processTenantFile = useCallback(
     async (parsed: any[]) => {
-      if (!user?.email || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-        alert('User must be a property manager to import tenants');
-        return
+      if (!user || !user.email || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
+        alert('User must be a property manager part of an organization to import tenants');
+        return;
       }
       parsed.forEach((row: any, index: number) => {
         const {
@@ -207,6 +207,8 @@ export const ImportTenantsModal = ({
           numBaths,
           createNewProperty: true,
           propertyUUId: uuid(),
+          organization: user!.organization!,
+          organizationName: user!.organizationName!,
           error: missingFields.length > 0 ? `Missing required field(s): {${missingFields}}` : undefined,
         };
         setUploadList((prev) => [...prev, tenant]);
@@ -216,9 +218,9 @@ export const ImportTenantsModal = ({
   );
 
   const handleImportTenants = async () => {
-    if (!user?.email || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-      alert('User must be a property manager to import tenants');
-      return
+    if (!user || !user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
+      alert('User must be a property manager in an organization to import tenants');
+      return;
     }
     setImportTenantsLoading(true);
     setImportTenantProgress(0);
@@ -248,10 +250,12 @@ export const ImportTenantsModal = ({
       onClose();
       toast.success(`${uploadList.length} tenants successfully created!`, {
         position: toast.POSITION.TOP_CENTER,
+        draggable: false,
       });
     } else {
       toast.error(`Error uploading ${errorList.length} tenants. Please try again`, {
         position: toast.POSITION.TOP_CENTER,
+        draggable: false,
       });
     }
     onSuccessfulAdd();

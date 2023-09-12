@@ -1,13 +1,13 @@
-import { Events } from "@/constants";
-import { Data } from "@/database";
-import { ENTITY_KEY } from "@/database/entities";
-import { EventEntity } from "@/database/entities/event";
-import { WorkOrderEntity } from "@/database/entities/work-order";
-import { SendEmailApiRequest } from "@/types";
-import { deconstructKey, generateKey } from "@/utils";
-import sendgrid from "@sendgrid/mail";
-import { NextApiRequest, NextApiResponse } from "next";
-import { v4 as uuid } from "uuid";
+import { Events, STATUS } from '@/constants';
+import { Data } from '@/database';
+import { ENTITY_KEY } from '@/database/entities';
+import { EventEntity } from '@/database/entities/event';
+import { WorkOrderEntity } from '@/database/entities/work-order';
+import { SendEmailApiRequest } from '@/types';
+import { deconstructKey, generateKey } from '@/utils';
+import sendgrid from '@sendgrid/mail';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { v4 as uuid } from 'uuid';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
@@ -15,7 +15,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
-    const { address,
+    const {
+      address,
       city,
       permissionToEnter,
       country,
@@ -28,6 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       tenantEmail,
       organization,
       tenantName,
+      pmEmail,
     } = body;
 
     const woId = uuid();
@@ -38,15 +40,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       address,
       city,
       permissionToEnter,
-      country: country ?? "US",
-      issue: body.issueDescription || "No Issue Description",
-      location: body.issueLocation || "No Issue Location",
-      additionalDetails: body.additionalDetails || "No Additional Details",
+      country: country ?? 'US',
+      issue: body.issueDescription || 'No Issue Description',
+      location: body.issueLocation || 'No Issue Location',
+      additionalDetails: body.additionalDetails || '',
       postalCode,
-      propertyManagerEmail: body.pmEmail,
+      pmEmail, // If the propertyManagerEmail is provided, then the WO was created by a PM and we can use propertyManagerEmail
       state,
-      ...(organization && { organization: deconstructKey(organization) }),
-      status: "TO_DO",
+      organization,
+      status: STATUS.TO_DO,
       createdBy: creatorEmail,
       createdByType,
       // If the tenantEmail/tenantName is not provided, then the WO was created by a tenant and we can use creatorEmail and creatorName
@@ -55,14 +57,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       unit,
     });
 
-
-
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
 
     /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
-      throw new Error("missing SENDGRID_API_KEY env variable.");
+      throw new Error('missing SENDGRID_API_KEY env variable.');
     }
     sendgrid.setApiKey(apiKey);
 
@@ -72,18 +72,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     await eventEntity.create({
       workOrderId: woId,
       updateType: Events.STATUS_UPDATE,
-      updateDescription: "Work Order Created",
+      updateDescription: 'Work Order Created',
       updateMadeBy: creatorEmail,
     });
 
-
+    const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName);
     for (const message of body.messages) {
       // Create a comment for each existing comment so the Work Order has context.
+      console.log(message);
       await eventEntity.create({
         workOrderId: deconstructKey(workOrder?.pk),
         updateType: Events.COMMENT_UPDATE,
-        updateDescription: message.content ?? "",
-        updateMadeBy: message.role === "user" ? body.tenantEmail ?? "" : message.role
+        updateDescription: message.content ?? '',
+        updateMadeBy: message.role === 'user' ? tenantDisplayName : "Pillar Assistant",
       });
     }
     const ccString = (body.createdByType === "TENANT" && creatorEmail !== body.pmEmail) ? creatorEmail.toLowerCase() : "";
@@ -91,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
-      from: "pillar@pillarhq.co", // The Email from the company
+      from: "pillar@pillarhq.co",
       subject: `Work Order Request for ${body.unit ? "unit " + body.unit : body.address}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
@@ -149,11 +150,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             </tr>
             <tr>
               <td>Issue Location</td>
-              <td>${body.issueLocation ?? "None provided"}</td>
+              <td>${body.issueLocation ?? 'None provided'}</td>
             </tr>
             <tr>
               <td>Additional Details</td>
-              <td>${body.additionalDetails ?? "None provided"}</td>
+              <td>${body.additionalDetails ?? 'None provided'}</td>
             </tr>
             <tr>
               <td>Permission To Enter</td>
@@ -165,7 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             </tr>
             <tr>
               <td>Unit</td>
-              <td>${body.unit ?? "No Unit"}</td>
+              <td>${body.unit ?? 'No Unit'}</td>
             </tr>
             <tr>
               <td>City</td>
@@ -182,7 +183,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
-            ${body.messages?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`).join(" ")}
+            ${body.messages
+          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+          .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -197,5 +200,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(error.statusCode || 500).json({ response: error.message });
   }
 
-  return res.status(200).json({ response: "Successfully sent email" });
+  return res.status(200).json({ response: 'Successfully sent email' });
 }

@@ -1,25 +1,20 @@
-import { Events } from "@/constants";
-import { Data } from "@/database";
-import { EventEntity } from "@/database/entities/event";
-import { WorkOrderEntity, WorkOrderStatus } from "@/database/entities/work-order";
-import { deconstructKey } from "@/utils";
-import { NextApiRequest, NextApiResponse } from "next";
-import sendgrid from "@sendgrid/mail";
+import { Events, PTE_Type, Status } from '@/constants';
+import { Data } from '@/database';
+import { EventEntity } from '@/database/entities/event';
+import { WorkOrderEntity } from '@/database/entities/work-order';
+import { deconstructKey } from '@/utils';
+import { NextApiRequest, NextApiResponse } from 'next';
+import sendgrid from '@sendgrid/mail';
 
 type UpdateWorkOrderApiRequest = {
   pk: string;
   sk: string;
   email: string; //email of the current user who made the update
-  status: WorkOrderStatus;
-  permissionToEnter?: "yes" | "no";
+  status: Status;
+  permissionToEnter?: PTE_Type;
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-
-
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
@@ -38,7 +33,7 @@ export default async function handler(
       pk,
       sk,
       status,
-      ...(permissionToEnter && { permissionToEnter })
+      ...(permissionToEnter && { permissionToEnter }),
     });
 
     //Spawn new event on status change

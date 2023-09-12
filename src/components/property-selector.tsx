@@ -1,18 +1,18 @@
-import { IProperty } from "@/database/entities/property";
-import axios from "axios";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import Select from "react-select";
-import { LoadingSpinner } from "./loading-spinner/loading-spinner";
-import { GetPropertiesForPropertyManagerApiRequest } from "@/pages/api/get-all-properties-for-pm";
+import { IProperty } from '@/database/entities/property';
+import axios from 'axios';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import Select from 'react-select';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { GetPropertiesApiRequest } from '@/pages/api/get-all-properties';
 
 const PropertySelector = ({
   selectedProperty,
   setSelectedProperty,
-  email,
+  orgId,
 }: {
   selectedProperty: IProperty | null;
   setSelectedProperty: Dispatch<SetStateAction<IProperty | null>>;
-  email: string;
+  orgId?: string;
 }) => {
   const [properties, setProperties] = useState<IProperty[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
@@ -23,23 +23,29 @@ const PropertySelector = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    //TOD: add try catch plus error handling
     async function getProperties() {
-      if (!email || !email.length) {
-        return;
-      }
       setLoading(true);
+      try {
+        if (!orgId || !orgId.length) {
+          throw new Error('Must provide either email or orgId to fetch properties');
+        }
 
-      const { data } = await axios.post("/api/get-all-properties-for-pm", {
-        pmEmail: email,
-      } as GetPropertiesForPropertyManagerApiRequest);
-      if (data.response) {
-        const parsed: IProperty[] = JSON.parse(data.response);
-        setProperties(parsed);
+        const { data } = await axios.post('/api/get-all-properties', {
+          startKey: undefined,
+          orgId: orgId,
+        } as GetPropertiesApiRequest);
+        const response = JSON.parse(data.response);
+        console.log({ response })
+        setProperties(response.properties);
+      } catch (err) {
+        console.log(err);
       }
+
       setLoading(false);
     }
     getProperties();
-  }, [email]);
+  }, [orgId]);
 
   const addressSet = new Set();
   const unitSet = new Set();
@@ -80,11 +86,11 @@ const PropertySelector = ({
   }, []);
 
   return (
-    <div className={`mt-2 mx-auto ${!selectedProperty ? "w-full" : "w-1/2"}`}>
+    <div className={`mt-2 mx-auto ${!selectedProperty ? 'w-full' : 'w-1/2'}`}>
       {!selectedProperty && (
         <div className="w-full">
           <label className="mt-5" htmlFor="address">
-            Street Address*{" "}
+            Street Address*{' '}
           </label>
           <Select
             className="basic-single"
@@ -99,7 +105,7 @@ const PropertySelector = ({
             options={addressOptions as { value: string; label: string }[]}
           />
           <label className="mt-5" htmlFor="address">
-            Unit{" "}
+            Unit{' '}
           </label>
           <Select
             className="basic-single"
@@ -113,7 +119,7 @@ const PropertySelector = ({
             options={unitOptions as { value: string; label: string }[]}
           />
           <label className="mt-5" htmlFor="state">
-            State*{" "}
+            State*{' '}
           </label>
           <Select
             className="basic-single"
@@ -127,7 +133,7 @@ const PropertySelector = ({
             options={stateOptions as { value: string; label: string }[]}
           />
           <label className="mt-5" htmlFor="city">
-            City*{" "}
+            City*{' '}
           </label>
           <Select
             className="basic-single"
@@ -141,7 +147,7 @@ const PropertySelector = ({
             options={cityOptions as { value: string; label: string }[]}
           />
           <label className="mt-5" htmlFor="postalCode">
-            Zip*{" "}
+            Zip*{' '}
           </label>
           <Select
             className="basic-single mb-4"
@@ -174,13 +180,14 @@ const PropertySelector = ({
                 return (
                   <div key={o.pk + o.sk} onClick={() => setSelectedProperty(o)} className="bg-gray-200 rounded mt-1 p-1 cursor-pointer">
                     <p className="text-sm text-gray-800">
-                      {o.address.trim()} {o.unit ? " " + o.unit : ""}
+                      {o.address.trim()} {o.unit ? ' ' + o.unit : ''}
                     </p>
-                    <p className="text-sm font-light">{o.city + ", " + o.state + " " + o.postalCode}</p>
+                    <p className="text-sm font-light">{o.city + ', ' + o.state + ' ' + o.postalCode}</p>
                   </div>
                 );
               })
             : null}
+          {filteredOptions.length === 0 && !selectedProperty && <p className="text-base text-red-500 text-center">Sorry, no properties found. Try creating a property first.</p>}
         </>
       )}
 

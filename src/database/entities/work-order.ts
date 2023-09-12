@@ -1,12 +1,19 @@
-import { Entity } from "dynamodb-toolbox";
-import { ENTITIES, ENTITY_KEY, StartKey } from ".";
-import { INDEXES, PillarDynamoTable } from "..";
-import { generateKey } from "@/utils";
-import { UserType } from "./user";
+import { Entity } from 'dynamodb-toolbox';
+import { ENTITIES, ENTITY_KEY, StartKey } from '.';
+import { INDEXES, PillarDynamoTable } from '..';
+import { generateKey } from '@/utils';
+import { UserType } from './user';
+import { PAGE_SIZE, PTE_Type, STATUS, STATUS_KEY, Status } from '@/constants';
+import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 
-export interface IGetAllWorkOrdersForUserProps { email: string; userType: UserType; orgId?: string; };
+export interface IGetAllWorkOrdersForUserProps {
+  email: string;
+  userType: UserType;
+  orgId?: string;
+  startKey: StartKey;
+  statusFilter: Record<Status, boolean>;
+}
 
-export type WorkOrderStatus = "COMPLETE" | "TO_DO";
 type CreateWorkOrderProps = {
   uuid: string;
   address: string;
@@ -16,13 +23,13 @@ type CreateWorkOrderProps = {
   createdBy: string;
   createdByType: UserType;
   state: string;
-  permissionToEnter: "yes" | "no";
-  organization?: string;
+  permissionToEnter: PTE_Type;
+  organization: string;
   city: string;
   country: string;
   postalCode: string;
-  propertyManagerEmail: string;
-  status: WorkOrderStatus;
+  pmEmail: string;
+  status: Status;
   issue: string;
   location: string;
   additionalDetails: string;
@@ -35,16 +42,6 @@ export type PropertyAddress = {
   state: string;
   postalCode: string;
   country: string;
-};
-
-type AssignTechnicianProps = {
-  technicianEmail: string;
-  workOrderId: string;
-  address: PropertyAddress;
-  status: IWorkOrder["status"];
-  issueDescription: string;
-  permissionToEnter: "yes" | "no";
-  pmEmail: string;
 };
 
 export interface IWorkOrder {
@@ -63,43 +60,43 @@ export interface IWorkOrder {
   issue: string;
   location: string;
   additionalDetails: string;
-  permissionToEnter: "yes" | "no";
+  permissionToEnter: PTE_Type;
   tenantEmail: string;
   createdBy: string;
-  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
+  createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
   tenantName: string;
   address: PropertyAddress;
-  status: WorkOrderStatus;
+  status: Status;
   assignedTo: Set<string>;
-};
+}
 
 export class WorkOrderEntity {
   private workOrderEntity = new Entity({
     name: ENTITIES.WORK_ORDER,
     attributes: {
-      pk: { partitionKey: true },
-      sk: { sortKey: true },
-      GSI1PK: { type: "string" }, //PM email
-      GSI1SK: { type: "string" },
-      GSI2PK: { type: "string" }, //Tenant email
-      GSI2SK: { type: "string" },
-      GSI3PK: { type: "string" }, //Technician email
-      GSI3SK: { type: "string" },
-      GSI4PK: { type: "string" }, //Org Id 
-      GSI4SK: { type: "string" },
-      permissionToEnter: { type: "string" },
-      pmEmail: { type: "string" },
-      organization: { type: "string" },
-      issue: { type: "string" },
-      location: { type: "string" },
-      additionalDetails: { type: "string" },
-      tenantEmail: { type: "string" },
-      tenantName: { type: "string" },
-      address: { type: "map" },
-      status: { type: "string" },
-      createdBy: { type: "string" },
-      createdByType: { type: "string" },
-      assignedTo: { type: "set" },
+      pk: { partitionKey: true }, //woId
+      sk: { sortKey: true }, //woId
+      GSI1PK: { type: 'string' }, //PM email
+      GSI1SK: { type: 'string' }, //Status
+      GSI2PK: { type: 'string' }, //Tenant email
+      GSI2SK: { type: 'string' }, //Status
+      GSI3PK: { type: 'string' }, //Technician email
+      GSI3SK: { type: 'string' }, //Status
+      GSI4PK: { type: 'string' }, //Org Id
+      GSI4SK: { type: 'string' }, //Status
+      permissionToEnter: { type: 'string' },
+      pmEmail: { type: 'string' },
+      organization: { type: 'string' },
+      issue: { type: 'string' },
+      location: { type: 'string' },
+      additionalDetails: { type: 'string' },
+      tenantEmail: { type: 'string' },
+      tenantName: { type: 'string' },
+      address: { type: 'map' },
+      status: { type: 'string' },
+      createdBy: { type: 'string' },
+      createdByType: { type: 'string' },
+      assignedTo: { type: 'set' },
     },
     table: PillarDynamoTable,
   } as const);
@@ -110,7 +107,7 @@ export class WorkOrderEntity {
   public async create({
     uuid,
     address,
-    country = "US",
+    country = 'US',
     city,
     createdBy,
     createdByType,
@@ -118,43 +115,51 @@ export class WorkOrderEntity {
     postalCode,
     permissionToEnter,
     unit,
-    propertyManagerEmail,
+    pmEmail,
     status,
     issue,
     organization,
     location,
     additionalDetails,
     tenantName,
-    tenantEmail
+    tenantEmail,
   }: CreateWorkOrderProps) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
-    const result = await this.workOrderEntity.update({
-      pk: workOrderIdKey,
-      sk: workOrderIdKey,
-      GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, propertyManagerEmail.toLowerCase()),
-      GSI1SK: workOrderIdKey,
-      GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
-      GSI2SK: workOrderIdKey,
-      ...(organization && { GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, organization) }),
-      ...(organization && { GSI4SK: workOrderIdKey }),
-      permissionToEnter,
-      pmEmail: propertyManagerEmail.toLowerCase(),
-      createdBy: createdBy.toLowerCase(),
-      createdByType,
-      tenantEmail,
-      status,
-      tenantName,
-      address: this.generateAddress({ address, country, city, state, postalCode, unit }),
-      issue: issue.toLowerCase(),
-      organization,
-      location,
-      additionalDetails,
-    }, { returnValues: "ALL_NEW" });
-    return result?.Attributes;
+
+    //Construct status key for TODO or COMPLETE status, we need to be able to separate TODO/COMPLETE from DELETED status
+    //TODO and COMPLETE require a "STATUS#" prefix, while DELETED does not
+    //This allows us to query for all work orders with any valid status, without getting deleted work orders
+    const statusKey = generateKey(STATUS_KEY, status);
+
+    const result = await this.workOrderEntity.update(
+      {
+        pk: workOrderIdKey,
+        sk: workOrderIdKey,
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail.toLowerCase()),
+        GSI1SK: statusKey,
+        GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
+        GSI2SK: statusKey,
+        GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, organization),
+        GSI4SK: statusKey,
+        permissionToEnter,
+        pmEmail: pmEmail.toLowerCase(),
+        createdBy: createdBy.toLowerCase(),
+        createdByType,
+        tenantEmail,
+        tenantName,
+        status: statusKey,
+        address: this.generateAddress({ address, country, city, state, postalCode, unit }),
+        issue: issue.toLowerCase(),
+        organization,
+        location,
+        additionalDetails,
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return result.Attributes;
   }
 
-  public async get({ pk, sk }:
-    { pk: string; sk: string; }) {
+  public async get({ pk, sk }: { pk: string; sk: string; }) {
     const params = {
       pk,
       sk,
@@ -163,15 +168,29 @@ export class WorkOrderEntity {
     return result;
   }
 
+  //Soft delete work order
+  public async delete({ pk, sk }: { pk: string; sk: string; }) {
+    const result = await this.workOrderEntity.update(
+      {
+        pk: pk,
+        sk: sk,
+        status: STATUS.DELETED,
+        GSI1SK: STATUS.DELETED,
+        GSI2SK: STATUS.DELETED,
+        GSI4PK: STATUS.DELETED,
+      },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+    );
+    return result;
+  }
+
   /**
-   * 
+   *
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
-  public async getAllForUser({ email, userType, orgId }: IGetAllWorkOrdersForUserProps) {
-    let startKey: StartKey;
+  public async getAllForUser({ email, userType, orgId, startKey, statusFilter }: IGetAllWorkOrdersForUserProps) {
     const workOrders: IWorkOrder[] = [];
-
-    let pk: string = "";
+    let pk: string = '';
     let index: undefined | string;
 
     if (orgId) {
@@ -179,54 +198,56 @@ export class WorkOrderEntity {
       index = INDEXES.GSI4;
     } else {
       switch (userType) {
-        case "PROPERTY_MANAGER":
+        case ENTITIES.PROPERTY_MANAGER:
           pk = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
           index = INDEXES.GSI1;
           break;
-        case "TECHNICIAN":
+        case ENTITIES.TECHNICIAN:
           pk = generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, email.toLowerCase());
           index = INDEXES.GSI3;
           break;
-        case "TENANT":
+        case ENTITIES.TENANT:
           pk = generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
           index = INDEXES.GSI2;
           break;
         default:
-          throw new Error("No user type or organization sent when querying work orders");
+          throw new Error('No user type or organization sent when querying work orders');
       }
     }
 
+    let remainingWOToFetch = PAGE_SIZE;
+
     do {
-      try {
-        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
-          pk,
-          {
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.WORK_ORDER}#`,
-            ...(index && { index }),
-          }
-        ));
-        startKey = LastEvaluatedKey as StartKey;
-        workOrders.push(...(Items ?? []) as IWorkOrder[]);
-      } catch (err) {
-        console.log({ err });
-      }
-    } while (!!startKey);
-    return workOrders;
+      const options = {
+        ...(statusFilter.COMPLETE && !statusFilter.TO_DO && { eq: generateKey(STATUS_KEY, STATUS.COMPLETE) }),
+        ...(!statusFilter.COMPLETE && statusFilter.TO_DO && { eq: generateKey(STATUS_KEY, STATUS.TO_DO) }),
+        ...(statusFilter.COMPLETE && statusFilter.TO_DO && { beginsWith: STATUS_KEY }),
+        ...(!statusFilter.COMPLETE && !statusFilter.TO_DO && { eq: STATUS.DELETED }),
+        limit: remainingWOToFetch,
+        reverse: true,
+        ...(index && { index }),
+        ...(startKey && { startKey }),
+      };
+      const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(pk, options);
+      startKey = LastEvaluatedKey as StartKey;
+      remainingWOToFetch -= Items?.length ?? 0;
+      workOrders.push(...((Items ?? []) as IWorkOrder[]));
+    } while (!!startKey && remainingWOToFetch > 0);
+    return { workOrders, startKey };
   }
 
-  public async update({ pk, status, permissionToEnter }: { pk: string, sk: string; status: WorkOrderStatus; permissionToEnter?: "yes" | "no"; }) {
+  //Update in a loop to ensure we update the records for all companion rows that map technician to WO(assigned technicians)
+  public async update({ pk, status, permissionToEnter }: { pk: string; sk: string; status: Status; permissionToEnter?: PTE_Type; }) {
     let startKey: StartKey;
     const workOrders = [];
     try {
       do {
         try {
           const { Items, LastEvaluatedKey } = await this.workOrderEntity.query(pk, {
-            limit: 20,
+            limit: PAGE_SIZE,
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}`,
-            startKey
+            startKey,
           });
           startKey = LastEvaluatedKey as StartKey;
           Items?.length && workOrders.push(...Items);
@@ -236,13 +257,20 @@ export class WorkOrderEntity {
       } while (!!startKey);
 
       let result = null;
+      const statusKey = status === STATUS.DELETED ? status : generateKey(STATUS_KEY, status);
       for (const workOrder of workOrders) {
-        result = await this.workOrderEntity.update({
-          pk: workOrder.pk,
-          sk: workOrder.sk,
-          ...(status && { status }),
-          ...(permissionToEnter && { permissionToEnter })
-        }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
+        result = await this.workOrderEntity.update(
+          {
+            pk: workOrder.pk,
+            sk: workOrder.sk,
+            ...(status && { status: statusKey }),
+            ...(status && { GSI1SK: statusKey }),
+            ...(status && { GSI2SK: statusKey }),
+            ...(status && { GSI4PK: statusKey }),
+            ...(permissionToEnter && { permissionToEnter }),
+          },
+          { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+        );
       }
       return result?.Attributes;
     } catch (err) {
@@ -251,13 +279,15 @@ export class WorkOrderEntity {
   }
 
   public async assignTechnician({
+    organization,
     workOrderId,
     technicianEmail,
     address,
     status,
     issueDescription,
     permissionToEnter,
-    pmEmail }: AssignTechnicianProps) {
+    pmEmail,
+  }: AssignTechnicianBody) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       // Create companion row for the technician
@@ -266,27 +296,29 @@ export class WorkOrderEntity {
         sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
         address: this.generateAddress(address),
         GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
-        GSI3SK: workOrderIdKey,
+        GSI3SK: status,
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
         assignedTo: {
-          $add: [technicianEmail.toLowerCase()]
+          $add: [technicianEmail.toLowerCase()],
         },
         pmEmail,
-        status
+        status,
+        organization
       });
 
-      const result = await this.workOrderEntity.update({
-        pk: workOrderIdKey,
-        sk: workOrderIdKey,
-        assignedTo: {
-          $add: [technicianEmail.toLowerCase()]
-        }
-      }, { returnValues: "ALL_NEW" });
+      const result = await this.workOrderEntity.update(
+        {
+          pk: workOrderIdKey,
+          sk: workOrderIdKey,
+          assignedTo: {
+            $add: [technicianEmail.toLowerCase()],
+          },
+        },
+        { returnValues: 'ALL_NEW' }
+      );
 
       return result.Attributes ?? null;
-
-
     } catch (err) {
       console.log({ err });
     }
@@ -295,6 +327,7 @@ export class WorkOrderEntity {
   public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
     try {
+      //Delete relationship between WO and technician
       await this.workOrderEntity.delete({
         pk: key,
         sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
@@ -308,7 +341,7 @@ export class WorkOrderEntity {
             $delete: [technicianEmail.toLowerCase()],
           },
         },
-        { returnValues: "ALL_NEW" }
+        { returnValues: 'ALL_NEW' }
       );
       return result;
     } catch (err) {
@@ -332,8 +365,12 @@ export class WorkOrderEntity {
     unit?: string;
   }) {
     return {
-      address, unit, city, state, postalCode, country
+      address,
+      unit,
+      city,
+      state,
+      postalCode,
+      country,
     };
   }
-
 }

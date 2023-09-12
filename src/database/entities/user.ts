@@ -1,13 +1,15 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { generateAddress, generateKey, toTitleCase } from '@/utils';
-
+import { generateAddress, generateKey } from '@/utils';
+import { PAGE_SIZE } from '@/constants';
+import { INVITE_STATUS, InviteStatusType } from '@/utils/user-types';
 
 interface IBaseUser {
   pk: string;
   sk: string;
   email: string;
+  name: string;
 }
 
 interface ICreatePMUser extends IBaseUser {
@@ -19,17 +21,18 @@ interface ICreatePMUser extends IBaseUser {
 export interface ICreateTechnician {
   technicianName: string;
   technicianEmail: string;
-  status?: "JOINED" | "INVITED";
+  status?: InviteStatusType;
   pmEmail: string;
   organization: string;
-};
+  organizationName: string;
+}
 
 interface ICreatePMUser extends IBaseUser {
   pmEmail: string;
   pmName: string;
   organization?: string;
   organizationName?: string;
-};
+}
 
 interface ICreateUser {
   email: string;
@@ -39,61 +42,61 @@ interface ICreateTenant {
   pmEmail: string;
   tenantEmail: string;
   tenantName: string;
-  address: string,
-  organization?: string,
-  country: "US" | "CA",
-  city: string,
-  state: string,
-  postalCode: string,
+  address: string;
+  organization: string;
+  organizationName: string;
+  country: 'US' | 'CA';
+  city: string;
+  state: string;
+  postalCode: string;
   unit?: string;
   propertyUUId: string;
   numBeds: number;
   numBaths: number;
 }
 
-export type UserType = "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
+export type UserType = 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
 
 export interface IUser extends IBaseUser {
-  GSI1PK?: string, //PM email
-  GSI1SK?: string,
+  GSI1PK?: string; //PM email
+  GSI1SK?: string;
   addresses: Record<string, any>;
-  organization?: string,
-  organizationName?: string,
+  organization?: string;
+  organizationName?: string;
   pmEmail?: string;
   pmName?: string;
-  roles: Array<"TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN">,
-  status?: string;
-  technicianEmail?: { type: "string"; };
+  roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
+  status?: InviteStatusType;
+  technicianEmail?: { type: 'string' };
   technicianName?: string;
-  technicians: { type: "map"; },
+  technicians: { type: 'map' };
   tenantEmail?: string;
   tenantName?: string;
-  tenants: { type: "map"; },
+  tenants: { type: 'map' };
   userType?: string;
 }
 
 export const userRoles = {
-  TECHNICIAN: "TECHNICIAN", // Ability to update Work Orders
-  PROPERTY_MANAGER: "PROPERTY_MANAGER", // Ability to Add New Tenants, 
-  TENANT: "TENANT", // Ability to Create and Modify Work Orders
-  ORG_OWNER: "ORG_OWNER" // Ability to add PMs, See Org-View of outstanding Work Orders, Technicians, etc. 
+  TECHNICIAN: 'TECHNICIAN', // Ability to update Work Orders
+  PROPERTY_MANAGER: 'PROPERTY_MANAGER', // Ability to Add New Tenants,
+  TENANT: 'TENANT', // Ability to Create and Modify Work Orders
+  ORG_OWNER: 'ORG_OWNER', // Ability to add PMs, See Org-View of outstanding Work Orders, Technicians, etc.
 } as const;
 
-
 export class UserEntity {
-
-
   /**
    * Creates as new base user entity with no permissions.
    */
-  public async createBaseUser(
-    { email }: ICreateUser) {
+  public async createBaseUser({ email }: ICreateUser) {
     try {
-      const result = await this.userEntity.update({
-        pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-        status: "CREATED"
-      }, { returnValues: "ALL_NEW" });
+      const result = await this.userEntity.update(
+        {
+          pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
+          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+          status: INVITE_STATUS.CREATED,
+        },
+        { returnValues: 'ALL_NEW' }
+      );
       return result.Attributes;
     } catch (err) {
       console.log({ err });
@@ -102,38 +105,57 @@ export class UserEntity {
 
   /**
    * If user does not already exist, create a new user and give them tenant permissions.
-   * If the user does already exist, update them with the appropriate roles + metadata. 
+   * If the user does already exist, update them with the appropriate roles + metadata.
    */
-  public async createTenant(
-    { pmEmail, tenantName, organization, tenantEmail, address, country, city, state, postalCode, unit, propertyUUId, numBeds, numBaths }: ICreateTenant) {
+  public async createTenant({
+    pmEmail,
+    tenantName,
+    organization,
+    organizationName,
+    tenantEmail,
+    address,
+    country,
+    city,
+    state,
+    postalCode,
+    unit,
+    propertyUUId,
+    numBeds,
+    numBaths,
+  }: ICreateTenant) {
     try {
       const lowerCasePMEmail = pmEmail.toLowerCase();
       const lowerCaseTenantEmail = tenantEmail.toLowerCase();
-      const tenant = await this.userEntity.update({
-        pk: generateKey(ENTITY_KEY.USER, lowerCaseTenantEmail),
-        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-        pmEmail: lowerCasePMEmail,
-        roles: { $add: [userRoles.TENANT] },
-        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail.toLowerCase()),
-        GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-        tenantEmail: tenantEmail.toLowerCase(),
-        tenantName,
-        organization,
-        status: "INVITED",
-        userType: ENTITIES.TENANT,
-        addresses: generateAddress({
-          propertyUUId,
-          address,
-          country,
-          city,
-          state,
-          postalCode,
-          unit,
-          isPrimary: true,
-          numBaths,
-          numBeds
-        }),
-      }, { returnValues: "ALL_NEW" });
+      const tenant = await this.userEntity.update(
+        {
+          pk: generateKey(ENTITY_KEY.USER, lowerCaseTenantEmail),
+          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+          pmEmail: lowerCasePMEmail,
+          roles: { $add: [userRoles.TENANT] },
+          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, lowerCasePMEmail),
+          GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
+          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization.toLowerCase()),
+          GSI4SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
+          tenantEmail: tenantEmail.toLowerCase(),
+          tenantName,
+          organization,
+          organizationName,
+          status: INVITE_STATUS.INVITED,
+          addresses: generateAddress({
+            propertyUUId,
+            address,
+            country,
+            city,
+            state,
+            postalCode,
+            unit,
+            isPrimary: true,
+            numBaths,
+            numBeds,
+          }),
+        },
+        { returnValues: 'ALL_NEW' }
+      );
       return tenant.Attributes ?? null;
     } catch (err) {
       console.log({ err });
@@ -141,72 +163,62 @@ export class UserEntity {
     }
   }
 
+  //TODO: this isn't set up properly, will need to be updated on ticket where PM view is added
   public async createPropertyManager({ pmEmail, pmName, organization, organizationName }: ICreatePMUser) {
     try {
-      const result = await this.userEntity.update({
-        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, pmEmail.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
-        pmEmail: pmEmail.toLowerCase(),
-        pmName,
-        organization,
-        organizationName,
-        userType: ENTITIES.PROPERTY_MANAGER
-      }, { returnValues: "ALL_NEW" });
+      const result = await this.userEntity.update(
+        {
+          pk: generateKey(ENTITY_KEY.USER, pmEmail.toLowerCase()),
+          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+          roles: { $add: [userRoles.PROPERTY_MANAGER] },
+          organization,
+          organizationName,
+        },
+        { returnValues: 'ALL_NEW' }
+      );
       return result.Attributes;
     } catch (err) {
       console.log({ err });
     }
   }
 
-  public async createTechnician(
-    { technicianName, technicianEmail, pmEmail, organization }: ICreateTechnician) {
+  public async createTechnician({ technicianName, technicianEmail, pmEmail, organization, organizationName }: ICreateTechnician) {
     try {
-      /**
-       * We first need to attempt to create the Technician.
-       * If the technician already exists, we must only update the value of the propertyManager map and the GSI1PK/GSI1SK.
-       * We need one consistent profile though so that when the technician comes to the app, 
-       * they are able to fetch their profile with pk and sk (with their email alone).
-       * We must additionally create a companion row with the Property Manager email as the SK
-       * so we are able to perform the getAll technicians for 
-       */
-      const { Attributes } = await this.userEntity.update({
-        pk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail?.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail?.toLowerCase()),
-        organization,
-        ...(pmEmail && {
-          propertyManagers: {
-            $add: [pmEmail.toLowerCase()]
-          }
-        }),
-        status: "INVITED",
-        technicianEmail: technicianEmail.toLowerCase(),
-        technicianName: toTitleCase(technicianName),
-        userType: "TECHNICIAN",
-      }, { returnValues: "ALL_NEW" });
-
-
-      // Create Companion Row
-      await this.userEntity.update({
-        pk: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail?.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
-        technicianEmail: technicianEmail.toLowerCase(),
-        technicianName: toTitleCase(technicianName)
-      });
-      return Attributes ?? null;
+      const lowerCasePMEmail = pmEmail.toLowerCase();
+      const lowerCaseTechnicianEmail = technicianEmail.toLowerCase();
+      const tenant = await this.userEntity.update(
+        {
+          pk: generateKey(ENTITY_KEY.USER, lowerCaseTechnicianEmail),
+          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+          pmEmail: lowerCasePMEmail,
+          roles: { $add: [userRoles.TECHNICIAN] },
+          GSI2PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, lowerCasePMEmail),
+          GSI2SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
+          GSI3PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization.toLowerCase()),
+          GSI3SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
+          technicianEmail: lowerCaseTechnicianEmail,
+          technicianName,
+          organization,
+          organizationName,
+          status: INVITE_STATUS.INVITED,
+        },
+        { returnValues: 'ALL_NEW' }
+      );
+      return tenant.Attributes ?? null;
     } catch (err) {
       console.log({ err });
+      return null;
     }
   }
-
 
   /**
    * @returns User entity
    */
-  public async get({ email }: { email: string; }) {
+  public async get({ email }: { email: string }) {
     try {
       const params = {
         pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
-        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER)
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
       };
       const result = (await this.userEntity.get(params, { consistent: true })).Item ?? null;
       return result;
@@ -216,50 +228,119 @@ export class UserEntity {
     }
   }
 
-  public async getAllTenantsForProperyManager({ pmEmail }: { pmEmail: string; }) {
-    let startKey: StartKey;
-    const tenants = [];
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail?.toLowerCase());
-    do {
-      try {
-        const { Items, LastEvaluatedKey } = (await this.userEntity.query(
-          GSI1PK,
-          {
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.TENANT}#`,
-            index: INDEXES.GSI1,
-          }
-        ));
-        startKey = LastEvaluatedKey as StartKey;
-        Items?.length && tenants.push(...(Items));
-      } catch (err) {
-        console.log({ err });
-      }
-    } while (!!startKey);
-    return tenants;
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
+    const params = {
+      pk,
+      sk,
+    };
+    const result = await this.userEntity.delete(params);
+    return result;
   }
 
-  public async getAllTechniciansForProperyManager({ pmEmail }: { pmEmail: string; }) {
-    let startKey: StartKey;
-    const technicians = [];
+  //Delete a role from roles; also fix GSI1 if needed
+  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
+    //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
+    const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
+    const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
+    const shouldDeleteNonPMIndexing: boolean = (roleToDelete === userRoles.TENANT && !isTech) || (roleToDelete === userRoles.TECHNICIAN && !isTenant);
+
+    const params = {
+      pk,
+      sk,
+      ...(shouldDeleteNonPMIndexing && {
+        GSI1PK: null,
+        GSI1SK: null,
+        GSI2PK: null,
+        GSI2SK: null,
+        GSI3PK: null,
+        GSI3SK: null,
+        GSI4PK: null,
+        GSI4SK: null,
+        pmEmail: null,
+        pmName: null,
+        tenantName: null,
+        tenantEmail: null,
+        technicianName: null,
+        technicianEmail: null,
+      }),
+      roles: { $delete: [roleToDelete] },
+    };
+    const result = await this.userEntity.update(params);
+    return result;
+  }
+
+  public async getAllTenantsForOrg({
+    organization,
+    tenantSearchString,
+    startKey,
+  }: {
+    organization: string;
+    tenantSearchString: string | undefined;
+    startKey: StartKey;
+  }) {
+    const tenants = [];
+    const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization);
+    let remainingTenantsToFetch = PAGE_SIZE;
     do {
       try {
-        const { Items, LastEvaluatedKey } = await this.userEntity.query(
-          generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail?.toLowerCase()),
-          {
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.TECHNICIAN}#`,
-          }
-        );
+        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
+          limit: remainingTenantsToFetch,
+          reverse: true,
+          ...(tenantSearchString && {
+            filters: [
+              { attr: 'tenantName', contains: tenantSearchString },
+              { or: true, attr: 'tenantEmail', contains: tenantSearchString },
+            ],
+          }),
+          ...(startKey && { startKey }),
+          beginsWith: `${ENTITY_KEY.TENANT}`,
+          index: INDEXES.GSI4,
+        });
         startKey = LastEvaluatedKey as StartKey;
-        Items?.length && technicians.push(...Items);
+        remainingTenantsToFetch -= Items?.length ?? 0;
+        Items?.length && tenants.push(...Items);
       } catch (err) {
         console.log({ err });
       }
-    } while (!!startKey);
-    return technicians;
+    } while (!!startKey && remainingTenantsToFetch > 0);
+    return { tenants, startKey };
+  }
+
+  public async getAllTechniciansForOrg({
+    organization,
+    techSearchString,
+    startKey,
+  }: {
+    organization: string;
+    techSearchString: string | undefined;
+    startKey: StartKey;
+  }) {
+    let techs = [];
+    const GSI3PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization);
+    let remainingTechsToFetch = PAGE_SIZE;
+    do {
+      try {
+        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI3PK, {
+          limit: remainingTechsToFetch,
+          reverse: true,
+          ...(techSearchString && {
+            filters: [
+              { attr: 'technicianName', contains: techSearchString },
+              { or: true, attr: 'technicianEmail', contains: techSearchString },
+            ],
+          }),
+          ...(startKey && { startKey }),
+          beginsWith: `${ENTITY_KEY.TECHNICIAN}`,
+          index: INDEXES.GSI3,
+        });
+        startKey = LastEvaluatedKey as StartKey;
+        remainingTechsToFetch -= Items?.length ?? 0;
+        Items?.length && techs.push(...Items);
+      } catch (err) {
+        console.log({ err });
+      }
+    } while (!!startKey && remainingTechsToFetch > 0);
+    return { techs, startKey };
   }
 
   /**
@@ -269,7 +350,7 @@ export class UserEntity {
     tenantEmail,
     propertyUUId,
     address,
-    country = "US",
+    country = 'US',
     city,
     state,
     postalCode,
@@ -292,7 +373,7 @@ export class UserEntity {
       //get current address map
       const userAccount = await this.get({ email: tenantEmail });
       if (!userAccount) {
-        throw new Error("tenant.addAddress error: Tenant not found: {" + tenantEmail + "}");
+        throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
       }
       //@ts-ignore
       let newAddresses: Record<string, any> = userAccount.addresses;
@@ -305,9 +386,9 @@ export class UserEntity {
         {
           pk: generateKey(ENTITY_KEY.USER, tenantEmail.toLowerCase()),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          addresses: newAddresses
+          addresses: newAddresses,
         },
-        { returnValues: "ALL_NEW" }
+        { returnValues: 'ALL_NEW' }
       );
       return result;
     } catch (err) {
@@ -320,24 +401,30 @@ export class UserEntity {
     attributes: {
       pk: { partitionKey: true },
       sk: { sortKey: true },
-      addresses: { type: "map" },
-      GSI1PK: { type: "string" }, //PM email
-      GSI1SK: { type: "string" },
-      organization: { type: "string" },
-      organizationName: { type: "string" },
-      pmEmail: { type: "string" },
-      pmName: { type: "string" },
+      addresses: { type: 'map' },
+      GSI1PK: { type: 'string' }, //PM tenant
+      GSI1SK: { type: 'string' },
+      GSI2PK: { type: 'string' }, //PM technician
+      GSI2SK: { type: 'string' },
+      GSI3PK: { type: 'string' }, //Org technician
+      GSI3SK: { type: 'string' },
+      GSI4PK: { type: 'string' }, //Org tenant
+      GSI4SK: { type: 'string' },
+      organization: { type: 'string' },
+      organizationName: { type: 'string' },
+      pmEmail: { type: 'string' },
+      pmName: { type: 'string' },
       propertyManagers: {},
-      roles: { type: "set", required: true },
-      status: { type: "string", required: true },
-      technicianName: { type: "string" },
-      technicianEmail: { type: "string" },
-      technicians: { type: "map" },
-      tenantEmail: { type: "string" },
-      tenantName: { type: "string" },
-      tenants: { type: "map" },
-      userType: { type: "string" },
+      roles: { type: 'set', required: true },
+      status: { type: 'string', required: true },
+      technicianName: { type: 'string' },
+      technicianEmail: { type: 'string' },
+      technicians: { type: 'map' },
+      tenantEmail: { type: 'string' },
+      tenantName: { type: 'string' },
+      tenants: { type: 'map' },
+      userType: { type: 'string' },
     },
-    table: PillarDynamoTable
+    table: PillarDynamoTable,
   } as const);
 }

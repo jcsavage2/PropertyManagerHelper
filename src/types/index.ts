@@ -1,5 +1,5 @@
-import { ChatCompletionRequestMessage } from "openai";
-import { Events } from "../constants";
+import { ChatCompletionRequestMessage } from 'openai';
+import { Events, PTE_Type } from '../constants';
 
 export type ApiRequest = WorkOrder & {
   userMessage: string;
@@ -7,11 +7,12 @@ export type ApiRequest = WorkOrder & {
   messages: ChatCompletionRequestMessage[];
 };
 
-export type SendEmailApiRequest = UserInfo & IssueInformation & {
-  messages: ChatCompletionRequestMessage[];
-  pmEmail: string;
-  organization?: string;
-};
+export type SendEmailApiRequest = UserInfo &
+  IssueInformation & {
+    messages: ChatCompletionRequestMessage[];
+    pmEmail: string;
+    organization: string;
+  };
 
 export type AiJSONResponse = IssueInformation & {
   aiMessage: string;
@@ -26,11 +27,11 @@ export type UserInfo = {
   address: string;
   city: string;
   country?: string;
-  createdByType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN";
+  createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
   creatorEmail: string;
   creatorName: string;
   organization?: string;
-  permissionToEnter: "yes" | "no";
+  permissionToEnter: PTE_Type;
   postalCode: string;
   state: string;
   tenantEmail?: string;

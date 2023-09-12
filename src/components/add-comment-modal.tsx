@@ -1,11 +1,10 @@
-import { useUserContext } from "@/context/user";
-import axios from "axios";
-import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from "react";
+import axios from 'axios';
+import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
-import { CreateCommentBody } from "@/pages/api/create-comment";
-import { deconstructKey } from "@/utils";
-import { useSessionUser } from "@/hooks/auth/use-session-user";
+import { CreateCommentBody } from '@/pages/api/create-comment';
+import { deconstructKey } from '@/utils';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 const customStyles = {
   content: {
@@ -15,8 +14,8 @@ const customStyles = {
     bottom: 'auto',
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
-    width: "75%",
-    backgroundColor: 'rgba(255, 255, 255)'
+    width: '75%',
+    backgroundColor: 'rgba(255, 255, 255)',
   },
   overLay: {
     position: 'fixed',
@@ -24,8 +23,8 @@ const customStyles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(25, 255, 255, 0.75)'
-  }
+    backgroundColor: 'rgba(25, 255, 255, 0.75)',
+  },
 };
 
 export type AddCommentModalProps = {
@@ -36,7 +35,6 @@ export type AddCommentModalProps = {
 };
 
 export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddCommentModalIsOpen, onSuccessfulAdd }: AddCommentModalProps) => {
-
   const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
@@ -45,77 +43,72 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
 
   isBrowser && Modal.setAppElement('#work-order');
 
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState('');
 
-  const handleCommentChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    setComment(e.currentTarget.value);
-  }, [setComment]);
+  const handleCommentChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setComment(e.currentTarget.value);
+    },
+    [setComment]
+  );
 
   function closeModal() {
-    setComment("");
+    setComment('');
     setAddCommentModalIsOpen(false);
   }
 
-  const handleCreateNewComment: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
-    try {
-      event.preventDefault();
-      if (!user?.email) return;
-      const { data } = await axios.post("/api/create-comment", {
-        comment,
-        email: user?.email?.toLowerCase(),
-        workOrderId: deconstructKey(workOrderId)
-      } as CreateCommentBody);
-      const { response } = data;
-      const parsedUser = JSON.parse(response);
-      if (parsedUser.modified) {
-        toast.success("Comment Successfully Added");
-        onSuccessfulAdd();
-        setAddCommentModalIsOpen(false);
+  const handleCreateNewComment: FormEventHandler<HTMLFormElement> = useCallback(
+    async (event) => {
+      try {
+        event.preventDefault();
+        if (!user?.email) return;
+        const { data } = await axios.post('/api/create-comment', {
+          comment,
+          email: user?.email?.toLowerCase(),
+          workOrderId: deconstructKey(workOrderId),
+        } as CreateCommentBody);
+        const { response } = data;
+        const parsedUser = JSON.parse(response);
+        if (parsedUser.modified) {
+          toast.success('Comment Successfully Added', { draggable: false });
+          onSuccessfulAdd();
+          setAddCommentModalIsOpen(false);
+        }
+      } catch (err) {
+        console.log({ err });
       }
-    } catch (err) {
-      console.log({ err });
-    }
-  }, [
-    user,
-    onSuccessfulAdd,
-    comment,
-    workOrderId,
-    setAddCommentModalIsOpen]);
+    },
+    [user, onSuccessfulAdd, comment, workOrderId, setAddCommentModalIsOpen]
+  );
 
   return (
     <Modal
       isOpen={addCommentModalIsOpen}
-      onAfterOpen={() => { }}
+      onAfterOpen={() => {}}
       onRequestClose={closeModal}
       contentLabel="Add New Technician Modal"
       style={customStyles}
     >
       <div className="w-full text-right">
-        <button
-          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          onClick={closeModal}>
+        <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
           X Close
         </button>
       </div>
 
-      <form onSubmit={handleCreateNewComment} style={{ display: "grid" }}>
-        <label htmlFor='name'>What would you like to say? </label>
+      <form onSubmit={handleCreateNewComment} style={{ display: 'grid' }}>
+        <label htmlFor="name">What would you like to say? </label>
         <input
-          className='rounded px-1 border-solid border-2 border-slate-200'
+          className="rounded px-1 border-solid border-2 border-slate-200"
           id="comment"
           placeholder="Issue not as described; toilet was leaking from tank, not bowl."
-          type={"text"}
+          type={'text'}
           value={comment}
           onChange={handleCommentChange}
         />
-        <button
-          className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          type="submit"
-          disabled={!comment.length}
-        >
+        <button className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={!comment.length}>
           Add Comment
         </button>
       </form>
-    </Modal >
+    </Modal>
   );
 };

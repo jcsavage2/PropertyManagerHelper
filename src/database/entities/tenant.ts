@@ -1,8 +1,9 @@
-import { Entity } from "dynamodb-toolbox";
-import { ENTITIES, ENTITY_KEY, StartKey } from ".";
-import { INDEXES, PillarDynamoTable } from "..";
-import { generateAddress, generateKey } from "@/utils";
-import { GetCommandInput } from "@aws-sdk/lib-dynamodb";
+import { Entity } from 'dynamodb-toolbox';
+import { ENTITIES, ENTITY_KEY, StartKey } from '.';
+import { INDEXES, PillarDynamoTable } from '..';
+import { generateAddress, generateKey } from '@/utils';
+import { GetCommandInput } from '@aws-sdk/lib-dynamodb';
+import { PAGE_SIZE } from '@/constants';
 
 export interface ITenant {
   pk: string;
@@ -34,22 +35,22 @@ export type CreateTenantProps = {
 };
 
 export class TenantEntity {
-  private tenant: Entity;
+  private tenantEntity: Entity;
 
   constructor() {
-    this.tenant = new Entity({
+    this.tenantEntity = new Entity({
       name: ENTITIES.TENANT,
       attributes: {
         pk: { partitionKey: true },
         sk: { sortKey: true },
-        GSI1PK: { type: "string" }, //PM email
-        GSI1SK: { type: "string" },
-        pmEmail: { type: "string" },
-        status: { type: "string" },
-        tenantEmail: { type: "string" },
-        tenantName: { type: "string" },
-        userType: { type: "string" },
-        addresses: { type: "map" },
+        GSI1PK: { type: 'string' }, //PM email
+        GSI1SK: { type: 'string' },
+        pmEmail: { type: 'string' },
+        status: { type: 'string' },
+        tenantEmail: { type: 'string' },
+        tenantName: { type: 'string' },
+        userType: { type: 'string' },
+        addresses: { type: 'map' },
       },
       table: PillarDynamoTable,
     } as const);
@@ -73,7 +74,7 @@ export class TenantEntity {
     numBaths,
   }: CreateTenantProps) {
     try {
-      const result = await this.tenant.update(
+      const result = await this.tenantEntity.update(
         {
           pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
           sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
@@ -82,7 +83,7 @@ export class TenantEntity {
           tenantEmail: tenantEmail.toLowerCase(),
           tenantName,
           ...(pmEmail && { pmEmail: pmEmail?.toLowerCase() }),
-          status: "INVITED",
+          status: 'INVITED',
           userType: ENTITIES.TENANT,
           addresses: generateAddress({
             propertyUUId,
@@ -97,7 +98,7 @@ export class TenantEntity {
             numBaths,
           }),
         },
-        { returnValues: "ALL_NEW", strictSchemaCheck: true }
+        { returnValues: 'ALL_NEW', strictSchemaCheck: true }
       );
       return result;
     } catch (err) {
@@ -105,18 +106,27 @@ export class TenantEntity {
     }
   }
 
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
+    const params = {
+      pk,
+      sk,
+    };
+    const result = await this.tenantEntity.delete(params);
+    return result;
+  }
+
   /**
    *
    */
   public async createTenantCompanionRow({ organization, pmEmail, tenantEmail }: { organization?: string; pmEmail: string; tenantEmail: string }) {
     try {
-      const result = await this.tenant.update(
+      const result = await this.tenantEntity.update(
         {
           pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
           sk: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail.toLowerCase()),
           organization,
         },
-        { returnValues: "ALL_NEW" }
+        { returnValues: 'ALL_NEW' }
       );
       return result;
     } catch (err) {
@@ -134,17 +144,17 @@ export class TenantEntity {
   }: {
     tenantEmail: string;
     tenantName?: string;
-    status?: "INVITED" | "JOINED" | "REQUESTED_JOIN";
+    status?: 'INVITED' | 'JOINED' | 'REQUESTED_JOIN';
   }) {
     try {
-      const result = await this.tenant.update(
+      const result = await this.tenantEntity.update(
         {
           pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
           sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
           ...(tenantName && { tenantName }),
           ...(status && { status }),
         },
-        { returnValues: "ALL_NEW" }
+        { returnValues: 'ALL_NEW' }
       );
       return result;
     } catch (err) {
@@ -159,7 +169,7 @@ export class TenantEntity {
     tenantEmail,
     propertyUUId,
     address,
-    country = "US",
+    country = 'US',
     city,
     state,
     postalCode,
@@ -182,22 +192,22 @@ export class TenantEntity {
       //get current address map
       const tenantResponse: GetCommandInput | undefined = await this.get({ tenantEmail });
       if (!tenantResponse) {
-        throw new Error("tenant.addAddress error: Tenant not found: {" + tenantEmail + "}");
+        throw new Error('tenantEntity.addAddress error: Tenant not found: {' + tenantEmail + '}');
       }
       //@ts-ignore
       let addresses: Record<string, any> = tenantResponse.Item.addresses;
 
       //Add new address into the map
-      addresses[propertyUUId] = { address, unit, city, state, postalCode, country, isPrimary: false, numBeds, numBaths }
+      addresses[propertyUUId] = { address, unit, city, state, postalCode, country, isPrimary: false, numBeds, numBaths };
 
-      //Add the map with the new address back into the tenant record
-      const result = await this.tenant.update(
+      //Add the map with the new address back into the tenantEntity record
+      const result = await this.tenantEntity.update(
         {
           pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
           sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          addresses
+          addresses,
         },
-        { returnValues: "ALL_NEW" }
+        { returnValues: 'ALL_NEW' }
       );
       return result;
     } catch (err) {
@@ -214,30 +224,27 @@ export class TenantEntity {
         pk: generateKey(ENTITY_KEY.TENANT, tenantEmail.toLowerCase()),
         sk: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
       };
-      const result = await this.tenant.get(params, { consistent: false });
+      const result = await this.tenantEntity.get(params, { consistent: false });
       return result;
     } catch (err) {
       console.log({ err });
     }
   }
 
-  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string; }) {
+  public async getAllForPropertyManager({ propertyManagerEmail }: { propertyManagerEmail: string }) {
     let startKey: StartKey;
     const tenants: ITenant[] = [];
     const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, propertyManagerEmail?.toLowerCase());
     do {
       try {
-        const { Items, LastEvaluatedKey } = (await PillarDynamoTable.query(
-          GSI1PK,
-          {
-            limit: 20,
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.TENANT}#`,
-            index: INDEXES.GSI1,
-          }
-        ));
+        const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(GSI1PK, {
+          limit: PAGE_SIZE,
+          reverse: true,
+          beginsWith: `${ENTITY_KEY.TENANT}#`,
+          index: INDEXES.GSI1,
+        });
         startKey = LastEvaluatedKey as StartKey;
-        tenants.push(...(Items ?? []) as ITenant[]);
+        tenants.push(...((Items ?? []) as ITenant[]));
       } catch (err) {
         console.log({ err });
       }
