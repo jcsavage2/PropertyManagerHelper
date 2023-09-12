@@ -3,6 +3,8 @@ import { PropertyEntity } from '@/database/entities/property';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { UserEntity } from '@/database/entities/user';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
 
 export type CreateTenantBody = {
   tenantEmail: string;
@@ -27,6 +29,11 @@ export type CreateTenantBody = {
  * @returns `ContextUser` object.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as CreateTenantBody;
     const {

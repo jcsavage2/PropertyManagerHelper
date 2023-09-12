@@ -15,6 +15,7 @@ import { ENTITIES } from '@/database/entities';
 import { useDevice } from '@/hooks/use-window-size';
 import { PTE } from '@/constants';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
+import { v4 as uuidv4 } from 'uuid';
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -61,6 +62,7 @@ export const AddWorkOrderModal = ({
   const [issueLocation, setIssueLocation] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [submitWorkOrderLoading, setSubmitWorkOrderLoading] = useState(false);
+  const [woId, _setWoId] = useState(uuidv4());
 
   function closeModal() {
     setAddWorkOrderModalIsOpen(false);
@@ -107,6 +109,8 @@ export const AddWorkOrderModal = ({
           city: primaryAddress.city,
           postalCode: primaryAddress.postalCode,
           tenantEmail,
+          woId,
+          images: [],
           tenantName: tenant.tenantName,
           organization: user.organization,
         };

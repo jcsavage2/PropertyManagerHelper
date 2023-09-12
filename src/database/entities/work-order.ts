@@ -20,6 +20,7 @@ type CreateWorkOrderProps = {
   tenantEmail: string;
   tenantName: string;
   unit?: string;
+  images: string[];
   createdBy: string;
   createdByType: UserType;
   state: string;
@@ -59,6 +60,7 @@ export interface IWorkOrder {
   pmEmail: string;
   issue: string;
   location: string;
+  images: string[];
   additionalDetails: string;
   permissionToEnter: PTE_Type;
   tenantEmail: string;
@@ -87,6 +89,7 @@ export class WorkOrderEntity {
       permissionToEnter: { type: 'string' },
       pmEmail: { type: 'string' },
       organization: { type: 'string' },
+      images: { type: 'set' },
       issue: { type: 'string' },
       location: { type: 'string' },
       additionalDetails: { type: 'string' },
@@ -118,6 +121,7 @@ export class WorkOrderEntity {
     pmEmail,
     status,
     issue,
+    images,
     organization,
     location,
     additionalDetails,
@@ -147,6 +151,7 @@ export class WorkOrderEntity {
         createdByType,
         tenantEmail,
         tenantName,
+        ...(images.length && { images }),
         status: statusKey,
         address: this.generateAddress({ address, country, city, state, postalCode, unit }),
         issue: issue.toLowerCase(),

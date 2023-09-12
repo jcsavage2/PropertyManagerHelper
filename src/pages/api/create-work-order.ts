@@ -7,9 +7,15 @@ import { SendEmailApiRequest } from '@/types';
 import { deconstructKey, generateKey } from '@/utils';
 import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { v4 as uuid } from 'uuid';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
   try {
     const body = req.body as SendEmailApiRequest;
     const workOrderEntity = new WorkOrderEntity();
@@ -25,14 +31,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       creatorEmail,
       creatorName,
       unit,
+      images,
       createdByType,
       tenantEmail,
       organization,
       tenantName,
       pmEmail,
+      woId
     } = body;
-
-    const woId = uuid();
 
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
@@ -47,6 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       postalCode,
       pmEmail, // If the propertyManagerEmail is provided, then the WO was created by a PM and we can use propertyManagerEmail
       state,
+      images,
       organization,
       status: STATUS.TO_DO,
       createdBy: creatorEmail,

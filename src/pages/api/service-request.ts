@@ -6,6 +6,8 @@ import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { AiJSONResponse, ApiRequest } from "@/types";
 import chalk from "chalk";
 import { Data } from "@/database";
+import { getServerSession } from "next-auth";
+import { options } from "./auth/[...nextauth]";
 
 const config = new Configuration({
   apiKey: process.env.NEXT_PUBLIC_OPEN_AI_API_KEY,
@@ -18,12 +20,16 @@ const gpt_model = 'gpt-4-0613';
  * We have two flows we need to handle: gather issue info, then gather user info.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+
+  const session = await getServerSession(req, res, options);
+  if (!session) {
+    res.status(401);
+    return;
+  }
+
   const body = req.body as ApiRequest;
   const { userMessage, messages, unitInfo, ...workOrderData } = body;
   try {
-
-
-    console.log(chalk.yellow("\n User Message =============\n"), userMessage);
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo);
 
     const response = await openai.createChatCompletion({

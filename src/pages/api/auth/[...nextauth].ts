@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth, { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import Email from 'next-auth/providers/email';
 import { DynamoDBAdapter } from '@next-auth/dynamodb-adapter';
@@ -28,7 +28,7 @@ const client = DynamoDBDocument.from(new DynamoDB(DynamoDBClientConfig), {
 	},
 });
 
-export default NextAuth({
+export const options: NextAuthOptions = {
 	providers: [
 		Email({
 			server: `smtp://${emailUsername}:${emailPassword}@${emailHost}:${smtpPort}`,
@@ -61,4 +61,6 @@ export default NextAuth({
 	},
 	adapter: DynamoDBAdapter(client),
 	secret: process.env.NEXT_PUBLIC_JWT_SECRET,
-});
+};
+
+export default NextAuth(options);
