@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const authLink = `https://pillarhq.co/?authredirect=true`;
     await sendgrid.send({
       to: tenantEmail, // The Property Manager
-      from: "dylan@pillarhq.co", // The Email from the company
+      from: "pillar@pillarhq.co", // The Email from the company
       subject: `Create Your Account With Pillar Work Order Management`, // work order for address on MM-DD-YYYY
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">

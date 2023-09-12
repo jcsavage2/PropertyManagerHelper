@@ -141,7 +141,7 @@ export default function WorkOrderChatbot() {
     };
     const res = await axios.post("/api/create-work-order", body);
     if (res.status === 200) {
-      toast.success("Successfully Submitted Work Order!", {
+      toast.success("Successfully Submitted Work Order. An email has been sent to you as confirmation", {
         position: toast.POSITION.TOP_CENTER,
       });
     } else {

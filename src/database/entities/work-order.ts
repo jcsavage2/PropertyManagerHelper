@@ -150,7 +150,7 @@ export class WorkOrderEntity {
       location,
       additionalDetails,
     }, { returnValues: "ALL_NEW" });
-    return result.Attributes;
+    return result?.Attributes;
   }
 
   public async get({ pk, sk }:
@@ -244,7 +244,7 @@ export class WorkOrderEntity {
           ...(permissionToEnter && { permissionToEnter })
         }, { returnValues: "ALL_NEW", strictSchemaCheck: true });
       }
-      return result;
+      return result?.Attributes;
     } catch (err) {
       console.log({ err });
     }

@@ -86,12 +86,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         updateMadeBy: message.role === "user" ? body.tenantEmail ?? "" : message.role
       });
     }
+    const ccString = (body.createdByType === "TENANT" && creatorEmail !== body.pmEmail) ? creatorEmail.toLowerCase() : "";
 
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
-      cc: creatorEmail === body.pmEmail ? "mitchposk+emailMatch@gmail.com" : creatorEmail.toLowerCase(), // The Tenant
-      from: "dylan@pillarhq.co", // The Email from the company
-      subject: `Work Order Request for ${body.address + (body.unit ? " " + body.unit : "")}`,
+      ...(!!ccString && { cc: ccString }),
+      from: "pillar@pillarhq.co", // The Email from the company
+      subject: `Work Order Request for ${body.unit ? "unit " + body.unit : body.address}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
