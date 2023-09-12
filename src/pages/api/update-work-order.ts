@@ -44,6 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       updateMadeBy: email,
     });
 
+    const subject = `Work Order Status Update${updatedWorkOrder?.address?.unit ? ` for unit ${updatedWorkOrder?.address.unit}` : ""}`;
 
     // If work order was created by a tenant
     if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk) {
@@ -51,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,
         from: "pillar@pillarhq.co",
-        subject: `Work Order Complete${updatedWorkOrder?.address.unit && ` for unit ${updatedWorkOrder?.address.unit}`}`,
+        subject,
         html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html lang="en">
         <head>
@@ -99,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         
         <body>
           <div class="container" style="margin-left: 20px;margin-right: 20px;">
-            <h1>Work Order Completed ${updatedWorkOrder?.address.unit && `for unit ${updatedWorkOrder?.address.unit}`}</h1>
+            <h1>Work Order Status Update ${updatedWorkOrder?.address?.unit ? `for unit ${updatedWorkOrder?.address.unit}` : ""}</h1>
             <a href="${workOrderLink}">View Work Order in PILLAR</a>
             <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
               Regards,<br> Pillar Team
