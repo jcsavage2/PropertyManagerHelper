@@ -57,7 +57,7 @@ export const WorkOrdersTable = ({
             sk: wo.sk,
             issue: toTitleCase(wo.issue),
             tenantEmail,
-            status: deconstructKey(wo.status) || wo.status, //Don't deconstruct DELETED key
+            status: wo.status,
             address: addressString,
             created: formattedDate,
             tenantName: toTitleCase(tenantName),
