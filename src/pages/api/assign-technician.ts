@@ -10,6 +10,7 @@ import { options } from './auth/[...nextauth]';
 
 export type AssignTechnicianBody = {
   organization: string;
+  ksuID: string; //need to pass ksuID from original WO record
   technicianEmail: string;
   technicianName: string;
   workOrderId: string;
@@ -28,15 +29,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   try {
     const body = req.body as AssignTechnicianBody;
-    const { workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization } = body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization) {
-      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization' });
+    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization } = body;
+    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID) {
+      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization, ksuID' });
     }
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
 
     const assignedTechnician = await workOrderEntity.assignTechnician({
       organization,
+      ksuID,
       workOrderId: deconstructKey(workOrderId),
       address,
       technicianEmail,

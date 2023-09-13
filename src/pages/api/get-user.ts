@@ -5,11 +5,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 
-type UserType = (typeof ENTITIES)[keyof typeof ENTITIES];
-
 export type GetUser = {
   email: string;
-  userType: UserType;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
@@ -20,11 +17,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   try {
     const body = req.body as GetUser;
-    const { email, userType } = body;
-    let user;
-
+    const { email } = body;
     const userEntity = new UserEntity();
-    user = await userEntity.get({ email });
+    const user = await userEntity.get({ email });
     return res.status(200).json({ response: JSON.stringify(user) });
   } catch (error) { }
 }

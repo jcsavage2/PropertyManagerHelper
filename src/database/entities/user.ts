@@ -165,6 +165,10 @@ export class UserEntity {
     }
   }
 
+  public async updateInviteStatus({ pk, sk, status }: { pk: string; sk: string; status: InviteStatusType; }) {
+    return (await this.userEntity.update({ pk, sk, status }, { returnValues: "ALL_NEW" })).Attributes;
+  }
+
   public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: ICreatePMUser) {
     try {
       const lowerCaseUserEmail = userEmail.toLowerCase();
@@ -223,7 +227,7 @@ export class UserEntity {
   /**
    * @returns User entity
    */
-  public async get({ email }: { email: string }) {
+  public async get({ email }: { email: string; }) {
     try {
       const params = {
         pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
@@ -237,7 +241,7 @@ export class UserEntity {
     }
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string }) {
+  public async delete({ pk, sk }: { pk: string; sk: string; }) {
     const params = {
       pk,
       sk,
@@ -246,7 +250,7 @@ export class UserEntity {
     return result;
   }
 
-  //Delete a role from roles, remove the appropriate indexes, and remove the appropriate metadata
+  //Delete a role from roles; also fix GSI1 if needed
   public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
