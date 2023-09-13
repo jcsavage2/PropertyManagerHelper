@@ -62,8 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     console.log(chalk.yellow("\n Initial Response=============\n"));
     console.log(aiResponse);
 
-    const aiMessageDate = new Date().toUTCString()
-    let processedResponse: string | null = processAiResponse({ response: aiResponse, workOrderData: workOrderData, aiMessageDate });
+    let processedResponse: string | null = processAiResponse({ response: aiResponse, workOrderData: workOrderData });
     console.log(chalk.yellow("\n Processed Response =============\n"), { processedResponse: processedResponse });
 
     if (!processedResponse) {
@@ -86,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const newAiResponse = newResponse.data.choices[0].message?.content ?? "";
 
       console.log("\n New Response... =============\n", newAiResponse);
-      processedResponse = processAiResponse({ response: newAiResponse, workOrderData: workOrderData, aiMessageDate });
+      processedResponse = processAiResponse({ response: newAiResponse, workOrderData: workOrderData });
 
       //If it still doesn't work, return the original aiMessage with other WO data taken from request body
       if (!processedResponse) {
@@ -95,7 +94,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           issueLocation: workOrderData.issueLocation ?? "",
           aiMessage: aiResponse,
           additionalDetails: workOrderData.additionalDetails ?? "",
-          aiMessageDate
         };
         processedResponse = JSON.stringify(incompleteResponse);
       }

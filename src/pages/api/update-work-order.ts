@@ -1,4 +1,3 @@
-import { EVENTS, UPDATE_TYPE } from '@/constants';
 import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
@@ -38,8 +37,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     //Spawn new event on status change
     await eventEntity.create({
       workOrderId: deconstructKey(pk),
-      type: EVENTS.UPDATE,
-      updateType: UPDATE_TYPE.STATUS,
       message: `Updated work order status: ${status}`,
       madeByEmail: email,
       madeByName: name,

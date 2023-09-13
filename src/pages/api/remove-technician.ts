@@ -1,8 +1,6 @@
-import { EVENTS, UPDATE_TYPE } from "@/constants";
 import { Data } from "@/database";
 import { EventEntity } from "@/database/entities/event";
 import { WorkOrderEntity } from "@/database/entities/work-order";
-import { deconstructKey } from "@/utils";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "./auth/[...nextauth]";
@@ -36,8 +34,6 @@ export default async function handler(
     const workOrderEntity = new WorkOrderEntity();
     await eventEntity.create({
       workOrderId,
-      type: EVENTS.UPDATE,
-      updateType: UPDATE_TYPE.UNASSIGNED,
       madeByEmail: pmEmail,
       madeByName: pmName,
       message: `Removed ${technicianName} (${technicianEmail}) from the work order`,

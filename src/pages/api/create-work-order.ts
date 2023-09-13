@@ -1,4 +1,4 @@
-import { EVENTS, STATUS, UPDATE_TYPE } from '@/constants';
+import { STATUS } from '@/constants';
 import { Data } from '@/database';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       organization,
       tenantName,
       pmEmail,
-      woId
+      woId,
     } = body;
 
     /** CREATE THE WORK ORDER */
@@ -73,25 +73,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     sendgrid.setApiKey(apiKey);
 
-    //Work order created event
-    await eventEntity.create({
-      workOrderId: woId,
-      type: EVENTS.UPDATE,
-      updateType: UPDATE_TYPE.CREATED,
-      madeByEmail: creatorEmail,
-      madeByName: creatorName,
-      message: `Work Order Created!`,
-    });
-
+    body.messages.pop()
     for (const message of body.messages) {
       // Create a comment for each existing message so the Work Order has context.
       await eventEntity.create({
         workOrderId: woId,
-        type: EVENTS.CHAT,
         message: message.content ?? '',
-        madeByEmail: message.role === 'user' ? (tenantEmail ?? creatorEmail) : "Pillar Assistant",
-        madeByName: message.role === 'user' ? (tenantName ?? creatorName) : "Pillar Assistant",
-        date: message.date,
+        madeByEmail: message.role === 'user' ? tenantEmail ?? creatorEmail : 'Pillar Assistant',
+        madeByName: message.role === 'user' ? tenantName ?? creatorName : 'Pillar Assistant',
       });
     }
 
@@ -190,8 +179,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-          .join(' ')}
+              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+              .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -200,6 +189,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         </div>
       </body>
       </html>`,
+    });
+
+    //Work order created event
+    await eventEntity.create({
+      workOrderId: woId,
+      madeByEmail: creatorEmail, //If the user is a pm then they created it, otherwise this is a system message
+      madeByName: creatorName,
+      message: `Work Order Created!`,
     });
   } catch (error: any) {
     console.log({ error });

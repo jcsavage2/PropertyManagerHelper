@@ -16,6 +16,7 @@ import { useDevice } from '@/hooks/use-window-size';
 import { PTE } from '@/constants';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
 import { v4 as uuidv4 } from 'uuid';
+import { toggleBodyScroll } from '@/utils';
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -162,7 +163,8 @@ export const AddWorkOrderModal = ({
   return (
     <Modal
       isOpen={addWorkOrderModalIsOpen}
-      onAfterOpen={() => { }}
+      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Example Modal"
       closeTimeoutMS={200}

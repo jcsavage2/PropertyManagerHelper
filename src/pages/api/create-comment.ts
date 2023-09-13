@@ -1,4 +1,3 @@
-import { EVENTS } from "@/constants";
 import { Data } from "@/database";
 import { EventEntity } from "@/database/entities/event";
 import { NextApiRequest, NextApiResponse } from "next";

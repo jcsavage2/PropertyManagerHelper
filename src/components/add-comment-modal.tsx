@@ -3,7 +3,7 @@ import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, use
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CreateCommentBody } from '@/pages/api/create-comment';
-import { deconstructKey } from '@/utils';
+import { deconstructKey, toggleBodyScroll } from '@/utils';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
@@ -78,6 +78,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
         const parsedResponse = JSON.parse(response);
         if (parsedResponse.modified) {
           toast.success('Comment Successfully Added', { draggable: false });
+          setComment('');
           onSuccessfulAdd();
           setAddCommentModalIsOpen(false);
         }
@@ -93,7 +94,8 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
   return (
     <Modal
       isOpen={addCommentModalIsOpen}
-      onAfterOpen={() => {}}
+      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Add Comment Modal"
       style={customStyles}

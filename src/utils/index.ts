@@ -93,11 +93,9 @@ export const generatePrompt = (workOrder: WorkOrder, unitInfo: string): ChatComp
 export const processAiResponse = ({
   response,
   workOrderData,
-  aiMessageDate,
 }: {
   response: string;
   workOrderData: WorkOrder;
-  aiMessageDate: string;
 }): string | null => {
   try {
     let returnValue: string | null = null;
@@ -109,7 +107,6 @@ export const processAiResponse = ({
       const substr = response.substring(jsonStart, jsonEnd + 1);
       const cleanedString = substr.replace(regex, '"').replace('True', 'true').replace('False', 'false').replace('undefined', '""');
       let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse;
-      jsonResponse.aiMessageDate = aiMessageDate;
 
       const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse });
 
@@ -220,4 +217,12 @@ export function generateAddress({
 
 export function getPageLayout(isMobile: boolean) {
   return isMobile ? {} : { display: 'grid', gridTemplateColumns: '2fr 9fr', columnGap: '2rem' };
+}
+
+export function toggleBodyScroll(open: boolean) {
+  if(open) {
+    document.body.classList.add('modal-open');
+  }else{
+    document.body.classList.remove('modal-open');
+  }
 }

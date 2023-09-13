@@ -12,7 +12,7 @@ import { IProperty } from "@/database/entities/property";
 import { v4 as uuid } from "uuid";
 import { useSessionUser } from "@/hooks/auth/use-session-user";
 import { LoadingSpinner } from "./loading-spinner/loading-spinner";
-import { deconstructKey } from "@/utils";
+import { deconstructKey, toggleBodyScroll } from "@/utils";
 
 export const AddTenantModal = ({
   tenantModalIsOpen,
@@ -225,6 +225,8 @@ export const AddTenantModal = ({
     <Modal
       isOpen={tenantModalIsOpen}
       onRequestClose={() => setTenantModalIsOpen(false)}
+      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterClose={() => toggleBodyScroll(false)}
       contentLabel="Add Tenant Modal"
       closeTimeoutMS={200}
       style={customStyles}

@@ -3,7 +3,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey } from '@/utils';
+import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey, toggleBodyScroll } from '@/utils';
 import { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
@@ -13,9 +13,7 @@ import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { PTE, STATUS } from '@/constants';
-import { BsPersonFill, BsTrashFill } from 'react-icons/bs';
-import { IoLocationSharp } from 'react-icons/io5';
-import { BiTimeFive } from 'react-icons/bi';
+import { BsTrashFill } from 'react-icons/bs';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import ConfirmationModal from './confirmation-modal';
@@ -28,7 +26,6 @@ import Modal from 'react-modal';
 import { userRoles } from '@/database/entities/user';
 import { RemoveTechnicianBody } from '@/pages/api/remove-technician';
 import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
-import { GrFormAdd } from 'react-icons/gr';
 import { MdOutlineClear } from 'react-icons/md';
 
 const WorkOrder = ({
@@ -50,13 +47,12 @@ const WorkOrder = ({
 
   //Loading state
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const [technicianOptions, setTechnicianOptions] = useState<OptionType[]>([]);
   const [assignedTechnicians, setAssignedTechnicians] = useState<OptionType[]>([]);
   const [loadingAssignedTechnicians, setLoadingAssignedTechnicians] = useState(false);
-  const [assignedTechniciansMenuOpen, setAssignedTechniciansMenuOpen] = useState(false);
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
 
@@ -162,7 +158,7 @@ const WorkOrder = ({
       console.error(err);
     }
     setIsLoading(false);
-  }, [workOrderId]);
+  }, [workOrderId, user]);
 
   const getWorkOrderEvents = useCallback(
     async (initialFetch: boolean, startKey?: StartKey) => {
@@ -174,7 +170,7 @@ const WorkOrder = ({
           startKey,
         } as GetWorkOrderEvents);
         const response = JSON.parse(data.response);
-        setEvents(initialFetch ? response.events : [...events, response.events]);
+        initialFetch ? setEvents(response.events) : setEvents((prev) => [...prev, ...response.events]);
         setEventsStartKey(response.startKey);
       } catch (err) {
         console.error(err);
@@ -202,6 +198,7 @@ const WorkOrder = ({
       if (updatedWorkOrder) {
         setWorkOrder(updatedWorkOrder);
       }
+      await getWorkOrderEvents(true);
     } catch (e) {
       console.log(e);
       toast.error('Error updating work order status', {
@@ -278,6 +275,8 @@ const WorkOrder = ({
           technicianName: removedTechnician.label,
         } as RemoveTechnicianBody);
       }
+      await getWorkOrder();
+      await getWorkOrderEvents(true);
     } catch (err) {
       console.error(err);
       toast.error('Error assigning or removing Technician. Please Try Again', {
@@ -285,173 +284,171 @@ const WorkOrder = ({
         draggable: false,
       });
     }
-    setAssignedTechniciansMenuOpen(false);
     setLoadingAssignedTechnicians(false);
-    await getWorkOrder();
   };
 
   useEffect(() => {
     const fetchInOrder = async () => {
       if (!workOrderId || !user || !userType) return;
       await getWorkOrder();
-      //if (isMobile) return;
       await getWorkOrderEvents(true);
     };
     fetchInOrder();
   }, [workOrderId, user, userType]);
 
-  //TODO; fix meeeee, move out div and get header outside of loading logic
+  useEffect(() => {
+    async function getImages() {
+      if (!workOrder?.images) return;
+      const imageKeys = workOrder?.images ?? [];
+      const response = await axios.post(`/api/get-images`, { keys: imageKeys });
+      setImages(response.data?.images ?? []);
+      setImagesLoading(false);
+    }
+    getImages();
+  }, [workOrder?.images]);
+
   if (workOrder) {
     return (
-      <div id="work-order" className={'h-full'}>
-        <AddCommentModal
-          addCommentModalIsOpen={openAddCommentModal}
-          setAddCommentModalIsOpen={setOpenAddCommentModal}
-          workOrderId={workOrderId}
-          onSuccessfulAdd={async () => {
-            await getWorkOrder();
-          }}
-        />
-        <ConfirmationModal
-          confirmationModalIsOpen={confirmDeleteModalIsOpen}
-          setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
-          onConfirm={() => deleteWorkOrder(workOrderId)}
-          childrenComponents={
-            <div className="flex flex-col text-center mt-2">
-              <div>Are you sure you want to delete this work order?</div>
-              <div className="italic mt-2">This action is NOT reversable.</div>
-            </div>
-          }
-        />
-        <div className="w-full bg-blue-300 text-gray-600 text-center py-2">
-          Created on {createdToFormattedDateTime(workOrder.created).join(' @ ')}
-          <MdOutlineClear className="float-right my-auto h-6 text-xl mr-4 text-gray-600 cursor-pointer" onClick={() => handleCloseWorkOrderModal()} />
-        </div>
-        <div className="flex flex-col w-full align-middle items-center">
-          <div className="text-xl my-auto flex flex-row items-center justify-between text-gray-600 w-full p-4  border-b border-slate-200">
-            <div className=" flex flex-col">
-              {toTitleCase(workOrder?.issue)}
-              <div className="hidden md:inline text-base text-gray-400"># {deconstructKey(workOrderId)}</div>
-            </div>
-            {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
-              <div
-                onClick={() => {
-                  if (workOrder.status === STATUS.DELETED) return;
-                  setConfirmDeleteModalIsOpen(true);
-                }}
-              >
-                <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
+      <div id="work-order" className="box-border">
+        <div className="w-full sticky top-0">
+          <div className=" bg-blue-200 text-gray-600 text-center py-2 px-4 text-sm">
+            Created on {createdToFormattedDateTime(workOrder.created).join(' @ ')}
+            <MdOutlineClear className="float-right my-auto h-6 text-xl text-gray-600 cursor-pointer" onClick={() => handleCloseWorkOrderModal()} />
+          </div>
+          <div className="flex flex-col w-full align-middle items-center">
+            <div className="text-xl my-auto flex flex-row items-center justify-between text-gray-600 w-full p-4  border-b border-slate-200">
+              <div className=" flex flex-col">
+                {toTitleCase(workOrder?.issue)}
+                <div className="text-base text-gray-400"># {deconstructKey(workOrderId)}</div>
               </div>
-            )}
+              <div className="flex flex-row items-center">
+                {!isMobile ? (
+                  <a
+                    href="#wo-modal-comments"
+                    className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4"
+                  >
+                    Go to comments
+                  </a>
+                ) : null}
+                {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
+                  <div
+                    onClick={() => {
+                      if (workOrder.status === STATUS.DELETED) return;
+                      setConfirmDeleteModalIsOpen(true);
+                    }}
+                  >
+                    <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+        {/* WO Modal Content */}
 
         <div
-          style={{ height: isMobile ? '38rem' : '25rem' }}
-          className={`clear-both overflow-auto p-0 m-0 ${
-            isLoadingEvents || isLoadingEvents || assignedTechniciansMenuOpen || (loadingAssignedTechnicians && 'opacity-50')
-          }`}
+          style={{ height: isMobile ? `calc(100vh - 310px)` : `calc(100vh - 270px)` }}
+          className={`h-max p-5 pb-8 overflow-y-scroll flex flex-col box-border text-gray-600 text-md md:text-base`}
         >
-          <div className="flex flex-col w-full items-center justify-start text-gray-600 text-md md:text-base">
-            <div className="flex md:flex-row flex-col w-full md:justify-evenly md:items-start items-center mt-2 md:mt-5">
-              <div>
-                <div className="font-bold text-center md:text-start">Status</div>
-                <div className="mt-1 md:ml-4 mx-auto flex flex-row">
-                  {workOrder.status !== STATUS.DELETED ? (
-                    <>
-                      <button
-                        disabled={isUpdatingStatus}
-                        onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                        className={`${
-                          deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
-                        } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
-                      >
-                        <GoTasklist />
-                        <span className="text-xs">Todo</span>
-                      </button>
-                      <button
-                        disabled={isUpdatingStatus}
-                        onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                        className={`${
-                          deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
-                        } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
-                      >
-                        <AiOutlineCheck />
-                        <span className="text-xs">Complete</span>
-                      </button>
-                    </>
-                  ) : (
-                    <p className="text-red-600">{STATUS.DELETED}</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col md:mt-0 mt-4 md:items-start items-center">
-                {!isMobile ? <div className="font-bold mb-1">Other Details</div> : null}
-                <div className="flex flex-row items-center ml-4 mb-1">
-                  <BsPersonFill className="mr-2" />
-                  {workOrder.tenantName}({workOrder.tenantEmail})
-                </div>
-                <div className="flex flex-row items-center ml-4 mb-1">
-                  <IoLocationSharp className="mr-2" />{' '}
-                  {generateAddressKey({ address: workOrder?.address?.address, unit: workOrder?.address?.unit ?? '' })}
-                </div>
-                <div className="flex flex-row items-center ml-4 mb-1">
-                  <BiTimeFive className="mr-2" />
-                  {createdToFormattedDateTime(workOrder.created).join(' @ ')}
-                </div>
-              </div>
-            </div>
-            <div className={`flex md:flex-row flex-col w-full items-center mt-4 md:mt-6 md:justify-evenly`}>
-              <div className="">
-                <div className="font-bold text-center md:text-left">Location</div>
-                <div className="text-center md:text-left md:ml-4">
-                  {workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}
-                </div>
-              </div>
-              <div className="md:mt-0 mt-6">
-                <div className="font-bold text-center md:text-left">Additional Info</div>
-                <div className="text-center md:text-left md:ml-4">
-                  {workOrder.additionalDetails && workOrder.additionalDetails.length > 0 ? (
-                    <p>&quot;{workOrder.additionalDetails}&quot;</p>
-                  ) : (
-                    <p className="italic">None provided</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col font-bold mt-6 md:mt-0 md:ml-12 ml-0">
-                <p>Permission to Enter</p>
-                <p
+          <div className="font-bold">Status</div>
+          <div className="flex flex-row mt-0.5">
+            {workOrder.status !== STATUS.DELETED ? (
+              <>
+                <button
+                  disabled={isUpdatingStatus}
+                  onClick={(e) => !isUpdatingStatus && handleUpdateStatus(e, STATUS.TO_DO)}
                   className={`${
-                    workOrder.permissionToEnter === PTE.YES ? 'text-green-600' : 'text-red-600'
-                  }  text-center md:text-start font-normal md:ml-4`}
+                    deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
+                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                 >
-                  {toTitleCase(workOrder.permissionToEnter)}
-                </p>
-              </div>
-            </div>
-
-            <div className="font-bold mt-4 md:mt-6 text-center">Assigned To</div>
-            <div className="w-11/12 mt-1 md:mb-2">
-              <AsyncSelect
-                placeholder={loadingAssignedTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
-                isDisabled={userType !== 'PROPERTY_MANAGER'} // potentially could have logic for technicians to "self assign"
-                className={'md:w-9/12 w-full mt-1 mx-auto'}
-                closeMenuOnSelect={false}
-                isMulti
-                defaultOptions={technicianOptions}
-                value={assignedTechnicians}
-                captureMenuScroll={true}
-                loadOptions={(searchString: string) => searchTechnicians(searchString)}
-                isLoading={loadingAssignedTechnicians}
-                onChange={handleAssignTechnician}
-                isClearable={false}
-                onMenuOpen={() => setAssignedTechniciansMenuOpen(true)}
-                onMenuClose={() => setAssignedTechniciansMenuOpen(false)}
-                menuPortalTarget={document.body}
-              />
-            </div>
+                  <GoTasklist />
+                  <span className="text-xs">Todo</span>
+                </button>
+                <button
+                  disabled={isUpdatingStatus}
+                  onClick={(e) => !isUpdatingStatus && handleUpdateStatus(e, STATUS.COMPLETE)}
+                  className={`${
+                    deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
+                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                >
+                  <AiOutlineCheck />
+                  <span className="text-xs">Complete</span>
+                </button>
+              </>
+            ) : (
+              <p className="text-red-600">{STATUS.DELETED}</p>
+            )}
           </div>
-          <div className="w-full flex flex-col justify-center items-center">
+
+          <div className="mt-4 font-bold">Assigned To</div>
+          <div className="w-full mt-0.5">
+            <AsyncSelect
+              placeholder={loadingAssignedTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
+              isDisabled={loadingAssignedTechnicians} // potentially could have logic for technicians to "self assign"
+              className={'w-10/12 mt-1'}
+              closeMenuOnSelect={true}
+              isMulti
+              defaultOptions={technicianOptions}
+              value={assignedTechnicians}
+              captureMenuScroll={true}
+              loadOptions={(searchString: string) => searchTechnicians(searchString)}
+              isLoading={loadingAssignedTechnicians}
+              onChange={handleAssignTechnician}
+              isClearable={false} //Don't have the functionality for remove all yet
+              menuPortalTarget={document.body}
+            />
+          </div>
+          <div className="font-bold mt-4">Photos</div>
+          <div className="w-full flex md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200">
+            {imagesLoading ? (
+              <LoadingSpinner />
+            ) : images && images.length ? (
+              images.map((i) => {
+                return (
+                  <Image
+                    key={i + Math.random()}
+                    className={`mb-4 mr-2 last:mr-0 md:mx-0 cursor-pointer`}
+                    alt={'work order image'}
+                    onClick={() => {
+                      i === fullScreenImage ? setFullScreenImage('') : setFullScreenImage(i);
+                    }}
+                    src={i}
+                    width={100}
+                    height={40}
+                  />
+                );
+              })
+            ) : (
+              'No photos found'
+            )}
+          </div>
+          <div className="mt-4 font-bold">Permission to Enter</div>
+          <div className={`${workOrder.permissionToEnter === PTE.YES ? 'text-green-600' : 'text-red-600'} mt-0.5 font-normal`}>
+            {toTitleCase(workOrder.permissionToEnter)}
+          </div>
+          <div className="font-bold mt-4">Unit</div>
+          <div className="mt-0.5">{toTitleCase(workOrder.address.unit ? workOrder.address.unit : workOrder.address.address)}</div>
+          <div className="font-bold mt-4">Tenant</div>
+          <div className="mt-0.5">{workOrder.tenantName}</div>
+          <div className="font-bold mt-4">Location</div>
+          <div className="mt-0.5">{workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}</div>
+          {workOrder.additionalDetails && workOrder.additionalDetails.length > 0 ? (
+            <>
+              <div className="font-bold mt-4">Additional Info</div>
+              <div className="mt-0.5">
+                <p>&quot;{workOrder.additionalDetails}&quot;</p>
+              </div>
+            </>
+          ) : null}
+
+          <div className="flex flex-row items-center border-t border-slate-200 pt-2 mt-4">
+            <div className="font-bold text-lg">Comments</div>
+            <button onClick={() => setOpenAddCommentModal(true)} className="ml-3 rounded px-4 py-0.5 text-sm border bg-blue-200 hover:bg-blue-100">
+              Add Comment
+            </button>
+          </div>
+
+          <div className="w-full" id="wo-modal-comments">
             {events && events.length ? (
               events.map((event: IEvent | null, i: number) => {
                 if (event) {
@@ -459,24 +456,42 @@ const WorkOrder = ({
                   return (
                     <div
                       key={`${ENTITIES.EVENT}-${i}`}
-                      className="mx-auto text-gray-800 md:w-9/12 w-11/12 rounded-md bg-gray-200 mt-2 mb-2 py-2 px-4 text-left"
+                      className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 py-2 px-3 text-left"
                     >
-                      <div className="text-sm text-gray-500">
-                        {event.madeByName} ({event.madeByEmail})
-                      </div>
-                      <div className="text-sm text-gray-500 mb-1">
-                        {formattedDateTime[0]} @ {formattedDateTime[1]}
+                      <div className="mb-0.5 flex flex-row">
+                        <p className="font-bold mr-2">{event.madeByName} </p>
+                        <p className="text-slate-600">
+                          {formattedDateTime[0]} @ {formattedDateTime[1]}
+                        </p>
                       </div>
                       <div className="break-words">{event.message}</div>
                     </div>
                   );
                 }
               })
-            ) : (
+            ) : !isLoadingEvents ? (
               <p className="mt-4 text-center font-bold">Sorry, no comments found</p>
-            )}
+            ) : null}
+            {isLoadingEvents ? (
+              <LoadingSpinner containerClass="mt-4" />
+            ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
+              <div className="w-full flex items-center justify-center">
+                <button
+                  disabled={isLoadingEvents}
+                  onClick={() => getWorkOrderEvents(false, eventsStartKey)}
+                  className="bg-blue-200 mx-auto py-1 md:w-1/4 w-2/5 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                >
+                  Load more
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
+        <div className="w-full box-border text-sm fixed bottom-0 border-t border-slate-200 md:text-right bg-white text-gray-600 py-4 md:px-6 text-center">
+          Created by {workOrder.tenantName} ({workOrder.tenantEmail})
+        </div>
+
+        {/* Other modals */}
         <Modal
           isOpen={!!fullScreenImage}
           onRequestClose={() => setFullScreenImage('')}
@@ -495,6 +510,25 @@ const WorkOrder = ({
             />
           </div>
         </Modal>
+        <AddCommentModal
+          addCommentModalIsOpen={openAddCommentModal}
+          setAddCommentModalIsOpen={setOpenAddCommentModal}
+          workOrderId={workOrderId}
+          onSuccessfulAdd={async () => {
+            await getWorkOrderEvents(true);
+          }}
+        />
+        <ConfirmationModal
+          confirmationModalIsOpen={confirmDeleteModalIsOpen}
+          setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
+          onConfirm={() => deleteWorkOrder(workOrderId)}
+          childrenComponents={
+            <div className="flex flex-col text-center mt-2">
+              <div>Are you sure you want to delete this work order?</div>
+              <div className="italic mt-2">This action is NOT reversable.</div>
+            </div>
+          }
+        />
       </div>
     );
   }

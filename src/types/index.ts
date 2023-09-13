@@ -4,12 +4,12 @@ import { PTE, STATUS } from '../constants';
 export type ApiRequest = WorkOrder & {
   userMessage: string;
   unitInfo: string;
-  messages: AssistantMessage[];
+  messages: ChatCompletionRequestMessage[];
 };
 
 export type SendEmailApiRequest = UserInfo &
   IssueInformation & {
-    messages: AssistantMessage[];
+    messages: ChatCompletionRequestMessage[];
     pmEmail: string;
     organization: string;
     woId: string;
@@ -18,7 +18,6 @@ export type SendEmailApiRequest = UserInfo &
 
 export type AiJSONResponse = IssueInformation & {
   aiMessage: string;
-  aiMessageDate: string;
 };
 
 export type FinishFormRequest = IssueInformation & {
@@ -67,5 +66,3 @@ export type AddressOptionType = {
 export type PTE_Type = (typeof PTE)[keyof typeof PTE];
 
 export type StatusType = (typeof STATUS)[keyof typeof STATUS];
-
-export type AssistantMessage = ChatCompletionRequestMessage & { date?: string };

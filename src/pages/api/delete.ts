@@ -1,4 +1,3 @@
-import { EVENTS, UPDATE_TYPE } from '@/constants';
 import { ENTITIES, EntityTypeKeys } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { OrganizationEntity } from '@/database/entities/organization';
@@ -57,8 +56,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const eventEntity = new EventEntity();
         await eventEntity.create({
           workOrderId: deconstructKey(pk),
-          type: EVENTS.UPDATE,
-          updateType: UPDATE_TYPE.DELETED,
           message: `Work Order Deleted`,
           madeByEmail,
           madeByName,

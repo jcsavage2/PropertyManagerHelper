@@ -17,7 +17,7 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 // Types
 import { IGetAllWorkOrdersForUserProps, IWorkOrder } from '@/database/entities/work-order';
-import { deconstructKey, getPageLayout } from '@/utils';
+import { deconstructKey, getPageLayout, toggleBodyScroll } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
 import { StatusOptionType, StatusType } from '@/types';
@@ -50,7 +50,7 @@ const WorkOrders = () => {
 
   const customStyles = {
     content: {
-      top: '50%',
+      top: isMobile ? '46%' : '50%',
       left: '50%',
       right: 'auto',
       bottom: 'auto',
@@ -101,7 +101,7 @@ const WorkOrders = () => {
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(
     async (initialFetch: boolean) => {
-      if (router.query.workOrderId || !user || !userType) return;
+      if (!user || !userType) return;
       setIsFetching(true);
       try {
         const body: IGetAllWorkOrdersForUserProps = {
@@ -115,7 +115,7 @@ const WorkOrders = () => {
         const response = JSON.parse(data.response);
         const orders: IWorkOrder[] = response.workOrders;
         setStartKey(response.startKey);
-        initialFetch ? setWorkOrders(orders) : setWorkOrders([...workOrders, ...orders]);
+        initialFetch ? setWorkOrders(orders) : setWorkOrders((prev) => [...prev, ...orders]);
         if (orders.length) {
           sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
         }
@@ -132,12 +132,13 @@ const WorkOrders = () => {
    */
   useEffect(() => {
     fetchWorkOrders(true);
-    //Prevent scrolling if the WO modal is open
-    if (router.query.workOrderId) {
-      document.body.style.overflow = 'hidden';
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router.query.workOrderId, orgMode, statusFilter]);
+
+  const closeWOModalRefetch = () => {
+    router.push('/work-orders');
+    fetchWorkOrders(true);
+  };
 
   const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any }) => (
     <div className="flex flex-row items-center">
@@ -145,11 +146,6 @@ const WorkOrders = () => {
       <span className="ml-1 text-sm">{label}</span>
     </div>
   );
-
-  const closeWOModalRefetch = () => {
-    router.push('/work-orders');
-    fetchWorkOrders(true);
-  }
 
   return (
     <>
@@ -160,6 +156,8 @@ const WorkOrders = () => {
         closeTimeoutMS={200}
         preventScroll={true}
         style={customStyles}
+        onAfterOpen={() => toggleBodyScroll(true)}
+        onAfterClose={() => toggleBodyScroll(false)}
       >
         <WorkOrder
           workOrderId={router.query.workOrderId as string}
@@ -233,7 +231,9 @@ const WorkOrders = () => {
                 Load more
               </button>
             </div>
-          ) : <div className="mb-8"></div>}
+          ) : (
+            <div className="mb-8"></div>
+          )}
           <AddWorkOrderModal
             addWorkOrderModalIsOpen={addWorkOrderModalIsOpen}
             setAddWorkOrderModalIsOpen={setAddWorkOrderModalIsOpen}

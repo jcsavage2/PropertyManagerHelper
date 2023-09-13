@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { hasAllIssueInfo } from '@/utils';
-import { AddressOptionType, AiJSONResponse, ApiRequest, AssistantMessage, PTE_Type, SendEmailApiRequest, WorkOrder } from '@/types';
+import { AddressOptionType, AiJSONResponse, ApiRequest, PTE_Type, SendEmailApiRequest, WorkOrder } from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
@@ -11,6 +11,7 @@ import { userRoles } from '@/database/entities/user';
 import { PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { ENTITIES } from '@/database/entities';
+import { ChatCompletionRequestMessage } from 'openai';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -39,7 +40,7 @@ export default function WorkOrderChatbot() {
   const [issueLocation, setIssueLocation] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
 
-  const [messages, setMessages] = useState<AssistantMessage[]>([]);
+  const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
@@ -200,23 +201,21 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    const userMessageDate = new Date().toUTCString();
     try {
       if (!isUsingAI) {
         setMessages([
           ...messages,
-          { role: 'user', content: issueDescription, date: userMessageDate },
+          { role: 'user', content: issueDescription },
           {
             role: 'assistant',
             content:
               "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request.",
-            date: new Date().toUTCString(),
           },
         ]);
       }
 
       if (userMessage === '' || !selectedAddress) return;
-      setMessages([...messages, { role: 'user', content: userMessage, date: userMessageDate }]);
+      setMessages([...messages, { role: 'user', content: userMessage }]);
       setIsResponding(true);
       setLastUserMessage(userMessage);
       setUserMessage('');
@@ -240,8 +239,8 @@ export default function WorkOrderChatbot() {
       setIsResponding(false);
       setMessages([
         ...messages,
-        { role: 'user', content: userMessage, date: userMessageDate },
-        { role: 'assistant', content: newMessage, date: parsed.aiMessageDate },
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: newMessage },
       ]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
@@ -254,8 +253,8 @@ export default function WorkOrderChatbot() {
       setIsResponding(false);
       setMessages([
         ...messages,
-        { role: 'user', content: userMessage, date: userMessageDate },
-        { role: 'assistant', content: assistantMessage, date: new Date().toUTCString() },
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: assistantMessage },
       ]);
       setUserMessage(lastUserMessage);
     }

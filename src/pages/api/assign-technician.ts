@@ -1,4 +1,3 @@
-import { EVENTS, UPDATE_TYPE } from '@/constants';
 import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
 import { PropertyAddress, WorkOrderEntity } from '@/database/entities/work-order';
@@ -34,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !pmName) {
       return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization' });
     }
-    console.log('attempting assign tech: ', workOrderId);
+
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
 
@@ -53,8 +52,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     await eventEntity.create({
       workOrderId,
-      type: EVENTS.UPDATE,
-      updateType: UPDATE_TYPE.ASSIGNED_TO,
       madeByEmail: pmEmail,
       madeByName: pmName,
       message: `Assigned ${technicianName} (${technicianEmail}) to the work order`,

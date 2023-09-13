@@ -3,13 +3,13 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
 import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
+import { PAGE_SIZE } from '@/constants';
 
 type CreateEventProps = {
   workOrderId: string;
   madeByEmail: string;
   madeByName: string;
   message?: string;
-  created?: string; //Have to override db created date for chat events
 };
 
 export interface IEvent {
@@ -37,8 +37,7 @@ export class EventEntity {
   /**
    * Creates a new event attached to a work order
    */
-  public async create({ workOrderId, madeByEmail, madeByName, message, created }: CreateEventProps) {
-    const time = created ?? new Date().toUTCString();
+  public async create({ workOrderId, madeByEmail, madeByName, message }: CreateEventProps) {
     const result = await this.eventEntity.update(
       {
         pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
@@ -46,7 +45,6 @@ export class EventEntity {
         madeByEmail,
         madeByName,
         message,
-        created: time,
       },
       { returnValues: 'ALL_NEW' }
     );
@@ -59,7 +57,8 @@ export class EventEntity {
   public async getEvents({ workOrderId, startKey }: GetWorkOrderEvents) {
     const { Items, LastEvaluatedKey } = await this.eventEntity.query(generateKey(ENTITY_KEY.EVENT, workOrderId), {
       startKey,
-      reverse: true
+      reverse: true,
+      limit: PAGE_SIZE,
     });
     startKey = LastEvaluatedKey as StartKey;
     return {events: Items ?? [], startKey};

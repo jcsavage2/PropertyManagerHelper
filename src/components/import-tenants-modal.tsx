@@ -15,6 +15,7 @@ import { userRoles } from '@/database/entities/user';
 import { useUserContext } from '@/context/user';
 import { AiOutlineLink } from 'react-icons/ai';
 import { GetS3BucketRequest } from '@/pages/api/get-s3bucket';
+import { toggleBodyScroll } from '@/utils';
 
 type ImportTenantObject = CreateTenantBody & {
   key: number;
@@ -287,7 +288,15 @@ export const ImportTenantsModal = ({
   };
 
   return (
-    <Modal isOpen={modalIsOpen} onRequestClose={onClose} contentLabel="Import Tenants Modal" closeTimeoutMS={200} style={customStyles}>
+    <Modal
+      isOpen={modalIsOpen}
+      onRequestClose={onClose}
+      contentLabel="Import Tenants Modal"
+      closeTimeoutMS={200}
+      style={customStyles}
+      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterClose={() => toggleBodyScroll(false)}
+    >
       <div className="flex flex-row items-center">
         <div className="w-full mt-1">
           <h1 className={`text-center text-lg font-bold`}>Import Tenants</h1>

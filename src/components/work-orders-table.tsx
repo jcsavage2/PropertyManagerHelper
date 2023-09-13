@@ -165,7 +165,7 @@ export const WorkOrdersTable = ({
         </div>
       </div>
 
-      <div className="border-collapse overflow-visible mt-2">
+      <div className="border-collapse mt-2">
         {remappedWorkOrders.length > 0 ? (
           <table className={`w-full border-spacing-x-10 table-auto ${isFetching && 'opacity-25 pointer-events-none'}`}>
             <thead className="">
