@@ -40,6 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       woId
     } = body;
 
+
+
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
       uuid: woId,
@@ -74,7 +76,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     sendgrid.setApiKey(apiKey);
 
     body.messages.pop();
-
     /** CREATE THE FIRST EVENT FOR THE WO */
     await eventEntity.create({
       workOrderId: woId,
@@ -83,10 +84,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       updateMadeBy: creatorEmail,
     });
 
+
     const tenantDisplayName: string = "Tenant: " + (tenantName ?? creatorName);
     for (const message of body.messages) {
       // Create a comment for each existing comment so the Work Order has context.
-      console.log(message);
       await eventEntity.create({
         workOrderId: deconstructKey(workOrder?.pk),
         updateType: Events.COMMENT_UPDATE,
