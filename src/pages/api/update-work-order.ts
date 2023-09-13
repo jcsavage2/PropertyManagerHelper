@@ -1,4 +1,4 @@
-import { Events, PTE_Type, Status } from '@/constants';
+import { Events, PTE_Type, STATUS, Status } from '@/constants';
 import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const subject = `Work Order Status Update${updatedWorkOrder?.address?.unit ? ` for unit ${updatedWorkOrder?.address.unit}` : ""}`;
 
     // If work order was created by a tenant
-    if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk) {
+    if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk && updatedWorkOrder.status === STATUS.COMPLETE) {
       const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(updatedWorkOrder.pk)}`;
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,
@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         
         <body>
           <div class="container" style="margin-left: 20px;margin-right: 20px;">
-            <h1>Work Order Status Update ${updatedWorkOrder?.address?.unit ? `for unit ${updatedWorkOrder?.address.unit}` : ""}</h1>
+            <h1>Work Order Status Complete ${updatedWorkOrder?.address?.unit ? `for unit ${updatedWorkOrder?.address.unit}` : ""}</h1>
             <a href="${workOrderLink}">View Work Order in PILLAR</a>
             <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
               Regards,<br> Pillar Team
