@@ -135,7 +135,7 @@ export class WorkOrderEntity {
     const result = await this.workOrderEntity.update(
       {
         pk: workOrderIdKey,
-        sk: workOrderIdKey,
+        sk: ksuID,
         GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail.toLowerCase()),
         GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
@@ -271,13 +271,12 @@ export class WorkOrderEntity {
       } while (!!startKey);
 
       let result = null;
-      const statusKey = status === STATUS.DELETED ? status : generateKey(STATUS_KEY, status);
       for (const workOrder of workOrders) {
         result = await this.workOrderEntity.update(
           {
             pk: workOrder.pk,
             sk: workOrder.sk,
-            ...(status && { status: statusKey }),
+            ...(status && { status: status }),
             ...(permissionToEnter && { permissionToEnter }),
           },
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }
@@ -322,7 +321,7 @@ export class WorkOrderEntity {
       const result = await this.workOrderEntity.update(
         {
           pk: workOrderIdKey,
-          sk: workOrderIdKey,
+          sk: ksuID,
           assignedTo: {
             $add: [technicianEmail.toLowerCase()],
           },

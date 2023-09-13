@@ -50,10 +50,10 @@ export const PillarDynamoTable = new Table({
   partitionKey: 'pk',
   sortKey: 'sk',
   indexes: {
-    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' }, 
-    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' }, 
-    [INDEXES.GSI3]: { partitionKey: 'GSI3PK', sortKey: 'GSI3SK' }, 
-    [INDEXES.GSI4]: { partitionKey: 'GSI4PK', sortKey: 'GSI4SK' }, 
+    [INDEXES.GSI1]: { partitionKey: 'GSI1PK', sortKey: 'GSI1SK' }, // PM Email
+    [INDEXES.GSI2]: { partitionKey: 'GSI2PK', sortKey: 'GSI2SK' }, // Tenant Email
+    [INDEXES.GSI3]: { partitionKey: 'GSI3PK', sortKey: 'GSI3SK' }, // Technician Email
+    [INDEXES.GSI4]: { partitionKey: 'GSI4PK', sortKey: 'GSI4SK' }, // Org
   },
   removeNullAttributes: true,
   DocumentClient,
