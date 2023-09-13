@@ -36,7 +36,6 @@ const PropertySelector = ({
           orgId: orgId,
         } as GetPropertiesApiRequest);
         const response = JSON.parse(data.response);
-        console.log({ response })
         setProperties(response.properties);
       } catch (err) {
         console.log(err);

@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { generateKey } from '@/utils';
+import { generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
 import { PAGE_SIZE, PTE_Type, STATUS, STATUS_KEY, Status } from '@/constants';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
@@ -12,6 +12,7 @@ export interface IGetAllWorkOrdersForUserProps {
   orgId?: string;
   startKey: StartKey;
   statusFilter: Record<Status, boolean>;
+  reverse?: boolean;
 }
 
 type CreateWorkOrderProps = {
@@ -77,15 +78,15 @@ export class WorkOrderEntity {
     name: ENTITIES.WORK_ORDER,
     attributes: {
       pk: { partitionKey: true }, //woId
-      sk: { sortKey: true }, //woId
+      sk: { sortKey: true }, //ksuID - same for all GSISK
       GSI1PK: { type: 'string' }, //PM email
-      GSI1SK: { type: 'string' }, //Status
+      GSI1SK: { type: 'string' }, 
       GSI2PK: { type: 'string' }, //Tenant email
-      GSI2SK: { type: 'string' }, //Status
+      GSI2SK: { type: 'string' }, 
       GSI3PK: { type: 'string' }, //Technician email
-      GSI3SK: { type: 'string' }, //Status
+      GSI3SK: { type: 'string' }, 
       GSI4PK: { type: 'string' }, //Org Id
-      GSI4SK: { type: 'string' }, //Status
+      GSI4SK: { type: 'string' }, 
       permissionToEnter: { type: 'string' },
       pmEmail: { type: 'string' },
       organization: { type: 'string' },
@@ -130,21 +131,17 @@ export class WorkOrderEntity {
   }: CreateWorkOrderProps) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
 
-    //Construct status key for TODO or COMPLETE status, we need to be able to separate TODO/COMPLETE from DELETED status
-    //TODO and COMPLETE require a "STATUS#" prefix, while DELETED does not
-    //This allows us to query for all work orders with any valid status, without getting deleted work orders
-    const statusKey = generateKey(STATUS_KEY, status);
-
+    const ksuID = generateKSUID();
     const result = await this.workOrderEntity.update(
       {
         pk: workOrderIdKey,
-        sk: workOrderIdKey,
+        sk: ksuID,
         GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail.toLowerCase()),
-        GSI1SK: statusKey,
+        GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
-        GSI2SK: statusKey,
+        GSI2SK: ksuID,
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, organization),
-        GSI4SK: statusKey,
+        GSI4SK: ksuID,
         permissionToEnter,
         pmEmail: pmEmail.toLowerCase(),
         createdBy: createdBy.toLowerCase(),
@@ -152,7 +149,7 @@ export class WorkOrderEntity {
         tenantEmail,
         tenantName,
         ...(images.length && { images }),
-        status: statusKey,
+        status,
         address: this.generateAddress({ address, country, city, state, postalCode, unit }),
         issue: issue.toLowerCase(),
         organization,
@@ -180,9 +177,6 @@ export class WorkOrderEntity {
         pk: pk,
         sk: sk,
         status: STATUS.DELETED,
-        GSI1SK: STATUS.DELETED,
-        GSI2SK: STATUS.DELETED,
-        GSI4PK: STATUS.DELETED,
       },
       { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
@@ -193,7 +187,7 @@ export class WorkOrderEntity {
    *
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
-  public async getAllForUser({ email, userType, orgId, startKey, statusFilter }: IGetAllWorkOrdersForUserProps) {
+  public async getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse = true }: IGetAllWorkOrdersForUserProps) {
     const workOrders: IWorkOrder[] = [];
     let pk: string = '';
     let index: undefined | string;
@@ -224,12 +218,28 @@ export class WorkOrderEntity {
 
     do {
       const options = {
-        ...(statusFilter.COMPLETE && !statusFilter.TO_DO && { eq: generateKey(STATUS_KEY, STATUS.COMPLETE) }),
-        ...(!statusFilter.COMPLETE && statusFilter.TO_DO && { eq: generateKey(STATUS_KEY, STATUS.TO_DO) }),
-        ...(statusFilter.COMPLETE && statusFilter.TO_DO && { beginsWith: STATUS_KEY }),
-        ...(!statusFilter.COMPLETE && !statusFilter.TO_DO && { eq: STATUS.DELETED }),
+        ...(statusFilter.COMPLETE && !statusFilter.TO_DO && {
+          filters: [
+            { attr: 'status', eq: STATUS.COMPLETE },
+          ],
+        }),
+        ...(!statusFilter.COMPLETE && statusFilter.TO_DO && {
+          filters: [
+            { attr: 'status', eq: STATUS.TO_DO },
+          ],
+        }),
+        ...(statusFilter.COMPLETE && statusFilter.TO_DO && {
+          filters: [
+            { attr: 'status', ne: STATUS.DELETED },
+          ],
+        }),
+        ...(!statusFilter.COMPLETE && !statusFilter.TO_DO && {
+          filters: [
+            { attr: 'status', eq: STATUS.DELETED },
+          ],
+        }),
         limit: remainingWOToFetch,
-        reverse: true,
+        reverse,
         ...(index && { index }),
         ...(startKey && { startKey }),
       };
@@ -249,7 +259,6 @@ export class WorkOrderEntity {
       do {
         try {
           const { Items, LastEvaluatedKey } = await this.workOrderEntity.query(pk, {
-            limit: PAGE_SIZE,
             reverse: true,
             beginsWith: `${ENTITY_KEY.WORK_ORDER}`,
             startKey,
@@ -262,16 +271,12 @@ export class WorkOrderEntity {
       } while (!!startKey);
 
       let result = null;
-      const statusKey = status === STATUS.DELETED ? status : generateKey(STATUS_KEY, status);
       for (const workOrder of workOrders) {
         result = await this.workOrderEntity.update(
           {
             pk: workOrder.pk,
             sk: workOrder.sk,
-            ...(status && { status: statusKey }),
-            ...(status && { GSI1SK: statusKey }),
-            ...(status && { GSI2SK: statusKey }),
-            ...(status && { GSI4PK: statusKey }),
+            ...(status && { status: status }),
             ...(permissionToEnter && { permissionToEnter }),
           },
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }
@@ -285,6 +290,7 @@ export class WorkOrderEntity {
 
   public async assignTechnician({
     organization,
+    ksuID,
     workOrderId,
     technicianEmail,
     address,
@@ -301,7 +307,7 @@ export class WorkOrderEntity {
         sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
         address: this.generateAddress(address),
         GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
-        GSI3SK: status,
+        GSI3SK: ksuID,
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
         assignedTo: {
@@ -315,7 +321,7 @@ export class WorkOrderEntity {
       const result = await this.workOrderEntity.update(
         {
           pk: workOrderIdKey,
-          sk: workOrderIdKey,
+          sk: ksuID,
           assignedTo: {
             $add: [technicianEmail.toLowerCase()],
           },

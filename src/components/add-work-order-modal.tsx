@@ -4,10 +4,9 @@ import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { OptionType, SendEmailApiRequest } from '@/types';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
-import { ITenant } from '@/database/entities/tenant';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { IUser, userRoles } from '@/database/entities/user';
 import { TenantSelect } from './tenant-select';
 import { SingleValue } from 'react-select';
 import { GetUser } from '@/pages/api/get-user';
@@ -84,9 +83,9 @@ export const AddWorkOrderModal = ({
         setSubmitWorkOrderLoading(true);
 
         //get tenant primary property
-        const getTenantResponse = await axios.post('/api/get-user', { email: tenantEmail } as GetUser);
-        const tenant = JSON.parse(getTenantResponse.data.response) as ITenant;
-        const addressMap: Map<string, any> = tenant.addresses;
+        const getTenantResponse = await axios.post('/api/get-user', { email: tenantEmail, userType: ENTITIES.TENANT } as GetUser);
+        const tenant = JSON.parse(getTenantResponse.data.response) as IUser;
+        const addressMap: Record<string, any> = tenant.addresses;
         let primaryAddress: any;
         Object.entries(addressMap).forEach((pair) => {
           if (pair[1].isPrimary) {
@@ -109,9 +108,9 @@ export const AddWorkOrderModal = ({
           city: primaryAddress.city,
           postalCode: primaryAddress.postalCode,
           tenantEmail,
+          tenantName: tenant.name,
           woId,
           images: [],
-          tenantName: tenant.tenantName,
           organization: user.organization,
         };
 

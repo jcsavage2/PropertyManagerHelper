@@ -25,7 +25,7 @@ import { DeleteRequest } from '@/pages/api/delete';
 import { ENTITIES } from '@/database/entities';
 import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
 import Modal from 'react-modal';
-import { userRoles } from '@/database/entities/user';
+import { IUser, userRoles } from '@/database/entities/user';
 
 const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDelete: () => Promise<void>; }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -89,10 +89,10 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
         };
         const { data } = await axios.post('/api/get-techs-for-org', body);
         const response = JSON.parse(data.response);
-        const mappedTechnicians = response.techs.map((technician: any) => {
+        const mappedTechnicians = response.techs.map((technician: IUser) => {
           return {
-            value: technician.technicianEmail,
-            label: technician.technicianName,
+            value: technician.email,
+            label: technician.name,
           };
         });
 
@@ -205,6 +205,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
         const body: AssignTechnicianBody = {
           organization: user.organization,
           workOrderId,
+          ksuID: workOrder.GSI1SK, //Pass ksuid from creation time to the assign technician api so we accurately date technician queries
           pmEmail: user.email,
           technicianEmail: selectedTechnician.value,
           technicianName: selectedTechnician.label,
@@ -332,7 +333,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                     <button
                       disabled={isUpdatingStatus}
                       onClick={(e) => handleUpdateStatus(e, STATUS.TO_DO)}
-                      className={`${deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
+                      className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'
                         } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                     >
                       <GoTasklist />
@@ -341,7 +342,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
                     <button
                       disabled={isUpdatingStatus}
                       onClick={(e) => handleUpdateStatus(e, STATUS.COMPLETE)}
-                      className={`${deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
+                      className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'
                         } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                     >
                       <AiOutlineCheck />

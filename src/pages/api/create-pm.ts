@@ -1,14 +1,13 @@
 import { Data } from '@/database';
-import { UserEntity } from '@/database/entities/user';
+import { ICreatePMUser, UserEntity } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 
-export type CreateTechnicianBody = {
-  technicianEmail: string;
-  technicianName: string;
-  pmEmail: string;
+export type CreatePMBody = {
   pmName: string;
+  isAdmin: boolean;
+  pmEmail: string;
   organization: string;
   organizationName: string;
 };
@@ -24,14 +23,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const body = req.body as CreateTechnicianBody;
-    const { technicianEmail, technicianName, organization, organizationName, pmEmail, pmName } = body;
+    const body = req.body as ICreatePMUser;
+    const { organization, organizationName, userEmail, userName, isAdmin } = body;
 
     const userEntity = new UserEntity();
+    const newPM = await userEntity.createPropertyManager({ organization, organizationName, userEmail, userName, isAdmin });
 
-    const newTechnician = await userEntity.createTechnician({ technicianName, technicianEmail, organization, organizationName, pmEmail, pmName });
-
-    return res.status(200).json({ response: JSON.stringify(newTechnician) });
+    return res.status(200).json({ response: JSON.stringify(newPM) });
   } catch (error) {
     console.log({ error });
   }

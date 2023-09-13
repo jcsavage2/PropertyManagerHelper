@@ -5,27 +5,7 @@ import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CreateTechnicianBody } from '@/pages/api/create-technician';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-
-const customStyles = {
-  content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    width: '75%',
-    backgroundColor: 'rgba(255, 255, 255)',
-  },
-  overLay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(25, 255, 255, 0.75)',
-  },
-};
+import { useDevice } from '@/hooks/use-window-size';
 
 export type AddTechnicianModalProps = {
   technicianModalIsOpen: boolean;
@@ -44,8 +24,29 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-
+  const { isMobile } = useDevice();
   const { userType } = useUserContext();
+
+  const customStyles = {
+    content: {
+      top: '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      marginRight: '-50%',
+      transform: 'translate(-50%, -50%)',
+      width: isMobile? '75%' : '50%',
+      backgroundColor: 'rgba(255, 255, 255)',
+    },
+    overLay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(25, 255, 255, 0.75)',
+    },
+  };
 
   const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
@@ -71,11 +72,13 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       try {
         event.preventDefault();
         if (
-          !user?.email ||
-          !user?.roles?.includes('PROPERTY_MANAGER') ||
+          !user ||
+          !user.email ||
+          !user.roles?.includes('PROPERTY_MANAGER') ||
           userType !== 'PROPERTY_MANAGER' ||
           !user.organization ||
-          !user.organizationName
+          !user.organizationName ||
+          !user.name
         ) {
           throw new Error('user needs to be a Property Manager in an organization');
         }
@@ -83,6 +86,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           technicianEmail: email,
           technicianName: name,
           pmEmail: user.email,
+          pmName: user.name,
           organization: user.organization,
           organizationName: user.organizationName,
         } as CreateTechnicianBody);

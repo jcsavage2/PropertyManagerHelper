@@ -10,6 +10,7 @@ export type CreateTenantBody = {
   tenantEmail: string;
   tenantName: string;
   pmEmail: string;
+  pmName: string;
   address: string;
   unit?: string;
   state: string;
@@ -38,6 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const body = req.body as CreateTenantBody;
     const {
       pmEmail,
+      pmName,
       tenantEmail,
       tenantName,
       organization,
@@ -55,6 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     } = body;
 
     if (
+      !pmName ||
       !pmEmail ||
       !tenantEmail ||
       !tenantName ||
@@ -79,6 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       tenantEmail,
       tenantName,
       pmEmail,
+      pmName,
       propertyUUId,
       address,
       country,
