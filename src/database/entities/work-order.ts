@@ -135,7 +135,7 @@ export class WorkOrderEntity {
     const result = await this.workOrderEntity.update(
       {
         pk: workOrderIdKey,
-        sk: ksuID,
+        sk: workOrderIdKey,
         GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail.toLowerCase()),
         GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
@@ -321,7 +321,7 @@ export class WorkOrderEntity {
       const result = await this.workOrderEntity.update(
         {
           pk: workOrderIdKey,
-          sk: ksuID,
+          sk: workOrderIdKey,
           assignedTo: {
             $add: [technicianEmail.toLowerCase()],
           },

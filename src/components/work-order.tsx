@@ -55,7 +55,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
   useEffect(() => {
     // Set the app element for accessibility once Modal is loaded
     if (Modal && isBrowser) {
-      Modal.setAppElement('#work-order');
+      Modal.setAppElement('#workOrder');
     }
   }, []);
 
@@ -191,7 +191,7 @@ const WorkOrder = ({ workOrderId, afterDelete }: { workOrderId: string; afterDel
         draggable: false,
       });
     }
-  }, []);
+  }, [workOrder]);
 
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
     setLoadingAssignedTechnicians(true);
