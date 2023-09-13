@@ -124,7 +124,7 @@ export const AddTenantModal = ({
         if (!user || !user.name || !user.email) {
           throw new Error("user needs to be a Property Manager.");
         }
-        if(!user.organization || !user.organizationName) {
+        if (!user.organization || !user.organizationName) {
           throw new Error("User needs to be part of an organization to add tenants.");
         }
         setCreateNewTenantLoading(true);

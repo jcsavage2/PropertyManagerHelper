@@ -282,7 +282,7 @@ export class WorkOrderEntity {
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }
         );
       }
-      return result;
+      return result?.Attributes;
     } catch (err) {
       console.log({ err });
     }

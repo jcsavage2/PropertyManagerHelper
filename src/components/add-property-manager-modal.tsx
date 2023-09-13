@@ -118,7 +118,7 @@ export const AddPropertyManagerModal = ({
   return (
     <Modal
       isOpen={addPMModalIsOpen}
-      onAfterOpen={() => {}}
+      onAfterOpen={() => { }}
       onRequestClose={closeModal}
       contentLabel="Create PM Modal"
       closeTimeoutMS={200}
@@ -158,7 +158,7 @@ export const AddPropertyManagerModal = ({
             placeholder="Email*"
             type="checkbox"
             checked={isAdmin}
-            onChange={(e) => {setIsAdmin(!isAdmin)}}
+            onChange={(e) => { setIsAdmin(!isAdmin); }}
           />
         </div>
 

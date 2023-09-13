@@ -33,7 +33,7 @@ export const options: NextAuthOptions = {
 	providers: [
 		Email({
 			server: `smtp://${emailUsername}:${emailPassword}@${emailHost}:${smtpPort}`,
-			from: 'dylan@pillarhq.co',
+			from: 'pillar@pillarhq.co',
 		}),
 		GoogleProvider({
 			clientId,

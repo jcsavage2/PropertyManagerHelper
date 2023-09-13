@@ -109,7 +109,7 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    if (!user || !user.organization || !user.pmEmail || !user.name || !user.email) {
+    if (!user || !user.organization || !user.pmEmail || !user.email) {
       alert('Your user account is not set up properly, please contact your property manager for assistance.');
       return;
     }
@@ -144,7 +144,7 @@ export default function WorkOrderChatbot() {
 
     const res = await axios.post('/api/create-work-order', body);
     if (res.status === 200) {
-      toast.success('Successfully Submitted Work Order!', {
+      toast.success("Successfully Submitted Work Order. An email has been sent to you as confirmation", {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
