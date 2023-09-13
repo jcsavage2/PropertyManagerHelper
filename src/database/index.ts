@@ -42,7 +42,7 @@ export const INDEXES = {
   GSI1: 'GSI1PK-GSI1SK-index', // property manager index
   GSI2: 'tenant-index', // tenant index
   GSI3: 'technician-index', // technician index
-  GSI4: 'org-index'
+  GSI4: 'org-index', // organization index
 } as const;
 
 export const PillarDynamoTable = new Table({
