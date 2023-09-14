@@ -164,7 +164,7 @@ export const ImportTenantsModal = ({
 
   const processTenantFile = useCallback(
     async (parsed: any[]) => {
-      if (!user || !user.email || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
+      if (!user || !user.email || !user.name || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
         alert('User must be a property manager part of an organization to import tenants');
         return;
       }
@@ -203,7 +203,8 @@ export const ImportTenantsModal = ({
           postalCode: postalCode?.toString(),
           unit: unit?.toString(),
           country: 'US',
-          pmEmail: user!.email,
+          pmEmail: user.email,
+          pmName: user.name,
           numBeds,
           numBaths,
           createNewProperty: true,

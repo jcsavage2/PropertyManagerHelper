@@ -6,9 +6,11 @@ import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { PTE_Type, StatusType } from '@/types';
+import { deconstructKey } from '@/utils';
 
 export type AssignTechnicianBody = {
   organization: string;
+  ksuID: string; //need to pass ksuID from original WO record
   technicianEmail: string;
   technicianName: string;
   workOrderId: string;
@@ -28,10 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   try {
     const body = req.body as AssignTechnicianBody;
-    const { workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName } =
-      body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !pmName) {
-      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization' });
+    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName } = body;
+    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID || !pmName) {
+      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization, ksuID' });
     }
 
     const eventEntity = new EventEntity();
@@ -39,6 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const assignedTechnician = await workOrderEntity.assignTechnician({
       organization,
+      ksuID,
       workOrderId,
       address,
       technicianEmail,

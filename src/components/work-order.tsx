@@ -69,7 +69,7 @@ const WorkOrder = ({
   useEffect(() => {
     // Set the app element for accessibility once Modal is loaded
     if (Modal && isBrowser) {
-      Modal.setAppElement('#work-order');
+      Modal.setAppElement('#workOrder');
     }
   }, []);
 
@@ -81,8 +81,8 @@ const WorkOrder = ({
     if (!technicians || technicians.length === 0) return [];
     return technicians.map((technician: any) => {
       return {
-        value: technician.technicianEmail,
-        label: technician.technicianName,
+        value: technician.email,
+        label: technician.name,
       };
     });
   };
@@ -139,7 +139,6 @@ const WorkOrder = ({
 
       const technicianResponse = await getTechnicians(user.organization);
       const mappedTechnicians = mapTechnicians(technicianResponse.techs);
-
       setTechnicianOptions(mappedTechnicians);
       setAssignedTechnicians([]);
       if (_workOrder && _workOrder.assignedTo && mappedTechnicians.length > 0) {
@@ -255,6 +254,7 @@ const WorkOrder = ({
         await axios.post('/api/assign-technician', {
           organization: user.organization,
           workOrderId: deconstructKey(workOrderId),
+          ksuID: workOrder.GSI1SK, //Pass ksuid from creation time to the assign technician api so we accurately date technician queries
           pmEmail: user.email,
           pmName: user.name,
           technicianEmail: selectedTechnician.value,
@@ -265,7 +265,6 @@ const WorkOrder = ({
           issueDescription: workOrder?.issue,
         } as AssignTechnicianBody);
       } else if (actionType === 'remove-value') {
-        console.log('removing technician');
         const removedTechnician = actionMeta.removedValue as OptionType;
         await axios.post('/api/remove-technician', {
           workOrderId: deconstructKey(workOrderId),
@@ -302,9 +301,9 @@ const WorkOrder = ({
       const imageKeys = workOrder?.images ?? [];
       const response = await axios.post(`/api/get-images`, { keys: imageKeys });
       setImages(response.data?.images ?? []);
-      setImagesLoading(false);
     }
     getImages();
+    setImagesLoading(false);
   }, [workOrder?.images]);
 
   if (workOrder) {
@@ -319,27 +318,29 @@ const WorkOrder = ({
             <div className="text-xl my-auto flex flex-row items-center justify-between text-gray-600 w-full p-4  border-b border-slate-200">
               <div className=" flex flex-col">
                 {toTitleCase(workOrder?.issue)}
-                <div className="text-base text-gray-400"># {deconstructKey(workOrderId)}</div>
+                <div className="text-gray-400 md:text-base text-sm"># {deconstructKey(workOrderId)}</div>
               </div>
               <div className="flex flex-row items-center">
                 {!isMobile ? (
-                  <a
-                    href="#wo-modal-comments"
-                    className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4"
-                  >
-                    Go to comments
-                  </a>
+                  <>
+                    <a
+                      href="#wo-modal-comments"
+                      className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4"
+                    >
+                      Go to comments
+                    </a>
+                    {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
+                      <div
+                        onClick={() => {
+                          if (workOrder.status === STATUS.DELETED) return;
+                          setConfirmDeleteModalIsOpen(true);
+                        }}
+                      >
+                        <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
+                      </div>
+                    )}
+                  </>
                 ) : null}
-                {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
-                  <div
-                    onClick={() => {
-                      if (workOrder.status === STATUS.DELETED) return;
-                      setConfirmDeleteModalIsOpen(true);
-                    }}
-                  >
-                    <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -347,8 +348,8 @@ const WorkOrder = ({
         {/* WO Modal Content */}
 
         <div
-          style={{ height: isMobile ? `calc(100vh - 310px)` : `calc(100vh - 270px)` }}
-          className={`h-max p-5 pb-8 overflow-y-scroll flex flex-col box-border text-gray-600 text-md md:text-base`}
+          style={{ height: isMobile ? `calc(100vh - 285px)` : `calc(100vh - 265px)` }}
+          className={`h-max pt-3 px-5 pb-8 overflow-y-scroll flex flex-col box-border text-gray-600 text-md md:text-base`}
         >
           <div className="font-bold">Status</div>
           <div className="flex flex-row mt-0.5">
@@ -358,7 +359,7 @@ const WorkOrder = ({
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && handleUpdateStatus(e, STATUS.TO_DO)}
                   className={`${
-                    deconstructKey(workOrder.status) === STATUS.TO_DO && 'bg-blue-200'
+                    workOrder.status === STATUS.TO_DO && 'bg-blue-200'
                   } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                 >
                   <GoTasklist />
@@ -368,7 +369,7 @@ const WorkOrder = ({
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && handleUpdateStatus(e, STATUS.COMPLETE)}
                   className={`${
-                    deconstructKey(workOrder.status) === STATUS.COMPLETE && 'bg-blue-200'
+                    workOrder.status === STATUS.COMPLETE && 'bg-blue-200'
                   } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
@@ -426,7 +427,7 @@ const WorkOrder = ({
           <div className={`${workOrder.permissionToEnter === PTE.YES ? 'text-green-600' : 'text-red-600'} mt-0.5 font-normal`}>
             {toTitleCase(workOrder.permissionToEnter)}
           </div>
-          <div className="font-bold mt-4">Unit</div>
+          <div className="font-bold mt-4">{workOrder.address.unit ? 'Unit' : 'Address'}</div>
           <div className="mt-0.5">{toTitleCase(workOrder.address.unit ? workOrder.address.unit : workOrder.address.address)}</div>
           <div className="font-bold mt-4">Tenant</div>
           <div className="mt-0.5">{workOrder.tenantName}</div>
@@ -456,7 +457,7 @@ const WorkOrder = ({
                   return (
                     <div
                       key={`${ENTITIES.EVENT}-${i}`}
-                      className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 py-2 px-3 text-left"
+                      className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 last-of-type:mb-0 py-2 px-3 text-left"
                     >
                       <div className="mb-0.5 flex flex-row">
                         <p className="font-bold mr-2">{event.madeByName} </p>

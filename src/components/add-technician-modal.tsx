@@ -18,6 +18,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   const { isMobile } = useDevice();
+  const { userType } = useUserContext();
   useEffect(() => {
     setIsBrowser(true);
   }, []);
@@ -48,8 +49,6 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
-  const { userType } = useUserContext();
-
   const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
       setName(e.currentTarget.value);
@@ -74,11 +73,13 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       try {
         event.preventDefault();
         if (
-          !user?.email ||
-          !user?.roles?.includes('PROPERTY_MANAGER') ||
+          !user ||
+          !user.email ||
+          !user.roles?.includes('PROPERTY_MANAGER') ||
           userType !== 'PROPERTY_MANAGER' ||
           !user.organization ||
-          !user.organizationName
+          !user.organizationName ||
+          !user.name
         ) {
           throw new Error('user needs to be a Property Manager in an organization');
         }
@@ -86,6 +87,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           technicianEmail: email,
           technicianName: name,
           pmEmail: user.email,
+          pmName: user.name,
           organization: user.organization,
           organizationName: user.organizationName,
         } as CreateTechnicianBody);

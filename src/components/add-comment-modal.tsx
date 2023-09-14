@@ -66,7 +66,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
       try {
         event.preventDefault();
         if(!user || !user.email || !user || workOrderId){
-
+          throw new Error('User or workOrderId not found');
         }
         const { data } = await axios.post('/api/create-comment', {
           comment,
@@ -83,7 +83,6 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
           setAddCommentModalIsOpen(false);
         }
       } catch (err) {
-        toast.error('Error Adding Comment', { draggable: false });
         console.log({ err });
       }
       setIsLoading(false);
@@ -116,7 +115,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
           value={comment}
           onChange={handleCommentChange}
         />
-        <button className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={!comment.length}>
+        <button className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={!comment.length || isLoading}>
           {isLoading ? <LoadingSpinner /> : "Add Comment"}
         </button>
       </form>

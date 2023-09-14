@@ -42,8 +42,8 @@ export const TenantSelect = ({
           tenantSearchString: _searchString,
         } as GetTenantsForOrgRequest);
         const response = JSON.parse(data.response);
-        const processedTenants = response.tenants.map((tenant: any) => {
-          return { value: tenant.tenantEmail, label: `${tenant.tenantName} (${tenant.tenantEmail})` };
+        const processedTenants = response.tenants.map((tenant: IUser) => {
+          return { value: tenant.email, label: `${tenant.name} (${tenant.email})` };
         });
         if (!_searchString) {
           setTenantOptions(processedTenants);

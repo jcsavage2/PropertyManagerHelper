@@ -94,7 +94,6 @@ export const WorkOrdersCards = ({
         {workOrders.length > 0
           ? workOrders?.map((workOrder, index) => {
               const { assignedTo } = workOrder;
-              const status = deconstructKey(workOrder.status);
               const assignedToString = setToShortenedString(assignedTo);
               return (
                 <div
@@ -110,9 +109,9 @@ export const WorkOrdersCards = ({
                     rounded 
                     p-1 
                     w-48
-                    ${status === STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
+                    ${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
                   `}
-                      value={StatusOptions.find((o) => o.value === status)}
+                      value={StatusOptions.find((o) => o.value === workOrder.status)}
                       blurInputOnSelect={false}
                       formatOptionLabel={formattedStatusOptions}
                       onChange={(v) => {

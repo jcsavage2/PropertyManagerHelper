@@ -29,7 +29,6 @@ export default async function handler(
     if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !pmName) {
       return res.status(400).json({ response: "Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName" });
     }
-    console.log("Removing technician: ", workOrderId)
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
     await eventEntity.create({

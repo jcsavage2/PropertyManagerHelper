@@ -13,7 +13,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const keys = req.body.keys as string[];  // expect keys to be an array of strings
-  console.log(keys)
   try {
     if (!keys?.length) {
       res.status(200);
@@ -41,7 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       })
     );
-      console.log(images)
     res.status(200).json({ images });
   } catch (error) {
     console.log({ error });

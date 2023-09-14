@@ -6,6 +6,7 @@ import { DynamoDBClientConfig } from '@/database';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { UserEntity } from '@/database/entities/user';
+import { InviteStatusType } from '@/utils/user-types';
 
 const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const clientSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;
@@ -44,15 +45,27 @@ export const options: NextAuthOptions = {
 		// Creates the user if the user does not already exist in the database. 
 		async session({ session, user }) {
 			if (user.email) {
+				let userFromDB;
 				const userEntity = new UserEntity();
-				const databaseUser = await userEntity.get({ email: user.email.toLowerCase() });
-				if (databaseUser) {
-					session.user = { ...session.user, ...databaseUser };
+				userFromDB = await userEntity.get({ email: user?.email.toLowerCase() });
+				if (userFromDB) {
+					session.user = { ...session.user, ...userFromDB };
 				} else {
-					const newUser = await userEntity.createBaseUser({ email: user.email });
-					session.user = { ...session.user, ...newUser };
+
+					// Users first time on the app, but they were not invited
+					userFromDB = await userEntity.createBaseUser({ email: user.email });
+					session.user = { ...session.user, ...userFromDB };
+				}
+				const userStatus = userFromDB?.status as InviteStatusType;
+
+				// User's first time on the application, mark them as joined.
+				if (userStatus === "INVITED") {
+					const updatedUser = await userEntity.updateInviteStatus({ pk: userFromDB?.pk, sk: userFromDB?.sk, status: "JOINED" });
+					userFromDB = updatedUser;
+					session.user = { ...session.user, ...userFromDB };
 				}
 			}
+
 			return session;
 		},
 	},

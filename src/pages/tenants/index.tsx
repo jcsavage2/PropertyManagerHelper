@@ -10,16 +10,13 @@ import { GetTenantsForOrgRequest } from '../api/get-all-tenants-for-org';
 import { useUserContext } from '@/context/user';
 import { IUser, userRoles } from '@/database/entities/user';
 import { createdToFormattedDateTime, getPageLayout, toTitleCase } from '@/utils';
-import { AiOutlineSearch } from 'react-icons/ai';
 import ConfirmationModal from '@/components/confirmation-modal';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { DeleteRequest } from '../api/delete';
 import { toast } from 'react-toastify';
 import { CiCircleRemove } from 'react-icons/ci';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { ITenant } from '@/database/entities/tenant';
 import { MdClear } from 'react-icons/md';
-import { INVITE_STATUS } from '@/utils/user-types';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -204,16 +201,16 @@ const Tenants = () => {
                     } ${index < tenants.length - 1 && 'mb-3'}`}
                   >
                     <div className="pl-2 text-gray-800">
-                      <p className="text-2xl ">{toTitleCase(tenant.tenantName!)} </p>
-                      <p className="text-sm mt-2">{tenant.tenantEmail} </p>
+                      <p className="text-2xl ">{toTitleCase(tenant.name)} </p>
+                      <p className="text-sm mt-2">{tenant.email} </p>
                       <p className="text-sm mt-1">{toTitleCase(displayAddress)} </p>
-                      <p className={` text-sm mt-2`}>{tenant.status} </p>
+                      <p className={`text-sm mt-2`}>{tenant.status} </p>
                     </div>
                     <CiCircleRemove
                       className="text-3xl text-red-500 cursor-pointer"
                       onClick={() => {
                         if (tenantsLoading) return;
-                        setToDelete({ pk: tenant.pk, sk: tenant.sk, name: tenant.tenantName!, roles: tenant.roles });
+                        setToDelete({ pk: tenant.pk, sk: tenant.sk, name: tenant.name, roles: tenant.roles });
                         setConfirmDeleteModalIsOpen(true);
                       }}
                     />
@@ -238,22 +235,22 @@ const Tenants = () => {
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">
-                    {tenants.map((tenant: any) => {
+                    {tenants.map((tenant: IUser) => {
                       const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
                       const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
                       return (
                         <tr key={`${tenant.pk}-${tenant.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tenant.tenantName!)}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${tenant.tenantEmail}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tenant.name)}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${tenant.email}`}</td>
                           <td className="border-b border-t px-4 py-1">{tenant.status}</td>
                           <td className="border-b border-t px-4 py-1">{toTitleCase(displayAddress)}</td>
-                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tenant._ct ?? tenant.created)[0]}</td>
+                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tenant.created)[0]}</td>
                           <td className="pl-6 py-1">
                             <CiCircleRemove
                               className="text-3xl text-red-500 cursor-pointer"
                               onClick={() => {
                                 if (tenantsLoading) return;
-                                setToDelete({ pk: tenant.pk, sk: tenant.sk, name: tenant.tenantName!, roles: tenant.roles });
+                                setToDelete({ pk: tenant.pk, sk: tenant.sk, name: tenant.name, roles: tenant.roles });
                                 setConfirmDeleteModalIsOpen(true);
                               }}
                             />
