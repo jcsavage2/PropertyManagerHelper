@@ -46,7 +46,7 @@ export default function WorkOrderChatbot() {
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
   const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
 
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [woId, _setWoId] = useState(uuidv4());
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
@@ -165,14 +165,15 @@ export default function WorkOrderChatbot() {
     return;
   };
 
-  const handleSubmitImages: React.FormEventHandler<HTMLFormElement> = async (event) => {
-    event.preventDefault();
-    if (!selectedFiles) return;
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(async (e) => {
+    e.preventDefault();
+    setUploadingFiles(true);
+    const selectedFs = e.target.files ?? [];
     const formData = new FormData();
 
     // Append all selected files to the FormData
-    for (const selectedFile of selectedFiles) {
-      formData.append('image', selectedFile);
+    for (const imageFile of selectedFs) {
+      formData.append('image', imageFile);
     }
     formData.append("uuid", woId);
 
@@ -184,18 +185,16 @@ export default function WorkOrderChatbot() {
       if (response.status === 200) {
         setUploadedFiles(response?.data?.files ?? []);
         toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
+        setUploadingFiles(false);
       } else {
         toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+        setUploadingFiles(false);
       }
     } catch (error) {
       toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+      setUploadingFiles(false);
     }
-  };
-
-  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    e.preventDefault();
-    setSelectedFiles(e.target.files);
-  }, []);
+  }, [woId]);
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -383,14 +382,13 @@ export default function WorkOrderChatbot() {
                                     onChange={handleAdditionalDetailsChange}
                                   />
                                 </div>
-                                <form className='mt-2' onSubmit={handleSubmitImages}>
+                                <form className='mt-2' onSubmit={() => { }}>
                                   <input
                                     type="file"
                                     multiple name="image"
                                     accept="image/*"
                                     onChange={handleFileChange}
                                   />
-                                  {selectedFiles?.length && (<button type="submit">Upload</button>)}
                                 </form>
                                 <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : 'Property'}* </p>
                                 <div>
@@ -440,10 +438,10 @@ export default function WorkOrderChatbot() {
                   {((hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && messages.length > 1) || !hasConnectionWithGPT ? (
                     <button
                       onClick={handleSubmitWorkOrder}
-                      disabled={issueDescription.length === 0 || submittingWorkOrderLoading}
+                      disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? <LoadingSpinner /> : 'Submit Work Order'}
+                      {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? "Files Uploading..." : 'Submit Work Order'}
                     </button>
                   ) : (
                     <form
