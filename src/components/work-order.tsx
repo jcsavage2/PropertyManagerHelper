@@ -23,7 +23,7 @@ import { DeleteRequest } from '@/pages/api/delete';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
 import Modal from 'react-modal';
-import { userRoles } from '@/database/entities/user';
+import { IUser, userRoles } from '@/database/entities/user';
 import { RemoveTechnicianBody } from '@/pages/api/remove-technician';
 import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
 import { MdOutlineClear } from 'react-icons/md';
@@ -49,10 +49,14 @@ const WorkOrder = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [fetchingTechnicians, setFetchingTechnicians] = useState(false); //Will not disable technician select, allows the user to search for technicians without diabling the input
+  const [isUpdatingAssignedTechnicians, setIsUpdatingAssignedTechnicians] = useState(false); //Will disable technician select
 
+  //Technician state
   const [technicianOptions, setTechnicianOptions] = useState<OptionType[]>([]);
   const [assignedTechnicians, setAssignedTechnicians] = useState<OptionType[]>([]);
-  const [loadingAssignedTechnicians, setLoadingAssignedTechnicians] = useState(false);
+
+  //Modals
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
 
@@ -60,6 +64,10 @@ const WorkOrder = ({
   const [fullScreenImage, setFullScreenImage] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [imagesLoading, setImagesLoading] = useState<boolean>(true);
+
+  //Event state
+  const [events, setEvents] = useState<Array<IEvent | null>>([]);
+  const [eventsStartKey, setEventsStartKey] = useState<StartKey | undefined>(undefined);
 
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
@@ -73,54 +81,36 @@ const WorkOrder = ({
     }
   }, []);
 
-  //Event state
-  const [events, setEvents] = useState<Array<IEvent | null>>([]);
-  const [eventsStartKey, setEventsStartKey] = useState<StartKey | undefined>(undefined);
-
-  const mapTechnicians = (technicians: any[]): OptionType[] => {
-    if (!technicians || technicians.length === 0) return [];
-    return technicians.map((technician: any) => {
-      return {
-        value: technician.email,
-        label: technician.name,
-      };
-    });
-  };
-
-  const getTechnicians = useCallback(async (organization: string, _searchString?: string) => {
-    const body: GetTechsForOrgRequest = {
-      organization,
-      startKey: undefined,
-      techSearchString: _searchString,
-    };
-    const { data } = await axios.post('/api/get-techs-for-org', body);
-    const response = JSON.parse(data.response);
-    return response;
-  }, []);
-
   //Return a list of technician options based on string search input
+  //Can also be used to get all technicians for an org by omitting the search string
   const searchTechnicians = useCallback(
-    async (_searchString: string) => {
+    async (_searchString?: string) => {
       if (!user || !userType) return [];
-      setLoadingAssignedTechnicians(true);
+      setFetchingTechnicians(true);
       try {
-        if (
-          !user.email ||
-          userType !== 'PROPERTY_MANAGER' ||
-          !user.roles?.includes(userRoles.PROPERTY_MANAGER) ||
-          !user.organization ||
-          !_searchString
-        ) {
-          throw new Error('user must be a property manager in an organization, and there must be a search string');
+        if (!user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
+          throw new Error('user must be a property manager in an organization');
         }
-        const response = await getTechnicians(user.organization, _searchString);
-        const mappedTechnicians = mapTechnicians(response.techs);
-        setLoadingAssignedTechnicians(false);
+        const body: GetTechsForOrgRequest = {
+          organization: user.organization,
+          startKey: undefined,
+          techSearchString: _searchString,
+        };
+        const { data } = await axios.post('/api/get-techs-for-org', body);
+        const response = JSON.parse(data.response);
+        const mappedTechnicians = response.techs && response.techs.map((technician: any) => {
+          return {
+            value: technician.email,
+            label: technician.name,
+          };
+        });
+
+        setFetchingTechnicians(false);
         return mappedTechnicians;
       } catch (err) {
         console.log({ err });
       }
-      setLoadingAssignedTechnicians(false);
+      setFetchingTechnicians(false);
       return [];
     },
     [user, userType, workOrder]
@@ -137,22 +127,19 @@ const WorkOrder = ({
       const _workOrder: IWorkOrder = JSON.parse(data.response);
       setWorkOrder(_workOrder);
 
-      setLoadingAssignedTechnicians(true);
-      const technicianResponse = await getTechnicians(user.organization);
-      const mappedTechnicians = mapTechnicians(technicianResponse.techs);
+      const mappedTechnicians = await searchTechnicians();
       setTechnicianOptions(mappedTechnicians);
       setAssignedTechnicians([]);
       if (_workOrder && _workOrder.assignedTo && mappedTechnicians.length > 0) {
         Array.from(_workOrder.assignedTo).forEach((email: string) => {
-          const technician: OptionType | undefined = mappedTechnicians.find((technician) => technician.value === email);
+          const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === email);
           if (technician) {
             setAssignedTechnicians((prev) => [...prev, technician]);
           }
         });
       }
-      setLoadingAssignedTechnicians(false);
     } catch (err) {
-      toast.error('Error getting work order. Please try reloading your page', {
+      toast.error('Error getting work order.', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
@@ -245,7 +232,7 @@ const WorkOrder = ({
   );
 
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
-    setLoadingAssignedTechnicians(true);
+    setIsUpdatingAssignedTechnicians(true);
     try {
       if (!user?.email || !workOrder || userType !== 'PROPERTY_MANAGER' || !user.organization) {
         throw new Error('User must be a property manager in an organization to assign or remove technicians');
@@ -285,7 +272,7 @@ const WorkOrder = ({
         draggable: false,
       });
     }
-    setLoadingAssignedTechnicians(false);
+    setIsUpdatingAssignedTechnicians(false);
   };
 
   useEffect(() => {
@@ -386,8 +373,8 @@ const WorkOrder = ({
           <div className="mt-4 font-bold">Assigned To</div>
           <div className="w-full mt-0.5">
             <AsyncSelect
-              placeholder={loadingAssignedTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
-              isDisabled={loadingAssignedTechnicians} // potentially could have logic for technicians to "self assign"
+              placeholder={isUpdatingAssignedTechnicians || fetchingTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
+              isDisabled={isUpdatingAssignedTechnicians} // potentially could have logic for technicians to "self assign"
               className={'w-11/12 md:w-10/12 mt-1'}
               closeMenuOnSelect={true}
               isMulti
@@ -395,7 +382,7 @@ const WorkOrder = ({
               value={assignedTechnicians}
               captureMenuScroll={true}
               loadOptions={(searchString: string) => searchTechnicians(searchString)}
-              isLoading={loadingAssignedTechnicians}
+              isLoading={isUpdatingAssignedTechnicians || fetchingTechnicians}
               onChange={handleAssignTechnician}
               isClearable={false} //Don't have the functionality for remove all yet
               menuPortalTarget={document.body}
