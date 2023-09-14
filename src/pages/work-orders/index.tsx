@@ -75,11 +75,13 @@ const WorkOrders = () => {
         const body: IGetAllWorkOrdersForUserProps = {
           email: user.email,
           userType,
-          orgId: orgMode ? deconstructKey(user?.organization ?? '') : undefined,
+          orgId: orgMode ? user?.organization ?? '' : undefined,
           startKey: initialFetch ? undefined : startKey,
           statusFilter,
         };
+
         const { data } = await axios.post('/api/get-all-work-orders-for-user', { ...body });
+
         const response = JSON.parse(data.response);
         const orders: IWorkOrder[] = response.workOrders;
         setStartKey(response.startKey);
