@@ -40,6 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       woId,
     } = body;
 
+
+
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
       uuid: woId,
@@ -83,12 +85,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         madeByName: message.role === 'user' ? tenantName ?? creatorName : 'Pillar Assistant',
       });
     }
+    const ccString = (body.createdByType === "TENANT" && creatorEmail !== body.pmEmail) ? creatorEmail.toLowerCase() : "";
 
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
-      cc: creatorEmail === body.pmEmail ? 'mitchposk+emailMatch@gmail.com' : creatorEmail.toLowerCase(), // The Tenant
-      from: 'dylan@pillarhq.co', // The Email from the company
-      subject: `Work Order Request for ${body.address}`, // work order for address on MM-DD-YYYY
+      ...(!!ccString && { cc: ccString }),
+      from: "pillar@pillarhq.co",
+      subject: `Work Order Request for ${body.unit ? "unit " + body.unit : body.address}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>

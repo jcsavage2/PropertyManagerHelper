@@ -137,6 +137,7 @@ const WorkOrder = ({
       const _workOrder: IWorkOrder = JSON.parse(data.response);
       setWorkOrder(_workOrder);
 
+      setLoadingAssignedTechnicians(true);
       const technicianResponse = await getTechnicians(user.organization);
       const mappedTechnicians = mapTechnicians(technicianResponse.techs);
       setTechnicianOptions(mappedTechnicians);
@@ -149,6 +150,7 @@ const WorkOrder = ({
           }
         });
       }
+      setLoadingAssignedTechnicians(false);
     } catch (err) {
       toast.error('Error getting work order. Please try reloading your page', {
         position: toast.POSITION.TOP_CENTER,
@@ -386,7 +388,7 @@ const WorkOrder = ({
             <AsyncSelect
               placeholder={loadingAssignedTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
               isDisabled={loadingAssignedTechnicians} // potentially could have logic for technicians to "self assign"
-              className={'w-10/12 mt-1'}
+              className={'w-11/12 md:w-10/12 mt-1'}
               closeMenuOnSelect={true}
               isMulti
               defaultOptions={technicianOptions}

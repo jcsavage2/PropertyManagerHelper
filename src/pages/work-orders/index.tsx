@@ -107,11 +107,13 @@ const WorkOrders = () => {
         const body: IGetAllWorkOrdersForUserProps = {
           email: user.email,
           userType,
-          orgId: orgMode ? deconstructKey(user?.organization ?? '') : undefined,
+          orgId: orgMode ? user?.organization ?? '' : undefined,
           startKey: initialFetch ? undefined : startKey,
           statusFilter,
         };
+
         const { data } = await axios.post('/api/get-all-work-orders-for-user', { ...body });
+
         const response = JSON.parse(data.response);
         const orders: IWorkOrder[] = response.workOrders;
         setStartKey(response.startKey);
@@ -124,7 +126,7 @@ const WorkOrders = () => {
       }
       setIsFetching(false);
     },
-    [orgMode, user, userType, statusFilter, startKey]
+    [router.query.workOrderId, user, userType, orgMode, startKey, statusFilter, workOrders]
   );
 
   /**
@@ -172,9 +174,8 @@ const WorkOrders = () => {
           <div className="flex flex-row justify-between items-center mb-2">
             <h1 className="text-4xl">{`Work Orders`}</h1>
             <button
-              className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${
-                isFetching && 'opacity-50 pointer-events-none'
-              }'}`}
+              className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${isFetching && 'opacity-50 pointer-events-none'
+                }'}`}
               onClick={() => {
                 if (isFetching) return;
                 setAddWorkOrderModalIsOpen(true);

@@ -5,7 +5,6 @@ export const findIssueSample: AiJSONResponse = {
   issueDescription: '<value of the issueDescription>',
   issueLocation: '<value of issueLocation>',
   additionalDetails: '<value of additionalDetails>',
-  aiMessageDate: '',
 };
 
 export const issueCategoryToTypes = {
@@ -38,8 +37,6 @@ export const issueCategoryToTypes = {
   Washer: ['No Water', 'No Hot Water', "Won't Start"],
   Window: ['Shattered', 'Cracked', "Won't Open", "Won't Close"],
 } as Record<string, string[]>;
-
-export const STATUS_KEY = "STATUS";
 
 export const STATUS = {
   TO_DO: 'TO_DO',

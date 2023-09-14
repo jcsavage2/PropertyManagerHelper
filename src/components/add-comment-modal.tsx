@@ -65,7 +65,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
       setIsLoading(true);
       try {
         event.preventDefault();
-        if(!user || !user.email || !user || workOrderId){
+        if(!user || !user.email || !user || !workOrderId){
           throw new Error('User or workOrderId not found');
         }
         const { data } = await axios.post('/api/create-comment', {

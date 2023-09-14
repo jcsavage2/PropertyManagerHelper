@@ -146,7 +146,7 @@ export const WorkOrdersCards = ({
                       </p>
                     </div>
                     <Link
-                      className="px-4 py-1 -mt-2 bg-slate-500 text-slate-100 rounded"
+                      className="px-4 py-1 bg-slate-500 text-slate-100 rounded"
                       key={workOrder.pk + index}
                       href={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}
                       as={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}

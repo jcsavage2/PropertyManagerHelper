@@ -3,7 +3,7 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
-import { PAGE_SIZE, STATUS, STATUS_KEY } from '@/constants';
+import { PAGE_SIZE, STATUS } from '@/constants';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { PTE_Type, StatusType } from '@/types';
 
@@ -283,7 +283,7 @@ export class WorkOrderEntity {
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }
         );
       }
-      return result;
+      return result?.Attributes;
     } catch (err) {
       console.log({ err });
     }

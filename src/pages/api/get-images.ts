@@ -17,12 +17,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!keys?.length) {
       res.status(200);
     }
+
     const images = await Promise.all(
       keys.map(async (key) => {
+        const newKey = key.replace("https://pillar-file-storage.s3.us-east-1.amazonaws.com/", "");
+        const decoded = decodeURI(newKey);
         const response = await BucketClient.send(
           new GetObjectCommand({
             Bucket: "pillar-file-storage",
-            Key: `work-order-images/3058d0c3-25b2-4fef-97e6-68225db6893f-1694358697643-IMG_1858.jpg`,
+            Key: decoded,
           })
         );
 

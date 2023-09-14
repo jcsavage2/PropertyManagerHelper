@@ -116,7 +116,7 @@ const Home = () => {
           </div>
           <div className="w-full text-center">
             <h3 className="mt-5">NOTICE</h3>
-            <p>This application is in the process of being developed and is not yet stable for public use. Please contact dylan@pillarhq.co if you would like more information.</p>
+            <p>This application is in the process of being developed and is not yet stable for public use. Please contact pillar@pillarhq.co if you would like more information.</p>
             <p>Pillar is not responsible for any transactions or data submitted during this period.</p>
           </div>
 

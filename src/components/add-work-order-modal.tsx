@@ -102,7 +102,7 @@ export const AddWorkOrderModal = ({
           pmEmail: user.email,
           creatorEmail: user.email,
           creatorName: user.name,
-          createdByType: userType,
+          createdByType: "PROPERTY_MANAGER",
           permissionToEnter: PTE.NO,
           address: primaryAddress.address,
           state: primaryAddress.state,
