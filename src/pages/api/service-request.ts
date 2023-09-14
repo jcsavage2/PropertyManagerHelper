@@ -32,19 +32,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo);
 
-    const messagesForGPT: ChatCompletionRequestMessage[] = messages.map((message) => {
-      return {
-        role: message.role,
-        content: message.content,
-      };
-    })
-
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
       model: gpt_model,
       messages: [
         prompt,
-        ...messagesForGPT,
+        ...messages,
         {
           role: "user",
           content: userMessage
@@ -72,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         model: gpt_model,
         messages: [
           prompt,
-          ...messagesForGPT,
+          ...messages,
           { role: "user", content: userMessage },
           { role: "assistant", content: aiResponse },
           {
