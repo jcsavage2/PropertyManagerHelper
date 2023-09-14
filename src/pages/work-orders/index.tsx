@@ -101,7 +101,7 @@ const WorkOrders = () => {
   /** Fetch Work Orders For User Type */
   const fetchWorkOrders = useCallback(
     async (initialFetch: boolean) => {
-      if (!user || !userType) return;
+      if (router.query.workOrderId || !user || !userType) return;
       setIsFetching(true);
       try {
         const body: IGetAllWorkOrdersForUserProps = {

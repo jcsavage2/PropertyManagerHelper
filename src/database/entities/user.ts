@@ -323,7 +323,6 @@ export class UserEntity {
     let techs = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization);
     let remainingTechsToFetch = PAGE_SIZE;
-    console.log("Search string: " + techSearchString)
     do {
       try {
         const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
@@ -342,7 +341,6 @@ export class UserEntity {
         startKey = LastEvaluatedKey as StartKey;
         remainingTechsToFetch -= Items?.length ?? 0;
         Items?.length && techs.push(...Items);
-        console.log(Items)
       } catch (err) {
         console.log({ err });
       }
