@@ -98,7 +98,8 @@ const WorkOrder = ({
         };
         const { data } = await axios.post('/api/get-techs-for-org', body);
         const response = JSON.parse(data.response);
-        const mappedTechnicians = response.techs && response.techs.map((technician: any) => {
+        if(!response.techs) return [];
+        const mappedTechnicians = response.techs.map((technician: any) => {
           return {
             value: technician.email,
             label: technician.name,
