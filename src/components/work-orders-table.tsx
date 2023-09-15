@@ -37,7 +37,7 @@ export const WorkOrdersTable = ({
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
     { label: 'Issue', accessor: 'issue', width: 'w-72' },
-    { label: 'StatusType', accessor: 'status', width: '' },
+    { label: 'Status', accessor: 'status', width: '' },
     { label: 'Address', accessor: 'address', width: '' },
     { label: 'Assigned To', accessor: 'assignedTo', width: 'w-32' },
     { label: 'Created', accessor: 'created', width: '' },
