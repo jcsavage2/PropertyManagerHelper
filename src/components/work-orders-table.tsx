@@ -38,7 +38,7 @@ export const WorkOrdersTable = ({
   const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
     { label: 'Issue', accessor: 'issue', width: 'w-72' },
     { label: 'Status', accessor: 'status', width: '' },
-    { label: 'Address', accessor: 'address', width: '' },
+    { label: 'Address', accessor: 'address', width: 'w-44' },
     { label: 'Assigned To', accessor: 'assignedTo', width: 'w-32' },
     { label: 'Created', accessor: 'created', width: '' },
     { label: 'Tenant', accessor: 'tenantName', width: '' },
@@ -78,7 +78,7 @@ export const WorkOrdersTable = ({
                 const tData = workOrder[accessor];
                 if (accessor === 'status') {
                   return (
-                    <td key={accessor} className="border-t border-b px-2">
+                    <td key={accessor} className="border-t border-b">
                       {tData !== STATUS.DELETED ? (
                         <Select
                           className={`cursor-pointer rounded p-1 min-w-max ${tData === STATUS.TO_DO && 'bg-yellow-200'} ${
