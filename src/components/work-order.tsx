@@ -416,8 +416,8 @@ const WorkOrder = ({
           <div className={`${workOrder.permissionToEnter === PTE.YES ? 'text-green-600' : 'text-red-600'} mt-0.5 font-normal`}>
             {toTitleCase(workOrder.permissionToEnter)}
           </div>
-          <div className="font-bold mt-4">{workOrder.address.unit ? 'Unit' : 'Address'}</div>
-          <div className="mt-0.5">{toTitleCase(workOrder.address.unit ? workOrder.address.unit : workOrder.address.address)}</div>
+          <div className="font-bold mt-4">Address</div>
+          <div className="mt-0.5">{workOrder.address.unit ? toTitleCase(workOrder.address.address + " " + workOrder.address.unit) : toTitleCase(workOrder.address.address)}</div>
           <div className="font-bold mt-4">Tenant</div>
           <div className="mt-0.5">{workOrder.tenantName}</div>
           <div className="font-bold mt-4">Location</div>

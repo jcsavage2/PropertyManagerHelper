@@ -107,6 +107,7 @@ export const AddWorkOrderModal = ({
           address: primaryAddress.address,
           state: primaryAddress.state,
           city: primaryAddress.city,
+          unit: primaryAddress.unit,
           postalCode: primaryAddress.postalCode,
           tenantEmail,
           tenantName: tenant.name,

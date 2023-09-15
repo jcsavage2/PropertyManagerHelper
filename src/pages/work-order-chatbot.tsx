@@ -138,6 +138,7 @@ export default function WorkOrderChatbot() {
       address: parsedAddress.address,
       state: parsedAddress.state,
       city: parsedAddress.city,
+      unit: parsedAddress.unit,
       postalCode: parsedAddress.postalCode,
       images: uploadedFiles,
       woId
