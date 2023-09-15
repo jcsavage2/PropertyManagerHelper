@@ -17,7 +17,7 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 // Types
 import { IGetAllWorkOrdersForUserProps, IWorkOrder } from '@/database/entities/work-order';
-import { deconstructKey, getPageLayout, toggleBodyScroll } from '@/utils';
+import { getPageLayout, toggleBodyScroll } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
 import { StatusOptionType, StatusType } from '@/types';
@@ -173,16 +173,19 @@ const WorkOrders = () => {
         <div className={`lg:max-w-5xl`}>
           <div className="flex flex-row justify-between items-center mb-2">
             <h1 className="text-4xl">{`Work Orders`}</h1>
-            <button
-              className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${isFetching && 'opacity-50 pointer-events-none'
+            {userType === ENTITIES.PROPERTY_MANAGER ? (
+              <button
+                className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${
+                  isFetching && 'opacity-50 pointer-events-none'
                 }'}`}
-              onClick={() => {
-                if (isFetching) return;
-                setAddWorkOrderModalIsOpen(true);
-              }}
-            >
-              + Work Order
-            </button>
+                onClick={() => {
+                  if (isFetching) return;
+                  setAddWorkOrderModalIsOpen(true);
+                }}
+              >
+                + Work Order
+              </button>
+            ) : null}
           </div>
           {userType !== ENTITIES.TENANT && (
             <div className={`flex flex-row cursor-pointer mb-2 text-slate-700 ${isFetching && 'opacity-50 pointer-events-none '}`}>
@@ -193,7 +196,7 @@ const WorkOrders = () => {
                   setOrgMode(false);
                 }}
               >
-                My work orders
+                {userType === ENTITIES.TECHNICIAN ? "Assigned to me" : "My work orders"}
               </div>
               <div
                 className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`}

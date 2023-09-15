@@ -26,7 +26,9 @@ export type CreatePropertyBody = {
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
-  if (!session) {
+  //User must be a pm to create properties
+  // @ts-ignore
+  if (!session || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
     res.status(401);
     return;
   }

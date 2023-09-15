@@ -6,7 +6,6 @@ import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { PTE_Type, StatusType } from '@/types';
-import { deconstructKey } from '@/utils';
 
 export type AssignTechnicianBody = {
   organization: string;
@@ -20,6 +19,9 @@ export type AssignTechnicianBody = {
   permissionToEnter: PTE_Type;
   pmEmail: string;
   pmName: string;
+  tenantEmail: string;
+  tenantName: string;
+  oldAssignedTo: Set<string>;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
@@ -30,9 +32,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   try {
     const body = req.body as AssignTechnicianBody;
-    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName } = body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID || !pmName) {
-      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization, ksuID' });
+    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName, tenantName, tenantEmail, oldAssignedTo } = body;
+    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID || !pmName || !tenantEmail || !tenantName || !oldAssignedTo) {
+      throw new Error('Invalid params to assign technician');
     }
 
     const eventEntity = new EventEntity();
@@ -50,6 +52,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       permissionToEnter,
       pmEmail,
       pmName,
+      tenantEmail,
+      tenantName,
+      oldAssignedTo
     });
 
     await eventEntity.create({

@@ -19,7 +19,9 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   const session = await getServerSession(req, res, options);
-  if (!session) {
+  //User must be a pm to unassign a technician from a WO
+  // @ts-ignore
+  if (!session || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
     res.status(401);
     return;
   }

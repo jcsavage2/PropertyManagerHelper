@@ -32,7 +32,7 @@ export const AddPropertyManagerModal = ({
       right: 'auto',
       bottom: 'auto',
       transform: 'translate(-50%, -50%)',
-      width: isMobile ? '90%' : '50%',
+      width: isMobile ? '90%' : '60%',
       backgroundColor: 'rgba(255, 255, 255)',
     },
     overLay: {
@@ -69,6 +69,9 @@ export const AddPropertyManagerModal = ({
         if (!userType) {
           throw new Error('No userType');
         }
+        if(!user.isAdmin){
+          throw new Error("User must be an admin to create pms")
+        }
         setCreatePMLoading(true);
 
         const body: ICreatePMUser = {
@@ -99,7 +102,7 @@ export const AddPropertyManagerModal = ({
       setAddPMModalIsOpen(false);
       setCreatePMLoading(false);
     },
-    [user, onSuccessfulAdd, setAddPMModalIsOpen, pmEmail, pmName]
+    [user, onSuccessfulAdd, setAddPMModalIsOpen, pmEmail, pmName, isAdmin]
   );
 
   const handlePmEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(

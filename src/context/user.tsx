@@ -1,6 +1,6 @@
 import { useSessionUser } from "@/hooks/auth/use-session-user";
 import { signOut } from "next-auth/react";
-import { createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 export type UserContext = {
   userType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN" | null;
@@ -19,7 +19,7 @@ export const UserContext = createContext<UserContext>({
 export const UserContextProvider = (props: any) => {
   const { user } = useSessionUser();
   const defaultState = user?.roles?.length === 1 ? user?.roles[0] : null;
-  const [userType, setType] = useState(defaultState);
+  const [userType, setType] = useState<UserContext["userType"]>(defaultState);
 
   useEffect(() => {
     const localUserType = localStorage.getItem("PILLAR:USER_TYPE");

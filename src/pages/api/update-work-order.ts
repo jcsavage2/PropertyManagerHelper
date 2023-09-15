@@ -8,6 +8,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
+import { userRoles } from '@/database/entities/user';
 
 type UpdateWorkOrderApiRequest = {
   pk: string;
@@ -20,7 +21,9 @@ type UpdateWorkOrderApiRequest = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
-  if (!session) {
+  //User must be a pm or technician to update the status or PTE on a WO
+  //@ts-ignore
+  if (!session || (!session.user?.roles?.includes(userRoles.PROPERTY_MANAGER) && !session.user?.roles?.includes(userRoles.TECHNICIAN))) {
     res.status(401);
     return;
   }
@@ -37,7 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { pk, sk, status, email, permissionToEnter, name } = body;
     const updatedWorkOrder = await workOrderEntity.update({
       pk,
-      sk,
       status,
       ...(permissionToEnter && { permissionToEnter }),
     });

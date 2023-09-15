@@ -1,5 +1,5 @@
 import { IWorkOrder } from '@/database/entities/work-order';
-import { deconstructKey, generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
+import { generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
@@ -11,6 +11,8 @@ import { StatusType, StatusOptionType } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
+import { ENTITIES } from '@/database/entities';
+import { useUserContext } from '@/context/user';
 
 export const StatusOptions: StatusOptionType[] = [
   { value: STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
@@ -35,6 +37,7 @@ export const WorkOrdersTable = ({
   formattedStatusOptions,
 }: IWorkOrdersTableProps) => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const { userType } = useUserContext();
   const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
     { label: 'Issue', accessor: 'issue', width: 'w-72' },
     { label: 'Status', accessor: 'status', width: '' },
@@ -89,6 +92,7 @@ export const WorkOrdersTable = ({
                           formatOptionLabel={formattedStatusOptions}
                           options={StatusOptions}
                           menuPortalTarget={document.body}
+                          isDisabled={userType === ENTITIES.TENANT}
                         />
                       ) : (
                         <p className="text-red-600 text-center">{STATUS.DELETED}</p>

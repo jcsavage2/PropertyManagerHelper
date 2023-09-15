@@ -88,8 +88,8 @@ const WorkOrder = ({
       if (!user || !userType) return [];
       setFetchingTechnicians(true);
       try {
-        if (!user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
-          throw new Error('user must be a property manager in an organization');
+        if (!user.email || !user.organization) {
+          throw new Error('user must be in an organization');
         }
         const body: GetTechsForOrgRequest = {
           organization: user.organization,
@@ -98,7 +98,7 @@ const WorkOrder = ({
         };
         const { data } = await axios.post('/api/get-techs-for-org', body);
         const response = JSON.parse(data.response);
-        if(!response.techs) return [];
+        if (!response.techs) return [];
         const mappedTechnicians = response.techs.map((technician: any) => {
           return {
             value: technician.email,
@@ -176,6 +176,9 @@ const WorkOrder = ({
       if (!user || !user.name || !user.email) {
         throw new Error('User or workOrderId not found');
       }
+      if (!user.roles?.includes(userRoles.TECHNICIAN) && !user.roles.includes(userRoles.PROPERTY_MANAGER)) {
+        throw new Error('User must be a technician or pm to update status');
+      }
       const { data } = await axios.post('/api/update-work-order', {
         pk: workOrderId,
         sk: workOrderId,
@@ -235,7 +238,7 @@ const WorkOrder = ({
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
     setIsUpdatingAssignedTechnicians(true);
     try {
-      if (!user?.email || !workOrder || userType !== 'PROPERTY_MANAGER' || !user.organization) {
+      if (!user?.email || !workOrder || userType !== ENTITIES.PROPERTY_MANAGER || !user.organization) {
         throw new Error('User must be a property manager in an organization to assign or remove technicians');
       }
       const actionType = actionMeta.action;
@@ -253,6 +256,9 @@ const WorkOrder = ({
           status: workOrder.status,
           permissionToEnter: workOrder?.permissionToEnter,
           issueDescription: workOrder?.issue,
+          tenantName: workOrder?.tenantName,
+          tenantEmail: workOrder?.tenantEmail,
+          oldAssignedTo: workOrder?.assignedTo ?? [],
         } as AssignTechnicianBody);
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as OptionType;
@@ -347,20 +353,20 @@ const WorkOrder = ({
               <>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) => !isUpdatingStatus && handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${
-                    workOrder.status === STATUS.TO_DO && 'bg-blue-200'
-                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                  onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.TO_DO)}
+                  className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} ${
+                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <GoTasklist />
                   <span className="text-xs">Todo</span>
                 </button>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) => !isUpdatingStatus && handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${
-                    workOrder.status === STATUS.COMPLETE && 'bg-blue-200'
-                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center hover:bg-blue-100 disabled:opacity-25`}
+                  onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.COMPLETE)}
+                  className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} ${
+                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
                   <span className="text-xs">Complete</span>
@@ -374,8 +380,14 @@ const WorkOrder = ({
           <div className="mt-4 font-bold">Assigned To</div>
           <div className="w-full mt-0.5">
             <AsyncSelect
-              placeholder={isUpdatingAssignedTechnicians || fetchingTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
-              isDisabled={isUpdatingAssignedTechnicians} // potentially could have logic for technicians to "self assign"
+              placeholder={
+                isUpdatingAssignedTechnicians || fetchingTechnicians
+                  ? 'Loading...'
+                  : assignedTechnicians.length === 0
+                  ? 'Unassigned'
+                  : 'Assign technicians...'
+              }
+              isDisabled={isUpdatingAssignedTechnicians || userType !== ENTITIES.PROPERTY_MANAGER} // potentially could have logic for technicians to "self assign"
               className={'w-11/12 md:w-10/12 mt-1'}
               closeMenuOnSelect={true}
               isMulti
@@ -418,7 +430,9 @@ const WorkOrder = ({
             {toTitleCase(workOrder.permissionToEnter)}
           </div>
           <div className="font-bold mt-4">Address</div>
-          <div className="mt-0.5">{workOrder.address.unit ? toTitleCase(workOrder.address.address + " " + workOrder.address.unit) : toTitleCase(workOrder.address.address)}</div>
+          <div className="mt-0.5">
+            {workOrder.address.unit ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit) : toTitleCase(workOrder.address.address)}
+          </div>
           <div className="font-bold mt-4">Tenant</div>
           <div className="mt-0.5">{workOrder.tenantName}</div>
           <div className="font-bold mt-4">Location</div>

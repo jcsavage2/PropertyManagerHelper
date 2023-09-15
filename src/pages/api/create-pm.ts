@@ -19,7 +19,9 @@ export type CreatePMBody = {
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
-  if (!session) {
+  //User must be an admin pm to create a pm
+  // @ts-ignore
+  if (!session || !user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !session.user?.isAdmin) {
     res.status(401);
     return;
   }
