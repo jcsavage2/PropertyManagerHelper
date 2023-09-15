@@ -13,6 +13,7 @@ import { useUserContext } from '@/context/user';
 import { userRoles } from '@/database/entities/user';
 import { TenantSelect } from './tenant-select';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { toggleBodyScroll } from '@/utils';
 
 export const AddPropertyModal = ({
   addPropertyModalIsOpen,
@@ -160,7 +161,7 @@ export const AddPropertyModal = ({
 
   return (
     <div>
-      <Modal isOpen={addPropertyModalIsOpen} onRequestClose={closeModal} contentLabel="Example Modal" closeTimeoutMS={200} style={customStyles}>
+      <Modal isOpen={addPropertyModalIsOpen} onRequestClose={closeModal} contentLabel="Example Modal" closeTimeoutMS={200} style={customStyles} onAfterClose={() => toggleBodyScroll(false)} onAfterOpen={() => toggleBodyScroll(true)}>
         <div className="w-full text-right">
           <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
             X Close

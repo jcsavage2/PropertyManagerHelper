@@ -40,7 +40,7 @@ const Technicians = () => {
         setStartKey(response.startKey);
         isInitial ? setPMs(_pms) : setPMs([...pms, ..._pms]);
       } catch (err) {
-        console.log({ err });
+        ({ err });
       }
       setPMsLoading(false);
     },

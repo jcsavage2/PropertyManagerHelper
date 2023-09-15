@@ -4,6 +4,7 @@ import { OrganizationEntity } from '@/database/entities/organization';
 import { PropertyEntity } from '@/database/entities/property';
 import { UserEntity } from '@/database/entities/user';
 import { WorkOrderEntity } from '@/database/entities/work-order';
+import { deconstructKey } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
@@ -12,6 +13,8 @@ export type DeleteRequest = {
   entity: EntityTypeKeys;
   pk: string;
   sk: string;
+  madeByEmail: string;
+  madeByName: string;
   roleToDelete?: EntityTypeKeys;
   currentUserRoles?: string[];
 };
@@ -24,11 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   try {
     const body = req.body as DeleteRequest;
-    const { pk, sk, entity, roleToDelete, currentUserRoles } = body;
+    const { pk, sk, entity, roleToDelete, currentUserRoles, madeByEmail, madeByName } = body;
     if (!pk || !sk || !entity) {
       throw new Error('Invalid params to delete');
     }
-    if ((entity === ENTITIES.USER && !roleToDelete) || (entity !== ENTITIES.USER && roleToDelete)) {
+    if ((entity === ENTITIES.USER && !roleToDelete) || (entity !== ENTITIES.USER && roleToDelete) || !madeByEmail || !madeByName) {
       throw new Error('Invalid params to delete, when trying to delete a user, you must specify the role to delete');
     }
 
@@ -42,6 +45,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     switch (entity) {
       case ENTITIES.WORK_ORDER:
         dbEntity = new WorkOrderEntity();
+
+        //When work orders are deleted spawn an event
+        const eventEntity = new EventEntity();
+        await eventEntity.create({
+          workOrderId: deconstructKey(pk),
+          message: `Work Order Deleted`,
+          madeByEmail,
+          madeByName,
+        });
         break;
       case ENTITIES.PROPERTY:
         dbEntity = new PropertyEntity();

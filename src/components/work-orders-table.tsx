@@ -1,13 +1,13 @@
 import { IWorkOrder } from '@/database/entities/work-order';
 import { deconstructKey, generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
-import { AiOutlineCheck, AiOutlineFilter } from 'react-icons/ai';
+import { AiOutlineCheck } from 'react-icons/ai';
 import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import Link from 'next/link';
-import { STATUS, Status } from '@/constants';
+import { STATUS } from '@/constants';
 import { GoTasklist } from 'react-icons/go';
-import { StatusOptionType } from '@/types';
+import { StatusType, StatusOptionType } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
@@ -20,8 +20,8 @@ export const StatusOptions: StatusOptionType[] = [
 interface IWorkOrdersTableProps {
   workOrders: IWorkOrder[];
   isFetching: boolean;
-  statusFilter: Record<Status, boolean>;
-  setStatusFilter: (statusFilter: Record<Status, boolean>) => void;
+  statusFilter: Record<StatusType, boolean>;
+  setStatusFilter: (statusFilter: Record<StatusType, boolean>) => void;
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
 }
@@ -37,7 +37,7 @@ export const WorkOrdersTable = ({
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
     { label: 'Issue', accessor: 'issue', width: 'w-72' },
-    { label: 'Status', accessor: 'status', width: '' },
+    { label: 'StatusType', accessor: 'status', width: '' },
     { label: 'Address', accessor: 'address', width: '' },
     { label: 'Assigned To', accessor: 'assignedTo', width: 'w-32' },
     { label: 'Created', accessor: 'created', width: '' },
@@ -165,7 +165,7 @@ export const WorkOrdersTable = ({
         </div>
       </div>
 
-      <div className="border-collapse overflow-visible mt-2">
+      <div className="border-collapse mt-2">
         {remappedWorkOrders.length > 0 ? (
           <table className={`w-full border-spacing-x-10 table-auto ${isFetching && 'opacity-25 pointer-events-none'}`}>
             <thead className="">
@@ -186,7 +186,7 @@ export const WorkOrdersTable = ({
         )}
         {isFetching && (
           <div className="mt-8">
-            <LoadingSpinner spinnerClass="spinner-large" />
+            <LoadingSpinner containerClass='h-20' spinnerClass="spinner-large" />
           </div>
         )}
       </div>

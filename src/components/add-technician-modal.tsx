@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { CreateTechnicianBody } from '@/pages/api/create-technician';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { toggleBodyScroll } from '@/utils';
 import { useDevice } from '@/hooks/use-window-size';
 
 export type AddTechnicianModalProps = {
@@ -16,16 +17,11 @@ export type AddTechnicianModalProps = {
 export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIsOpen, onSuccessfulAdd }: AddTechnicianModalProps) => {
   const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
+  const { isMobile } = useDevice();
+  const { userType } = useUserContext();
   useEffect(() => {
     setIsBrowser(true);
   }, []);
-
-  isBrowser && Modal.setAppElement('#testing');
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const { isMobile } = useDevice();
-  const { userType } = useUserContext();
 
   const customStyles = {
     content: {
@@ -35,7 +31,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       bottom: 'auto',
       marginRight: '-50%',
       transform: 'translate(-50%, -50%)',
-      width: isMobile? '75%' : '50%',
+      width: isMobile ? '75%' : '50%',
       backgroundColor: 'rgba(255, 255, 255)',
     },
     overLay: {
@@ -47,6 +43,11 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       backgroundColor: 'rgba(25, 255, 255, 0.75)',
     },
   };
+
+  isBrowser && Modal.setAppElement('#testing');
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
 
   const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
@@ -107,7 +108,8 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   return (
     <Modal
       isOpen={technicianModalIsOpen}
-      onAfterOpen={() => {}}
+      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Add New Technician Modal"
       style={customStyles}

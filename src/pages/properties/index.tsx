@@ -126,11 +126,11 @@ const Properties = () => {
         {!propertiesLoading && properties.length === 0 && <div className="mt-6 font-bold text-center">Sorry, no properties found.</div>}
         {propertiesLoading && (
           <div className="mt-8">
-            <LoadingSpinner spinnerClass="spinner-large" />
+            <LoadingSpinner containerClass='h-20' spinnerClass="spinner-large" />
           </div>
         )}
         {properties.length && startKey && !propertiesLoading ? (
-          <div className="w-full flex items-center justify-center">
+          <div className="w-full flex items-center justify-center mb-8">
             <button
               onClick={() => {
                 fetchProperties(false);
@@ -140,7 +140,7 @@ const Properties = () => {
               Load more
             </button>
           </div>
-        ) : null}
+        ) : <div className="mb-8"></div>}
       </div>
       <AddPropertyModal
         addPropertyModalIsOpen={addPropertyModalIsOpen}

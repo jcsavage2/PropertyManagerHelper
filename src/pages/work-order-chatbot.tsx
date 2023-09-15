@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { ChatCompletionRequestMessage } from 'openai';
 import { toast } from 'react-toastify';
 import { hasAllIssueInfo } from '@/utils';
-import { AddressOptionType, AiJSONResponse, ApiRequest, SendEmailApiRequest, WorkOrder } from '@/types';
+import { AddressOptionType, AiJSONResponse, ApiRequest, PTE_Type, SendEmailApiRequest, WorkOrder } from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { userRoles } from '@/database/entities/user';
-import { PTE, PTE_Type } from '@/constants';
+import { PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
+import { ENTITIES } from '@/database/entities';
+import { ChatCompletionRequestMessage } from 'openai';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -128,7 +129,7 @@ export default function WorkOrderChatbot() {
       issueLocation,
       additionalDetails,
       messages,
-      createdByType: 'TENANT',
+      createdByType: ENTITIES.TENANT,
       creatorEmail: user.email,
       creatorName: user.name,
       permissionToEnter,
@@ -137,6 +138,7 @@ export default function WorkOrderChatbot() {
       address: parsedAddress.address,
       state: parsedAddress.state,
       city: parsedAddress.city,
+      unit: parsedAddress.unit,
       postalCode: parsedAddress.postalCode,
       images: uploadedFiles,
       woId
@@ -234,7 +236,11 @@ export default function WorkOrderChatbot() {
 
       const newMessage = parsed.aiMessage;
       setIsResponding(false);
-      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
+      setMessages([
+        ...messages,
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: newMessage },
+      ]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
 
@@ -244,7 +250,11 @@ export default function WorkOrderChatbot() {
       }
 
       setIsResponding(false);
-      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: assistantMessage }]);
+      setMessages([
+        ...messages,
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: assistantMessage },
+      ]);
       setUserMessage(lastUserMessage);
     }
   };

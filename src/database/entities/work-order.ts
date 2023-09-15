@@ -3,15 +3,16 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
-import { PAGE_SIZE, PTE_Type, STATUS, STATUS_KEY, Status } from '@/constants';
+import { PAGE_SIZE, STATUS } from '@/constants';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
+import { PTE_Type, StatusType } from '@/types';
 
 export interface IGetAllWorkOrdersForUserProps {
   email: string;
   userType: UserType;
   orgId?: string;
   startKey: StartKey;
-  statusFilter: Record<Status, boolean>;
+  statusFilter: Record<StatusType, boolean>;
   reverse?: boolean;
 }
 
@@ -31,7 +32,7 @@ type CreateWorkOrderProps = {
   country: string;
   postalCode: string;
   pmEmail: string;
-  status: Status;
+  status: StatusType;
   issue: string;
   location: string;
   additionalDetails: string;
@@ -69,7 +70,7 @@ export interface IWorkOrder {
   createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
   tenantName: string;
   address: PropertyAddress;
-  status: Status;
+  status: StatusType;
   assignedTo: Set<string>;
 }
 
@@ -252,7 +253,7 @@ export class WorkOrderEntity {
   }
 
   //Update in a loop to ensure we update the records for all companion rows that map technician to WO(assigned technicians)
-  public async update({ pk, status, permissionToEnter }: { pk: string; sk: string; status: Status; permissionToEnter?: PTE_Type; }) {
+  public async update({ pk, status, permissionToEnter }: { pk: string; sk: string; status: StatusType; permissionToEnter?: PTE_Type }) {
     let startKey: StartKey;
     const workOrders = [];
     try {
@@ -298,6 +299,7 @@ export class WorkOrderEntity {
     issueDescription,
     permissionToEnter,
     pmEmail,
+    pmName,
   }: AssignTechnicianBody) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
@@ -335,8 +337,8 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
-    const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+  public async removeTechnician({ workOrderId, technicianEmail }: { workOrderId: string; technicianEmail: string }) {
+    const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
       await this.workOrderEntity.delete({

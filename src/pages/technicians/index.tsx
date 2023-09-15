@@ -72,8 +72,8 @@ const Technicians = () => {
         if (!pk || !sk || !name || !roles) {
           throw new Error('To delete a tech, a pk sk name, and roles must be present');
         }
-        if (!user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-          throw new Error('Only property managers can delete techs');
+        if (!user || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.email || !user.name) {
+          throw new Error('User must be a pm to delete techs');
         }
         const params: DeleteRequest = {
           pk: pk,
@@ -81,6 +81,8 @@ const Technicians = () => {
           entity: ENTITIES.USER,
           roleToDelete: ENTITIES.TECHNICIAN,
           currentUserRoles: roles,
+          madeByEmail: user.email,
+          madeByName: user.name,
         };
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
@@ -244,11 +246,11 @@ const Technicians = () => {
         {!techsLoading && techs.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no technicians found.</div>}
         {techsLoading && (
           <div className="mt-8">
-            <LoadingSpinner spinnerClass="spinner-large" />
+            <LoadingSpinner containerClass='h-20' spinnerClass="spinner-large" />
           </div>
         )}
         {techs.length && startKey && !techsLoading ? (
-          <div className="w-full flex items-center justify-center">
+          <div className="w-full flex items-center justify-center mb-8">
             <button
               onClick={() => fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)}
               className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
@@ -256,7 +258,7 @@ const Technicians = () => {
               Load more
             </button>
           </div>
-        ) : null}
+        ) : <div className="mb-8"></div>}
       </div>
       <AddTechnicianModal
         technicianModalIsOpen={addTechModalIsOpen}
