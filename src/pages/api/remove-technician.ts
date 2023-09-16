@@ -4,6 +4,7 @@ import { WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "./auth/[...nextauth]";
+import { IUser, userRoles } from "@/database/entities/user";
 
 
 export type RemoveTechnicianBody = {
@@ -19,9 +20,11 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   const session = await getServerSession(req, res, options);
+  //@ts-ignore
+  const sessionUser: IUser = session?.user;
+
   //User must be a pm to unassign a technician from a WO
-  // @ts-ignore
-  if (!session || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
+  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
     res.status(401);
     return;
   }

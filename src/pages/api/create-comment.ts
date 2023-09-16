@@ -3,6 +3,7 @@ import { EventEntity } from "@/database/entities/event";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "./auth/[...nextauth]";
+import { IUser, userRoles } from "@/database/entities/user";
 
 export type CreateCommentBody = {
   comment: string;
@@ -20,7 +21,11 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   const session = await getServerSession(req, res, options);
-  if (!session) {
+  //@ts-ignore
+  const sessionUser: IUser = session?.user;
+
+  //User must be a pm or technician to create a comment
+  if (!session || (!sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER) && !sessionUser?.roles?.includes(userRoles.TECHNICIAN))) {
     res.status(401);
     return;
   }

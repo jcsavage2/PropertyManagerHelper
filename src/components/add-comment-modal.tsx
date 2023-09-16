@@ -7,6 +7,7 @@ import { deconstructKey, toggleBodyScroll } from '@/utils';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { useUserContext } from '@/context/user';
 
 export type AddCommentModalProps = {
   addCommentModalIsOpen: boolean;
@@ -23,6 +24,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
     setIsBrowser(true);
   }, []);
   const { isMobile } = useDevice();
+  const { userType } = useUserContext();
   isBrowser && Modal.setAppElement('#work-order');
 
   const [comment, setComment] = useState('');
@@ -68,6 +70,9 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
         if(!user || !user.email || !user || !workOrderId){
           throw new Error('User or workOrderId not found');
         }
+        if(userType === 'TENANT'){
+          throw new Error('Tenants cannot add comments');
+        }
         const { data } = await axios.post('/api/create-comment', {
           comment,
           email: user!.email,
@@ -84,6 +89,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
         }
       } catch (err) {
         console.log({ err });
+        toast.error('Error adding comment', { draggable: false });
       }
       setIsLoading(false);
     },

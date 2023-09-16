@@ -1,9 +1,10 @@
 import { Data } from '@/database';
-import { ICreatePMUser, UserEntity } from '@/database/entities/user';
+import { ICreatePMUser, IUser, UserEntity } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import sendgrid from '@sendgrid/mail';
+import { userRoles } from '@/database/entities/user';
 
 export type CreatePMBody = {
   pmName: string;
@@ -19,9 +20,11 @@ export type CreatePMBody = {
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
-  //User must be an admin pm to create a pm
   // @ts-ignore
-  if (!session || !user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !session.user?.isAdmin) {
+  const sessionUser: IUser = session?.user;
+  
+  //User must be an admin pm to create a pm
+  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER) || !sessionUser?.isAdmin) {
     res.status(401);
     return;
   }

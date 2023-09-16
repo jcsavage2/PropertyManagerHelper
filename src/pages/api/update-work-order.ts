@@ -21,9 +21,11 @@ type UpdateWorkOrderApiRequest = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
+  // @ts-ignore
+  const sessionUser: IUser = session?.user;
+
   //User must be a pm or technician to update the status or PTE on a WO
-  //@ts-ignore
-  if (!session || (!session.user?.roles?.includes(userRoles.PROPERTY_MANAGER) && !session.user?.roles?.includes(userRoles.TECHNICIAN))) {
+  if (!session || (!sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER) && !sessionUser?.roles?.includes(userRoles.TECHNICIAN))) {
     res.status(401);
     return;
   }

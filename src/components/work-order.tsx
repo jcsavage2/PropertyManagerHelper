@@ -319,12 +319,15 @@ const WorkOrder = ({
               <div className="flex flex-row items-center">
                 {!isMobile ? (
                   <>
-                    <a
-                      href="#wo-modal-comments"
-                      className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4"
-                    >
-                      Go to comments
-                    </a>
+                    {userType !== 'TENANT' ? (
+                      <a
+                        href="#wo-modal-comments"
+                        className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4"
+                      >
+                        Go to comments
+                      </a>
+                    ) : null}
+
                     {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
                       <div
                         onClick={() => {
@@ -445,52 +448,58 @@ const WorkOrder = ({
               </div>
             </>
           ) : null}
-
-          <div className="flex flex-row items-center border-t border-slate-200 pt-2 mt-4">
-            <div className="font-bold text-lg">Comments</div>
-            <button onClick={() => setOpenAddCommentModal(true)} className="ml-3 rounded px-4 py-0.5 text-sm border bg-blue-200 hover:bg-blue-100">
-              Add Comment
-            </button>
-          </div>
-
-          <div className="w-full" id="wo-modal-comments">
-            {events && events.length ? (
-              events.map((event: IEvent | null, i: number) => {
-                if (event) {
-                  const formattedDateTime = createdToFormattedDateTime(event.created!);
-                  return (
-                    <div
-                      key={`${ENTITIES.EVENT}-${i}`}
-                      className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 last-of-type:mb-0 py-2 px-3 text-left"
-                    >
-                      <div className="mb-0.5 flex flex-row">
-                        <p className="font-bold mr-2">{event.madeByName} </p>
-                        <p className="text-slate-600">
-                          {formattedDateTime[0]} @ {formattedDateTime[1]}
-                        </p>
-                      </div>
-                      <div className="break-words">{event.message}</div>
-                    </div>
-                  );
-                }
-              })
-            ) : !isLoadingEvents ? (
-              <p className="mt-4 text-center font-bold">Sorry, no comments found</p>
-            ) : null}
-            {isLoadingEvents ? (
-              <LoadingSpinner containerClass="mt-4" />
-            ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
-              <div className="w-full flex items-center justify-center">
+          {userType !== ENTITIES.TENANT ? (
+            <>
+              <div className="flex flex-row items-center border-t border-slate-200 pt-2 mt-4">
+                <div className="font-bold text-lg">Comments</div>
                 <button
-                  disabled={isLoadingEvents}
-                  onClick={() => getWorkOrderEvents(false, eventsStartKey)}
-                  className="bg-blue-200 mx-auto py-1 md:w-1/4 w-2/5 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                  onClick={() => setOpenAddCommentModal(true)}
+                  className="ml-3 rounded px-4 py-0.5 text-sm border bg-blue-200 hover:bg-blue-100"
                 >
-                  Load more
+                  Add Comment
                 </button>
               </div>
-            ) : null}
-          </div>
+
+              <div className="w-full" id="wo-modal-comments">
+                {events && events.length ? (
+                  events.map((event: IEvent | null, i: number) => {
+                    if (event) {
+                      const formattedDateTime = createdToFormattedDateTime(event.created!);
+                      return (
+                        <div
+                          key={`${ENTITIES.EVENT}-${i}`}
+                          className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 last-of-type:mb-0 py-2 px-3 text-left"
+                        >
+                          <div className="mb-0.5 flex flex-row">
+                            <p className="font-bold mr-2">{event.madeByName} </p>
+                            <p className="text-slate-600">
+                              {formattedDateTime[0]} @ {formattedDateTime[1]}
+                            </p>
+                          </div>
+                          <div className="break-words">{event.message}</div>
+                        </div>
+                      );
+                    }
+                  })
+                ) : !isLoadingEvents ? (
+                  <p className="mt-4 text-center font-bold">Sorry, no comments found</p>
+                ) : null}
+                {isLoadingEvents ? (
+                  <LoadingSpinner containerClass="mt-4" />
+                ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
+                  <div className="w-full flex items-center justify-center">
+                    <button
+                      disabled={isLoadingEvents}
+                      onClick={() => getWorkOrderEvents(false, eventsStartKey)}
+                      className="bg-blue-200 mx-auto py-1 md:w-1/4 w-2/5 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                    >
+                      Load more
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          ) : null}
         </div>
         <div className="w-full box-border text-sm fixed bottom-0 border-t border-slate-200 md:text-right bg-white text-gray-600 py-4 md:px-6 text-center">
           Created by {workOrder.tenantName} ({workOrder.tenantEmail})

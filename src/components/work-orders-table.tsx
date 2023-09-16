@@ -11,8 +11,8 @@ import { StatusType, StatusOptionType } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
-import { ENTITIES } from '@/database/entities';
 import { useUserContext } from '@/context/user';
+import { userRoles } from '@/database/entities/user';
 
 export const StatusOptions: StatusOptionType[] = [
   { value: STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
@@ -46,6 +46,32 @@ export const WorkOrdersTable = ({
     { label: 'Created', accessor: 'created', width: '' },
     { label: 'Tenant', accessor: 'tenantName', width: '' },
   ];
+
+  const renderWoCardStatus = (workOrder: IWorkOrder) => {
+    if (workOrder.status === STATUS.DELETED) {
+      return <p className="text-red-600 ml-1">{STATUS.DELETED}</p>;
+    }
+    if (userType === userRoles.TENANT) {
+      const index = workOrder.status === STATUS.TO_DO ? 0 : 1;
+      return (
+        <div className={`${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200 ' : 'bg-green-200'} px-2 py-1 rounded-lg`}>
+          {formattedStatusOptions({ value: StatusOptions[index].value, label: StatusOptions[index].label, icon: StatusOptions[index].icon })}
+        </div>
+      );
+    }
+    return (
+      <Select
+        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === STATUS.TO_DO && 'bg-yellow-200'} ${
+          workOrder.status === STATUS.COMPLETE && 'bg-green-200'
+        }`}
+        value={StatusOptions.find((o) => o.value === workOrder.status)!}
+        onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
+        formatOptionLabel={formattedStatusOptions}
+        options={StatusOptions}
+        menuPortalTarget={document.body}
+      />
+    );
+  };
 
   const remappedWorkOrders =
     workOrders && workOrders.length
@@ -82,21 +108,8 @@ export const WorkOrdersTable = ({
                 if (accessor === 'status') {
                   return (
                     <td key={accessor} className="border-t border-b">
-                      {tData !== STATUS.DELETED ? (
-                        <Select
-                          className={`cursor-pointer rounded p-1 min-w-max ${tData === STATUS.TO_DO && 'bg-yellow-200'} ${
-                            tData === STATUS.COMPLETE && 'bg-green-200'
-                          }`}
-                          value={StatusOptions.find((o) => o.value === tData)!}
-                          onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
-                          formatOptionLabel={formattedStatusOptions}
-                          options={StatusOptions}
-                          menuPortalTarget={document.body}
-                          isDisabled={userType === ENTITIES.TENANT}
-                        />
-                      ) : (
-                        <p className="text-red-600 text-center">{STATUS.DELETED}</p>
-                      )}
+                      {/* @ts-ignore */}
+                      {renderWoCardStatus(workOrder)}
                     </td>
                   );
                 }
@@ -190,7 +203,7 @@ export const WorkOrdersTable = ({
         )}
         {isFetching && (
           <div className="mt-8">
-            <LoadingSpinner containerClass='h-20' spinnerClass="spinner-large" />
+            <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
           </div>
         )}
       </div>

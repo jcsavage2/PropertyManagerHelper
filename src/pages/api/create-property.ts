@@ -1,6 +1,6 @@
 import { Data } from '@/database';
 import { PropertyEntity } from '@/database/entities/property';
-import { UserEntity } from '@/database/entities/user';
+import { IUser, UserEntity, userRoles } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { v4 as uuid } from 'uuid';
 import { options } from './auth/[...nextauth]';
@@ -26,9 +26,11 @@ export type CreatePropertyBody = {
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
+  //@ts-ignore
+  const sessionUser: IUser = session?.user;
+  
   //User must be a pm to create properties
-  // @ts-ignore
-  if (!session || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
+  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
     res.status(401);
     return;
   }

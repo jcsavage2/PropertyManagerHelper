@@ -10,6 +10,8 @@ import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { HandleUpdateStatusProps } from '../pages/work-orders';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
 import { StatusType } from '@/types';
+import { useUserContext } from '@/context/user';
+import { userRoles } from '@/database/entities/user';
 
 interface IWorkOrdersCardsProps {
   workOrders: IWorkOrder[];
@@ -29,6 +31,43 @@ export const WorkOrdersCards = ({
   setStatusFilter,
 }: IWorkOrdersCardsProps) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { userType } = useUserContext();
+
+  const renderWoCardStatus = (workOrder: IWorkOrder) => {
+    if (workOrder.status === STATUS.DELETED) {
+      return <p className="text-red-600 ml-1">{STATUS.DELETED}</p>;
+    }
+    if (userType === userRoles.TENANT) {
+      const index = workOrder.status === STATUS.TO_DO ? 0 : 1;
+      return (
+        <div className={`${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200 w-20' : 'bg-green-200 w-24'} px-2 py-1 rounded-lg`}>
+          {formattedStatusOptions({ value: StatusOptions[index].value, label: StatusOptions[index].label, icon: StatusOptions[index].icon })}
+        </div>
+      );
+    }
+    return (
+      <Select
+        className={`
+      cursor-pointer
+      rounded 
+      p-1 
+      w-48
+      ${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
+    `}
+        value={StatusOptions.find((o) => o.value === workOrder.status)}
+        blurInputOnSelect={false}
+        formatOptionLabel={formattedStatusOptions}
+        onChange={(v) => {
+          if (v) {
+            //@ts-ignore
+            handleUpdateStatus({ pk: workOrder.pk, sk: workOrder.sk, val: v });
+          }
+        }}
+        options={StatusOptions}
+        isDisabled={isFetching}
+      />
+    );
+  };
 
   return (
     <div className={`mt-4 pb-24`}>
@@ -102,30 +141,7 @@ export const WorkOrdersCards = ({
                 >
                   <p className="text-lg text-gray-800 ml-1 mb-1.5">{toTitleCase(workOrder.issue)} </p>
 
-                  {workOrder.status !== STATUS.DELETED ? (
-                    <Select
-                      className={`
-                    cursor-pointer
-                    rounded 
-                    p-1 
-                    w-48
-                    ${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
-                  `}
-                      value={StatusOptions.find((o) => o.value === workOrder.status)}
-                      blurInputOnSelect={false}
-                      formatOptionLabel={formattedStatusOptions}
-                      onChange={(v) => {
-                        if (v) {
-                          //@ts-ignore
-                          handleUpdateStatus({ pk: workOrder.pk, sk: workOrder.sk, val: v });
-                        }
-                      }}
-                      options={StatusOptions}
-                      isDisabled={isFetching}
-                    />
-                  ) : (
-                    <p className="text-red-600 ml-1">{STATUS.DELETED}</p>
-                  )}
+                  {renderWoCardStatus(workOrder)}
                   <p className="ml-1 text-base mt-2 font-light">{workOrder.address.address + ' ' + (workOrder?.address?.unit ?? '')} </p>
                   <div className="ml-1 text-sm mt-1 flex flex-row">
                     Tenant: <p className="font-light ml-1">{workOrder.tenantEmail}</p>
@@ -160,7 +176,7 @@ export const WorkOrdersCards = ({
           : !isFetching && <div className="text-center font-bold">Sorry, no work orders found.</div>}
         {isFetching && (
           <div className="mt-8">
-            <LoadingSpinner containerClass='h-20' spinnerClass="spinner-large" />
+            <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
           </div>
         )}
       </div>
