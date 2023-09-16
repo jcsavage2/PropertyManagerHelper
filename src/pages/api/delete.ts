@@ -2,7 +2,7 @@ import { ENTITIES, EntityTypeKeys } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { OrganizationEntity } from '@/database/entities/organization';
 import { PropertyEntity } from '@/database/entities/property';
-import { UserEntity } from '@/database/entities/user';
+import { IUser, UserEntity, userRoles } from '@/database/entities/user';
 import { WorkOrderEntity } from '@/database/entities/work-order';
 import { deconstructKey } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -21,7 +21,11 @@ export type DeleteRequest = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<{ response: boolean; }>) {
   const session = await getServerSession(req, res, options);
-  if (!session) {
+  //@ts-ignore
+  const sessionUser: IUser = session?.user;
+
+  //Tenants and technicians should not be allowed to delete entities
+  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
     res.status(401);
     return;
   }

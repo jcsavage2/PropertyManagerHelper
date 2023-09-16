@@ -1,5 +1,5 @@
 import { Data } from '@/database';
-import { UserEntity } from '@/database/entities/user';
+import { UserEntity, userRoles } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
@@ -19,7 +19,11 @@ export type CreateTechnicianBody = {
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
-  if (!session) {
+  // @ts-ignore
+  const sessionUser: IUser = session?.user;
+
+  //User must be a pm to create technicians
+  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
     res.status(401);
     return;
   }
