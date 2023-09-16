@@ -246,8 +246,8 @@ const WorkOrder = ({
         const selectedTechnician = actionMeta.option as OptionType;
         await axios.post('/api/assign-technician', {
           organization: user.organization,
-          workOrderId: deconstructKey(workOrderId),
-          ksuID: workOrder.GSI1SK, //Pass ksuid from creation time to the assign technician api so we accurately date technician queries
+          workOrderId,
+          ksuID: workOrder.GSI1SK,
           pmEmail: user.email,
           pmName: user.name,
           technicianEmail: selectedTechnician.value,

@@ -6,6 +6,7 @@ import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { PTE_Type, StatusType } from '@/types';
+import { deconstructKey } from '@/utils';
 
 export type AssignTechnicianBody = {
   organization: string;
@@ -43,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const assignedTechnician = await workOrderEntity.assignTechnician({
       organization,
       ksuID,
-      workOrderId,
+      workOrderId: deconstructKey(workOrderId),
       address,
       technicianEmail,
       technicianName,
@@ -58,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     await eventEntity.create({
-      workOrderId,
+      workOrderId: deconstructKey(workOrderId),
       madeByEmail: pmEmail,
       madeByName: pmName,
       message: `Assigned ${technicianName} (${technicianEmail}) to the work order`,
