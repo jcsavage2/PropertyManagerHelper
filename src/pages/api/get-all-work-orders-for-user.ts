@@ -15,10 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const workOrderEntity = new WorkOrderEntity();
     const { email, userType, orgId, startKey, statusFilter } = body;
     const response = await workOrderEntity.getAllForUser({ email, userType, orgId, startKey, statusFilter });
-    const workOrders = response.workOrders?.sort((a: IWorkOrder, b: IWorkOrder) => {
+    const workOrders = response.workOrders ? response.workOrders.sort((a: IWorkOrder, b: IWorkOrder) => {
       //@ts-ignore
       return new Date(b.created) - new Date(a.created);
-    });
+    }) : [];
 
     return res.status(200).json({ response: JSON.stringify({ workOrders, startKey: response.startKey }) });
   } catch (error) {

@@ -1,16 +1,18 @@
 import { IWorkOrder } from '@/database/entities/work-order';
-import { deconstructKey, generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
-import { AiOutlineCheck, AiOutlineFilter } from 'react-icons/ai';
+import { generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
+import { AiOutlineCheck } from 'react-icons/ai';
 import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import Link from 'next/link';
-import { STATUS, Status } from '@/constants';
+import { STATUS } from '@/constants';
 import { GoTasklist } from 'react-icons/go';
-import { StatusOptionType } from '@/types';
+import { StatusType, StatusOptionType } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
+import { useUserContext } from '@/context/user';
+import { userRoles } from '@/database/entities/user';
 
 export const StatusOptions: StatusOptionType[] = [
   { value: STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
@@ -20,8 +22,8 @@ export const StatusOptions: StatusOptionType[] = [
 interface IWorkOrdersTableProps {
   workOrders: IWorkOrder[];
   isFetching: boolean;
-  statusFilter: Record<Status, boolean>;
-  setStatusFilter: (statusFilter: Record<Status, boolean>) => void;
+  statusFilter: Record<StatusType, boolean>;
+  setStatusFilter: (statusFilter: Record<StatusType, boolean>) => void;
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
 }
@@ -35,14 +37,41 @@ export const WorkOrdersTable = ({
   formattedStatusOptions,
 }: IWorkOrdersTableProps) => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const { userType } = useUserContext();
   const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
     { label: 'Issue', accessor: 'issue', width: 'w-72' },
     { label: 'Status', accessor: 'status', width: '' },
-    { label: 'Address', accessor: 'address', width: '' },
+    { label: 'Address', accessor: 'address', width: 'w-44' },
     { label: 'Assigned To', accessor: 'assignedTo', width: 'w-32' },
     { label: 'Created', accessor: 'created', width: '' },
     { label: 'Tenant', accessor: 'tenantName', width: '' },
   ];
+
+  const renderWoCardStatus = (workOrder: IWorkOrder) => {
+    if (workOrder.status === STATUS.DELETED) {
+      return <p className="text-red-600 ml-1">{STATUS.DELETED}</p>;
+    }
+    if (userType === userRoles.TENANT) {
+      const index = workOrder.status === STATUS.TO_DO ? 0 : 1;
+      return (
+        <div className={`${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200 ' : 'bg-green-200'} px-2 py-1 rounded-lg`}>
+          {formattedStatusOptions({ value: StatusOptions[index].value, label: StatusOptions[index].label, icon: StatusOptions[index].icon })}
+        </div>
+      );
+    }
+    return (
+      <Select
+        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === STATUS.TO_DO && 'bg-yellow-200'} ${
+          workOrder.status === STATUS.COMPLETE && 'bg-green-200'
+        }`}
+        value={StatusOptions.find((o) => o.value === workOrder.status)!}
+        onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
+        formatOptionLabel={formattedStatusOptions}
+        options={StatusOptions}
+        menuPortalTarget={document.body}
+      />
+    );
+  };
 
   const remappedWorkOrders =
     workOrders && workOrders.length
@@ -78,21 +107,9 @@ export const WorkOrdersTable = ({
                 const tData = workOrder[accessor];
                 if (accessor === 'status') {
                   return (
-                    <td key={accessor} className="border-t border-b px-2">
-                      {tData !== STATUS.DELETED ? (
-                        <Select
-                          className={`cursor-pointer rounded p-1 min-w-max ${tData === STATUS.TO_DO && 'bg-yellow-200'} ${
-                            tData === STATUS.COMPLETE && 'bg-green-200'
-                          }`}
-                          value={StatusOptions.find((o) => o.value === tData)!}
-                          onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
-                          formatOptionLabel={formattedStatusOptions}
-                          options={StatusOptions}
-                          menuPortalTarget={document.body}
-                        />
-                      ) : (
-                        <p className="text-red-600 text-center">{STATUS.DELETED}</p>
-                      )}
+                    <td key={accessor} className="border-t border-b">
+                      {/* @ts-ignore */}
+                      {renderWoCardStatus(workOrder)}
                     </td>
                   );
                 }
@@ -165,7 +182,7 @@ export const WorkOrdersTable = ({
         </div>
       </div>
 
-      <div className="border-collapse overflow-visible mt-2">
+      <div className="border-collapse mt-2">
         {remappedWorkOrders.length > 0 ? (
           <table className={`w-full border-spacing-x-10 table-auto ${isFetching && 'opacity-25 pointer-events-none'}`}>
             <thead className="">
@@ -186,7 +203,7 @@ export const WorkOrdersTable = ({
         )}
         {isFetching && (
           <div className="mt-8">
-            <LoadingSpinner spinnerClass="spinner-large" />
+            <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
           </div>
         )}
       </div>

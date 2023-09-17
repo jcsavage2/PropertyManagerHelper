@@ -1,4 +1,5 @@
 import { useDevice } from '@/hooks/use-window-size';
+import { toggleBodyScroll } from '@/utils';
 import { Dispatch, SetStateAction } from 'react';
 import Modal from 'react-modal';
 
@@ -44,7 +45,8 @@ export const ConfirmationModal = ({
   return (
     <Modal
       isOpen={confirmationModalIsOpen}
-      onAfterOpen={() => {}}
+      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Example Modal"
       closeTimeoutMS={0}

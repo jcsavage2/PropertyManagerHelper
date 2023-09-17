@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { findIssueSample } from "@/constants";
-import { generatePrompt, processAiResponse } from "@/utils";
+import {  generatePrompt, processAiResponse } from "@/utils";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { AiJSONResponse, ApiRequest } from "@/types";

@@ -3,15 +3,16 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
-import { PAGE_SIZE, PTE_Type, STATUS, STATUS_KEY, Status } from '@/constants';
+import { PAGE_SIZE, STATUS } from '@/constants';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
+import { PTE_Type, StatusType } from '@/types';
 
 export interface IGetAllWorkOrdersForUserProps {
   email: string;
   userType: UserType;
   orgId?: string;
   startKey: StartKey;
-  statusFilter: Record<Status, boolean>;
+  statusFilter: Record<StatusType, boolean>;
   reverse?: boolean;
 }
 
@@ -31,7 +32,7 @@ type CreateWorkOrderProps = {
   country: string;
   postalCode: string;
   pmEmail: string;
-  status: Status;
+  status: StatusType;
   issue: string;
   location: string;
   additionalDetails: string;
@@ -69,7 +70,7 @@ export interface IWorkOrder {
   createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
   tenantName: string;
   address: PropertyAddress;
-  status: Status;
+  status: StatusType;
   assignedTo: Set<string>;
 }
 
@@ -251,8 +252,18 @@ export class WorkOrderEntity {
     return { workOrders, startKey };
   }
 
-  //Update in a loop to ensure we update the records for all companion rows that map technician to WO(assigned technicians)
-  public async update({ pk, status, permissionToEnter }: { pk: string; sk: string; status: Status; permissionToEnter?: PTE_Type; }) {
+  //Update in a loop to ensure we update all companion rows for a WO
+  public async update({
+    pk,
+    status,
+    permissionToEnter,
+    assignedTo,
+  }: {
+    pk: string;
+    status?: StatusType;
+    permissionToEnter?: PTE_Type;
+    assignedTo?: string[];
+  }) {
     let startKey: StartKey;
     const workOrders = [];
     try {
@@ -278,6 +289,7 @@ export class WorkOrderEntity {
             sk: workOrder.sk,
             ...(status && { status: status }),
             ...(permissionToEnter && { permissionToEnter }),
+            ...(assignedTo && { assignedTo }),
           },
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }
         );
@@ -298,9 +310,14 @@ export class WorkOrderEntity {
     issueDescription,
     permissionToEnter,
     pmEmail,
+    pmName,
+    tenantEmail,
+    tenantName,
+    oldAssignedTo,
   }: AssignTechnicianBody) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
+      let assignedTo: string[] = [...oldAssignedTo, technicianEmail.toLowerCase()];
       // Create companion row for the technician
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
@@ -310,33 +327,28 @@ export class WorkOrderEntity {
         GSI3SK: ksuID,
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
-        assignedTo: {
-          $add: [technicianEmail.toLowerCase()],
-        },
+        assignedTo,
         pmEmail,
         status,
-        organization
+        organization,
+        tenantEmail,
+        tenantName,
       });
 
-      const result = await this.workOrderEntity.update(
-        {
-          pk: workOrderIdKey,
-          sk: workOrderIdKey,
-          assignedTo: {
-            $add: [technicianEmail.toLowerCase()],
-          },
-        },
-        { returnValues: 'ALL_NEW' }
-      );
+      //Need to update all companion rows for the work order
+      const result = await this.update({
+        pk: workOrderIdKey,
+        assignedTo,
+      });
 
-      return result.Attributes ?? null;
+      return result ?? null;
     } catch (err) {
       console.log({ err });
     }
   }
 
-  public async removeTechnician({ woId, technicianEmail }: { woId: string; technicianEmail: string; }) {
-    const key = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+  public async removeTechnician({ workOrderId, technicianEmail }: { workOrderId: string; technicianEmail: string }) {
+    const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
       await this.workOrderEntity.delete({

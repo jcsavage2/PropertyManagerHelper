@@ -38,14 +38,6 @@ export const issueCategoryToTypes = {
   Window: ['Shattered', 'Cracked', "Won't Open", "Won't Close"],
 } as Record<string, string[]>;
 
-export const Events = {
-  STATUS_UPDATE: 'STATUS_UPDATE',
-  ASSIGNED_TO_UPDATE: 'ASSIGNED_TO_UPDATE',
-  COMMENT_UPDATE: 'COMMENT_UPDATE',
-};
-
-export const STATUS_KEY = "STATUS";
-
 export const STATUS = {
   TO_DO: 'TO_DO',
   COMPLETE: 'COMPLETE',
@@ -56,9 +48,5 @@ export const PTE = {
   YES: 'Yes',
   NO: 'No',
 };
-
-export type PTE_Type = (typeof PTE)[keyof typeof PTE];
-
-export type Status = (typeof STATUS)[keyof typeof STATUS];
 
 export const PAGE_SIZE = 20;

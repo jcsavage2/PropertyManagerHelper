@@ -1,12 +1,12 @@
-import { Events, PTE_Type, Status } from '@/constants';
 import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
 import { PropertyAddress, WorkOrderEntity } from '@/database/entities/work-order';
-import { deconstructKey } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
+import { PTE_Type, StatusType } from '@/types';
+import { deconstructKey } from '@/utils';
 
 export type AssignTechnicianBody = {
   organization: string;
@@ -15,10 +15,14 @@ export type AssignTechnicianBody = {
   technicianName: string;
   workOrderId: string;
   address: PropertyAddress;
-  status: Status;
+  status: StatusType;
   issueDescription: string;
   permissionToEnter: PTE_Type;
   pmEmail: string;
+  pmName: string;
+  tenantEmail: string;
+  tenantName: string;
+  oldAssignedTo: Set<string>;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
@@ -29,10 +33,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
   try {
     const body = req.body as AssignTechnicianBody;
-    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization } = body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID) {
-      return res.status(400).json({ response: 'Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, organization, ksuID' });
+    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName, tenantName, tenantEmail, oldAssignedTo } = body;
+    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID || !pmName || !tenantEmail || !tenantName || !oldAssignedTo) {
+      throw new Error('Invalid params to assign technician');
     }
+
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
 
@@ -47,13 +52,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       issueDescription,
       permissionToEnter,
       pmEmail,
+      pmName,
+      tenantEmail,
+      tenantName,
+      oldAssignedTo
     });
 
     await eventEntity.create({
       workOrderId: deconstructKey(workOrderId),
-      updateType: Events.ASSIGNED_TO_UPDATE,
-      updateDescription: `Assigned ${technicianName}(${technicianEmail}) to the work order`,
-      updateMadeBy: pmEmail,
+      madeByEmail: pmEmail,
+      madeByName: pmName,
+      message: `Assigned ${technicianName} (${technicianEmail}) to the work order`,
     });
 
     /** SEND THE EMAIL TO THE TECHNICIAN */
@@ -115,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h1>You've Been Assigned To A Work Order by ${pmEmail}</h1>
+          <h1>You've Been Assigned To A Work Order by ${pmName}</h1>
           <a href="${workOrderLink}">View Work Order in PILLAR</a>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team

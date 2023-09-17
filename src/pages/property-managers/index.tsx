@@ -40,7 +40,7 @@ const Technicians = () => {
         setStartKey(response.startKey);
         isInitial ? setPMs(_pms) : setPMs([...pms, ..._pms]);
       } catch (err) {
-        console.log({ err });
+        ({ err });
       }
       setPMsLoading(false);
     },
@@ -62,15 +62,17 @@ const Technicians = () => {
         <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Property Managers</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
-            <button
-              className="bg-blue-200 mr-4 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-7/12 md:w-44 text-center "
-              onClick={() => {
-                !pmsLoading && setAddPMModalIsOpen(true);
-              }}
-              disabled={pmsLoading}
-            >
-              + Property Manager
-            </button>
+            {user?.isAdmin ? (
+              <button
+                className="bg-blue-200 mr-4 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-7/12 md:w-44 text-center "
+                onClick={() => {
+                  !pmsLoading && setAddPMModalIsOpen(true);
+                }}
+                disabled={pmsLoading}
+              >
+                + Property Manager
+              </button>
+            ) : null}
           </div>
         </div>
         {isMobile ? (
@@ -78,7 +80,7 @@ const Technicians = () => {
             <div className="flex flex-col items-center">
               {pms.length ? (
                 <p className="text-sm place-self-start font-light italic mb-1 ml-2 text-gray-500">
-                  {'Showing ' + pms.length} {pms.length === 1 ? ' technician...' : 'technicians...'}
+                  {'Showing ' + pms.length} {pms.length === 1 ? ' property manager...' : ' property managers...'}
                 </p>
               ) : null}
               {pms.map((pm: IUser, index) => {
@@ -92,7 +94,7 @@ const Technicians = () => {
                     <div className="pl-2 text-gray-800">
                       <p className="text-2xl ">{toTitleCase(pm.name)} </p>
                       <p className="text-sm mt-2">{`${pm.email}`} </p>
-                      <p className="text-sm mt-2">{`${pm.isAdmin}`} </p>
+                      <div className="text-sm mt-2 flex flex-row items-center">Is Admin? <p className="ml-2">{pm.isAdmin ? "Yes" : "No"}</p> </div>
                       <p className="text-sm mt-2">{`${pm.status}`} </p>
                     </div>
                   </div>
@@ -101,7 +103,7 @@ const Technicians = () => {
             </div>
           </div>
         ) : (
-          <div className={`${pmsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
+          <div className={`${pmsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-8`}>
             <div className="overflow-x-auto">
               {pms && pms.length > 0 && (
                 <table className="w-full border-spacing-x-10 table-auto">
@@ -121,7 +123,7 @@ const Technicians = () => {
                           <td className="border-b border-t px-4 py-1">{`${toTitleCase(pm.name)}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.email}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.status}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${pm.isAdmin ? "Yes" : "No"}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${pm.isAdmin ? 'Yes' : 'No'}`}</td>
                           <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(pm.created)[0]}</td>
                         </tr>
                       );
@@ -149,11 +151,7 @@ const Technicians = () => {
           </div>
         ) : null}
       </div>
-      <AddPropertyManagerModal
-        addPMModalIsOpen={addPMModalIsOpen}
-        setAddPMModalIsOpen={setAddPMModalIsOpen}
-        onSuccessfulAdd={() => fetchPMs(true)}
-      />
+      <AddPropertyManagerModal addPMModalIsOpen={addPMModalIsOpen} setAddPMModalIsOpen={setAddPMModalIsOpen} onSuccessfulAdd={() => fetchPMs(true)} />
       {isMobile && <BottomNavigationPanel />}
     </div>
   );

@@ -1,5 +1,5 @@
 import { ChatCompletionRequestMessage } from 'openai';
-import { Events, PTE_Type } from '../constants';
+import { PTE, STATUS } from '../constants';
 
 export type ApiRequest = WorkOrder & {
   userMessage: string;
@@ -49,8 +49,6 @@ export type IssueInformation = {
 
 export type WorkOrder = IssueInformation;
 
-export type EventType = (typeof Events)[keyof typeof Events];
-
 export type OptionType = {
   value: string;
   label: string;
@@ -64,3 +62,7 @@ export type AddressOptionType = {
   label: string;
   value: any;
 };
+
+export type PTE_Type = (typeof PTE)[keyof typeof PTE];
+
+export type StatusType = (typeof STATUS)[keyof typeof STATUS];

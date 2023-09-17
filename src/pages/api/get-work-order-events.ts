@@ -1,6 +1,6 @@
 import { Data } from "@/database";
+import { StartKey } from "@/database/entities";
 import { EventEntity } from "@/database/entities/event";
-import { deconstructKey } from "@/utils";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "./auth/[...nextauth]";
@@ -8,6 +8,7 @@ import { options } from "./auth/[...nextauth]";
 
 export type GetWorkOrderEvents = {
   workOrderId: string;
+  startKey?: StartKey;
 };
 
 export default async function handler(
@@ -26,9 +27,8 @@ export default async function handler(
       return res.status(400).json({ response: "Missing workOrderId" });
     }
     const eventEntity = new EventEntity();
-    const events = await eventEntity.getEvents({ woId: deconstructKey(workOrderId) });
-
-    return res.status(200).json({ response: JSON.stringify(events) });
+    const { events, startKey } = await eventEntity.getEvents({ workOrderId, startKey: body.startKey });
+    return res.status(200).json({ response: JSON.stringify({ events, startKey }) });
   } catch (error) {
     console.error(error);
   }
