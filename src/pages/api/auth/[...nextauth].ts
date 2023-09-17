@@ -48,7 +48,7 @@ export const options: NextAuthOptions = {
 				if (!userFromDB) {
 					// Users first time on the app, but they were not invited
 					await userEntity.createBaseUser({ email: user.email });
-					return "/unautorized";
+					return "/unauthorized";
 				} else if (!userFromDB.organization) {
 					return "/unauthorized";
 				}
