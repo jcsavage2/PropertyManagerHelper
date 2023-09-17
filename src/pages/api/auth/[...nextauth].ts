@@ -41,6 +41,21 @@ export const options: NextAuthOptions = {
 		}),
 	],
 	callbacks: {
+		async signIn({ user }) {
+			if (user.email) {
+				const userEntity = new UserEntity();
+				const userFromDB = await userEntity.get({ email: user.email.toLowerCase() });
+				if (!userFromDB) {
+					// Users first time on the app, but they were not invited
+					await userEntity.createBaseUser({ email: user.email });
+					return "/unautorized";
+				} else if (!userFromDB.organization) {
+					return "/unauthorized";
+				}
+			}
+			return true;
+		},
+
 		// Send user properties to the client.
 		// Creates the user if the user does not already exist in the database. 
 		async session({ session, user }) {
@@ -51,7 +66,6 @@ export const options: NextAuthOptions = {
 				if (userFromDB) {
 					session.user = { ...session.user, ...userFromDB };
 				} else {
-
 					// Users first time on the app, but they were not invited
 					userFromDB = await userEntity.createBaseUser({ email: user.email });
 					session.user = { ...session.user, ...userFromDB };
@@ -65,7 +79,6 @@ export const options: NextAuthOptions = {
 					session.user = { ...session.user, ...userFromDB };
 				}
 			}
-
 			return session;
 		},
 	},

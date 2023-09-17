@@ -7,6 +7,7 @@ import Modal from 'react-modal';
 import { useSessionUser } from "@/hooks/auth/use-session-user";
 import { LoadingSpinner } from "@/components/loading-spinner/loading-spinner";
 import { useUserContext } from "@/context/user";
+import { userRoles } from "@/database/entities/user";
 
 const Home = () => {
   const router = useRouter();
@@ -38,6 +39,23 @@ const Home = () => {
   function closeModal() {
     setShowNotice(false);
   }
+
+  useEffect(() => {
+    const allUserRoles = user?.roles ?? [];
+    if (!allUserRoles.length) {
+      return;
+    }
+
+    const userIsTenant = allUserRoles.includes(userRoles.TENANT);
+    if (userIsTenant) {
+      // always default to the tenant view if the user has the tenant role. 
+      router.push("/work-order-chatbot");
+    } else {
+      // for technicians and PMs, always go to work-orders page. 
+      router.push("/work-orders");
+    }
+  }, [router, user?.roles]);
+
   if (sessionStatus === "loading") {
     return <LoadingSpinner containerClass={"mt-4"} />;
   }
