@@ -9,6 +9,7 @@ import { useUserContext } from '@/context/user';
 export const BottomNavigationPanel = () => {
   const { userType } = useUserContext();
 
+  if(userType !== ENTITIES.PROPERTY_MANAGER) return null;
   return (
     <div
       className="fixed -bottom-1 left-0 z-50 w-full border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600"

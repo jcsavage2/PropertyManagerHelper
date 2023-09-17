@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useDevice } from '@/hooks/use-window-size';
 import HamburgerMenu from './hamburger-menu';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { userRoles } from '@/database/entities/user';
 
 export const NavLinks = () => {
   const { logOut } = useUserContext();
@@ -16,10 +17,8 @@ export const NavLinks = () => {
 
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
-
     logOut();
     router.push("/");
-
   }, [logOut, router]);
 
   if (isMobile) {
@@ -50,11 +49,12 @@ export const NavLinks = () => {
           <Image src="/2.png" alt='1' width={30} height={0} />
         </div>
         <div className='my-auto flex space-x-4'>
-          <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link>
+          
+          {user && (user.roles.includes(userRoles.PROPERTY_MANAGER) || user.roles.length > 1) ? <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link> : null}
           {user?.email && (<Link onClick={handleClick} className='hover:text-gray-500 text-lg' href={"/"}>{"Sign Out"}</Link>)}
-          {userType === "TENANT" && <Link className='hover:text-gray-500 text-lg' href={"/work-order-chatbot"}>New Work Order</Link>}
-          {userType === "TENANT" && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Work Orders</Link>}
-          {userType === "PROPERTY_MANAGER" && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Admin Portal</Link>}
+          {user && userType === userRoles.TENANT && <Link className='hover:text-gray-500 text-lg' href={"/work-order-chatbot"}>New Work Order</Link>}
+          {user && userType === userRoles.TENANT || userType === userRoles.TECHNICIAN ? <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Work Orders</Link> : null}
+          {user && userType === userRoles.PROPERTY_MANAGER && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Admin Portal</Link>}
         </div>
       </div>
     </nav>

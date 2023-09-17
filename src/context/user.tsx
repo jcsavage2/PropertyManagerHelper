@@ -1,37 +1,58 @@
-import { useSessionUser } from "@/hooks/auth/use-session-user";
-import { signOut } from "next-auth/react";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { userRoles } from '@/database/entities/user';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { signOut } from 'next-auth/react';
+import router from 'next/router';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 export type UserContext = {
-  userType: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN" | null;
-  setUserType: (type: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN") => void;
+  userType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN' | null;
+  setUserType: (type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => void;
   logOut: () => void;
 };
 
-
 export const UserContext = createContext<UserContext>({
   userType: null,
-  setUserType: () => { },
-  logOut: () => { },
+  setUserType: () => {},
+  logOut: () => {},
 });
-
 
 export const UserContextProvider = (props: any) => {
   const { user } = useSessionUser();
   const defaultState = user?.roles?.length === 1 ? user?.roles[0] : null;
-  const [userType, setType] = useState<UserContext["userType"]>(defaultState);
+  const [userType, setType] = useState<UserContext['userType']>(defaultState);
 
   useEffect(() => {
-    const localUserType = localStorage.getItem("PILLAR:USER_TYPE");
-    if (user?.roles?.length === 1 && !userType && !localUserType) {
-      setType(user?.roles[0]);
-    } else if (localUserType && !userType) {
-      setType(localUserType as any);
+    if (userType || !user) return;
+    const localUserType = localStorage.getItem('PILLAR:USER_TYPE');
+
+    let role: UserContext['userType'];
+    if (user?.roles?.length === 1 && !localUserType) {
+      role = user?.roles[0];
+    } else if (localUserType) {
+      role = localUserType as any;
+    } else {
+      //Select PM role if exists, otherwise pick first role
+      if (user?.roles.includes(userRoles.PROPERTY_MANAGER)) {
+        role = userRoles.PROPERTY_MANAGER;
+      } else {
+        role = user?.roles[0];
+      }
+    }
+
+    setUserType(role!)
+
+    //Handle initial routing
+    if(role === userRoles.TENANT) {
+      router.push('/work-order-chatbot');
+    }else if(role === userRoles.TECHNICIAN) {
+      router.push('/work-orders');
+    } else { //PM
+      router.push('/');
     }
   }, [user, userType]);
 
-  const setUserType = useCallback((type: "TENANT" | "PROPERTY_MANAGER" | "TECHNICIAN") => {
-    localStorage.setItem("PILLAR:USER_TYPE", type);
+  const setUserType = useCallback((type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => {
+    localStorage.setItem('PILLAR:USER_TYPE', type);
     setType(type);
   }, []);
 
@@ -59,4 +80,3 @@ export const UserContextProvider = (props: any) => {
 };
 
 export const useUserContext = () => useContext(UserContext);
-

@@ -38,7 +38,7 @@ const Technicians = () => {
         const response = JSON.parse(data.response);
         const _pms: IUser[] = response.pms;
         setStartKey(response.startKey);
-        isInitial ? setPMs(_pms) : setPMs([...pms, ..._pms]);
+        isInitial ? setPMs(_pms) : setPMs((prev) => [...prev, ..._pms]);
       } catch (err) {
         ({ err });
       }
@@ -58,7 +58,7 @@ const Technicians = () => {
   return (
     <div id="property-managers" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
-      <div className="lg:max-w-5xl">
+      <div className="lg:max-w-5xl mb-44 md:mb-10">
         <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Property Managers</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
@@ -136,7 +136,7 @@ const Technicians = () => {
         )}
         {!pmsLoading && pms.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no property managers found.</div>}
         {pmsLoading && (
-          <div className="mt-8">
+          <div className="md:mt-8">
             <LoadingSpinner spinnerClass="spinner-large" />
           </div>
         )}
