@@ -11,11 +11,11 @@ import { v4 as uuid } from 'uuid';
 import { toTitleCase } from '@/utils';
 import { toast } from 'react-toastify';
 import Papa from 'papaparse';
-import { userRoles } from '@/database/entities/user';
 import { useUserContext } from '@/context/user';
 import { AiOutlineLink } from 'react-icons/ai';
 import { GetS3BucketRequest } from '@/pages/api/get-s3bucket';
 import { toggleBodyScroll } from '@/utils';
+import { ENTITIES } from '@/database/entities';
 
 type ImportTenantObject = CreateTenantBody & {
   key: number;
@@ -164,7 +164,7 @@ export const ImportTenantsModal = ({
 
   const processTenantFile = useCallback(
     async (parsed: any[]) => {
-      if (!user || !user.email || !user.name || userType !== 'PROPERTY_MANAGER' || user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
+      if (!user || !user.email || !user.name || userType !== 'PROPERTY_MANAGER' || !user?.roles?.includes(ENTITIES.PROPERTY_MANAGER) || !user.organization) {
         alert('User must be a property manager part of an organization to import tenants');
         return;
       }
@@ -220,7 +220,7 @@ export const ImportTenantsModal = ({
   );
 
   const handleImportTenants = async () => {
-    if (!user || !user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
+    if (!user || !user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(ENTITIES.PROPERTY_MANAGER) || !user.organization) {
       alert('User must be a property manager in an organization to import tenants');
       return;
     }
