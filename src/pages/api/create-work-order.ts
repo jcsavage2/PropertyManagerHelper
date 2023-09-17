@@ -101,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
       from: "pillar@pillarhq.co",
-      subject: `Work Order Request for ${body.unit ? "unit " + body.unit : body.address}`,
+      subject: `Work Order Request for ${body.address ?? ""} ${body.unit ?? ""}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
