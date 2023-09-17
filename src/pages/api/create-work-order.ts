@@ -75,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     sendgrid.setApiKey(apiKey);
 
-    body.messages.pop()
+    body.messages.pop();
     for (const message of body.messages) {
       // Create a comment for each existing message so the Work Order has context.
       await eventEntity.create({
@@ -87,11 +87,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     const ccString = (body.createdByType === "TENANT" && creatorEmail !== body.pmEmail) ? creatorEmail.toLowerCase() : "";
 
+    const shortenedWorkOrderIdString = woId.substring(woId.length - 4);
+
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
       from: "pillar@pillarhq.co",
-      subject: `Work Order Request for ${body.unit ? "unit " + body.unit : body.address}`,
+      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.address ?? ""} ${body.unit ?? ""}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -182,8 +184,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-              .join(' ')}
+          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+          .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
