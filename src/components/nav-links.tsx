@@ -49,8 +49,8 @@ export const NavLinks = () => {
           <Image src="/2.png" alt='1' width={30} height={0} />
         </div>
         <div className='my-auto flex space-x-4'>
-          
-          {user && (user.roles.includes(userRoles.PROPERTY_MANAGER) || user.roles.length > 1) ? <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link> : null}
+
+          {user && (user?.roles?.includes(userRoles.PROPERTY_MANAGER) || user?.roles?.length > 1) ? <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link> : null}
           {user?.email && (<Link onClick={handleClick} className='hover:text-gray-500 text-lg' href={"/"}>{"Sign Out"}</Link>)}
           {user && userType === userRoles.TENANT && <Link className='hover:text-gray-500 text-lg' href={"/work-order-chatbot"}>New Work Order</Link>}
           {user && userType === userRoles.TENANT || userType === userRoles.TECHNICIAN ? <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Work Orders</Link> : null}

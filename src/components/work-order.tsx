@@ -176,7 +176,7 @@ const WorkOrder = ({
       if (!user || !user.name || !user.email) {
         throw new Error('User or workOrderId not found');
       }
-      if (!user.roles?.includes(userRoles.TECHNICIAN) && !user.roles.includes(userRoles.PROPERTY_MANAGER)) {
+      if (!user.roles?.includes(userRoles.TECHNICIAN) && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
         throw new Error('User must be a technician or pm to update status');
       }
       const { data } = await axios.post('/api/update-work-order', {
@@ -357,9 +357,8 @@ const WorkOrder = ({
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} ${
-                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
-                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
+                  className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} ${userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                    } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <GoTasklist />
                   <span className="text-xs">Todo</span>
@@ -367,9 +366,8 @@ const WorkOrder = ({
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} ${
-                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
-                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
+                  className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} ${userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                    } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
                   <span className="text-xs">Complete</span>
@@ -387,8 +385,8 @@ const WorkOrder = ({
                 isUpdatingAssignedTechnicians || fetchingTechnicians
                   ? 'Loading...'
                   : assignedTechnicians.length === 0
-                  ? 'Unassigned'
-                  : 'Assign technicians...'
+                    ? 'Unassigned'
+                    : 'Assign technicians...'
               }
               isDisabled={isUpdatingAssignedTechnicians || userType !== ENTITIES.PROPERTY_MANAGER} // potentially could have logic for technicians to "self assign"
               className={'w-11/12 md:w-10/12 mt-1'}
