@@ -50,7 +50,7 @@ const Home = () => {
               setUserType(userRoles.TENANT);
               router.push('/work-order-chatbot');
             }}
-            disabled={!user?.roles.includes(userRoles.TENANT) || userType === userRoles.TENANT}
+            disabled={!user?.roles?.includes(userRoles.TENANT) || userType === userRoles.TENANT}
           >
             Switch to Tenant view
           </button>
