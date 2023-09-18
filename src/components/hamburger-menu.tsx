@@ -61,6 +61,12 @@ const HamburgerMenu = () => {
                 {'Sign In'}
               </Link>
             )}
+            <Link className={linkStyle} href={'/terms-and-conditions'}>
+              {'Terms And Conditions'}
+            </Link>
+            <Link className={linkStyle} href={'/privacy-policy'}>
+              {'Privacy Policy'}
+            </Link>
           </div>
         </div>
       )}

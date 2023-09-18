@@ -55,6 +55,12 @@ export const NavLinks = () => {
           {user && userType === userRoles.TENANT && <Link className='hover:text-gray-500 text-lg' href={"/work-order-chatbot"}>New Work Order</Link>}
           {user && userType === userRoles.TENANT || userType === userRoles.TECHNICIAN ? <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Work Orders</Link> : null}
           {user && userType === userRoles.PROPERTY_MANAGER && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Admin Portal</Link>}
+          <Link className={'hover:text-gray-500 text-lg'} href={'/terms-and-conditions'}>
+            {'Terms And Conditions'}
+          </Link>
+          <Link className={'hover:text-gray-500 text-lg'} href={'/privacy-policy'}>
+            {'Privacy Policy'}
+          </Link>
         </div>
       </div>
     </nav>
