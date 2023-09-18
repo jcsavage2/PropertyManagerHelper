@@ -62,18 +62,18 @@ const Home = () => {
               setUserType(userRoles.PROPERTY_MANAGER);
               router.push('/work-orders');
             }}
-            disabled={!user?.roles.includes(userRoles.PROPERTY_MANAGER) || userType === userRoles.PROPERTY_MANAGER}
+            disabled={!user?.roles?.includes(userRoles.PROPERTY_MANAGER) || userType === userRoles.PROPERTY_MANAGER}
           >
             Switch to Property Manager view
           </button>
           <button
             className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
             onClick={async () => {
-              if (!user?.roles.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN) return;
+              if (!user?.roles?.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN) return;
               setUserType(userRoles.TECHNICIAN);
               router.push('/work-orders');
             }}
-            disabled={!user?.roles.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN}
+            disabled={!user?.roles?.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN}
           >
             Switch to Technician view
           </button>
