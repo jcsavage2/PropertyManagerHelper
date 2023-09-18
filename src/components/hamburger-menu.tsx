@@ -30,7 +30,7 @@ const HamburgerMenu = () => {
       {isOpen && (
         <div className="absolute left-0 bg-blue-400 mt-0 w-full grid z-10" style={{ top: '7dvh', height: '93dvh' }} onClick={() => setIsOpen(false)}>
           <div className="flex flex-col h-12">
-            {user && (user.roles.includes(userRoles.PROPERTY_MANAGER) || user.roles.length > 1) ? (
+            {user && (user?.roles?.includes(userRoles.PROPERTY_MANAGER) || user?.roles?.length > 1) ? (
               <Link className={linkStyle} href={'/'}>
                 Home
               </Link>
