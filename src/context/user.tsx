@@ -47,7 +47,7 @@ export const UserContextProvider = (props: any) => {
     }else if(role === userRoles.TECHNICIAN) {
       router.push('/work-orders');
     } else { //PM
-      router.push('/');
+      router.push('/work-orders');
     }
   }, [user, userType]);
 
