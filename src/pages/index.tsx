@@ -46,7 +46,7 @@ const Home = () => {
           <button
             className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
             onClick={() => {
-              if (!user?.roles.includes(userRoles.TENANT) || userType === userRoles.TENANT) return;
+              if (!user?.roles?.includes(userRoles.TENANT) || userType === userRoles.TENANT) return;
               setUserType(userRoles.TENANT);
               router.push('/work-order-chatbot');
             }}
