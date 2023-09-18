@@ -500,7 +500,7 @@ const WorkOrder = ({
           ) : null}
         </div>
         <div className="w-full box-border text-sm fixed bottom-0 border-t border-slate-200 md:text-right bg-white text-gray-600 py-4 md:px-6 text-center">
-          Created by {workOrder.tenantName} ({workOrder.tenantEmail})
+          Created by {workOrder.createdByType === "TENANT" ? "Tenant" : "Property Manager:"} {workOrder.createdByType === "TENANT" ? workOrder.tenantEmail : workOrder.pmEmail}
         </div>
 
         {/* Other modals */}
