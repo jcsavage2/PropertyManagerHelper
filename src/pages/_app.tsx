@@ -4,12 +4,16 @@ import { SessionProvider, SessionProviderProps } from "next-auth/react";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Head from 'next/head';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UserContextProvider } from '@/context/user';
 import { NavLinks } from '@/components/nav-links';
+import * as Fullstory from "@fullstory/browser";
 
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
+  useEffect(() => {
+    Fullstory.init({ orgId: 'o-1PYDZB-na1' });
+  }, []);
   return (
     <SessionProvider
       session={session}
