@@ -347,7 +347,7 @@ const WorkOrder = ({
         {/* WO Modal Content */}
 
         <div
-          style={{ height: isMobile ? `calc(100vh - 285px)` : `calc(100vh - 265px)` }}
+          style={{ height: isMobile ? `calc(100vh - 320px)` : `calc(100vh - 265px)` }}
           className={`h-max pt-3 px-5 pb-8 overflow-y-scroll flex flex-col box-border text-gray-600 text-md md:text-base`}
         >
           <div className="font-bold">Status</div>
