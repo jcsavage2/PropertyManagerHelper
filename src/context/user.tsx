@@ -40,15 +40,6 @@ export const UserContextProvider = (props: any) => {
     }
 
     setUserType(role!)
-
-    //Handle initial routing
-    if(role === userRoles.TENANT) {
-      router.push('/work-order-chatbot');
-    }else if(role === userRoles.TECHNICIAN) {
-      router.push('/work-orders');
-    } else { //PM
-      router.push('/work-orders');
-    }
   }, [user, userType]);
 
   const setUserType = useCallback((type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => {

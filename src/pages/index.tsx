@@ -4,12 +4,25 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { useUserContext } from '@/context/user';
 import { userRoles } from '@/database/entities/user';
+import { useEffect } from 'react';
 
 const Home = () => {
   const router = useRouter();
   const { query } = router;
   const { userType, setUserType } = useUserContext();
   const { user, sessionStatus } = useSessionUser();
+
+  //Redirect to correct page after sign in occurs
+  useEffect(() => {
+    if(!userType) return;
+    if(userType === userRoles.TENANT) {
+      router.push('/work-order-chatbot');
+    }else if(userType === userRoles.TECHNICIAN) {
+      router.push('/work-orders');
+    } else { //PM
+      router.push('/work-orders');
+    }
+  }, [userType])
 
   if (query?.authredirect && !user?.email && sessionStatus === 'unauthenticated') {
     const alreadyRedirected = localStorage.getItem('PILLAR::REDIRECT');

@@ -304,8 +304,8 @@ const WorkOrder = ({
 
   if (workOrder) {
     return (
-      <div id="work-order" className="box-border">
-        <div className="w-full sticky top-0">
+      <div id="work-order" className="box-border overflow-hidden">
+        <div className="w-full sticky top-0 overflow-hidden">
           <div className=" bg-blue-200 text-gray-600 text-center py-2 px-4 text-sm">
             Created on {createdToFormattedDateTime(workOrder.created).join(' @ ')}
             <MdOutlineClear className="float-right my-auto h-6 text-xl text-gray-600 cursor-pointer" onClick={() => handleCloseWorkOrderModal()} />
