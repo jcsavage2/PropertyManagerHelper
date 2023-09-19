@@ -12,6 +12,7 @@ import { PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { ENTITIES } from '@/database/entities';
 import { ChatCompletionRequestMessage } from 'openai';
+import Modal from 'react-modal';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -19,18 +20,7 @@ export default function WorkOrderChatbot() {
   const { user, sessionStatus } = useSessionUser();
   const { isMobile } = useDevice();
 
-  const addressesOptions: AddressOptionType[] = useMemo(() => {
-    if (!user?.addresses) return [];
-    return (
-      Object.values(user?.addresses)?.map(
-        (address: any) =>
-        ({
-          label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
-          value: address,
-        } as AddressOptionType)
-      ) ?? []
-    );
-  }, [user?.addresses]);
+  const [platform, setPlatform] = useState<"Desktop" | "iOS" | "Android">();
 
   const [isUsingAI, _setIsUsingAI] = useState(true);
   const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
@@ -51,6 +41,39 @@ export default function WorkOrderChatbot() {
   const [woId, _setWoId] = useState(uuidv4());
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  const [isBrowser, setIsBrowser] = useState(false);
+  const [downloadModalIsOpen, setDownloadModalIsOpen] = useState(false);
+
+  const addressesOptions: AddressOptionType[] = useMemo(() => {
+    if (!user?.addresses) return [];
+    return (
+      Object.values(user?.addresses)?.map(
+        (address: any) =>
+        ({
+          label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
+          value: address,
+        } as AddressOptionType)
+      ) ?? []
+    );
+  }, [user?.addresses]);
+
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+
+  useEffect(() => {
+    if (isBrowser) {
+      const isDesktop = window.innerWidth >= 800;
+      setPlatform(isDesktop ? "Desktop" : window.navigator.userAgent.toLowerCase().includes("android") ? "Android" : "iOS");
+    }
+  }, [isBrowser]);
+
+  useEffect(() => {
+    if (platform === "iOS" || platform === "Android") {
+      setDownloadModalIsOpen(true);
+    }
+  }, [platform]);
+
   //If the user has only one address, select it automatically
   useEffect(() => {
     if (addressesOptions && addressesOptions.length === 1) {
@@ -60,6 +83,13 @@ export default function WorkOrderChatbot() {
       setAddressHasBeenSelected(false);
     }
   }, [addressesOptions]);
+
+
+
+  if (isBrowser && document.querySelector("#chatbot")) {
+    Modal.setAppElement('#chatbot');
+  }
+
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -311,9 +341,70 @@ export default function WorkOrderChatbot() {
   if (!user?.roles?.includes(userRoles.TENANT)) {
     return <p className="p-4">User must have the tenant Role assigned to them by a property manager or Owner.</p>;
   }
+  const customStyles = {
+    content: {
+      top: '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      marginRight: '-50%',
+      transform: 'translate(-50%, -50%)',
+      width: isMobile ? '95%' : '50%',
+      backgroundColor: 'rgba(255, 255, 255)',
+    },
+    overLay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(25, 255, 255, 0.75)',
+    },
+  };
+
+  function closeModal() {
+    setDownloadModalIsOpen(!downloadModalIsOpen);
+  }
 
   return (
-    <>
+    <div id="chatbot">
+      <Modal
+        isOpen={downloadModalIsOpen}
+        onRequestClose={closeModal}
+        contentLabel="Add Comment Modal"
+        ariaHideApp={false}
+        style={customStyles}
+      >
+        <div className="p-6">
+          <h2 className="text-center text-2xl font-bold mb-4">
+            Save Pillar App to Your Home Screen
+          </h2>
+
+          <div className="space-y-2">
+            {platform === "iOS" ? (
+              <>
+                <p>1. Tap the share icon (square with an arrow pointing out of it) at the bottom of the screen.</p>
+                <p>{'2. Scroll down and tap "Add to Home Screen".'}</p>
+                <p>{'3. Name it as you wish and then tap "Add" on the top-right.'}</p>
+              </>
+            ) : platform === "Android" ? (
+              <>
+                <p>{'1. Tap the menu button (three dots) on the top-right of the screen.'}</p>
+                <p>{'2. Tap "Add to Home screen".'}</p>
+              </>
+            ) : (
+              <p>Your device is not recognized. Please refer to its documentation for instructions.</p>
+            )}
+          </div>
+
+          <button
+            onClick={closeModal}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Close
+          </button>
+        </div>
+      </Modal>
       <main style={{ height: '92dvh' }} className="text-center">
         <div>
           <div>
@@ -488,6 +579,6 @@ export default function WorkOrderChatbot() {
           </div>
         </div>
       </main>
-    </>
+    </div>
   );
 }
