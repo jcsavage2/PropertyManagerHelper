@@ -61,6 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(updatedWorkOrder.pk)}`;
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,
+        cc: updatedWorkOrder.pmEmail,
         from: 'pillar@pillarhq.co',
         subject,
         html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
