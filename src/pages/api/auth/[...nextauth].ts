@@ -83,7 +83,7 @@ export const options: NextAuthOptions = {
 		},
 	},
 	session: {
-		maxAge: 30 * 24 * 60 * 60, // Max Age: 60 days
+		maxAge: 90 * 24 * 60 * 60, // Max Age: 90 days
 	},
 	adapter: DynamoDBAdapter(client),
 	secret: process.env.NEXT_PUBLIC_JWT_SECRET,
