@@ -69,6 +69,10 @@ const WorkOrder = ({
   const [events, setEvents] = useState<Array<IEvent | null>>([]);
   const [eventsStartKey, setEventsStartKey] = useState<StartKey | undefined>(undefined);
 
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+
+
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -80,6 +84,38 @@ const WorkOrder = ({
       Modal.setAppElement('#workOrder');
     }
   }, []);
+
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(async (e) => {
+    e.preventDefault();
+    setUploadingFiles(true);
+    const selectedFs = e.target.files ?? [];
+    const formData = new FormData();
+
+    // Append all selected files to the FormData
+    for (const imageFile of selectedFs) {
+      formData.append('image', imageFile);
+    }
+    formData.append("uuid", workOrderId);
+
+    try {
+      const response = await axios.post('/api/upload-images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.status === 200) {
+        await axios.post("/api/add-images-to-work-order", { pk: workOrder?.pk, sk: workOrder?.sk, images: [...(response?.data?.files ?? []), ...(workOrder?.images ?? [])] });
+        setUploadedFiles(response?.data?.files ?? []);
+        toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
+        setUploadingFiles(false);
+      } else {
+        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+        setUploadingFiles(false);
+      }
+    } catch (error) {
+      toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+      setUploadingFiles(false);
+    }
+  }, [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId]);
 
   //Return a list of technician options based on string search input
   //Can also be used to get all technicians for an org by omitting the search string
@@ -289,7 +325,7 @@ const WorkOrder = ({
       await getWorkOrderEvents(true);
     };
     fetchInOrder();
-  }, [workOrderId, user, userType]);
+  }, [workOrderId, user, userType, uploadedFiles]);
 
   useEffect(() => {
     async function getImages() {
@@ -403,7 +439,7 @@ const WorkOrder = ({
             />
           </div>
           <div className="font-bold mt-4">Photos</div>
-          <div className="w-full flex md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200">
+          <div className="w-full grid grid-cols-3 md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2">
             {imagesLoading ? (
               <LoadingSpinner />
             ) : images && images.length ? (
@@ -425,6 +461,18 @@ const WorkOrder = ({
             ) : (
               'No photos found'
             )}
+          </div>
+          <div className={"w-full md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200"}>
+            {uploadingFiles ?
+              <LoadingSpinner />
+              :
+              <input
+                type="file"
+                multiple name="image"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            }
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
           <div className={`${workOrder.permissionToEnter === PTE.YES ? 'text-green-600' : 'text-red-600'} mt-0.5 font-normal`}>
