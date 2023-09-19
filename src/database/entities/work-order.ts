@@ -38,6 +38,8 @@ type CreateWorkOrderProps = {
   additionalDetails: string;
 };
 
+export type UpdateImagesProps = { pk: string; sk: string; images: string[]; addNew?: boolean; };
+
 export type PropertyAddress = {
   address: string;
   unit?: string;
@@ -81,13 +83,13 @@ export class WorkOrderEntity {
       pk: { partitionKey: true }, //woId
       sk: { sortKey: true }, //ksuID - same for all GSISK
       GSI1PK: { type: 'string' }, //PM email
-      GSI1SK: { type: 'string' }, 
+      GSI1SK: { type: 'string' },
       GSI2PK: { type: 'string' }, //Tenant email
-      GSI2SK: { type: 'string' }, 
+      GSI2SK: { type: 'string' },
       GSI3PK: { type: 'string' }, //Technician email
-      GSI3SK: { type: 'string' }, 
+      GSI3SK: { type: 'string' },
       GSI4PK: { type: 'string' }, //Org Id
-      GSI4SK: { type: 'string' }, 
+      GSI4SK: { type: 'string' },
       permissionToEnter: { type: 'string' },
       pmEmail: { type: 'string' },
       organization: { type: 'string' },
@@ -347,7 +349,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ workOrderId, technicianEmail }: { workOrderId: string; technicianEmail: string }) {
+  public async removeTechnician({ workOrderId, technicianEmail }: { workOrderId: string; technicianEmail: string; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
@@ -367,6 +369,15 @@ export class WorkOrderEntity {
         { returnValues: 'ALL_NEW' }
       );
       return result;
+    } catch (err) {
+      console.log({ err });
+    }
+  }
+
+  public async updateImages({ pk, sk, images, addNew }: UpdateImagesProps) {
+    try {
+      const updatedWorkOrder = (await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })).Attributes;
+      return updatedWorkOrder;
     } catch (err) {
       console.log({ err });
     }

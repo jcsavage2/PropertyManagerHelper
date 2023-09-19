@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const images = await Promise.all(
       keys.map(async (key) => {
         const newKey = key.replace("https://pillar-file-storage.s3.us-east-1.amazonaws.com/", "");
-        const decoded = decodeURI(newKey);
+        const decoded = decodeURIComponent(newKey);
         const response = await BucketClient.send(
           new GetObjectCommand({
             Bucket: "pillar-file-storage",
@@ -45,8 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
     res.status(200).json({ images });
   } catch (error) {
-    console.log({ error });
-    res.status(500).send("Internal Server Error");
+    // @ts-ignore
+    res.status(500).send("Failed to Upload Image");
   }
 }
 export const config = {
