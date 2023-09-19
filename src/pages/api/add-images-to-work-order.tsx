@@ -1,5 +1,4 @@
 import { Data } from '@/database';
-import { EventEntity } from '@/database/entities/event';
 import { UpdateImagesProps, WorkOrderEntity } from '@/database/entities/work-order';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
