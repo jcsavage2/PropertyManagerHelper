@@ -12,8 +12,8 @@ export type UserContext = {
 
 export const UserContext = createContext<UserContext>({
   userType: null,
-  setUserType: () => {},
-  logOut: () => {},
+  setUserType: () => { },
+  logOut: () => { },
 });
 
 export const UserContextProvider = (props: any) => {
@@ -23,12 +23,13 @@ export const UserContextProvider = (props: any) => {
 
   useEffect(() => {
     if (userType || !user) return;
-    const localUserType = localStorage.getItem('PILLAR:USER_TYPE');
+    const localUserType = localStorage.getItem('PILLAR:USER_TYPE') as UserContext['userType'] | null;
 
     let role: UserContext['userType'];
+
     if (user?.roles?.length === 1 && !localUserType) {
       role = user?.roles[0];
-    } else if (localUserType) {
+    } else if (localUserType && user.roles.includes(localUserType)) {
       role = localUserType as any;
     } else {
       //Select PM role if exists, otherwise pick first role
@@ -39,7 +40,7 @@ export const UserContextProvider = (props: any) => {
       }
     }
 
-    setUserType(role!)
+    setUserType(role!);
   }, [user, userType]);
 
   const setUserType = useCallback((type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => {
