@@ -377,7 +377,7 @@ export default function WorkOrderChatbot() {
       >
         <div className="p-6">
           <h2 className="text-center text-2xl font-bold mb-4">
-            Save Pillar App to Your Home Screen
+            Instructions to Save Pillar App to Your Home Screen
           </h2>
 
           <div className="space-y-2">
