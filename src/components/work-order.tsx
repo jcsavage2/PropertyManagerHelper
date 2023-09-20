@@ -8,7 +8,7 @@ import { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { OptionType, PTE_Type } from '@/types';
+import { OptionType } from '@/types';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
@@ -49,7 +49,6 @@ const WorkOrder = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [isUpdatingPTE, setIsUpdatingPTE] = useState(false);
   const [fetchingTechnicians, setFetchingTechnicians] = useState(false); //Will not disable technician select, allows the user to search for technicians without diabling the input
   const [isUpdatingAssignedTechnicians, setIsUpdatingAssignedTechnicians] = useState(false); //Will disable technician select
 
@@ -241,39 +240,6 @@ const WorkOrder = ({
     setIsUpdatingStatus(false);
   };
 
-  const handleUpdatePTE = async (permissionToEnter: PTE_Type) => {
-    if (!workOrderId) return;
-    setIsUpdatingPTE(true);
-    try {
-      if (!user || !user.name || !user.email) {
-        throw new Error('User or workOrderId not found');
-      }
-      if (!user.roles?.includes(userRoles.TENANT) && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-        throw new Error('User must be a tenant or property manager to update status');
-      }
-      const { data } = await axios.post('/api/update-work-order', {
-        pk: workOrderId,
-        sk: workOrderId,
-        email: user.email,
-        name: user.name,
-        permissionToEnter
-      });
-      const updatedWorkOrder = JSON.parse(data.response);
-      if (updatedWorkOrder) {
-        setWorkOrder(updatedWorkOrder);
-      }
-      await getWorkOrderEvents(true);
-      setIsUpdatingPTE(false);
-    } catch (e) {
-      console.log(e);
-      toast.error('Error updating work order status', {
-        position: 'top-right',
-        draggable: false,
-      });
-    }
-    setIsUpdatingStatus(false);
-  };
-
   const deleteWorkOrder = useCallback(
     async (workOrderId: string) => {
       if (!workOrderId) return;
@@ -305,7 +271,7 @@ const WorkOrder = ({
         });
       }
     },
-    [workOrder?.status, user, router, afterDelete]
+    [workOrderId, workOrder, user]
   );
 
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
@@ -374,7 +340,6 @@ const WorkOrder = ({
     getImages();
     setImagesLoading(false);
   }, [workOrder?.images]);
-
 
   if (workOrder) {
     return (
@@ -513,21 +478,8 @@ const WorkOrder = ({
             }
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
-          <div>
-            <button
-              onClick={() => handleUpdatePTE(PTE.YES)}
-              className={`${workOrder.permissionToEnter === PTE.YES && 'bg-green-300'} rounded hover:bg-green-300 text-green-700 py-2 px-5 mt-0.5 font-normal`}
-              disabled={workOrder.permissionToEnter === PTE.YES}
-            >
-              {"Yes"}
-            </button>
-            <button
-              onClick={() => handleUpdatePTE(PTE.NO)}
-              className={`${workOrder.permissionToEnter === PTE.NO && 'bg-red-300'} ml-3 rounded hover:bg-red-300 py-2 px-5 text-red-700 mt-0.5 font-normal`}
-              disabled={workOrder.permissionToEnter === PTE.NO}
-            >
-              {"No"}
-            </button>
+          <div className={`${workOrder.permissionToEnter === PTE.YES ? 'text-green-600' : 'text-red-600'} mt-0.5 font-normal`}>
+            {toTitleCase(workOrder.permissionToEnter)}
           </div>
           <div className="font-bold mt-4">Address</div>
           <div className="mt-0.5">

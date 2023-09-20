@@ -47,6 +47,6 @@ export const STATUS = {
 export const PTE = {
   YES: 'Yes',
   NO: 'No',
-} as const;
+};
 
 export const PAGE_SIZE = 20;
