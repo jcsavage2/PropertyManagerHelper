@@ -122,7 +122,7 @@ const WorkOrder = ({
   //Can also be used to get all technicians for an org by omitting the search string
   const searchTechnicians = useCallback(
     async (_searchString?: string) => {
-      if (!user || !userType) return [];
+      if (!user) return [];
       setFetchingTechnicians(true);
       try {
         if (!user.email || !user.organization) {
@@ -135,7 +135,10 @@ const WorkOrder = ({
         };
         const { data } = await axios.post('/api/get-techs-for-org', body);
         const response = JSON.parse(data.response);
-        if (!response.techs) return [];
+        if (!response.techs){
+          setFetchingTechnicians(false);
+          return [];
+        }
         const mappedTechnicians = response.techs.map((technician: any) => {
           return {
             value: technician.email,
@@ -151,7 +154,7 @@ const WorkOrder = ({
       setFetchingTechnicians(false);
       return [];
     },
-    [user, userType, workOrder]
+    [user, workOrder]
   );
 
   const getWorkOrder = useCallback(async () => {
