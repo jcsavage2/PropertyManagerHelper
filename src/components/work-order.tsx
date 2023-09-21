@@ -174,20 +174,20 @@ const WorkOrder = ({
       if (_workOrder && _workOrder.assignedTo && mappedTechnicians.length > 0) {
         Array.from(_workOrder.assignedTo).forEach((str: string) => {
           //Backwards compatible with old assignedTo format
-          if(str.includes(TECHNICIAN_DELIM)){
+          if (str.includes(TECHNICIAN_DELIM)) {
             const keys: string[] = deconstructNameEmailString(str);
             const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === keys[0]);
             if (technician) {
               setAssignedTechnicians((prev) => [...prev, technician]);
             }
-          }else{
+          } else {
             //str is just tech email in this case
             const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === str);
             if (technician) {
               setAssignedTechnicians((prev) => [...prev, technician]);
             }
           }
-          
+
         });
       }
     } catch (err) {
@@ -220,6 +220,7 @@ const WorkOrder = ({
     [workOrderId]
   );
 
+  console.log({ workOrder });
   const handleUpdateStatus = async (e: any, status: string) => {
     if (!workOrderId) return;
     setIsUpdatingStatus(true);

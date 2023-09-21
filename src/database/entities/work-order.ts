@@ -81,7 +81,7 @@ export class WorkOrderEntity {
     name: ENTITIES.WORK_ORDER,
     attributes: {
       pk: { partitionKey: true }, //woId
-      sk: { sortKey: true }, 
+      sk: { sortKey: true },
       GSI1PK: { type: 'string' }, //PM email
       GSI1SK: { type: 'string' }, //ksuID - same for all GSISK
       GSI2PK: { type: 'string' }, //Tenant email
@@ -360,11 +360,11 @@ export class WorkOrderEntity {
       });
 
       //Backwards compatibility when removing technicians from WO
-      let newAssignedTo: string[]
+      let newAssignedTo: string[];
       const oldAssignedTo = [...assignedTo];
-      if(oldAssignedTo.includes(constructNameEmailString(technicianEmail.toLowerCase(), technicianName))) {
+      if (oldAssignedTo.includes(constructNameEmailString(technicianEmail.toLowerCase(), technicianName))) {
         newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName));
-      }else{
+      } else {
         newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail.toLowerCase());
       }
 

@@ -124,7 +124,7 @@ export const AddWorkOrderModal = ({
           organization: user.organization,
         };
 
-        const res = await axios.post('/api/create-work-order', body);
+        const res = await axios.post('/api/create-work-order', { ...body });
         if (res.status !== 200) throw new Error('Error creating and sending WO email');
 
         toast.success('Successfully Submitted Work Order!', {
@@ -146,7 +146,7 @@ export const AddWorkOrderModal = ({
         setSubmitWorkOrderLoading(false);
       }
     },
-    [user, onSuccessfulAdd, setAddWorkOrderModalIsOpen, tenantEmail, issueDescription, issueLocation, additionalDetails]
+    [user, userType, tenantEmail, issueDescription, issueLocation, additionalDetails, permissionToEnter, woId, onSuccessfulAdd]
   );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
