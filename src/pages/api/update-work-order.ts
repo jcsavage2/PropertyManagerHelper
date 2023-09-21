@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // If work order was created by a tenant
     if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk && updatedWorkOrder.status === STATUS.COMPLETE && !permissionToEnter) {
-      const subject = `Work Order Update${updatedWorkOrder?.address?.unit ? ` for unit ${updatedWorkOrder?.address.unit}` : ''}`;
+      const subject = `Work Order Update for ${updatedWorkOrder?.address?.address ?? ""} ${updatedWorkOrder?.address?.unit ? ` ${updatedWorkOrder?.address.unit}` : ''}`;
       const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(updatedWorkOrder.pk)}`;
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,
