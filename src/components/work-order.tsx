@@ -4,7 +4,7 @@ import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey, toggleBodyScroll } from '@/utils';
-import { ActionMeta, MultiValue } from 'react-select';
+import Select, { ActionMeta, GroupBase, MultiValue, OptionsOrGroups, SingleValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
@@ -135,7 +135,7 @@ const WorkOrder = ({
         };
         const { data } = await axios.post('/api/get-techs-for-org', body);
         const response = JSON.parse(data.response);
-        if (!response.techs){
+        if (!response.techs) {
           setFetchingTechnicians(false);
           return [];
         }
@@ -241,7 +241,7 @@ const WorkOrder = ({
     setIsUpdatingStatus(false);
   };
 
-  const handleUpdatePTE = async (permissionToEnter: PTE_Type) => {
+  const handleUpdatePTE = async (newValue: PTE_Type) => {
     if (!workOrderId) return;
     setIsUpdatingPTE(true);
     try {
@@ -256,7 +256,7 @@ const WorkOrder = ({
         sk: workOrderId,
         email: user.email,
         name: user.name,
-        permissionToEnter
+        permissionToEnter: newValue
       });
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
@@ -375,6 +375,10 @@ const WorkOrder = ({
     setImagesLoading(false);
   }, [workOrder?.images]);
 
+  const PTEOptions: { value: PTE_Type, label: PTE_Type; }[] = [
+    { value: PTE.YES, label: PTE.YES },
+    { value: PTE.NO, label: PTE.NO },
+  ];
 
   if (workOrder) {
     return (
@@ -514,20 +518,16 @@ const WorkOrder = ({
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
           <div>
-            <button
-              onClick={() => handleUpdatePTE(PTE.YES)}
-              className={`${workOrder.permissionToEnter === PTE.YES && 'bg-green-300'} rounded hover:bg-green-300 text-green-700 py-2 px-5 mt-0.5 font-normal`}
-              disabled={workOrder.permissionToEnter === PTE.YES}
-            >
-              {"Yes"}
-            </button>
-            <button
-              onClick={() => handleUpdatePTE(PTE.NO)}
-              className={`${workOrder.permissionToEnter === PTE.NO && 'bg-red-300'} ml-3 rounded hover:bg-red-300 py-2 px-5 text-red-700 mt-0.5 font-normal`}
-              disabled={workOrder.permissionToEnter === PTE.NO}
-            >
-              {"No"}
-            </button>
+            <Select
+              options={PTEOptions as { value: PTE_Type, label: PTE_Type; }[]}
+              className="basic-single"
+              classNamePrefix="select"
+              value={{ value: workOrder.permissionToEnter, label: workOrder.permissionToEnter }}
+              onChange={(v: { value: PTE_Type, label: PTE_Type; } | null) => { v?.value && handleUpdatePTE(v.value); }}
+              defaultValue={undefined}
+              isDisabled={!user?.roles?.includes("PROPERTY_MANAGER") && !user?.roles?.includes("TENANT")}
+              placeholder={workOrder.permissionToEnter as PTE_Type}
+            />
           </div>
           <div className="font-bold mt-4">Address</div>
           <div className="mt-0.5">
