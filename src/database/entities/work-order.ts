@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { generateKSUID, generateKey } from '@/utils';
+import { constructNameEmailString, generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
 import { PAGE_SIZE, STATUS } from '@/constants';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
@@ -81,9 +81,9 @@ export class WorkOrderEntity {
     name: ENTITIES.WORK_ORDER,
     attributes: {
       pk: { partitionKey: true }, //woId
-      sk: { sortKey: true }, //ksuID - same for all GSISK
+      sk: { sortKey: true }, 
       GSI1PK: { type: 'string' }, //PM email
-      GSI1SK: { type: 'string' },
+      GSI1SK: { type: 'string' }, //ksuID - same for all GSISK
       GSI2PK: { type: 'string' }, //Tenant email
       GSI2SK: { type: 'string' },
       GSI3PK: { type: 'string' }, //Technician email
@@ -103,7 +103,7 @@ export class WorkOrderEntity {
       status: { type: 'string' },
       createdBy: { type: 'string' },
       createdByType: { type: 'string' },
-      assignedTo: { type: 'set' },
+      assignedTo: { type: 'set' }, //List of concatenated strings like: technicianEmail##NAME##technicianName
     },
     table: PillarDynamoTable,
   } as const);
@@ -307,6 +307,7 @@ export class WorkOrderEntity {
     ksuID,
     workOrderId,
     technicianEmail,
+    technicianName,
     address,
     status,
     issueDescription,
@@ -319,7 +320,7 @@ export class WorkOrderEntity {
   }: AssignTechnicianBody) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
-      let assignedTo: string[] = [...oldAssignedTo, technicianEmail.toLowerCase()];
+      let assignedTo: string[] = [...oldAssignedTo, constructNameEmailString(technicianEmail.toLowerCase(), technicianName)];
       // Create companion row for the technician
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
@@ -349,7 +350,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ workOrderId, technicianEmail }: { workOrderId: string; technicianEmail: string; }) {
+  public async removeTechnician({ workOrderId, technicianEmail, technicianName, assignedTo }: { workOrderId: string; technicianEmail: string; technicianName: string; assignedTo: Set<string>; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
@@ -358,13 +359,20 @@ export class WorkOrderEntity {
         sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
       });
 
+      //Backwards compatibility when removing technicians from WO
+      let newAssignedTo: string[]
+      const oldAssignedTo = [...assignedTo];
+      if(oldAssignedTo.includes(constructNameEmailString(technicianEmail.toLowerCase(), technicianName))) {
+        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName));
+      }else{
+        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail.toLowerCase());
+      }
+
       const result = await this.workOrderEntity.update(
         {
           pk: key,
           sk: key,
-          assignedTo: {
-            $delete: [technicianEmail.toLowerCase()],
-          },
+          assignedTo: newAssignedTo
         },
         { returnValues: 'ALL_NEW' }
       );

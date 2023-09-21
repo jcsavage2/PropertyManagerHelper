@@ -1,4 +1,4 @@
-import { findIssueSample } from '@/constants';
+import { TECHNICIAN_DELIM, findIssueSample } from '@/constants';
 import { ChatCompletionRequestMessage } from 'openai';
 import { AiJSONResponse, UserInfo, WorkOrder } from '@/types';
 import ksuid from 'ksuid';
@@ -155,6 +155,21 @@ export function deconstructKey(key: string): string {
 }
 
 /**
+ * @returns string[] [Email, Name]
+ */
+export function deconstructNameEmailString(key: string): string[] {
+  if(!key || key.length === 0) return [key];
+  return key.split(TECHNICIAN_DELIM);
+}
+
+/**
+ * @returns Email{technicianDelim}Name
+ */
+export function constructNameEmailString(email: string, name: string): string {
+  return [email, TECHNICIAN_DELIM, name].join('');
+}
+
+/**
  * @returns KSUID
  */
 export function generateKSUID() {
@@ -163,11 +178,14 @@ export function generateKSUID() {
 
 /**
  * @param set List of technician name and emails
- * @returns string of the first item in the set and the remaining appended in shorthand, or "Unassigned" if the set is empty
+ * @returns string of the first item in the set's name and the remaining appended in shorthand, or "Unassigned" if the set is empty
+ * Make sure to handle backwards compatibility with old assignedTo string format
  */
 export function setToShortenedString(set: Set<string>): string {
   const arr = set ? Array.from(set) : [];
-  return arr.length ? (arr.length > 1 ? arr[0] + ', +' + (arr.length - 1) : arr[0]) : 'Unassigned';
+  if (arr.length === 0) return 'Unassigned';
+  const firstVal = arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0];
+  return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
 }
 
 /**
