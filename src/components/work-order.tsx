@@ -517,7 +517,7 @@ const WorkOrder = ({
             }
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
-          <div>
+          <div className='text-center w-48'>
             <Select
               options={PTEOptions as { value: PTE_Type, label: PTE_Type; }[]}
               className="basic-single"
