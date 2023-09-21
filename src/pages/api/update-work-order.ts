@@ -10,13 +10,16 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { userRoles } from '@/database/entities/user';
 
-type UpdateWorkOrderApiRequest = {
+
+type StatusOr = { status: string, permissionToEnter?: never; };
+type PermissionOr = { status?: never, permissionToEnter: PTE_Type; };
+type StatusOrPermission = StatusOr | PermissionOr;
+
+type UpdateWorkOrderApiRequest = StatusOrPermission & {
   pk: string;
   sk: string;
   email: string; //email of the current user who made the update
   name: string; //name of the current user who made the update
-  status: StatusType;
-  permissionToEnter?: PTE_Type;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {

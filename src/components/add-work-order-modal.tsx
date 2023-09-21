@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
-import { OptionType, SendEmailApiRequest } from '@/types';
+import { OptionType, PTE_Type, SendEmailApiRequest } from '@/types';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
@@ -63,10 +63,18 @@ export const AddWorkOrderModal = ({
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [submitWorkOrderLoading, setSubmitWorkOrderLoading] = useState(false);
   const [woId, _setWoId] = useState(uuidv4());
+  const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
 
   function closeModal() {
     setAddWorkOrderModalIsOpen(false);
   }
+
+  const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      setPermissionToEnter(e.currentTarget.value as PTE_Type);
+    },
+    [setPermissionToEnter]
+  );
 
   const handleCreateWorkOrder: FormEventHandler<HTMLFormElement> = useCallback(
     async (event) => {
@@ -103,7 +111,7 @@ export const AddWorkOrderModal = ({
           creatorEmail: user.email,
           creatorName: user.name,
           createdByType: "PROPERTY_MANAGER",
-          permissionToEnter: PTE.NO,
+          permissionToEnter: permissionToEnter,
           address: primaryAddress.address,
           state: primaryAddress.state,
           city: primaryAddress.city,
@@ -198,6 +206,29 @@ export const AddWorkOrderModal = ({
               }}
               shouldFetch={addWorkOrderModalIsOpen}
             />
+          </div>
+          <div className='mb-5'>
+            <p className="mt-2">Permission To Enter Property* </p>
+            <input
+              className="rounded px-1"
+              id="permission-yes"
+              name={'permission'}
+              type={'radio'}
+              value={PTE.YES}
+              checked={permissionToEnter === PTE.YES}
+              onChange={handlePermissionChange}
+            />
+            <label htmlFor="permission-yes">{PTE.YES}</label>
+            <input
+              className="rounded px-1 ml-4"
+              id="permission-no"
+              name={'permission'}
+              type={'radio'}
+              value={PTE.NO}
+              checked={permissionToEnter === PTE.NO}
+              onChange={handlePermissionChange}
+            />
+            <label htmlFor="permission-no">{PTE.NO}</label>
           </div>
 
           <div
