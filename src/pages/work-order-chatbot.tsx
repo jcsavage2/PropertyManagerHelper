@@ -70,14 +70,16 @@ export default function WorkOrderChatbot() {
   }, [isBrowser]);
 
   useEffect(() => {
-    if (platform === "iOS" || platform === "Android" && user && !user?.hasSeenDownloadPrompt) {
-      setDownloadModalIsOpen(true);
+    const hasSeenDownloadModal = localStorage.getItem("Pillar::HAS_SEEN");
+    if ((platform === "iOS" || platform === "Android") && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
       async function updateUserHasSeenDownloadPrompt() {
         if (user?.pk && user.sk) {
+          localStorage.setItem("Pillar::HAS_SEEN", "true");
           const body: UpdateUser = { pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true };
           await axios.post("/api/update-user", { ...body });
         }
       }
+      setDownloadModalIsOpen(true);
       updateUserHasSeenDownloadPrompt();
     }
   }, [platform, user]);
