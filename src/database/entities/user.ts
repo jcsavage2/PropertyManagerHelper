@@ -71,6 +71,7 @@ export interface IUser extends IBaseUser {
   organizationName?: string;
   pmEmail?: string;
   pmName?: string;
+  hasSeenDownloadPrompt?: boolean;
   roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
   status: InviteStatusType;
   isAdmin: boolean;
@@ -169,6 +170,10 @@ export class UserEntity {
     return (await this.userEntity.update({ pk, sk, status }, { returnValues: "ALL_NEW" })).Attributes;
   }
 
+  public async updateUserAttribute({ pk, sk, hasSeenDownloadPrompt }: { pk: string; sk: string; hasSeenDownloadPrompt: boolean; }) {
+    return (await this.userEntity.update({ pk, sk, hasSeenDownloadPrompt }, { returnValues: "ALL_NEW" })).Attributes;
+  }
+
   public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: ICreatePMUser) {
     try {
       const lowerCaseUserEmail = userEmail.toLowerCase();
@@ -251,7 +256,7 @@ export class UserEntity {
   }
 
   //Delete a role from roles; also fix GSI1 if needed
-  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
+  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[]; }) {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
     const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
@@ -444,6 +449,7 @@ export class UserEntity {
       GSI3SK: { type: 'string' },
       GSI4PK: { type: 'string' }, //Org
       GSI4SK: { type: 'string' },
+      hasSeenDownloadPrompt: { type: "boolean" },
       organization: { type: 'string', required: true },
       organizationName: { type: 'string', required: true },
       pmEmail: { type: 'string' },

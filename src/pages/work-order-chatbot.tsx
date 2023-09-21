@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ENTITIES } from '@/database/entities';
 import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
+import { UpdateUser } from './api/update-user';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -69,10 +70,17 @@ export default function WorkOrderChatbot() {
   }, [isBrowser]);
 
   useEffect(() => {
-    if (platform === "iOS" || platform === "Android") {
+    if (platform === "iOS" || platform === "Android" && user && !user?.hasSeenDownloadPrompt) {
       setDownloadModalIsOpen(true);
+      async function updateUserHasSeenDownloadPrompt() {
+        if (user?.pk && user.sk) {
+          const body: UpdateUser = { pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true };
+          await axios.post("/api/update-user", { ...body });
+        }
+      }
+      updateUserHasSeenDownloadPrompt();
     }
-  }, [platform]);
+  }, [platform, user]);
 
   //If the user has only one address, select it automatically
   useEffect(() => {
