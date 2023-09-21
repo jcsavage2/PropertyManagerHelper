@@ -3,7 +3,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { toTitleCase, deconstructKey, createdToFormattedDateTime, generateAddressKey, toggleBodyScroll } from '@/utils';
+import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString } from '@/utils';
 import { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
@@ -12,7 +12,7 @@ import { OptionType } from '@/types';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
-import { PTE, STATUS } from '@/constants';
+import { PTE, STATUS, TECHNICIAN_DELIM } from '@/constants';
 import { BsTrashFill } from 'react-icons/bs';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
@@ -171,11 +171,22 @@ const WorkOrder = ({
       setTechnicianOptions(mappedTechnicians);
       setAssignedTechnicians([]);
       if (_workOrder && _workOrder.assignedTo && mappedTechnicians.length > 0) {
-        Array.from(_workOrder.assignedTo).forEach((email: string) => {
-          const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === email);
-          if (technician) {
-            setAssignedTechnicians((prev) => [...prev, technician]);
+        Array.from(_workOrder.assignedTo).forEach((str: string) => {
+          //Backwards compatible with old assignedTo format
+          if(str.includes(TECHNICIAN_DELIM)){
+            const keys: string[] = deconstructNameEmailString(str);
+            const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === keys[0]);
+            if (technician) {
+              setAssignedTechnicians((prev) => [...prev, technician]);
+            }
+          }else{
+            //str is just tech email in this case
+            const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === str);
+            if (technician) {
+              setAssignedTechnicians((prev) => [...prev, technician]);
+            }
           }
+          
         });
       }
     } catch (err) {
@@ -307,6 +318,7 @@ const WorkOrder = ({
           pmName: user.name,
           technicianEmail: removedTechnician.value,
           technicianName: removedTechnician.label,
+          oldAssignedTo: workOrder?.assignedTo ?? [],
         } as RemoveTechnicianBody);
       }
       await getWorkOrder();

@@ -50,3 +50,5 @@ export const PTE = {
 };
 
 export const PAGE_SIZE = 20;
+
+export const TECHNICIAN_DELIM = '##NAME##';
