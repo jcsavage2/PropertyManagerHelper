@@ -7,6 +7,7 @@ To ensure you have a working setup, copy the sample.env file and retrieve secret
 Start the dev environment with:
 ```bash
 yarn dev
+
 ```
 
 ### Future Improvements
