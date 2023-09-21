@@ -12,7 +12,11 @@ import * as Fullstory from "@fullstory/browser";
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
   useEffect(() => {
-    Fullstory.init({ orgId: 'o-1PYDZB-na1' });
+    if (process.env.NEXT_PUBLIC_IS_LOCAL) {
+      return;
+    } else {
+      Fullstory.init({ orgId: 'o-1PYDZB-na1' });
+    }
   }, []);
   return (
     <SessionProvider
