@@ -74,9 +74,9 @@ export default function WorkOrderChatbot() {
     if ((platform === "iOS" || platform === "Android") && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
       async function updateUserHasSeenDownloadPrompt() {
         if (user?.pk && user.sk) {
-          localStorage.setItem("Pillar::HAS_SEEN", "true");
           const body: UpdateUser = { pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true };
           await axios.post("/api/update-user", { ...body });
+          localStorage.setItem("Pillar::HAS_SEEN", "true");
         }
       }
       setDownloadModalIsOpen(true);
