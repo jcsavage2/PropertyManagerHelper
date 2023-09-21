@@ -146,7 +146,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
           a {
             display: inline-block;
-            margin-bottom: 20px;
             font-size: 14px;
           }
 
