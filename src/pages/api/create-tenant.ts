@@ -139,34 +139,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           html {
             font-family: arial, sans-serif;
           }
-          table {
-            font-family: arial, sans-serif;
-            border-collapse: collapse;
-            width: 50%;
-          }
 
-          td {
-            border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-          }
-
-          tr:nth-child(even) {
-            background-color: #dddddd;
+          body, p, h1, h2, h3, li, ol {
+            color: black;
           }
 
           a {
             display: inline-block;
             margin-bottom: 20px;
-            font-size: 20px;
+            font-size: 14px;
           }
 
-          @media only screen and (max-width: 600px) {
-            table {
-              font-family: arial, sans-serif;
-              border-collapse: collapse;
-              width: 100%;
-            }
+          li {
+            height: 1.3em;
+          }
+
+          p, li {
+            font-size: 14px;
           }
         </style>
         <meta name="description" content="The HTML5 Herald">
@@ -177,10 +166,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h1>You've Been Invited To Create an Account With Pillar</h1>
-          <a href="${authLink}">Login to Pillar</a>
+          <h1>${pmName} @ ${organizationName} is requesting you to join Pillar</h1>
+          <h2>${pmName} invited you To manage your work orders in Pillar</h2>
+          <p>Dear ${tenantName},</p>
+          <p>We are launching a new Program called Pillar that let's you convieniently submit your maintenance requests online at any time!</p>
+          <p>Here is how to use it:</p>
+          <h3>Instructions</h3>
+          <ol>
+            <li>
+              <a href="${authLink}">Click this Link to Pillar</a> and enter your current email address to join.
+            </li>
+            <li>
+              Receive a login link via email and click it to start submitting Work Orders!
+            </li>
+          </ol>
+          
+          <p>As always, feel free to call or email me with any questions!</p>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
-            Regards,<br> Pillar Team
+            Regards,<br> ${pmName}
           </p>
         </div>
       </body>
