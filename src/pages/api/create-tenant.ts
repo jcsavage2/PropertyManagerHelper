@@ -129,7 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     await sendgrid.send({
       to: tenantEmail,
       from: "pillar@pillarhq.co",
-      subject: `Create Your Account With Pillar Work Order Management`, // work order for address on MM-DD-YYYY
+      subject: `${pmName} @ ${organizationName} is requesting you to join Pillar`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -150,10 +150,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             font-size: 14px;
           }
 
-          li {
-            height: 1.3em;
-          }
-
           p, li {
             font-size: 14px;
           }
@@ -166,7 +162,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h1>${pmName} @ ${organizationName} is requesting you to join Pillar</h1>
           <h2>${pmName} invited you To manage your work orders in Pillar</h2>
           <p>Dear ${tenantName},</p>
           <p>We are launching a new Program called Pillar that let's you convieniently submit your maintenance requests online at any time!</p>
