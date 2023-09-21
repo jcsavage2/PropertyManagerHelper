@@ -52,15 +52,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     //Spawn new event on status change
     await eventEntity.create({
       workOrderId: deconstructKey(pk),
-      message: `Updated work order status: ${status}`,
+      message: status ? `Updated work order status: ${status}` : `Updated permission to enter to "${permissionToEnter}"`,
       madeByEmail: email,
       madeByName: name,
     });
 
-    const subject = `Work Order Status Update${updatedWorkOrder?.address?.unit ? ` for unit ${updatedWorkOrder?.address.unit}` : ''}`;
 
     // If work order was created by a tenant
-    if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk && updatedWorkOrder.status === STATUS.COMPLETE) {
+    if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk && updatedWorkOrder.status === STATUS.COMPLETE && !permissionToEnter) {
+      const subject = `Work Order Update${updatedWorkOrder?.address?.unit ? ` for unit ${updatedWorkOrder?.address.unit}` : ''}`;
       const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(updatedWorkOrder.pk)}`;
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,

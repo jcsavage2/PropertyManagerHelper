@@ -220,7 +220,6 @@ const WorkOrder = ({
     [workOrderId]
   );
 
-  console.log({ workOrder });
   const handleUpdateStatus = async (e: any, status: string) => {
     if (!workOrderId) return;
     setIsUpdatingStatus(true);
