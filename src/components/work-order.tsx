@@ -4,11 +4,11 @@ import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString } from '@/utils';
-import { ActionMeta, MultiValue } from 'react-select';
+import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { OptionType } from '@/types';
+import { OptionType, PTE_Type } from '@/types';
 import { AssignTechnicianBody } from '@/pages/api/assign-technician';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
@@ -49,6 +49,7 @@ const WorkOrder = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isUpdatingPTE, setIsUpdatingPTE] = useState(false);
   const [fetchingTechnicians, setFetchingTechnicians] = useState(false); //Will not disable technician select, allows the user to search for technicians without diabling the input
   const [isUpdatingAssignedTechnicians, setIsUpdatingAssignedTechnicians] = useState(false); //Will disable technician select
 
@@ -134,7 +135,7 @@ const WorkOrder = ({
         };
         const { data } = await axios.post('/api/get-techs-for-org', body);
         const response = JSON.parse(data.response);
-        if (!response.techs){
+        if (!response.techs) {
           setFetchingTechnicians(false);
           return [];
         }
@@ -251,6 +252,39 @@ const WorkOrder = ({
     setIsUpdatingStatus(false);
   };
 
+  const handleUpdatePTE = async (newValue: PTE_Type) => {
+    if (!workOrderId) return;
+    setIsUpdatingPTE(true);
+    try {
+      if (!user || !user.name || !user.email) {
+        throw new Error('User or workOrderId not found');
+      }
+      if (!user.roles?.includes(userRoles.TENANT) && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
+        throw new Error('User must be a tenant or property manager to update status');
+      }
+      const { data } = await axios.post('/api/update-work-order', {
+        pk: workOrderId,
+        sk: workOrderId,
+        email: user.email,
+        name: user.name,
+        permissionToEnter: newValue
+      });
+      const updatedWorkOrder = JSON.parse(data.response);
+      if (updatedWorkOrder) {
+        setWorkOrder(updatedWorkOrder);
+      }
+      await getWorkOrderEvents(true);
+      setIsUpdatingPTE(false);
+    } catch (e) {
+      console.log(e);
+      toast.error('Error updating work order status', {
+        position: 'top-right',
+        draggable: false,
+      });
+    }
+    setIsUpdatingStatus(false);
+  };
+
   const deleteWorkOrder = useCallback(
     async (workOrderId: string) => {
       if (!workOrderId) return;
@@ -282,7 +316,7 @@ const WorkOrder = ({
         });
       }
     },
-    [workOrderId, workOrder, user]
+    [workOrder?.status, workOrderId, user, router, afterDelete]
   );
 
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
@@ -352,6 +386,11 @@ const WorkOrder = ({
     getImages();
     setImagesLoading(false);
   }, [workOrder?.images]);
+
+  const PTEOptions: { value: PTE_Type, label: PTE_Type; }[] = [
+    { value: PTE.YES, label: PTE.YES },
+    { value: PTE.NO, label: PTE.NO },
+  ];
 
   if (workOrder) {
     return (
@@ -490,8 +529,17 @@ const WorkOrder = ({
             }
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
-          <div className={`${workOrder.permissionToEnter === PTE.YES ? 'text-green-600' : 'text-red-600'} mt-0.5 font-normal`}>
-            {toTitleCase(workOrder.permissionToEnter)}
+          <div className='text-center w-48'>
+            <Select
+              options={PTEOptions as { value: PTE_Type, label: PTE_Type; }[]}
+              className="basic-single"
+              classNamePrefix="select"
+              value={{ value: workOrder.permissionToEnter, label: workOrder.permissionToEnter }}
+              onChange={(v: { value: PTE_Type, label: PTE_Type; } | null) => { v?.value && handleUpdatePTE(v.value); }}
+              defaultValue={undefined}
+              isDisabled={!user?.roles?.includes("PROPERTY_MANAGER") && !user?.roles?.includes("TENANT")}
+              placeholder={workOrder.permissionToEnter as PTE_Type}
+            />
           </div>
           <div className="font-bold mt-4">Address</div>
           <div className="mt-0.5">
