@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       workOrderId: deconstructKey(workOrderId),
       madeByEmail: pmEmail,
       madeByName: pmName,
-      message: `Assigned ${technicianName} (${technicianEmail}) to the work order`,
+      message: `Assigned ${technicianName} to the work order`,
     });
 
     /** SEND THE EMAIL TO THE TECHNICIAN */
