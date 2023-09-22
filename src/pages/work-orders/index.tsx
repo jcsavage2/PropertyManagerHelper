@@ -135,7 +135,7 @@ const WorkOrders = () => {
   useEffect(() => {
     fetchWorkOrders(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, router.query.workOrderId, orgMode, statusFilter]);
+  }, [user, router.query.workOrderId, orgMode, statusFilter, userType]);
 
   const closeWOModalRefetch = () => {
     router.push('/work-orders');
