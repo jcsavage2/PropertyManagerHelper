@@ -39,7 +39,7 @@ export const hasAllUserInfo = (userInfo: UserInfo) => {
  * @returns An initial prompt which is dynamically generated based on the information we already have.
  * Depending on the information that the program has, the prompt will ask user for either issue information or user information.
  */
-export const generatePrompt = (workOrder: WorkOrder, unitInfo: string): ChatCompletionRequestMessage => {
+export const generatePrompt = (workOrder: WorkOrder, unitInfo: string, streetAddress: string): ChatCompletionRequestMessage => {
   return {
     role: 'system',
     content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is. \
@@ -47,6 +47,9 @@ export const generatePrompt = (workOrder: WorkOrder, unitInfo: string): ChatComp
         and should contain all of the keys: ${Object.keys(findIssueSample).join(', ')}, even if there are no values. \
         Here is the current state of the work order: ${JSON.stringify(workOrder)}. \
         Once you have values for "issueDescription" and "issueLocation", ask the user if they would like to provide any additional details. Let the user know that the "additionalDetails" field is optional. \
+        ${streetAddress.includes('romar dr') && (
+          'The user lives in a townhouse with central AC. If the user mentions an issue with their AC, mark the location as "Central AC".'
+        )}
         ${
           unitInfo.length > 0 &&
           `The user has an apartment with ${unitInfo}. Use this information to finish the work order by asking as few questions as possible.`

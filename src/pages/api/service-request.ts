@@ -28,10 +28,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   const body = req.body as ApiRequest;
-  const { userMessage, messages, unitInfo, ...workOrderData } = body;
+  const { userMessage, messages, unitInfo, streetAddress, ...workOrderData } = body;
   try {
-    const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo);
-
+    const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo, streetAddress);
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
       model: gpt_model,
