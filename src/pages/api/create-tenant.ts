@@ -161,7 +161,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h2>${pmName} invited you To manage your work orders in Pillar</h2>
+          <h2>${pmName} invited you to manage your work orders in Pillar</h2>
           <p>Dear ${tenantName},</p>
           <p>We are launching a new Program called Pillar that let's you convieniently submit your maintenance requests online at any time!</p>
           <p>Here is how to use it:</p>

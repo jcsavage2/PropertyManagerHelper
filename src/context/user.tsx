@@ -39,8 +39,19 @@ export const UserContextProvider = (props: any) => {
         role = user?.roles[0];
       }
     }
-
     setUserType(role!);
+
+    //Redirect on initial log in
+    const hasRouted = localStorage.getItem('PILLAR:ROUTED') as UserContext['userType'] | null;
+    if(hasRouted) return;
+    if(role === userRoles.TENANT) {
+      router.push('/work-order-chatbot');
+    }else if(role === userRoles.TECHNICIAN) {
+      router.push('/work-orders');
+    } else { //PM
+      router.push('/work-orders');
+    }
+    localStorage.setItem('PILLAR:ROUTED', 'true');
   }, [user, userType]);
 
   const setUserType = useCallback((type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => {
