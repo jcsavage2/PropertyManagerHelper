@@ -4,6 +4,7 @@ import { PTE, STATUS } from '../constants';
 export type ApiRequest = WorkOrder & {
   userMessage: string;
   unitInfo: string;
+  streetAddress: string;
   messages: ChatCompletionRequestMessage[];
 };
 
