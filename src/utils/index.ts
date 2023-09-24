@@ -244,3 +244,58 @@ export function toggleBodyScroll(open: boolean) {
     document.body.classList.remove('modal-open');
   }
 }
+
+export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: string, pmName: string): string {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>The HTML5 Herald</title>
+    <style>
+      html {
+        font-family: arial, sans-serif;
+      }
+
+      body, p, h1, h2, h3, li, ol {
+        color: black;
+      }
+
+      a {
+        display: inline-block;
+        font-size: 14px;
+      }
+
+      p, li {
+        font-size: 14px;
+      }
+    </style>
+    <meta name="description" content="The HTML5 Herald">
+    <meta name="author" content="SitePoint">
+    <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+    <link rel="stylesheet" href="css/styles.css?v=1.0">
+  </head>
+  
+  <body>
+    <div class="container" style="margin-left: 20px;margin-right: 20px;">
+      <h2>${pmName} invited you To manage your work orders in Pillar</h2>
+      <p>Dear ${tenantName},</p>
+      <p>We are launching a new Program called Pillar that let's you convieniently submit your maintenance requests online at any time!</p>
+      <p>Here is how to use it:</p>
+      <h3>Instructions</h3>
+      <ol>
+        <li>
+          <a href="${authLink}">Click this Link to Pillar</a> and enter your current email address to join.
+        </li>
+        <li>
+          Receive a login link via email and click it to start submitting Work Orders!
+        </li>
+      </ol>
+      
+      <p>As always, feel free to call or email me with any questions!</p>
+      <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
+        Regards,<br> ${pmName}
+      </p>
+    </div>
+  </body>
+  </html>`
+}

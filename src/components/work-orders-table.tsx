@@ -144,16 +144,14 @@ export const WorkOrdersTable = ({
           </button>
           {showStatusFilter && (
             <div className="absolute opacity-100 z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
-              <div className={`flex ${statusFilter.TO_DO ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
-                <p
-                  className={`py-1 px-3 cursor-pointer flex w-full rounded`}
-                  onClick={() => {
-                    if (isFetching) return;
-                    setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
-                  }}
-                >
-                  To Do
-                </p>
+              <div
+                className={`flex ${statusFilter.TO_DO ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                onClick={() => {
+                  if (isFetching) return;
+                  setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
+                }}
+              >
+                <p className={`py-1 px-3 cursor-pointer flex w-full rounded`}>To Do</p>
                 {!statusFilter.TO_DO ? (
                   <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                 ) : (
@@ -161,14 +159,14 @@ export const WorkOrdersTable = ({
                 )}
               </div>
 
-              <div className={`flex ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
-                <p
-                  className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
-                  onClick={() => {
-                    if (isFetching) return;
-                    setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
-                  }}
-                >
+              <div
+                className={`flex ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                onClick={() => {
+                  if (isFetching) return;
+                  setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
+                }}
+              >
+                <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
                   Complete
                 </p>
                 {!statusFilter.COMPLETE ? (
