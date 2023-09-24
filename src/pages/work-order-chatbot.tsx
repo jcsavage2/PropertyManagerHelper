@@ -265,6 +265,7 @@ export default function WorkOrderChatbot() {
         messages,
         ...workOrder,
         unitInfo: parsedAddress.numBeds && parsedAddress.numBaths ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms` : '',
+        streetAddress: parsedAddress.address.toLowerCase(),
       };
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
