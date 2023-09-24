@@ -26,6 +26,15 @@ const Home = () => {
     return <LoadingSpinner containerClass={'mt-4'} />;
   }
 
+  //If user is logged in and is not a PM, then route them to their respective page
+  if (user && userType && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
+    if (user?.roles.includes(userRoles.TENANT)) {
+      router.push('/work-order-chatbot');
+    } else if (user?.roles.includes(userRoles.TECHNICIAN)) {
+      router.push('/work-orders');
+    }
+  }
+
   return (
     <>
       <div className="text-center">
@@ -37,13 +46,30 @@ const Home = () => {
               <div className="w-3/4 mx-auto mb-4 ">
                 Hey {user?.name}, you are currently viewing Pillar as a {userType}
               </div>
-            ) : <button onClick={() => router.push('/work-orders')} className="bg-blue-200 px-3 py-2 mb-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44">View work orders</button>}
-            <button onClick={() => { logOut()}} className="bg-blue-200 px-3 py-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44">
+            ) : (
+              <button
+                onClick={() => router.push('/work-orders')}
+                className="bg-blue-200 px-3 py-2 mb-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44"
+              >
+                View work orders
+              </button>
+            )}
+            <button
+              onClick={() => {
+                logOut();
+              }}
+              className="bg-blue-200 px-3 py-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44"
+            >
               Sign Out
             </button>
           </div>
         ) : (
-          <button onClick={() => {signIn()}} className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25">
+          <button
+            onClick={() => {
+              signIn();
+            }}
+            className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          >
             Sign In/Sign Up
           </button>
         )}
