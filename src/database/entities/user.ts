@@ -282,10 +282,12 @@ export class UserEntity {
   public async getAllTenantsForOrg({
     organization,
     tenantSearchString,
+    statusFilter,
     startKey,
   }: {
     organization: string;
     tenantSearchString: string | undefined;
+    statusFilter: Record<'JOINED' | 'INVITED', boolean>;
     startKey: StartKey;
   }) {
     const tenants = [];
@@ -296,12 +298,7 @@ export class UserEntity {
         const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
           limit: remainingTenantsToFetch,
           reverse: true,
-          ...(tenantSearchString && {
-            filters: [
-              { attr: 'name', contains: tenantSearchString },
-              { or: true, attr: 'email', contains: tenantSearchString },
-            ],
-          }),
+          filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TENANT}`,
           index: INDEXES.GSI4,
@@ -314,6 +311,33 @@ export class UserEntity {
       }
     } while (!!startKey && remainingTenantsToFetch > 0);
     return { tenants, startKey };
+  }
+
+  private constructGetTenantFilters({
+    statusFilter,
+    tenantSearchString,
+  }: {
+    statusFilter: Record<'JOINED' | 'INVITED', boolean>;
+    tenantSearchString: string | undefined;
+  }): any[] {
+    const filters = [];
+    //Status filter logic
+    //When both are true add no filter
+    if (!statusFilter.JOINED && !statusFilter.INVITED) {
+      filters.push({ attr: 'status', eq: INVITE_STATUS.CREATED });
+    } else if (!statusFilter.INVITED && statusFilter.JOINED) {
+      filters.push({ attr: 'status', eq: INVITE_STATUS.JOINED });
+    } else if (!statusFilter.JOINED && statusFilter.INVITED) {
+      filters.push({ attr: 'status', eq: INVITE_STATUS.INVITED });
+    }
+    //Search string logic
+    if (tenantSearchString) {
+      filters.push([
+        { attr: 'name', contains: tenantSearchString },
+        { or: true, attr: 'email', contains: tenantSearchString },
+      ]);
+    }
+    return filters;
   }
 
   public async getAllTechniciansForOrg({

@@ -94,16 +94,14 @@ export const WorkOrdersCards = ({
           )}
         </div>
         <div className={`w-full ${!filtersOpen && 'hidden'} ${isFetching && 'opacity-50 pointer-events-none'} mt-1`}>
-          <div className={`flex flex-row items-center h-8 w-3/5 ${statusFilter.TO_DO ? 'hover:bg-blue-200' : 'hover:bg-gray-200'} px-4`}>
-            <p
-              className={`cursor-pointer w-full rounded`}
-              onClick={() => {
-                if (isFetching) return;
-                setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
-              }}
-            >
-              To Do
-            </p>
+          <div
+            className={`flex flex-row items-center h-8 w-3/5 ${statusFilter.TO_DO ? 'hover:bg-blue-200' : 'hover:bg-gray-200'} px-4`}
+            onClick={() => {
+              if (isFetching) return;
+              setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
+            }}
+          >
+            <p className={`cursor-pointer w-full rounded`}>To Do</p>
             {!statusFilter.TO_DO ? (
               <BiCheckbox className="mr-3 justify-self-end text-3xl" />
             ) : (
@@ -111,14 +109,14 @@ export const WorkOrdersCards = ({
             )}
           </div>
 
-          <div className={`flex flex-row items-center h-8 w-3/5 ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'} px-4`}>
-            <p
-              className={`cursor-pointer flex items-center w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
-              onClick={() => {
-                if (isFetching) return;
-                setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
-              }}
-            >
+          <div
+            className={`flex flex-row items-center h-8 w-3/5 ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'} px-4`}
+            onClick={() => {
+              if (isFetching) return;
+              setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
+            }}
+          >
+            <p className={`cursor-pointer flex items-center w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
               Complete
             </p>
             {!statusFilter.COMPLETE ? (

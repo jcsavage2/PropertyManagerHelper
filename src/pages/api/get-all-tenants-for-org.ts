@@ -8,6 +8,7 @@ import { options } from './auth/[...nextauth]';
 export type GetTenantsForOrgRequest = {
   organization: string;
   startKey: StartKey;
+  statusFilter: Record<'JOINED' | 'INVITED', boolean>
   tenantSearchString?: string;
 };
 
@@ -18,9 +19,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const { organization, startKey, tenantSearchString } = req.body as GetTenantsForOrgRequest;
+    const { organization, startKey, tenantSearchString, statusFilter } = req.body as GetTenantsForOrgRequest;
+    if(!organization || !statusFilter) {
+      throw new Error('Missing required fields');
+    }
     const userEntity = new UserEntity();
-    const response = await userEntity.getAllTenantsForOrg({ organization, startKey, tenantSearchString });
+    const response = await userEntity.getAllTenantsForOrg({ organization, startKey, statusFilter, tenantSearchString });
     return res.status(200).json({ response: JSON.stringify({ tenants: response.tenants, startKey: response.startKey }) });
   } catch (error) {
     console.log({ error });
