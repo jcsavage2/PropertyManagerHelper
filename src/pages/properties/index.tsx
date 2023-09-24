@@ -19,7 +19,6 @@ const Properties = () => {
   const { isMobile } = useDevice();
   const [propertiesLoading, setPropertiesLoading] = useState(true);
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
-  const [query, setQuery] = useState<string>('');
 
   const fetchProperties = useCallback(
     async (isInitial: boolean) => {

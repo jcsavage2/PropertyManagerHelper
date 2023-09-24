@@ -49,7 +49,7 @@ const Technicians = () => {
 
   useEffect(() => {
     fetchPMs(true);
-  }, [user]);
+  }, [user, userType]);
 
   if (user && !user.organization && userType !== ENTITIES.PROPERTY_MANAGER) {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;

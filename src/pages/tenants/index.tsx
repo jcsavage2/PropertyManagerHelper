@@ -90,7 +90,7 @@ const Tenants = () => {
 
   useEffect(() => {
     fetchTenants(true, tenantSearchString.length !== 0 ? tenantSearchString : undefined);
-  }, [user, statusFilter]);
+  }, [user, statusFilter, userType]);
 
   const handleDeleteTenant = useCallback(
     async ({ pk, sk, name, roles }: { pk: string; sk: string; name: string; roles: string[] }) => {

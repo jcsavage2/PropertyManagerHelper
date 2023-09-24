@@ -62,7 +62,7 @@ const Technicians = () => {
 
   useEffect(() => {
     fetchTechs(true);
-  }, [user]);
+  }, [user, userType]);
 
   
   const handleDeleteTech = useCallback(
