@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { PTE_Type, StatusType } from '@/types';
 import { deconstructKey } from '@/utils';
+import twilio from "twilio";
 
 export type AssignTechnicianBody = {
   organization: string;
@@ -73,6 +74,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     sendgrid.setApiKey(apiKey);
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(workOrderId)}`;
+
+    try {
+      const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
+      const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
+      if (!smsApiKey || !smsAuthToken) {
+        throw new Error('missing SMS env variable(s).');
+      }
+
+      const twilioClient = twilio(smsApiKey, smsAuthToken);
+      twilioClient.messages.create({
+        to: "+15619010188",
+        from: "+18449092150",
+        body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `
+      });
+    } catch (err) {
+      console.log({ err });
+    }
+
     await sendgrid.send({
       to: technicianEmail,
       from: "pillar@pillarhq.co",
