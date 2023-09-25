@@ -75,22 +75,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(workOrderId)}`;
 
-    try {
-      const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
-      const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
-      if (!smsApiKey || !smsAuthToken) {
-        throw new Error('missing SMS env variable(s).');
-      }
+    // try {
+    //   const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
+    //   const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
+    //   if (!smsApiKey || !smsAuthToken) {
+    //     throw new Error('missing SMS env variable(s).');
+    //   }
 
-      const twilioClient = twilio(smsApiKey, smsAuthToken);
-      twilioClient.messages.create({
-        to: "+15619010188",
-        from: "+18449092150",
-        body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `
-      });
-    } catch (err) {
-      console.log({ err });
-    }
+    //   const twilioClient = twilio(smsApiKey, smsAuthToken);
+    //   twilioClient.messages.create({
+    //     to: "+15619010188",
+    //     from: "+18449092150",
+    //     body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `
+    //   });
+    // } catch (err) {
+    //   console.log({ err });
+    // }
 
     await sendgrid.send({
       to: technicianEmail,
