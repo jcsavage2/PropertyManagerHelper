@@ -8,6 +8,7 @@ import { options } from './auth/[...nextauth]';
 import { PTE_Type, StatusType } from '@/types';
 import { deconstructKey } from '@/utils';
 import twilio from "twilio";
+import { UserEntity } from '@/database/entities/user';
 
 export type AssignTechnicianBody = {
   organization: string;
@@ -41,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
+    const userEntity = new UserEntity();
 
     const assignedTechnician = await workOrderEntity.assignTechnician({
       organization,
@@ -75,22 +77,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(workOrderId)}`;
 
-    // try {
-    //   const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
-    //   const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
-    //   if (!smsApiKey || !smsAuthToken) {
-    //     throw new Error('missing SMS env variable(s).');
-    //   }
+    /**
+     * Send SMS message to the technician if they have a phone number.
+     */
+    const technicianUser = await userEntity.get({ email: technicianEmail });
+    if (technicianUser?.phone) {
+      try {
+        const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
+        const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
+        if (!smsApiKey || !smsAuthToken) {
+          throw new Error('missing SMS env variable(s).');
+        }
 
-    //   const twilioClient = twilio(smsApiKey, smsAuthToken);
-    //   twilioClient.messages.create({
-    //     to: "+15619010188",
-    //     from: "+18449092150",
-    //     body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `
-    //   });
-    // } catch (err) {
-    //   console.log({ err });
-    // }
+        const twilioClient = twilio(smsApiKey, smsAuthToken);
+        twilioClient.messages.create({
+          to: technicianUser.phone,
+          from: "+18449092150",
+          body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `
+        });
+      } catch (err) {
+        console.log({ err });
+      }
+    }
 
     await sendgrid.send({
       to: technicianEmail,

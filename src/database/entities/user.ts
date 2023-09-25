@@ -43,6 +43,7 @@ interface ICreateTenant {
   address: string;
   organization: string;
   organizationName: string;
+  phone?: string;
   country: 'US' | 'CA';
   city: string;
   state: string;
@@ -72,6 +73,7 @@ export interface IUser extends IBaseUser {
   pmEmail?: string;
   pmName?: string;
   hasSeenDownloadPrompt?: boolean;
+  phone?: string;
   roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
   status: InviteStatusType;
   isAdmin: boolean;
@@ -118,6 +120,7 @@ export class UserEntity {
     address,
     country,
     city,
+    phone,
     state,
     postalCode,
     unit,
@@ -142,6 +145,7 @@ export class UserEntity {
           email: lowerCaseTenantEmail,
           name: tenantName,
           organization,
+          phone,
           organizationName,
           status: INVITE_STATUS.INVITED,
           addresses: generateAddress({
@@ -478,6 +482,7 @@ export class UserEntity {
       organizationName: { type: 'string', required: true },
       pmEmail: { type: 'string' },
       pmName: { type: 'string' },
+      phone: { type: 'string' },
       email: { type: 'string', required: true },
       name: { type: 'string', required: true },
       isAdmin: { type: 'boolean' },
