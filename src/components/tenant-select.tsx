@@ -40,6 +40,7 @@ export const TenantSelect = ({
           organization: user.organization,
           startKey: undefined,
           tenantSearchString: _searchString,
+          statusFilter: { JOINED: true, INVITED: true }
         } as GetTenantsForOrgRequest);
         const response = JSON.parse(data.response);
         const processedTenants = response.tenants.map((tenant: IUser) => {

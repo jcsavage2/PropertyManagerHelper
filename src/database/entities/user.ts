@@ -291,7 +291,7 @@ export class UserEntity {
   }: {
     organization: string;
     tenantSearchString: string | undefined;
-    statusFilter: Record<'JOINED' | 'INVITED', boolean>;
+    statusFilter?: Record<'JOINED' | 'INVITED', boolean>;
     startKey: StartKey;
   }) {
     const tenants = [];
@@ -302,7 +302,7 @@ export class UserEntity {
         const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
           limit: remainingTenantsToFetch,
           reverse: true,
-          filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
+          ...(statusFilter && { filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }) }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TENANT}`,
           index: INDEXES.GSI4,
