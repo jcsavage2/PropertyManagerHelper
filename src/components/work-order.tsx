@@ -3,7 +3,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString } from '@/utils';
+import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString, constructNameEmailString } from '@/utils';
 import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
@@ -23,10 +23,11 @@ import { DeleteRequest } from '@/pages/api/delete';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
 import Modal from 'react-modal';
-import { IUser, userRoles } from '@/database/entities/user';
+import { userRoles } from '@/database/entities/user';
 import { RemoveTechnicianBody } from '@/pages/api/remove-technician';
 import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
 import { MdOutlineClear } from 'react-icons/md';
+import { UpdateViewedWORequest } from '@/pages/api/update-viewed-wo-list';
 
 const WorkOrder = ({
   workOrderId,
@@ -171,24 +172,40 @@ const WorkOrder = ({
       const mappedTechnicians = await searchTechnicians();
       setTechnicianOptions(mappedTechnicians);
       setAssignedTechnicians([]);
-      if (_workOrder && _workOrder.assignedTo && mappedTechnicians.length > 0) {
-        Array.from(_workOrder.assignedTo).forEach((str: string) => {
+      const assignedToList = Array.from(_workOrder.assignedTo ?? []);
+      if (_workOrder && assignedToList.length > 0 && mappedTechnicians.length > 0) {
+        assignedToList.forEach((str: string) => {
+          let technician: OptionType | undefined;
           //Backwards compatible with old assignedTo format
           if (str.includes(TECHNICIAN_DELIM)) {
             const keys: string[] = deconstructNameEmailString(str);
-            const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === keys[0]);
-            if (technician) {
-              setAssignedTechnicians((prev) => [...prev, technician]);
-            }
+            technician = mappedTechnicians.find((technician: OptionType) => technician.value === keys[0]);
           } else {
             //str is just tech email in this case
-            const technician: OptionType | undefined = mappedTechnicians.find((technician: OptionType) => technician.value === str);
-            if (technician) {
-              setAssignedTechnicians((prev) => [...prev, technician]);
-            }
+            technician = mappedTechnicians.find((technician: OptionType) => technician.value === str);
           }
 
+          if (technician) {
+            //Only allow PMs to see who has viewed
+            if(userType === userRoles.PROPERTY_MANAGER && _workOrder.viewedWO && _workOrder.viewedWO.includes(technician.value)){
+              technician.label = technician.label + " (viewed)"
+            }
+            setAssignedTechnicians((prev) => [...prev, { value: technician!.value, label: technician!.label }]);
+          }
         });
+
+        //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
+        if(userType === userRoles.TECHNICIAN && (assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) && !_workOrder.viewedWO?.includes(user.email)){
+          //Handle async update viewed list
+          const params: UpdateViewedWORequest = {
+            pk: workOrderId,
+            sk: workOrderId,
+            email: user.email,
+            oldViewedWOList: _workOrder.viewedWO ?? [],
+            pmEmail: _workOrder.pmEmail,
+          }
+          axios.post('/api/update-viewed-wo-list', params);
+        }
       }
     } catch (err) {
       toast.error('Error getting work order.', {
@@ -282,7 +299,7 @@ const WorkOrder = ({
         draggable: false,
       });
     }
-    setIsUpdatingStatus(false);
+    setIsUpdatingPTE(false);
   };
 
   const deleteWorkOrder = useCallback(
@@ -346,13 +363,15 @@ const WorkOrder = ({
         } as AssignTechnicianBody);
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as OptionType;
+        const technicianName = removedTechnician.label.includes(' (viewed)') ? removedTechnician.label.replace(' (viewed)', '') : removedTechnician.label;
         await axios.post('/api/remove-technician', {
           workOrderId: deconstructKey(workOrderId),
           pmEmail: user.email,
           pmName: user.name,
           technicianEmail: removedTechnician.value,
-          technicianName: removedTechnician.label,
+          technicianName: technicianName,
           oldAssignedTo: workOrder?.assignedTo ?? [],
+          oldViewedWO: workOrder?.viewedWO ?? []
         } as RemoveTechnicianBody);
       }
       await getWorkOrder();
