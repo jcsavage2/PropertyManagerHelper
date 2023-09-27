@@ -22,7 +22,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     return res.status(200).json({ response: JSON.stringify({ workOrders, startKey: response.startKey }) });
   } catch (error) {
-    console.log({ error });
     return res.status(500).json({ response: '' });
   }
 }
