@@ -121,8 +121,8 @@ const WorkOrders = () => {
         if (orders.length) {
           sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
         }
-      } catch (e) {
-        console.log(e);
+      } catch (error) {
+        toast.error((error as any)?.response?.data?.response ?? 'Failed to get work orders for user', { position: toast.POSITION.TOP_CENTER });
       }
       setIsFetching(false);
     },
@@ -142,7 +142,7 @@ const WorkOrders = () => {
     fetchWorkOrders(true);
   };
 
-  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any }) => (
+  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any; }) => (
     <div className="flex flex-row items-center">
       {icon}
       <span className="ml-1 text-sm">{label}</span>
@@ -175,9 +175,8 @@ const WorkOrders = () => {
             <h1 className="text-4xl">{`Work Orders`}</h1>
             {userType === ENTITIES.PROPERTY_MANAGER ? (
               <button
-                className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${
-                  isFetching && 'opacity-50 pointer-events-none'
-                }'}`}
+                className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${isFetching && 'opacity-50 pointer-events-none'
+                  }'}`}
                 onClick={() => {
                   if (isFetching) return;
                   setAddWorkOrderModalIsOpen(true);
