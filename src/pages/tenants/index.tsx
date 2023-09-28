@@ -30,7 +30,7 @@ export type SearchTenantsBody = {
 
 const Tenants = () => {
   const { user } = useSessionUser();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   const { isMobile } = useDevice();
 
   const [addTenantModalIsOpen, setAddTenantModalIsOpen] = useState(false);
@@ -109,7 +109,7 @@ const Tenants = () => {
           roleToDelete: ENTITIES.TENANT,
           currentUserRoles: roles,
           madeByEmail: user.email,
-          madeByName: user.name,
+          madeByName: altName ?? user.name,
         };
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
@@ -129,7 +129,7 @@ const Tenants = () => {
       setConfirmDeleteModalIsOpen(false);
       setTenantsLoading(false);
     },
-    [user, tenants]
+    [user, tenants, altName]
   );
 
   const handleReinviteTenant = useCallback(
@@ -156,7 +156,7 @@ const Tenants = () => {
         }
 
         const params: ReinviteTenantBody = {
-          pmName: user.name,
+          pmName: altName ?? user.name,
           tenantEmail,
           tenantName,
           organizationName: user.organizationName,
@@ -181,7 +181,7 @@ const Tenants = () => {
         return _prev;
       });
     },
-    [user]
+    [user, altName]
   );
 
   if (user && !user.organization && userType !== 'PROPERTY_MANAGER') {

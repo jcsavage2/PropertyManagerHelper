@@ -35,7 +35,7 @@ const WorkOrders = () => {
   const [isBrowser, setIsBrowser] = useState(false);
   const [addWorkOrderModalIsOpen, setAddWorkOrderModalIsOpen] = useState(false);
   const { isMobile } = useDevice();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   const router = useRouter();
   const { user } = useSessionUser();
   const [orgMode, setOrgMode] = useState<boolean>(false);
@@ -83,7 +83,7 @@ const WorkOrders = () => {
       if (!user || !user.name || !user.email) {
         throw new Error('User not found');
       }
-      const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user.email, name: user.name });
+      const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user.email, name: altName ?? user.name });
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrders(workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)));

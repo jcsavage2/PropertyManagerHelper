@@ -29,6 +29,7 @@ export const AddTenantModal = ({
   useEffect(() => {
     setIsBrowser(true);
   }, []);
+  const { altName } = useUserContext();
 
   const customStyles = {
     content: {
@@ -130,12 +131,13 @@ export const AddTenantModal = ({
         setCreateNewTenantLoading(true);
 
         let body: CreateTenantBody;
+        const pmName = altName ?? user.name
         if (createNewProperty) {
           body = {
             tenantEmail,
             tenantName,
             pmEmail: user.email,
-            pmName: user.name,
+            pmName,
             address,
             unit,
             state,
@@ -155,7 +157,7 @@ export const AddTenantModal = ({
             tenantEmail,
             tenantName,
             pmEmail: user.email,
-            pmName: user.name,
+            pmName,
             address: selectedProperty.address,
             unit: selectedProperty.unit,
             state: selectedProperty.state,
@@ -220,6 +222,7 @@ export const AddTenantModal = ({
       numBeds,
       numBaths,
       selectedProperty,
+      altName
     ]
   );
 

@@ -18,7 +18,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   const { isMobile } = useDevice();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   useEffect(() => {
     setIsBrowser(true);
   }, []);
@@ -87,7 +87,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           technicianEmail: email,
           technicianName: name,
           pmEmail: user.email,
-          pmName: user.name,
+          pmName: altName ?? user.name,
           organization: user.organization,
           organizationName: user.organizationName,
         } as CreateTechnicianBody);
@@ -102,7 +102,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
         console.log({ err });
       }
     },
-    [user, userType, email, name, onSuccessfulAdd, setTechnicianModalIsOpen]
+    [user, userType, email, name, onSuccessfulAdd, setTechnicianModalIsOpen, altName]
   );
 
   return (
