@@ -113,7 +113,8 @@ const WorkOrder = ({
         setUploadingFiles(false);
       }
     } catch (error) {
-      toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+      console.error(error);
+      toast.error((error as any)?.response?.data?.response ?? 'Images upload failed', { position: toast.POSITION.TOP_CENTER });
       setUploadingFiles(false);
     }
   }, [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId]);

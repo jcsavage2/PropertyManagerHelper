@@ -5,12 +5,11 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
   try {
+    const session = false;
+    if (!session) {
+      return res.status(401).json({ response: 'Unauthorized Request' });
+    }
     const body = req.body as UpdateImagesProps;
     const workOrderEntity = new WorkOrderEntity();
 
@@ -29,10 +28,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       addNew
     });
 
+    return res.status(200).json({ response: JSON.stringify(workOrder) });
   } catch (error: any) {
-    console.log({ error });
-    return res.status(error.statusCode || 500).json({ response: error.message });
+    console.error(error);
+    return res.status(500).json({ response: 'Internal server error' });
   }
 
-  return res.status(200).json({ response: 'Successfully sent email' });
 }
