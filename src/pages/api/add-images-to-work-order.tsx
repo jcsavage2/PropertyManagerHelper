@@ -6,7 +6,7 @@ import { options } from './auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
-    const session = false;
+    const session = await getServerSession(req, res, options);
     if (!session) {
       return res.status(401).json({ response: 'Unauthorized Request' });
     }
@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({ response: JSON.stringify(workOrder) });
   } catch (error: any) {
     console.error(error);
-    return res.status(500).json({ response: 'Internal server error' });
+    return res.status(500).json({ response: 'Error adding images to work order' });
   }
 
 }
