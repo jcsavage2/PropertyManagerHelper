@@ -27,7 +27,7 @@ export const AddWorkOrderModal = ({
   onSuccessfulAdd: () => void;
 }) => {
   const { user } = useSessionUser();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   const { isMobile } = useDevice();
   const [isBrowser, setIsBrowser] = useState(false);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
@@ -109,8 +109,8 @@ export const AddWorkOrderModal = ({
           messages: [],
           pmEmail: user.email,
           creatorEmail: user.email,
-          creatorName: user.name,
-          createdByType: "PROPERTY_MANAGER",
+          creatorName: altName ?? user.name,
+          createdByType: userRoles.PROPERTY_MANAGER,
           permissionToEnter: permissionToEnter,
           address: primaryAddress.address,
           state: primaryAddress.state,
@@ -146,7 +146,7 @@ export const AddWorkOrderModal = ({
         setSubmitWorkOrderLoading(false);
       }
     },
-    [user, userType, tenantEmail, issueDescription, issueLocation, additionalDetails, permissionToEnter, woId, onSuccessfulAdd]
+    [user, userType, tenantEmail, issueDescription, issueLocation, additionalDetails, permissionToEnter, woId, onSuccessfulAdd, altName]
   );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(

@@ -7,15 +7,43 @@ import { RiFilePaper2Fill } from 'react-icons/ri';
 import { MdEngineering } from 'react-icons/md';
 import { useUserContext } from '@/context/user';
 import { ENTITIES } from '@/database/entities';
+import Select, { SingleValue } from 'react-select';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { useEffect, useState } from 'react';
+import { userRoles } from '@/database/entities/user';
+import { OptionType } from '@/types';
 
 export const PortalLeftPanel = () => {
   const router = useRouter();
-  const { userType } = useUserContext();
+  const { userType, altName, setAltName } = useUserContext();
+  const { user } = useSessionUser();
+  const [altNameOptions, setAltNameOptions] = useState<OptionType[]>([]);
+
+  useEffect(() => {
+    if (!user || userType !== userRoles.PROPERTY_MANAGER || !user.altNames || !user.name) return;
+    let options: OptionType[] = user.altNames.map((name) => ({ label: name, value: name }));
+    options.push({ label: user.name, value: user.name });
+    setAltNameOptions(options)
+  }, [user]);
 
   return (
     <div>
       <Image className="mx-auto" src="/2.png" alt="1" width={100} height={0} />
       <hr style={{ height: '2px', color: '#e5e7eb', backgroundColor: '#e5e7eb' }} />
+      {userType === ENTITIES.PROPERTY_MANAGER && (
+        <>
+          <p className="mt-2">{'Hey, ' + (altName ? altName : user?.name)}</p>
+          <Select options={altNameOptions} className="mb-4 mt-2" placeholder={"Change acting name"} onChange={(newValue: SingleValue<OptionType>) => {
+            if (!newValue || !user?.name) return;
+            if(newValue.value === user.name){
+              setAltName(null);
+              return;
+            }
+            setAltName(newValue.value);
+          }}/>
+          <hr style={{ height: '2px', color: '#e5e7eb', backgroundColor: '#e5e7eb' }} />
+        </>
+      )}
       <div className="mt-4 ml-2 text-lg" style={{ display: 'grid', rowGap: '0.5rem' }}>
         <div className="flex flex-row items-center justify-start">
           <RiFilePaper2Fill className="inline mr-2 my-auto" />
@@ -28,7 +56,10 @@ export const PortalLeftPanel = () => {
           <>
             <div className="flex flex-row items-center justify-start">
               <BsPersonLinesFill className={`inline mr-2 my-auto`} />
-              <Link className={`${router.pathname === '/property-managers' ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`} href={'property-managers'}>
+              <Link
+                className={`${router.pathname === '/property-managers' ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`}
+                href={'property-managers'}
+              >
                 Property Managers
               </Link>
             </div>
