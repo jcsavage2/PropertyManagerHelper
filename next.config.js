@@ -20,6 +20,7 @@ module.exports = withSentryConfig(
     silent: true,
     org: "pillar-technologies-llc",
     project: "javascript-nextjs",
+    authToken: process.env.NEXT_PUBLIC_SENTRY_AUTH_TOKEN
   },
   {
     // For all available options, see:
