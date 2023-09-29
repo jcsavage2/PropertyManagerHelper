@@ -5,7 +5,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 To ensure you have a working setup, copy the sample.env file and retrieve secret values from project admins. 
 
 Start the dev environment with:
-```bash
+```bash 
 yarn dev
 
 ```
