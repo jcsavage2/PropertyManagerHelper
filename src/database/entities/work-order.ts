@@ -74,6 +74,7 @@ export interface IWorkOrder {
   address: PropertyAddress;
   status: StatusType;
   assignedTo: Set<string>;
+  viewedWO: string[];
 }
 
 export class WorkOrderEntity {
@@ -104,6 +105,7 @@ export class WorkOrderEntity {
       createdBy: { type: 'string' },
       createdByType: { type: 'string' },
       assignedTo: { type: 'set' }, //List of concatenated strings like: technicianEmail##NAME##technicianName
+      viewedWO: { type: 'set' }, //List of assigned tech emails who have opened the WO
     },
     table: PillarDynamoTable,
   } as const);
@@ -260,11 +262,13 @@ export class WorkOrderEntity {
     status,
     permissionToEnter,
     assignedTo,
+    viewedWO
   }: {
     pk: string;
     status?: StatusType;
     permissionToEnter?: PTE_Type;
     assignedTo?: string[];
+    viewedWO?: string[];
   }) {
     let startKey: StartKey;
     const workOrders = [];
@@ -292,6 +296,7 @@ export class WorkOrderEntity {
             ...(status && { status: status }),
             ...(permissionToEnter && { permissionToEnter }),
             ...(assignedTo && { assignedTo }),
+            ...(viewedWO && { viewedWO })
           },
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }
         );
@@ -350,7 +355,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ workOrderId, technicianEmail, technicianName, assignedTo }: { workOrderId: string; technicianEmail: string; technicianName: string; assignedTo: Set<string>; }) {
+  public async removeTechnician({ workOrderId, technicianEmail, technicianName, assignedTo, viewedWO }: { workOrderId: string; technicianEmail: string; technicianName: string; assignedTo: Set<string>; viewedWO: string[]; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
@@ -367,12 +372,14 @@ export class WorkOrderEntity {
       } else {
         newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail.toLowerCase());
       }
-
+      const newViewedWOList = [...viewedWO].filter((email) => email !== technicianEmail.toLowerCase());
+      
       const result = await this.workOrderEntity.update(
         {
           pk: key,
           sk: key,
-          assignedTo: newAssignedTo
+          assignedTo: newAssignedTo,
+          viewedWO: newViewedWOList
         },
         { returnValues: 'ALL_NEW' }
       );

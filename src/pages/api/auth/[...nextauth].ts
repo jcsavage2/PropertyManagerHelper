@@ -6,7 +6,7 @@ import { DynamoDBClientConfig } from '@/database';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { UserEntity } from '@/database/entities/user';
-import { InviteStatusType } from '@/utils/user-types';
+import { INVITE_STATUS, InviteStatusType } from '@/utils/user-types';
 
 const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const clientSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;
@@ -73,8 +73,8 @@ export const options: NextAuthOptions = {
 				const userStatus = userFromDB?.status as InviteStatusType;
 
 				// User's first time on the application, mark them as joined.
-				if (userStatus === "INVITED") {
-					const updatedUser = await userEntity.updateInviteStatus({ pk: userFromDB?.pk, sk: userFromDB?.sk, status: "JOINED" });
+				if (userStatus === INVITE_STATUS.INVITED) {
+					const updatedUser = await userEntity.updateUser({ pk: userFromDB?.pk, sk: userFromDB?.sk, status: INVITE_STATUS.JOINED });
 					userFromDB = updatedUser;
 					session.user = { ...session.user, ...userFromDB };
 				}

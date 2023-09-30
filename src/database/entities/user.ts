@@ -171,12 +171,16 @@ export class UserEntity {
     }
   }
 
-  public async updateInviteStatus({ pk, sk, status }: { pk: string; sk: string; status: InviteStatusType; }) {
-    return (await this.userEntity.update({ pk, sk, status }, { returnValues: "ALL_NEW" })).Attributes;
-  }
+  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatusType }) {
+    const updatedUser = await this.userEntity.update(
+      { pk, sk, 
+        ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }), 
+        ...(status && { status }),
+      },
+      { returnValues: 'ALL_NEW' }
+    );
 
-  public async updateUserAttribute({ pk, sk, hasSeenDownloadPrompt }: { pk: string; sk: string; hasSeenDownloadPrompt: boolean; }) {
-    return (await this.userEntity.update({ pk, sk, hasSeenDownloadPrompt }, { returnValues: "ALL_NEW" })).Attributes;
+    return updatedUser.Attributes ?? null;
   }
 
   public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: ICreatePMUser) {

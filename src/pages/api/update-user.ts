@@ -1,5 +1,4 @@
 import { Data } from "@/database";
-import { WorkOrderEntity } from "@/database/entities/work-order";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "./auth/[...nextauth]";
@@ -9,7 +8,7 @@ import { UserEntity } from "@/database/entities/user";
 export type UpdateUser = {
   pk: string;
   sk: string;
-  hasSeenDownloadPrompt: boolean;
+  hasSeenDownloadPrompt?: boolean;
 };
 
 export default async function handler(
@@ -25,12 +24,14 @@ export default async function handler(
     const body = req.body as UpdateUser;
     const { pk, sk, hasSeenDownloadPrompt } = body;
     if (!pk || !sk) {
-      return res.status(400).json({ response: "Missing PK or SK" });
+      throw new Error("Missing pk or sk");
     }
+
     const userEntity = new UserEntity();
-    const updatedUser = await userEntity.updateUserAttribute({ pk, sk, hasSeenDownloadPrompt });
+    const updatedUser = await userEntity.updateUser({ pk, sk, hasSeenDownloadPrompt });
     return res.status(200).json({ response: JSON.stringify(updatedUser) });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+    return res.status(500).json({ response: error });
   }
 }
