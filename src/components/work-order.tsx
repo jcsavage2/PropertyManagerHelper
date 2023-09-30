@@ -155,7 +155,7 @@ const WorkOrder = ({
       setFetchingTechnicians(false);
       return [];
     },
-    [user, workOrder]
+    [user]
   );
 
   const getWorkOrder = useCallback(async () => {
@@ -187,25 +187,12 @@ const WorkOrder = ({
 
           if (technician) {
             //Only allow PMs to see who has viewed
-            if(userType === userRoles.PROPERTY_MANAGER && _workOrder.viewedWO && _workOrder.viewedWO.includes(technician.value)){
-              technician.label = technician.label + " (viewed)"
+            if (userType === userRoles.PROPERTY_MANAGER && _workOrder.viewedWO && _workOrder.viewedWO.includes(technician.value)) {
+              technician.label = technician.label + ' (viewed)';
             }
             setAssignedTechnicians((prev) => [...prev, { value: technician!.value, label: technician!.label }]);
           }
         });
-
-        //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
-        if(userType === userRoles.TECHNICIAN && (assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) && !_workOrder.viewedWO?.includes(user.email)){
-          //Handle async update viewed list
-          const params: UpdateViewedWORequest = {
-            pk: workOrderId,
-            sk: workOrderId,
-            email: user.email,
-            oldViewedWOList: _workOrder.viewedWO ?? [],
-            pmEmail: _workOrder.pmEmail,
-          }
-          axios.post('/api/update-viewed-wo-list', params);
-        }
       }
     } catch (err) {
       toast.error('Error getting work order.', {
@@ -215,7 +202,7 @@ const WorkOrder = ({
       console.error(err);
     }
     setIsLoading(false);
-  }, [workOrderId, user]);
+  }, [workOrderId, user, userType, searchTechnicians]);
 
   const getWorkOrderEvents = useCallback(
     async (initialFetch: boolean, startKey?: StartKey) => {
@@ -363,7 +350,9 @@ const WorkOrder = ({
         } as AssignTechnicianBody);
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as OptionType;
-        const technicianName = removedTechnician.label.includes(' (viewed)') ? removedTechnician.label.replace(' (viewed)', '') : removedTechnician.label;
+        const technicianName = removedTechnician.label.includes(' (viewed)')
+          ? removedTechnician.label.replace(' (viewed)', '')
+          : removedTechnician.label;
         await axios.post('/api/remove-technician', {
           workOrderId: deconstructKey(workOrderId),
           pmEmail: user.email,
@@ -406,7 +395,32 @@ const WorkOrder = ({
     setImagesLoading(false);
   }, [workOrder?.images]);
 
-  const PTEOptions: { value: PTE_Type, label: PTE_Type; }[] = [
+  useEffect(() => {
+    const updateViewedList = async () => {
+      if (!user || !workOrder || !workOrderId || !userType || userType !== userRoles.TECHNICIAN || !workOrder.assignedTo) return;
+      const assignedToList = Array.from(workOrder.assignedTo ?? []);
+      //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
+      if (
+        (assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) &&
+        !workOrder.viewedWO?.includes(user.email)
+      ) {
+        //Handle async update viewed list
+        const newViewedWOList = [...(workOrder.viewedWO ?? []), user.email];
+        const params: UpdateViewedWORequest = {
+          pk: workOrderId,
+          sk: workOrderId,
+          email: user.email,
+          newViewedWOList,
+          pmEmail: workOrder.pmEmail,
+        };
+        await axios.post('/api/update-viewed-wo-list', params);
+        workOrder.viewedWO = newViewedWOList;
+      }
+    };
+    updateViewedList();
+  }, [workOrder?.viewedWO, user, userType, workOrderId]);
+
+  const PTEOptions: { value: PTE_Type; label: PTE_Type; }[] = [
     { value: PTE.YES, label: PTE.YES },
     { value: PTE.NO, label: PTE.NO },
   ];
@@ -466,8 +480,9 @@ const WorkOrder = ({
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} ${userType !== userRoles.TENANT && 'hover:bg-blue-100'
-                    } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
+                  className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} ${
+                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <GoTasklist />
                   <span className="text-xs">Todo</span>
@@ -475,8 +490,9 @@ const WorkOrder = ({
                 <button
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} ${userType !== userRoles.TENANT && 'hover:bg-blue-100'
-                    } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
+                  className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} ${
+                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
                   <span className="text-xs">Complete</span>
@@ -494,8 +510,8 @@ const WorkOrder = ({
                 isUpdatingAssignedTechnicians || fetchingTechnicians
                   ? 'Loading...'
                   : assignedTechnicians.length === 0
-                    ? 'Unassigned'
-                    : 'Assign technicians...'
+                  ? 'Unassigned'
+                  : 'Assign technicians...'
               }
               isDisabled={isUpdatingAssignedTechnicians || userType !== ENTITIES.PROPERTY_MANAGER} // potentially could have logic for technicians to "self assign"
               className={'w-11/12 md:w-10/12 mt-1'}
@@ -535,34 +551,27 @@ const WorkOrder = ({
               'No photos found'
             )}
           </div>
-          <div className={"w-full md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200"}>
-            {uploadingFiles ?
-              <LoadingSpinner />
-              :
-              <input
-                type="file"
-                multiple name="image"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-            }
+          <div className={'w-full md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200'}>
+            {uploadingFiles ? <LoadingSpinner /> : <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />}
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
-          <div className='text-center w-48'>
+          <div className="text-center w-48">
             <Select
-              options={PTEOptions as { value: PTE_Type, label: PTE_Type; }[]}
+              options={PTEOptions as { value: PTE_Type; label: PTE_Type }[]}
               className="basic-single"
               classNamePrefix="select"
               value={{ value: workOrder.permissionToEnter, label: workOrder.permissionToEnter }}
-              onChange={(v: { value: PTE_Type, label: PTE_Type; } | null) => { v?.value && handleUpdatePTE(v.value); }}
+              onChange={(v: { value: PTE_Type; label: PTE_Type } | null) => {
+                v?.value && handleUpdatePTE(v.value);
+              }}
               defaultValue={undefined}
-              isDisabled={!user?.roles?.includes("PROPERTY_MANAGER") && !user?.roles?.includes("TENANT")}
+              isDisabled={!user?.roles?.includes(userRoles.PROPERTY_MANAGER) && !user?.roles?.includes(userRoles.TENANT)}
               placeholder={workOrder.permissionToEnter as PTE_Type}
             />
           </div>
           <div className="font-bold mt-4">Address</div>
           <div className="mt-0.5">
-            {workOrder.address.unit ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit) : toTitleCase(workOrder.address.address)}
+            {workOrder.address?.unit ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit) : toTitleCase(workOrder.address.address)}
           </div>
           <div className="font-bold mt-4">Tenant</div>
           <div className="mt-0.5">{workOrder.tenantName}</div>
@@ -630,7 +639,8 @@ const WorkOrder = ({
           ) : null}
         </div>
         <div className="w-full box-border text-sm fixed bottom-0 border-t border-slate-200 md:text-right bg-white text-gray-600 py-4 md:px-6 text-center">
-          Created by {workOrder.createdByType === "TENANT" ? "Tenant" : "Property Manager:"} {workOrder.createdByType === "TENANT" ? workOrder.tenantEmail : workOrder.pmEmail}
+          Created by {workOrder.createdByType === userRoles.TENANT ? 'Tenant' : 'Property Manager:'}{' '}
+          {workOrder.createdByType === userRoles.TENANT ? workOrder.tenantEmail : workOrder.pmEmail}
         </div>
 
         {/* Other modals */}

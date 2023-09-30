@@ -9,7 +9,7 @@ import sendgrid from '@sendgrid/mail';
 export type UpdateViewedWORequest = {
   pk: string;
   sk: string;
-  oldViewedWOList: string[];
+  newViewedWOList: string[];
   email: string;
   pmEmail: string;
 };
@@ -30,15 +30,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     sendgrid.setApiKey(apiKey);
     const body = req.body as UpdateViewedWORequest;
-    const { pk, sk, email, oldViewedWOList, pmEmail } = body;
-    if(!pk || !sk || !email || !oldViewedWOList || !pmEmail) {
+    const { pk, sk, email, newViewedWOList, pmEmail } = body;
+    if(!pk || !sk || !email || !newViewedWOList || !pmEmail) {
       throw new Error('Missing pk, sk, email, oldViewedWOList, or pmEmail');
     }
     const woEntity = new WorkOrderEntity();
-    const newViewedWOList = [...oldViewedWOList, email];
 
-    //TODO: send beth an email
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(pk)}`;
+    const wo = await woEntity.update({ pk, viewedWO: newViewedWOList });
     await sendgrid.send({
       to: pmEmail,
       from: 'pillar@pillarhq.co',
@@ -99,7 +98,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </body>
       </html>`,
     });
-    const user = await woEntity.update({ pk, viewedWO: newViewedWOList });
-    return res.status(200).json({ response: JSON.stringify(user) });
+    return res.status(200).json({ response: JSON.stringify(wo) });
   } catch (error) { }
 }
