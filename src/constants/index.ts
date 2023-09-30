@@ -49,6 +49,6 @@ export const PTE = {
   NO: 'No',
 } as const;
 
-export const PAGE_SIZE = 20;
+export const PAGE_SIZE = 40;
 
 export const TECHNICIAN_DELIM = '##NAME##';

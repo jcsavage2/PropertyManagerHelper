@@ -77,6 +77,7 @@ export interface IUser extends IBaseUser {
   roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
   status: InviteStatusType;
   isAdmin: boolean;
+  altNames: string[];
 }
 
 export const userRoles = {
@@ -489,6 +490,7 @@ export class UserEntity {
       phone: { type: 'string' },
       email: { type: 'string', required: true },
       name: { type: 'string', required: true },
+      altNames: { type: 'list'},
       isAdmin: { type: 'boolean' },
       roles: { type: 'set', required: true },
       status: { type: 'string', required: true },

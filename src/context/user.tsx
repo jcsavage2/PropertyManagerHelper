@@ -7,19 +7,24 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 export type UserContext = {
   userType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN' | null;
   setUserType: (type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => void;
+  altName: string | null;
+  setAltName: (name: string | null) => void;
   logOut: () => void;
 };
 
 export const UserContext = createContext<UserContext>({
   userType: null,
-  setUserType: () => { },
-  logOut: () => { },
+  altName: null,
+  setAltName: () => {},
+  setUserType: () => {},
+  logOut: () => {},
 });
 
 export const UserContextProvider = (props: any) => {
   const { user } = useSessionUser();
   const defaultState = user?.roles?.length === 1 ? user?.roles[0] : null;
   const [userType, setType] = useState<UserContext['userType']>(defaultState);
+  const [altName, _setAltName] = useState<string | null>(null);
 
   useEffect(() => {
     if (userType || !user) return;
@@ -41,14 +46,28 @@ export const UserContextProvider = (props: any) => {
     }
     setUserType(role!);
 
+    if (user.altNames) {
+      const localAltName = localStorage.getItem('PILLAR:ALT_NAME');
+      if (localAltName) {
+        if (!user.altNames.includes(localAltName)) {
+          setAltName(null);
+        } else {
+          setAltName(localAltName);
+        }
+      }else{
+        setAltName(null);
+      }
+    }
+
     //Redirect on initial log in
     const hasRouted = localStorage.getItem('PILLAR:ROUTED') as UserContext['userType'] | null;
-    if(hasRouted) return;
-    if(role === userRoles.TENANT) {
+    if (hasRouted) return;
+    if (role === userRoles.TENANT) {
       router.push('/work-order-chatbot');
-    }else if(role === userRoles.TECHNICIAN) {
+    } else if (role === userRoles.TECHNICIAN) {
       router.push('/work-orders');
-    } else { //PM
+    } else {
+      //PM
       router.push('/work-orders');
     }
     localStorage.setItem('PILLAR:ROUTED', 'true');
@@ -57,6 +76,16 @@ export const UserContextProvider = (props: any) => {
   const setUserType = useCallback((type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => {
     localStorage.setItem('PILLAR:USER_TYPE', type);
     setType(type);
+  }, []);
+
+  const setAltName = useCallback((name: string | null) => {
+    if(name){
+      localStorage.setItem('PILLAR:ALT_NAME', name);
+      _setAltName(name);
+    }else{
+      localStorage.removeItem('PILLAR:ALT_NAME');
+      _setAltName(null);
+    }
   }, []);
 
   /**
@@ -73,6 +102,8 @@ export const UserContextProvider = (props: any) => {
     <UserContext.Provider
       value={{
         userType,
+        altName,
+        setAltName,
         setUserType,
         logOut,
       }}

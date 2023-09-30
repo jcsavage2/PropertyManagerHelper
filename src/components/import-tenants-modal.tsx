@@ -32,7 +32,7 @@ export const ImportTenantsModal = ({
   onSuccessfulAdd: () => void;
 }) => {
   const { user } = useSessionUser();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   const { isMobile } = useDevice();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
@@ -204,7 +204,7 @@ export const ImportTenantsModal = ({
           unit: unit?.toString(),
           country: 'US',
           pmEmail: user.email,
-          pmName: user.name,
+          pmName: altName ?? user.name,
           numBeds,
           numBaths,
           createNewProperty: true,
@@ -216,7 +216,7 @@ export const ImportTenantsModal = ({
         setUploadList((prev) => [...prev, tenant]);
       });
     },
-    [setUploadList, user]
+    [setUploadList, user, altName]
   );
 
   const handleImportTenants = async () => {

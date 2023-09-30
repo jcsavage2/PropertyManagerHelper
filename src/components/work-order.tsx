@@ -41,7 +41,7 @@ const WorkOrder = ({
   isMobile: boolean;
 }) => {
   const { user } = useSessionUser();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   const router = useRouter();
 
   const [workOrder, setWorkOrder] = useState<IWorkOrder | null>(null);
@@ -252,7 +252,7 @@ const WorkOrder = ({
         sk: workOrderId,
         status: status,
         email: user.email,
-        name: user.name,
+        name: altName ?? user.name,
       });
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
@@ -283,7 +283,7 @@ const WorkOrder = ({
         pk: workOrderId,
         sk: workOrderId,
         email: user.email,
-        name: user.name,
+        name: altName ?? user.name,
         permissionToEnter: newValue
       });
       const updatedWorkOrder = JSON.parse(data.response);
@@ -314,7 +314,7 @@ const WorkOrder = ({
           sk: workOrderId,
           entity: ENTITIES.WORK_ORDER,
           madeByEmail: user.email,
-          madeByName: user.name,
+          madeByName: altName ?? user.name,
         };
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
@@ -333,7 +333,7 @@ const WorkOrder = ({
         });
       }
     },
-    [workOrder?.status, workOrderId, user, router, afterDelete]
+    [workOrder?.status, workOrderId, user, router, afterDelete, altName]
   );
 
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
@@ -350,7 +350,7 @@ const WorkOrder = ({
           workOrderId,
           ksuID: workOrder.GSI1SK,
           pmEmail: user.email,
-          pmName: user.name,
+          pmName: altName ?? user.name,
           technicianEmail: selectedTechnician.value,
           technicianName: selectedTechnician.label,
           address: workOrder.address,
@@ -367,7 +367,7 @@ const WorkOrder = ({
         await axios.post('/api/remove-technician', {
           workOrderId: deconstructKey(workOrderId),
           pmEmail: user.email,
-          pmName: user.name,
+          pmName: altName ?? user.name,
           technicianEmail: removedTechnician.value,
           technicianName: technicianName,
           oldAssignedTo: workOrder?.assignedTo ?? [],

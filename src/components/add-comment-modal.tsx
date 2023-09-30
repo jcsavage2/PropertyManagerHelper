@@ -24,7 +24,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
     setIsBrowser(true);
   }, []);
   const { isMobile } = useDevice();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   isBrowser && Modal.setAppElement('#work-order');
 
   const [comment, setComment] = useState('');
@@ -76,7 +76,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
         const { data } = await axios.post('/api/create-comment', {
           comment,
           email: user!.email,
-          name: user!.name,
+          name: altName ?? user!.name,
           workOrderId: deconstructKey(workOrderId),
         } as CreateCommentBody);
         const { response } = data;
@@ -93,7 +93,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
       }
       setIsLoading(false);
     },
-    [user, onSuccessfulAdd, comment, workOrderId, setAddCommentModalIsOpen]
+    [user, onSuccessfulAdd, comment, workOrderId, setAddCommentModalIsOpen, altName]
   );
 
   return (

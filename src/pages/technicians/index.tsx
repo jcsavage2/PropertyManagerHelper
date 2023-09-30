@@ -19,7 +19,7 @@ import { GetTechsForOrgRequest } from '../api/get-techs-for-org';
 
 const Technicians = () => {
   const { user } = useSessionUser();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
   const { isMobile } = useDevice();
 
   const [addTechModalIsOpen, setAddTechModalIsOpen] = useState(false);
@@ -82,7 +82,7 @@ const Technicians = () => {
           roleToDelete: ENTITIES.TECHNICIAN,
           currentUserRoles: roles,
           madeByEmail: user.email,
-          madeByName: user.name,
+          madeByName: altName ?? user.name,
         };
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
