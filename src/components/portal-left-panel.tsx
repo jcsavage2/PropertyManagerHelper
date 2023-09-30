@@ -24,7 +24,7 @@ export const PortalLeftPanel = () => {
     let options: OptionType[] = user.altNames.map((name) => ({ label: name, value: name }));
     options.push({ label: user.name, value: user.name });
     setAltNameOptions(options)
-  }, [user]);
+  }, [user, userType]);
 
   return (
     <div>

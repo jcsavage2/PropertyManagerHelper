@@ -40,7 +40,7 @@ export const WorkOrdersTable = ({
   const { userType } = useUserContext();
   const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
     { label: 'Issue', accessor: 'issue', width: 'w-72' },
-    { label: 'Status', accessor: 'status', width: '' },
+    { label: 'Status', accessor: 'status', width: 'w-44' },
     { label: 'Address', accessor: 'address', width: 'w-44' },
     { label: 'Assigned To', accessor: 'assignedTo', width: 'w-32' },
     { label: 'Created', accessor: 'created', width: '' },
