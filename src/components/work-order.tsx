@@ -470,8 +470,8 @@ const WorkOrder = ({
         {/* WO Modal Content */}
 
         <div
-          style={{ height: isMobile ? `calc(100vh - 350px)` : `calc(100vh - 265px)` }}
-          className={`h-max pt-3 px-5 pb-8 overflow-y-scroll flex flex-col box-border text-gray-600 text-md md:text-base`}
+          style={{ height: isMobile ? `calc(100vh - 300px)` : `calc(100vh - 265px)` }}
+          className={`h-max pt-3 px-5 md:pb-8 pb-16 overflow-y-scroll flex flex-col box-border text-gray-600 text-md md:text-base`}
         >
           <div className="font-bold">Status</div>
           <div className="flex flex-row mt-0.5">
@@ -528,7 +528,7 @@ const WorkOrder = ({
             />
           </div>
           <div className="font-bold mt-4">Photos</div>
-          <div className="w-full grid grid-cols-3 md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2">
+          <div className={`w-full mt-0.5 pb-2 ${images && images.length && 'grid grid-cols-3 md:grid-cols-5 md:gap-x-4 gap-x-0'}`}>
             {imagesLoading ? (
               <LoadingSpinner />
             ) : images && images.length ? (
@@ -555,17 +555,18 @@ const WorkOrder = ({
             {uploadingFiles ? <LoadingSpinner /> : <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />}
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
-          <div className="text-center w-48">
+          <div className={`${isUpdatingPTE && 'opacity-50'} text-center w-48`}>
             <Select
               options={PTEOptions as { value: PTE_Type; label: PTE_Type }[]}
               className="basic-single"
               classNamePrefix="select"
               value={{ value: workOrder.permissionToEnter, label: workOrder.permissionToEnter }}
               onChange={(v: { value: PTE_Type; label: PTE_Type } | null) => {
+                if(isUpdatingPTE) return;
                 v?.value && handleUpdatePTE(v.value);
               }}
               defaultValue={undefined}
-              isDisabled={!user?.roles?.includes(userRoles.PROPERTY_MANAGER) && !user?.roles?.includes(userRoles.TENANT)}
+              isDisabled={(!user?.roles?.includes(userRoles.PROPERTY_MANAGER) && !user?.roles?.includes(userRoles.TENANT)) || isUpdatingPTE}
               placeholder={workOrder.permissionToEnter as PTE_Type}
             />
           </div>
