@@ -2,7 +2,6 @@ import { useDevice } from '@/hooks/use-window-size';
 import { toggleBodyScroll } from '@/utils';
 import { Dispatch, SetStateAction } from 'react';
 import Modal from 'react-modal';
-import { buffer } from 'stream/consumers';
 
 export const ConfirmationModal = ({
   confirmationModalIsOpen,
