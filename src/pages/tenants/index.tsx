@@ -20,7 +20,7 @@ import { MdClear } from 'react-icons/md';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { INVITE_STATUS } from '@/utils/user-types';
 import { AiOutlineMail } from 'react-icons/ai';
-import { ReinviteTenantBody } from '../api/reinvite-tenant';
+import { ReinviteTenantsBody } from '../api/reinvite-tenants';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -38,8 +38,9 @@ const Tenants = () => {
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
   const [toDelete, setToDelete] = useState<{ pk: string; sk: string; name: string; roles: string[] }>({ pk: '', sk: '', name: '', roles: [] });
   const [tenants, setTenants] = useState<IUser[]>([]);
+  const [tenantsToReinvite, setTenantsToReinvite] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
-  const [resendingInviteArray, setResendingInviteArray] = useState<boolean[]>([]); //Can update to be a generic tenant loading state for each tenant row
+  const [resendingInvite, setResendingInvite] = useState<boolean>(false);
   const [tenantSearchString, setTenantSearchString] = useState<string>('');
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<Record<'JOINED' | 'INVITED', boolean>>({
@@ -47,6 +48,7 @@ const Tenants = () => {
     INVITED: true,
   });
   const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const [confirmReinviteTenantsModalIsOpen, setConfirmReinviteTenantsModalIsOpen] = useState(false);
 
   const fetchTenants = useCallback(
     async (isInitial: boolean, _searchString?: string) => {
@@ -78,8 +80,8 @@ const Tenants = () => {
           const addressB = `${primaryAddressB.address} ${primaryAddressB.unit ? ' ' + primaryAddressB.unit : ''}`.toUpperCase();
           return addressA.localeCompare(addressB);
         });
-        setResendingInviteArray(new Array(sortedTenants.length).fill(false));
         setTenants(sortedTenants);
+        setTenantsToReinvite(sortedTenants.filter((t) => t.status === INVITE_STATUS.INVITED));
       } catch (err) {
         console.log({ err });
       }
@@ -132,56 +134,40 @@ const Tenants = () => {
     [user, tenants, altName]
   );
 
-  const handleReinviteTenant = useCallback(
-    async ({
-      index,
-      tenantEmail,
-      tenantName,
-    }: {
-      index: number; //Tenant index, used to handle loading state to avoid multiple api calls at once
-      tenantEmail: string;
-      tenantName: string;
-    }) => {
-      setResendingInviteArray((prev) => {
-        const _prev = [...prev];
-        _prev[index] = true;
-        return _prev;
-      });
+  const handleReinviteTenants = useCallback(
+    async ({ _tenants }: { _tenants: { name: string; email: string }[] }) => {
+      setResendingInvite(true);
       try {
         if (!user || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.name || !user.email || !user.organizationName) {
           throw new Error('Only property managers can reinvite tenants');
         }
-        if (!tenantEmail || !tenantName || !index) {
-          throw new Error('Missing required params for reinvite tenant');
+        if (!_tenants) {
+          throw new Error('Missing required params for reinvite tenants');
         }
 
-        const params: ReinviteTenantBody = {
+        const params: ReinviteTenantsBody = {
           pmName: altName ?? user.name,
-          tenantEmail,
-          tenantName,
+          tenants: _tenants,
           organizationName: user.organizationName,
         };
-        const { data } = await axios.post('/api/reinvite-tenant', params);
+        const { data } = await axios.post('/api/reinvite-tenants', params);
         if (data.response) {
-          toast.success('Resent invite email!', {
+          toast.success('Resent invite email(s)!', {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
           });
         }
       } catch (err) {
         console.error(err);
-        toast.error('Error sending reinvite email', {
+        toast.error('Error sending reinvite email(s)', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });
       }
-      setResendingInviteArray((prev) => {
-        const _prev = [...prev];
-        _prev[index] = false;
-        return _prev;
-      });
+      setTenantsToReinvite(tenants.filter((t) => t.status === INVITE_STATUS.INVITED));
+      setResendingInvite(false);
     },
-    [user, altName]
+    [user, altName, tenants]
   );
 
   if (user && !user.organization && userType !== 'PROPERTY_MANAGER') {
@@ -197,6 +183,54 @@ const Tenants = () => {
         onConfirm={() => handleDeleteTenant(toDelete)}
         childrenComponents={<div className="text-center">Are you sure you want to delete the tenant record for {toDelete.name}?</div>}
         onCancel={() => setToDelete({ pk: '', sk: '', name: '', roles: [] })}
+      />
+
+      <ConfirmationModal
+        confirmationModalIsOpen={confirmReinviteTenantsModalIsOpen}
+        setConfirmationModalIsOpen={setConfirmReinviteTenantsModalIsOpen}
+        onConfirm={() => {
+          if (resendingInvite) return;
+          if (tenantsToReinvite && tenantsToReinvite.length > 0) {
+            handleReinviteTenants({ _tenants: tenantsToReinvite.map((t) => ({ name: t.name, email: t.email })) });
+          }
+          setConfirmReinviteTenantsModalIsOpen(false);
+        }}
+        onCancel={() => {
+          setTenantsToReinvite(tenants.filter((t) => t.status === INVITE_STATUS.INVITED));
+        }}
+        buttonsDisabled={resendingInvite}
+        childrenComponents={
+          <div className="flex flex-col text-center items-center justify-center mt-2">
+            <div>Are you sure you want to re-invite the following tenants to Pillar?</div>
+            <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
+            <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
+              {tenantsToReinvite && tenantsToReinvite.length ? (
+                tenantsToReinvite.map((tenant: IUser) => {
+                  return (
+                    <div
+                      key={'reinvitelist' + tenant.name + tenant.email}
+                      className="bg-blue-100 text-gray-600 rounded px-4 py-1 w-full flex flex-row items-center justify-center last:mb-0 mb-3"
+                    >
+                      <div className="flex flex-col overflow-hidden w-11/12">
+                        <p>{tenant.name}</p> <p>{tenant.email}</p>
+                      </div>
+                      <MdClear
+                        className={`h-6 w-6 cursor-pointer ${resendingInvite && 'opacity-50 pointer-events-none'}`}
+                        color="red"
+                        onClick={() => {
+                          if (resendingInvite) return;
+                          setTenantsToReinvite(tenantsToReinvite.filter((t) => t.email !== tenant.email));
+                        }}
+                      />
+                    </div>
+                  );
+                })
+              ) : (
+                <div>No tenants to reinvite</div>
+              )}
+            </div>
+          </div>
+        }
       />
       <div className="lg:max-w-5xl">
         <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
@@ -256,7 +290,7 @@ const Tenants = () => {
             Search
           </div>
         </div>
-        <div className={`flex flex-row w-full items-center ${tenantsLoading && 'pointer-events-none'}`}>
+        <div className={`flex flex-row justify-between w-full items-center text-gray-600 ${tenantsLoading && 'pointer-events-none'}`}>
           <div>
             <button
               className={`${tenantsLoading && 'opacity-50'} h-full mr-2 px-3 py-2 rounded ${
@@ -302,6 +336,16 @@ const Tenants = () => {
               </div>
             )}
           </div>
+          {!isMobile && tenants && tenantsToReinvite && tenantsToReinvite.length > 0 ? (
+            <button
+              className={`cursor-pointer  rounded px-4 py-2 mr-4 hover:bg-blue-300 bg-blue-200 ${
+                tenantsLoading && 'opacity-50 pointer-events-none'
+              }}`}
+              onClick={() => !tenantsLoading && setConfirmReinviteTenantsModalIsOpen(true)}
+            >
+              Renvite all tenants
+            </button>
+          ) : null}
         </div>
         {isMobile ? (
           <div className={`mt-4 pb-4`}>
@@ -334,10 +378,11 @@ const Tenants = () => {
                         {tenant.status === INVITE_STATUS.INVITED ? (
                           <button
                             className="cursor-pointer w-8 h-8 hover:bg-blue-100 bg-blue-200 rounded px-2 py-2 ml-2 disabled:opacity-50"
-                            onClick={() =>
-                              !resendingInviteArray[index] && handleReinviteTenant({ index, tenantEmail: tenant.email, tenantName: tenant.name })
-                            }
-                            disabled={resendingInviteArray[index]}
+                            onClick={() => {
+                              if (resendingInvite) return;
+                              handleReinviteTenants({ _tenants: [{ email: tenant.email, name: tenant.name }] });
+                            }}
+                            disabled={resendingInvite}
                           >
                             <AiOutlineMail />
                           </button>
@@ -392,11 +437,11 @@ const Tenants = () => {
                               {tenant.status === INVITE_STATUS.INVITED ? (
                                 <button
                                   className="cursor-pointer w-8 h-8 hover:bg-blue-100 bg-blue-200 rounded px-2 py-2 ml-2 disabled:opacity-50"
-                                  onClick={() =>
-                                    !resendingInviteArray[index] &&
-                                    handleReinviteTenant({ index, tenantEmail: tenant.email, tenantName: tenant.name })
-                                  }
-                                  disabled={resendingInviteArray[index]}
+                                  onClick={() => {
+                                    if (resendingInvite) return;
+                                    handleReinviteTenants({ _tenants: [{ email: tenant.email, name: tenant.name }] });
+                                  }}
+                                  disabled={resendingInvite}
                                 >
                                   <AiOutlineMail />
                                 </button>

@@ -6,16 +6,16 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { getInviteTenantSendgridEmailBody } from '@/utils';
 
-export type ReinviteTenantBody = {
-  tenantEmail: string;
-  tenantName: string;
+export type ReinviteTenantsBody = {
+  tenants: { name: string; email: string }[];
   pmName: string;
   organizationName: string;
 };
 
 /**
  *
- * @returns `ContextUser` object.
+ * @returns true if successful, error on failure
+ * @description Re-invites a list of tenants to join Pillar
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
@@ -28,20 +28,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const body = req.body as ReinviteTenantBody;
-    const {
-      pmName,
-      tenantEmail,
-      tenantName,
-      organizationName,
-    } = body;
+    const body = req.body as ReinviteTenantsBody;
+    const { pmName, tenants, organizationName } = body;
 
-    if (
-      !pmName ||
-      !tenantEmail ||
-      !tenantName ||
-      !organizationName
-    ) {
+    if (!pmName || !tenants || !organizationName) {
       throw new Error('reinvite-tenant Error: Missing required fields.');
     }
 
@@ -53,17 +43,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     sendgrid.setApiKey(apiKey);
 
     const authLink = `https://pillarhq.co/?authredirect=true`;
-    const emailBody = getInviteTenantSendgridEmailBody(tenantName, authLink, pmName)
-    await sendgrid.send({
-      to: tenantEmail,
-      from: 'pillar@pillarhq.co',
-      subject: `${pmName} @ ${organizationName} re-invited you to join Pillar`,
-      html: emailBody,
-    });
+    for (const tenant of tenants) {
+      const { name: tenantName, email: tenantEmail } = tenant;
+      const emailBody = getInviteTenantSendgridEmailBody(tenantName, authLink, pmName);
+      await sendgrid.send({
+        to: tenantEmail,
+        from: 'pillar@pillarhq.co',
+        subject: `${pmName} @ ${organizationName} re-invited you to join Pillar`,
+        html: emailBody,
+      });
+    }
 
     return res.status(200).json({ response: 'true' });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error.statusCode || 500).json({response: error});
+    return res.status(error.statusCode || 500).json({ response: error });
   }
 }

@@ -9,12 +9,14 @@ export const ConfirmationModal = ({
   onConfirm,
   childrenComponents,
   onCancel,
+  buttonsDisabled,
 }: {
   confirmationModalIsOpen: boolean;
   setConfirmationModalIsOpen: Dispatch<SetStateAction<boolean>>;
   onConfirm: () => void;
   childrenComponents: React.ReactNode;
   onCancel?: () => void;
+  buttonsDisabled?: boolean;
 }) => {
   const { isMobile } = useDevice();
 
@@ -54,12 +56,21 @@ export const ConfirmationModal = ({
     >
       <div className="w-full h-full">{childrenComponents}</div>
       <div className="flex flex-row md:w-1/2 w-3/4 mx-auto justify-between mt-6">
-        <button className="w-20 bg-blue-200 rounded py-1 hover:bg-blue-300" onClick={onConfirm}>
+        <button
+          className="w-20 bg-blue-200 rounded py-1 hover:bg-blue-300 disabled:opacity-50"
+          disabled={buttonsDisabled ?? false}
+          onClick={() => {
+            if (buttonsDisabled) return;
+            onConfirm();
+          }}
+        >
           Yes
         </button>
         <button
-          className="w-20 bg-blue-200 rounded py-1 hover:bg-blue-300"
+          disabled={buttonsDisabled ?? false}
+          className="w-20 bg-blue-200 rounded py-1 hover:bg-blue-300 disabled:opacity-50"
           onClick={() => {
+            if (buttonsDisabled) return;
             closeModal();
             if (onCancel) onCancel();
           }}
