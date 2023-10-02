@@ -5,6 +5,7 @@ export const INVITE_STATUS = {
   JOINED: 'JOINED',
   INVITED: 'INVITED',
   CREATED: 'CREATED',
+  RE_INVITED: "RE_INVITED"
 } as const;
 
 export type InviteStatusType = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];

@@ -36,7 +36,7 @@ const Tenants = () => {
   const [addTenantModalIsOpen, setAddTenantModalIsOpen] = useState(false);
   const [importTenantModalIsOpen, setImportTenantModalIsOpen] = useState(false);
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
-  const [toDelete, setToDelete] = useState<{ pk: string; sk: string; name: string; roles: string[] }>({ pk: '', sk: '', name: '', roles: [] });
+  const [toDelete, setToDelete] = useState<{ pk: string; sk: string; name: string; roles: string[]; }>({ pk: '', sk: '', name: '', roles: [] });
   const [tenants, setTenants] = useState<IUser[]>([]);
   const [tenantsToReinvite, setTenantsToReinvite] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
@@ -51,7 +51,7 @@ const Tenants = () => {
   const [confirmReinviteTenantsModalIsOpen, setConfirmReinviteTenantsModalIsOpen] = useState(false);
 
   const fetchTenants = useCallback(
-    async (isInitial: boolean, _searchString?: string) => {
+    async (isInitial: boolean, _searchString?: string, fetchAllTenants?: boolean) => {
       if (!user || !userType) return;
       setTenantsLoading(true);
       try {
@@ -67,12 +67,13 @@ const Tenants = () => {
           startKey: isInitial ? undefined : startKey,
           statusFilter: statusFilter,
           tenantSearchString: _searchString,
+          fetchAllTenants
         };
         const { data } = await axios.post('/api/get-all-tenants-for-org', body);
         const response = JSON.parse(data.response);
         const _tenants: IUser[] = response.tenants;
         setStartKey(response.startKey);
-        const unsortedTenants = isInitial ? _tenants : [...tenants, ..._tenants];
+        const unsortedTenants = (isInitial || fetchAllTenants) ? _tenants : [...tenants, ..._tenants];
         const sortedTenants = unsortedTenants.sort((a, b) => {
           const primaryAddressA = Object.values(a.addresses ?? []).find((a: any) => !!a.isPrimary);
           const primaryAddressB = Object.values(b.addresses ?? []).find((a: any) => !!a.isPrimary);
@@ -87,7 +88,7 @@ const Tenants = () => {
       }
       setTenantsLoading(false);
     },
-    [user, userType, tenantSearchString, startKey, tenants, statusFilter]
+    [user, userType, startKey, tenants, statusFilter]
   );
 
   useEffect(() => {
@@ -95,7 +96,7 @@ const Tenants = () => {
   }, [user, statusFilter, userType]);
 
   const handleDeleteTenant = useCallback(
-    async ({ pk, sk, name, roles }: { pk: string; sk: string; name: string; roles: string[] }) => {
+    async ({ pk, sk, name, roles }: { pk: string; sk: string; name: string; roles: string[]; }) => {
       setTenantsLoading(true);
       try {
         if (!pk || !sk || !name || !roles) {
@@ -135,7 +136,7 @@ const Tenants = () => {
   );
 
   const handleReinviteTenants = useCallback(
-    async ({ _tenants }: { _tenants: { name: string; email: string }[] }) => {
+    async ({ _tenants }: { _tenants: { name: string; email: string; }[]; }) => {
       setResendingInvite(true);
       try {
         if (!user || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.name || !user.email || !user.organizationName) {
@@ -145,18 +146,51 @@ const Tenants = () => {
           throw new Error('Missing required params for reinvite tenants');
         }
 
-        const params: ReinviteTenantsBody = {
-          pmName: altName ?? user.name,
-          tenants: _tenants,
-          organizationName: user.organizationName,
-        };
-        const { data } = await axios.post('/api/reinvite-tenants', params);
-        if (data.response) {
-          toast.success('Resent invite email(s)!', {
+
+        const batchedTenants = _tenants.reduce((batches, tenant, i) => {
+          const batchNumber = Math.floor(i / 5);
+          if (!batches[batchNumber]) {
+            batches[batchNumber] = [];
+          }
+          batches[batchNumber].push(tenant);
+          return batches;
+        }, {} as Record<number, { name: string; email: string; }[]>);
+
+        const batchedRequests =
+          Object.values(batchedTenants).map((tenants) => {
+            const params: ReinviteTenantsBody = {
+              pmName: altName ?? user.name,
+              tenants,
+              organizationName: user.organizationName ?? "",
+            };
+            return axios.post('/api/reinvite-tenants', params);
+          });
+
+        const allResponses = await Promise.all(batchedRequests);
+
+        const successfulResponses = allResponses.map(r => r.status === 200);
+
+        if (successfulResponses.length === _tenants.length) {
+          toast.success('All Re-invitations successfully sent', {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
           });
         }
+        if (successfulResponses.length !== _tenants.length && successfulResponses.length > 0) {
+          toast.error('Some Re-invitations successfully sent, please refresh page and retry', {
+            position: toast.POSITION.TOP_CENTER,
+            draggable: false,
+          });
+        }
+        if (!successfulResponses.length) {
+          toast.error('No re-invitations were successfully sent - please contact Pillar for this bug.', {
+            position: toast.POSITION.TOP_CENTER,
+            draggable: false,
+          });
+        }
+
+        fetchTenants(false, undefined, true);
+
       } catch (err) {
         console.error(err);
         toast.error('Error sending reinvite email(s)', {
@@ -173,7 +207,6 @@ const Tenants = () => {
   if (user && !user.organization && userType !== 'PROPERTY_MANAGER') {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
-
   return (
     <div id="testing" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
@@ -188,6 +221,7 @@ const Tenants = () => {
       <ConfirmationModal
         confirmationModalIsOpen={confirmReinviteTenantsModalIsOpen}
         setConfirmationModalIsOpen={setConfirmReinviteTenantsModalIsOpen}
+        fetchAllTenants={() => fetchTenants(false, undefined, true)}
         onConfirm={() => {
           if (resendingInvite) return;
           if (tenantsToReinvite && tenantsToReinvite.length > 0) {
@@ -205,10 +239,10 @@ const Tenants = () => {
             <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
             <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
               {tenantsToReinvite && tenantsToReinvite.length ? (
-                tenantsToReinvite.map((tenant: IUser) => {
+                tenantsToReinvite.map((tenant: IUser, i) => {
                   return (
                     <div
-                      key={'reinvitelist' + tenant.name + tenant.email}
+                      key={'reinvitelist' + tenant.name + tenant.email + i}
                       className="bg-blue-100 text-gray-600 rounded px-4 py-1 w-full flex flex-row items-center justify-center last:mb-0 mb-3"
                     >
                       <div className="flex flex-col overflow-hidden w-11/12">
@@ -293,9 +327,8 @@ const Tenants = () => {
         <div className={`flex flex-row justify-between w-full items-center text-gray-600 ${tenantsLoading && 'pointer-events-none'}`}>
           <div>
             <button
-              className={`${tenantsLoading && 'opacity-50'} h-full mr-2 px-3 py-2 rounded ${
-                !statusFilter.JOINED || !statusFilter.INVITED ? 'bg-blue-200' : 'bg-gray-200'
-              }`}
+              className={`${tenantsLoading && 'opacity-50'} h-full mr-2 px-3 py-2 rounded ${!statusFilter.JOINED || !statusFilter.INVITED ? 'bg-blue-200' : 'bg-gray-200'
+                }`}
               onClick={() => setShowStatusFilter((s) => !s)}
             >
               Status
@@ -338,9 +371,8 @@ const Tenants = () => {
           </div>
           {!isMobile && tenants && tenantsToReinvite && tenantsToReinvite.length > 0 ? (
             <button
-              className={`cursor-pointer  rounded px-4 py-2 mr-4 hover:bg-blue-300 bg-blue-200 ${
-                tenantsLoading && 'opacity-50 pointer-events-none'
-              }}`}
+              className={`cursor-pointer  rounded px-4 py-2 mr-4 hover:bg-blue-300 bg-blue-200 ${tenantsLoading && 'opacity-50 pointer-events-none'
+                }}`}
               onClick={() => !tenantsLoading && setConfirmReinviteTenantsModalIsOpen(true)}
             >
               Renvite all tenants
@@ -360,10 +392,9 @@ const Tenants = () => {
                 const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
                 return (
                   <div
-                    key={`${tenant.pk}-${tenant.sk}-${index}`}
-                    className={`flex flex-row justify-between items-center w-full rounded-lg py-4 px-2 h-36 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${
-                      index === 0 && 'mt-1'
-                    } ${index < tenants.length - 1 && 'mb-3'}`}
+                    key={`list-${tenant.pk}-${tenant.sk}-${index}`}
+                    className={`flex flex-row justify-between items-center w-full rounded-lg py-4 px-2 h-36 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${index === 0 && 'mt-1'
+                      } ${index < tenants.length - 1 && 'mb-3'}`}
                   >
                     <div className="pl-2 text-gray-800">
                       <p className="text-2xl ">{toTitleCase(tenant.name)} </p>
@@ -422,15 +453,14 @@ const Tenants = () => {
                       const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
                       const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
                       return (
-                        <tr key={`${tenant.pk}-${tenant.sk}`} className="h-20">
+                        <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
                           <td className="border-b border-t px-2 py-1">{`${toTitleCase(tenant.name)}`}</td>
                           <td className="border-b border-t px-2 py-1">{`${tenant.email}`}</td>
                           <td className="border-b border-t">
                             <div className="flex flex-row items-center justify-start">
                               <div
-                                className={`${
-                                  tenant.status === INVITE_STATUS.JOINED ? 'text-green-600' : 'text-yellow-500'
-                                } my-auto h-max inline-block`}
+                                className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-green-600' : 'text-yellow-500'
+                                  } my-auto h-max inline-block`}
                               >
                                 {tenant.status}
                               </div>{' '}

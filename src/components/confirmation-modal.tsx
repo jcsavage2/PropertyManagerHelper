@@ -10,6 +10,7 @@ export const ConfirmationModal = ({
   childrenComponents,
   onCancel,
   buttonsDisabled,
+  fetchAllTenants
 }: {
   confirmationModalIsOpen: boolean;
   setConfirmationModalIsOpen: Dispatch<SetStateAction<boolean>>;
@@ -17,6 +18,7 @@ export const ConfirmationModal = ({
   childrenComponents: React.ReactNode;
   onCancel?: () => void;
   buttonsDisabled?: boolean;
+  fetchAllTenants?: () => void;
 }) => {
   const { isMobile } = useDevice();
 
@@ -47,7 +49,11 @@ export const ConfirmationModal = ({
   return (
     <Modal
       isOpen={confirmationModalIsOpen}
-      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterOpen={() => {
+        fetchAllTenants && fetchAllTenants();
+        toggleBodyScroll(true);
+      }
+      }
       onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Example Modal"

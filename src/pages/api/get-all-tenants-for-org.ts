@@ -10,6 +10,7 @@ export type GetTenantsForOrgRequest = {
   startKey: StartKey;
   statusFilter?: Record<'JOINED' | 'INVITED', boolean>;
   tenantSearchString?: string;
+  fetchAllTenants?: boolean;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
@@ -19,12 +20,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const { organization, startKey, tenantSearchString, statusFilter } = req.body as GetTenantsForOrgRequest;
+    const { organization, startKey, tenantSearchString, statusFilter, fetchAllTenants = false } = req.body as GetTenantsForOrgRequest;
     if (!organization || !statusFilter) {
       throw new Error('Missing required fields');
     }
     const userEntity = new UserEntity();
-    const response = await userEntity.getAllTenantsForOrg({ organization, startKey, statusFilter, tenantSearchString });
+    const response = await userEntity.getAllTenantsForOrg({ organization, startKey, statusFilter, tenantSearchString, fetchAllTenants });
     return res.status(200).json({ response: JSON.stringify({ tenants: response.tenants, startKey: response.startKey }) });
   } catch (error) {
     console.log({ error });

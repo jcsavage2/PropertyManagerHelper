@@ -171,10 +171,11 @@ export class UserEntity {
     }
   }
 
-  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatusType }) {
+  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatusType; }) {
     const updatedUser = await this.userEntity.update(
-      { pk, sk, 
-        ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }), 
+      {
+        pk, sk,
+        ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
         ...(status && { status }),
       },
       { returnValues: 'ALL_NEW' }
@@ -293,13 +294,15 @@ export class UserEntity {
     tenantSearchString,
     statusFilter,
     startKey,
+    fetchAllTenants
   }: {
     organization: string;
     tenantSearchString: string | undefined;
     statusFilter?: Record<'JOINED' | 'INVITED', boolean>;
     startKey: StartKey;
+    fetchAllTenants?: boolean;
   }) {
-    const tenants = [];
+    const tenants: any[] = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization);
     let remainingTenantsToFetch = PAGE_SIZE;
     do {
@@ -318,8 +321,22 @@ export class UserEntity {
       } catch (err) {
         console.log({ err });
       }
-    } while (!!startKey && remainingTenantsToFetch > 0);
-    return { tenants, startKey };
+    } while ((!!startKey && remainingTenantsToFetch > 0) || (!!startKey && fetchAllTenants));
+    const uniqueTenants = this.getUniqueTenantsByPkAndSk(tenants);
+    return { tenants: uniqueTenants, startKey };
+  }
+
+  private getUniqueTenantsByPkAndSk(tenants: IUser[]) {
+    const uniqueTenants = [];
+    const seenTenantPksAndSks = new Set();
+    for (const tenant of tenants) {
+      const tenantPkAndSk = tenant.pk + tenant.sk;
+      if (!seenTenantPksAndSks.has(tenantPkAndSk)) {
+        uniqueTenants.push(tenant);
+        seenTenantPksAndSks.add(tenantPkAndSk);
+      }
+    }
+    return uniqueTenants;
   }
 
   private constructGetTenantFilters({
@@ -490,7 +507,7 @@ export class UserEntity {
       phone: { type: 'string' },
       email: { type: 'string', required: true },
       name: { type: 'string', required: true },
-      altNames: { type: 'list'},
+      altNames: { type: 'list' },
       isAdmin: { type: 'boolean' },
       roles: { type: 'set', required: true },
       status: { type: 'string', required: true },

@@ -1,13 +1,15 @@
 import { Data } from '@/database';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
-import { IUser, userRoles } from '@/database/entities/user';
+import { IUser, UserEntity, userRoles } from '@/database/entities/user';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
-import { getInviteTenantSendgridEmailBody } from '@/utils';
+import { generateKey, getInviteTenantSendgridEmailBody } from '@/utils';
+import { ENTITIES, ENTITY_KEY } from '@/database/entities';
+import { INVITE_STATUS } from '@/utils/user-types';
 
 export type ReinviteTenantsBody = {
-  tenants: { name: string; email: string }[];
+  tenants: { name: string; email: string; }[];
   pmName: string;
   organizationName: string;
 };
@@ -42,6 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     sendgrid.setApiKey(apiKey);
 
+    const userEntity = new UserEntity();
+
     const authLink = `https://pillarhq.co/?authredirect=true`;
     for (const tenant of tenants) {
       const { name: tenantName, email: tenantEmail } = tenant;
@@ -52,6 +56,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         subject: `${pmName} @ ${organizationName} re-invited you to join Pillar`,
         html: emailBody,
       });
+
+      const lowerCaseTenantEmail = tenantEmail.toLowerCase();
+      const pk = generateKey(ENTITY_KEY.USER, lowerCaseTenantEmail);
+      const sk = generateKey(ENTITY_KEY.USER, ENTITIES.USER);
+      await userEntity.updateUser({ pk, sk, status: INVITE_STATUS.RE_INVITED });
     }
 
     return res.status(200).json({ response: 'true' });

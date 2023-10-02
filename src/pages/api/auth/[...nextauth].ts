@@ -73,7 +73,7 @@ export const options: NextAuthOptions = {
 				const userStatus = userFromDB?.status as InviteStatusType;
 
 				// User's first time on the application, mark them as joined.
-				if (userStatus === INVITE_STATUS.INVITED) {
+				if (userStatus === INVITE_STATUS.INVITED || userStatus === INVITE_STATUS.RE_INVITED) {
 					const updatedUser = await userEntity.updateUser({ pk: userFromDB?.pk, sk: userFromDB?.sk, status: INVITE_STATUS.JOINED });
 					userFromDB = updatedUser;
 					session.user = { ...session.user, ...userFromDB };
