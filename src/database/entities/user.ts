@@ -310,7 +310,7 @@ export class UserEntity {
         const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
           limit: remainingTenantsToFetch,
           reverse: true,
-          ...(statusFilter && { filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }) }),
+          ...(statusFilter && !fetchAllTenants && { filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }) }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TENANT}`,
           index: INDEXES.GSI4,
