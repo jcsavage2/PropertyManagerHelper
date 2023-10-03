@@ -322,22 +322,10 @@ export class UserEntity {
         console.log({ err });
       }
     } while ((!!startKey && remainingTenantsToFetch > 0) || (!!startKey && fetchAllTenants));
-    const uniqueTenants = this.getUniqueTenantsByPkAndSk(tenants);
-    return { tenants: uniqueTenants, startKey };
+
+    return { tenants, startKey };
   }
 
-  private getUniqueTenantsByPkAndSk(tenants: IUser[]) {
-    const uniqueTenants = [];
-    const seenTenantPksAndSks = new Set();
-    for (const tenant of tenants) {
-      const tenantPkAndSk = tenant.pk + tenant.sk;
-      if (!seenTenantPksAndSks.has(tenantPkAndSk)) {
-        uniqueTenants.push(tenant);
-        seenTenantPksAndSks.add(tenantPkAndSk);
-      }
-    }
-    return uniqueTenants;
-  }
 
   private constructGetTenantFilters({
     statusFilter,

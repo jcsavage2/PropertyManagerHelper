@@ -167,16 +167,15 @@ const Tenants = () => {
           });
 
         const allResponses = await Promise.all(batchedRequests);
-
         const successfulResponses = allResponses.map(r => r.status === 200);
 
-        if (successfulResponses.length === _tenants.length) {
+        if (successfulResponses.length === allResponses.length) {
           toast.success('All Re-invitations successfully sent', {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
           });
         }
-        if (successfulResponses.length !== _tenants.length && successfulResponses.length > 0) {
+        if (successfulResponses.length !== allResponses.length && successfulResponses.length > 0) {
           toast.error('Some Re-invitations successfully sent, please refresh page and retry', {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
@@ -235,7 +234,7 @@ const Tenants = () => {
         buttonsDisabled={resendingInvite}
         childrenComponents={
           <div className="flex flex-col text-center items-center justify-center mt-2">
-            <div>Are you sure you want to re-invite the following tenants to Pillar?</div>
+            <div>{"Are you sure? This will resend an invitation email to ALL tenants whose status is 'Invited'."}</div>
             <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
             <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
               {tenantsToReinvite && tenantsToReinvite.length ? (
@@ -375,7 +374,7 @@ const Tenants = () => {
                 }}`}
               onClick={() => !tenantsLoading && setConfirmReinviteTenantsModalIsOpen(true)}
             >
-              Renvite all tenants
+              Bulk Re-Invite
             </button>
           ) : null}
         </div>
@@ -406,7 +405,7 @@ const Tenants = () => {
                         >
                           {tenant.status}
                         </div>{' '}
-                        {tenant.status === INVITE_STATUS.INVITED ? (
+                        {(tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED) ? (
                           <button
                             className="cursor-pointer w-8 h-8 hover:bg-blue-100 bg-blue-200 rounded px-2 py-2 ml-2 disabled:opacity-50"
                             onClick={() => {
@@ -464,7 +463,7 @@ const Tenants = () => {
                               >
                                 {tenant.status}
                               </div>{' '}
-                              {tenant.status === INVITE_STATUS.INVITED ? (
+                              {(tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED) ? (
                                 <button
                                   className="cursor-pointer w-8 h-8 hover:bg-blue-100 bg-blue-200 rounded px-2 py-2 ml-2 disabled:opacity-50"
                                   onClick={() => {
