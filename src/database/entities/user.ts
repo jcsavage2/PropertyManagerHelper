@@ -298,7 +298,7 @@ export class UserEntity {
   }: {
     organization: string;
     tenantSearchString: string | undefined;
-    statusFilter?: Record<'JOINED' | 'INVITED', boolean>;
+    statusFilter?: Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>;
     startKey: StartKey;
     fetchAllTenants?: boolean;
   }) {
@@ -310,7 +310,7 @@ export class UserEntity {
         const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
           limit: remainingTenantsToFetch,
           reverse: true,
-          ...(statusFilter && { filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }) }),
+          ...(statusFilter && !fetchAllTenants && { filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }) }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TENANT}`,
           index: INDEXES.GSI4,
@@ -331,19 +331,16 @@ export class UserEntity {
     statusFilter,
     tenantSearchString,
   }: {
-    statusFilter: Record<'JOINED' | 'INVITED', boolean>;
+    statusFilter: Record<'JOINED' | 'INVITED' | "RE_INVITED", boolean>;
     tenantSearchString: string | undefined;
   }): any[] {
+
     const filters = [];
-    //Status filter logic
-    //When both are true add no filter
-    if (!statusFilter.JOINED && !statusFilter.INVITED) {
-      filters.push({ attr: 'status', eq: INVITE_STATUS.CREATED });
-    } else if (!statusFilter.INVITED && statusFilter.JOINED) {
-      filters.push({ attr: 'status', eq: INVITE_STATUS.JOINED });
-    } else if (!statusFilter.JOINED && statusFilter.INVITED) {
-      filters.push({ attr: 'status', eq: INVITE_STATUS.INVITED });
-    }
+    const statusFilters = (Object.keys(statusFilter) as ('JOINED' | 'INVITED' | "RE_INVITED")[]).filter((k) => statusFilter[k]);
+
+    // Status filter logic
+    statusFilters.length < 3 && filters.push({ attr: 'status', in: statusFilters });
+
     //Search string logic
     if (tenantSearchString) {
       filters.push([

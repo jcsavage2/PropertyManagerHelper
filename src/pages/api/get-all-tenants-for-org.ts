@@ -8,7 +8,7 @@ import { options } from './auth/[...nextauth]';
 export type GetTenantsForOrgRequest = {
   organization: string;
   startKey: StartKey;
-  statusFilter?: Record<'JOINED' | 'INVITED', boolean>;
+  statusFilter?: Record<'JOINED' | 'INVITED' | "RE_INVITED", boolean>;
   tenantSearchString?: string;
   fetchAllTenants?: boolean;
 };

@@ -43,8 +43,9 @@ const Tenants = () => {
   const [resendingInvite, setResendingInvite] = useState<boolean>(false);
   const [tenantSearchString, setTenantSearchString] = useState<string>('');
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState<Record<'JOINED' | 'INVITED', boolean>>({
+  const [statusFilter, setStatusFilter] = useState<Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>>({
     JOINED: true,
+    RE_INVITED: true,
     INVITED: true,
   });
   const [showStatusFilter, setShowStatusFilter] = useState(false);
@@ -360,6 +361,22 @@ const Tenants = () => {
                     Joined
                   </p>
                   {!statusFilter.JOINED ? (
+                    <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
+                  ) : (
+                    <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
+                  )}
+                </div>
+                <div
+                  className={`flex ${statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                  onClick={() => {
+                    if (tenantsLoading) return;
+                    setStatusFilter({ ...statusFilter, RE_INVITED: !statusFilter.RE_INVITED });
+                  }}
+                >
+                  <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
+                    Re-Invited
+                  </p>
+                  {!statusFilter.RE_INVITED ? (
                     <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                   ) : (
                     <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
