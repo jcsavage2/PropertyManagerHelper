@@ -398,14 +398,14 @@ const WorkOrder = ({
   useEffect(() => {
     const updateViewedList = async () => {
       if (!user || !workOrder || !workOrderId || !userType || userType !== userRoles.TECHNICIAN || !workOrder.assignedTo) return;
-      const assignedToList = Array.from(workOrder.assignedTo ?? []);
+      const assignedToList = Array.from(workOrder.assignedTo);
       //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
       if (
         (assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) &&
         !workOrder.viewedWO?.includes(user.email)
       ) {
         //Handle async update viewed list
-        const newViewedWOList = [...(workOrder.viewedWO ?? []), user.email];
+        const newViewedWOList: string[] = [...(workOrder.viewedWO ?? []), user.email];
         const params: UpdateViewedWORequest = {
           pk: workOrderId,
           sk: workOrderId,
@@ -414,11 +414,11 @@ const WorkOrder = ({
           pmEmail: workOrder.pmEmail,
         };
         await axios.post('/api/update-viewed-wo-list', params);
-        workOrder.viewedWO = newViewedWOList;
+        await getWorkOrder();
       }
     };
     updateViewedList();
-  }, [workOrder?.viewedWO, user, userType, workOrderId]);
+  }, [workOrder, user, userType, workOrderId]);
 
   const PTEOptions: { value: PTE_Type; label: PTE_Type; }[] = [
     { value: PTE.YES, label: PTE.YES },

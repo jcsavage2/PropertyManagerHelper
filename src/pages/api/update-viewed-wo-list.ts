@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     await sendgrid.send({
       to: pmEmail,
       from: 'pillar@pillarhq.co',
-      subject: `Work Order ${deconstructKey(pk)} opened by technician ${email}`,
+      subject: `Technician ${email} opened WO ${deconstructKey(pk)}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
