@@ -61,6 +61,7 @@ export const generatePrompt = (workOrder: WorkOrder, unitInfo: string, streetAdd
         Do not fill in a value for "issueDescription" if the user has not provided one with sufficient details. \
         If the user doesn't know the specific issue, then simply record what they tell you and move on.\
         If the user describes multiple issues, kindly instruct them to submit a separate work order for each issue, and ask them to let you know which issue they would like to submit first. \
+        If the user mentions an issue involving a leak with their sink or faucet, clarify if the leak is coming from the faucet, the stem/handles, or the pipes under the sink before recording the "issueDescription" \
 
         ${
           !workOrder.issueLocation &&
