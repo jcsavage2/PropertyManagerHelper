@@ -62,7 +62,6 @@ export const AddWorkOrderModal = ({
   const [issueLocation, setIssueLocation] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [submitWorkOrderLoading, setSubmitWorkOrderLoading] = useState(false);
-  const [woId, _setWoId] = useState(uuidv4());
   const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
 
   function closeModal() {
@@ -119,7 +118,7 @@ export const AddWorkOrderModal = ({
           postalCode: primaryAddress.postalCode,
           tenantEmail,
           tenantName: tenant.name,
-          woId,
+          woId: uuidv4(),
           images: [],
           organization: user.organization,
         };
@@ -137,6 +136,7 @@ export const AddWorkOrderModal = ({
         setAdditionalDetails('');
         setTenantEmail('');
         setSubmitWorkOrderLoading(false);
+        setShowAdditionalOptions(false);
       } catch (err) {
         console.log({ err });
         toast.error('Error Submitting Work Order. Please Try Again', {
@@ -146,7 +146,7 @@ export const AddWorkOrderModal = ({
         setSubmitWorkOrderLoading(false);
       }
     },
-    [user, userType, tenantEmail, issueDescription, issueLocation, additionalDetails, permissionToEnter, woId, onSuccessfulAdd, altName]
+    [user, userType, tenantEmail, issueDescription, issueLocation, additionalDetails, permissionToEnter, onSuccessfulAdd, altName]
   );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
