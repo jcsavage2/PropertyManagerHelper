@@ -66,6 +66,11 @@ export const AddWorkOrderModal = ({
 
   function closeModal() {
     setAddWorkOrderModalIsOpen(false);
+    setIssueDescription('');
+    setIssueLocation('');
+    setAdditionalDetails('');
+    setTenantEmail('');
+    setShowAdditionalOptions(false);
   }
 
   const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -208,7 +213,7 @@ export const AddWorkOrderModal = ({
               shouldFetch={addWorkOrderModalIsOpen}
             />
           </div>
-          <div className='mb-5'>
+          <div className="mb-5">
             <p className="mt-2">Permission To Enter Property* </p>
             <input
               className="rounded px-1"

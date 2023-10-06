@@ -42,8 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       woId,
     } = body as SendEmailApiRequest;
 
-    if(body.createdByType !== userRoles.TENANT && (!tenantEmail || !tenantName || !pmName)) {
-      throw new Error('Missing tenant email, name, or pmName when creating a WO on a tenant\'s behalf.');
+    if (body.createdByType !== userRoles.TENANT && (!tenantEmail || !tenantName || !pmName)) {
+      throw new Error("Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
     }
     const derivedTenantEmail = body.createdByType === userRoles.TENANT ? creatorEmail : tenantEmail!;
     const derivedTenantName = body.createdByType === userRoles.TENANT ? creatorName : tenantName!;
@@ -92,15 +92,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     //CC the tenant if they created the work order, if a pm created the work order then a different email is sent to the tenant
-    const ccString = body.createdByType === userRoles.TENANT ? creatorEmail.toLowerCase() : "";
+    const ccString = body.createdByType === userRoles.TENANT ? creatorEmail.toLowerCase() : '';
 
     const shortenedWorkOrderIdString = woId.substring(woId.length - 4);
 
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
-      from: "pillar@pillarhq.co",
-      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.address ?? ""} ${body.unit ?? ""}`,
+      from: 'pillar@pillarhq.co',
+      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.address ?? ''} ${body.unit ?? ''}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -191,8 +191,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-          .join(' ')}
+              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+              .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -207,7 +207,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (body.createdByType !== userRoles.TENANT) {
       await sendgrid.send({
         to: derivedTenantEmail,
-        from: "pillar@pillarhq.co",
+        from: 'pillar@pillarhq.co',
         subject: `${pmName} created a Work Order for you! "${body.issueDescription}"`,
         html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html lang="en">
@@ -266,12 +266,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
               Regards,<br> Pillar Team
             </p>
+            <p style="font-style: italic; font-size: 14px">If this work order was created incorrectly, please contact your property manager for assistance</p>
           </div>
         </body>
         </html>`,
       });
     }
-    
 
     //Work order created event
     await eventEntity.create({
