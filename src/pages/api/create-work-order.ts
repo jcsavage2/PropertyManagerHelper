@@ -206,7 +206,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     //If the tenant didn't create the work order, make sure they are notified
     if (body.createdByType !== userRoles.TENANT) {
       await sendgrid.send({
-        to: derivedTenantEmail, // The Property Manager
+        to: derivedTenantEmail,
         from: "pillar@pillarhq.co",
         subject: `${pmName} created a Work Order for you! "${body.issueDescription}"`,
         html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
