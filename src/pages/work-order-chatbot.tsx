@@ -169,7 +169,7 @@ export default function WorkOrderChatbot() {
       issueLocation,
       additionalDetails,
       messages,
-      createdByType: ENTITIES.TENANT,
+      createdByType: userRoles.TENANT,
       creatorEmail: user.email,
       creatorName: user.name,
       permissionToEnter,
@@ -183,7 +183,6 @@ export default function WorkOrderChatbot() {
       images: uploadedFiles,
       woId
     };
-
     const res = await axios.post('/api/create-work-order', body);
     if (res.status === 200) {
       toast.success("Successfully Submitted Work Order. An email has been sent to you as confirmation", {

@@ -9,6 +9,7 @@ import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
+import { userRoles } from '@/database/entities/user';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
@@ -37,10 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       organization,
       tenantName,
       pmEmail,
+      pmName,
       woId,
-    } = body;
+    } = body as SendEmailApiRequest;
 
-
+    if (body.createdByType !== userRoles.TENANT && (!tenantEmail || !tenantName || !pmName)) {
+      throw new Error("Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
+    }
+    const derivedTenantEmail = body.createdByType === userRoles.TENANT ? creatorEmail : tenantEmail!;
+    const derivedTenantName = body.createdByType === userRoles.TENANT ? creatorName : tenantName!;
 
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
@@ -53,16 +59,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       location: body.issueLocation || 'No Issue Location',
       additionalDetails: body.additionalDetails || '',
       postalCode,
-      pmEmail, // If the propertyManagerEmail is provided, then the WO was created by a PM and we can use propertyManagerEmail
+      pmEmail,
       state,
       images,
       organization,
       status: STATUS.TO_DO,
       createdBy: creatorEmail,
       createdByType,
-      // If the tenantEmail/tenantName is not provided, then the WO was created by a tenant and we can use creatorEmail and creatorName
-      tenantEmail: tenantEmail ?? creatorEmail,
-      tenantName: tenantName ?? creatorName,
+      tenantEmail: derivedTenantEmail,
+      tenantName: derivedTenantName,
       unit,
     });
 
@@ -81,19 +86,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       await eventEntity.create({
         workOrderId: woId,
         message: message.content ?? '',
-        madeByEmail: message.role === 'user' ? tenantEmail ?? creatorEmail : 'Pillar Assistant',
-        madeByName: message.role === 'user' ? tenantName ?? creatorName : 'Pillar Assistant',
+        madeByEmail: message.role === 'user' ? derivedTenantEmail : 'Pillar Assistant',
+        madeByName: message.role === 'user' ? derivedTenantName : 'Pillar Assistant',
       });
     }
-    const ccString = (body.createdByType === "TENANT" && creatorEmail !== body.pmEmail) ? creatorEmail.toLowerCase() : "";
+
+    //CC the tenant if they created the work order, if a pm created the work order then a different email is sent to the tenant
+    const ccString = body.createdByType === userRoles.TENANT ? creatorEmail.toLowerCase() : '';
 
     const shortenedWorkOrderIdString = woId.substring(woId.length - 4);
 
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
-      from: "pillar@pillarhq.co",
-      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.address ?? ""} ${body.unit ?? ""}`,
+      from: 'pillar@pillarhq.co',
+      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.address ?? ''} ${body.unit ?? ''}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -184,8 +191,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-          .join(' ')}
+              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+              .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -195,6 +202,76 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </body>
       </html>`,
     });
+
+    //If the tenant didn't create the work order, make sure they are notified
+    if (body.createdByType !== userRoles.TENANT) {
+      await sendgrid.send({
+        to: derivedTenantEmail,
+        from: 'pillar@pillarhq.co',
+        subject: `${pmName} created a Work Order for you! "${body.issueDescription}"`,
+        html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <title>The HTML5 Herald</title>
+          <style>
+            html {
+              font-family: arial, sans-serif;
+            }
+            table {
+              font-family: arial, sans-serif;
+              border-collapse: collapse;
+              width: 50%;
+            }
+  
+            td {
+              border: 1px solid #dddddd;
+              text-align: left;
+              padding: 8px;
+            }
+  
+            tr:nth-child(even) {
+              background-color: #dddddd;
+            }
+  
+            a {
+              display: inline-block;
+              margin-bottom: 20px;
+              font-size: 20px;
+            }
+
+            p {
+              font-size: 20px;
+            }
+            @media only screen and (max-width: 600px) {
+              table {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+              }
+            }
+          </style>
+          <meta name="description" content="The HTML5 Herald">
+          <meta name="author" content="SitePoint">
+          <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+          <link rel="stylesheet" href="css/styles.css?v=1.0">
+        </head>
+        
+        <body>
+          <div class="container" style="margin-left: 20px;margin-right: 20px;">
+            <h2>New Work Order Request</h2>
+            <p>${pmName} created a Work Order for you! "${body.issueDescription}"</p>
+            <p>You can view your work order <a href="${workOrderLink}">here</a></p>
+            
+            <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
+              Regards,<br> Pillar Team
+            </p>
+            <p style="font-style: italic; font-size: 14px">If this work order was created incorrectly, please contact your property manager for assistance</p>
+          </div>
+        </body>
+        </html>`,
+      });
+    }
 
     //Work order created event
     await eventEntity.create({
