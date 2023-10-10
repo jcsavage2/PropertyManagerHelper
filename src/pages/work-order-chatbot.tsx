@@ -183,20 +183,30 @@ export default function WorkOrderChatbot() {
       images: uploadedFiles,
       woId
     };
-    const res = await axios.post('/api/create-work-order', body);
-    if (res.status === 200) {
-      toast.success("Successfully Submitted Work Order. An email has been sent to you as confirmation", {
+
+    try {
+      const res = await axios.post('/api/create-work-order', body);
+      if (res.status === 200) {
+        toast.success("Successfully Submitted Work Order. An email has been sent to you as confirmation", {
+          position: toast.POSITION.TOP_CENTER,
+          draggable: false,
+        });
+      } else {
+        toast.error('Error Submitting Work Order. Please Try Again', {
+          position: toast.POSITION.TOP_CENTER,
+          draggable: false,
+        });
+        setSubmittingWorkOrderLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.log({ err });
+      toast.error((err as any)?.response?.data?.response ?? 'Error Submitting Work Order. Please Try Again', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
-    } else {
-      toast.error('Error Submitting Work Order. Please Try Again', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
-      setSubmittingWorkOrderLoading(false);
-      return;
     }
+
     setMessages([]);
     setIssueDescription('');
     setIssueLocation('');
