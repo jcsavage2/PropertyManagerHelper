@@ -167,12 +167,17 @@ export class WorkOrderEntity {
   }
 
   public async get({ pk, sk }: { pk: string; sk: string; }) {
-    const params = {
-      pk,
-      sk,
-    };
-    const result = await this.workOrderEntity.get(params, { consistent: false });
-    return result;
+    try {
+      const params = {
+        pk,
+        sk,
+      };
+      const result = await this.workOrderEntity.get(params, { consistent: false });
+      return result.Item;
+    } catch (err) {
+      console.log({ err });
+      return null;
+    }
   }
 
   //Soft delete work order
@@ -373,7 +378,7 @@ export class WorkOrderEntity {
         newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail.toLowerCase());
       }
       const newViewedWOList = [...viewedWO].filter((email) => email !== technicianEmail.toLowerCase());
-      
+
       const result = await this.workOrderEntity.update(
         {
           pk: key,
