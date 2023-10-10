@@ -3,13 +3,14 @@ import { Data } from '@/database';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
-import { SendEmailApiRequest } from '@/types';
 import { generateKey } from '@/utils';
 import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { userRoles } from '@/database/entities/user';
+import { CreateWorkOrderFullSchema } from '../work-order-chatbot';
+import { ChatCompletionRequestMessage } from 'openai';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
@@ -18,20 +19,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const body = req.body as SendEmailApiRequest;
+    const body = CreateWorkOrderFullSchema.parse(req.body);
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
     const {
-      address,
-      city,
+      property,
       permissionToEnter,
-      country,
-      postalCode,
-      state,
       creatorEmail,
       creatorName,
-      unit,
       images,
       createdByType,
       tenantEmail,
@@ -40,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       pmEmail,
       pmName,
       woId,
-    } = body as SendEmailApiRequest;
+    } = body;
 
     if (body.createdByType !== userRoles.TENANT && (!tenantEmail || !tenantName || !pmName)) {
       throw new Error("Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
@@ -51,24 +47,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
       uuid: woId,
-      address,
-      city,
+      address: property.address,
+      city: property.city,
       permissionToEnter,
-      country: country ?? 'US',
+      country: property.country,
       issue: body.issueDescription || 'No Issue Description',
       location: body.issueLocation || 'No Issue Location',
       additionalDetails: body.additionalDetails || '',
-      postalCode,
+      postalCode: property.postalCode,
       pmEmail,
-      state,
-      images,
+      state: property.state,
+      images: images ?? [],
       organization,
       status: STATUS.TO_DO,
       createdBy: creatorEmail,
       createdByType,
       tenantEmail: derivedTenantEmail,
       tenantName: derivedTenantName,
-      unit,
+      unit: property.unit,
     });
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
@@ -80,15 +76,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     sendgrid.setApiKey(apiKey);
 
-    body.messages.pop();
-    for (const message of body.messages) {
-      // Create a comment for each existing message so the Work Order has context.
-      await eventEntity.create({
-        workOrderId: woId,
-        message: message.content ?? '',
-        madeByEmail: message.role === 'user' ? derivedTenantEmail : 'Pillar Assistant',
-        madeByName: message.role === 'user' ? derivedTenantName : 'Pillar Assistant',
-      });
+    if (body.messages) {
+      body.messages.pop();
+      for (const message of body.messages) {
+        // Create a comment for each existing message so the Work Order has context.
+        await eventEntity.create({
+          workOrderId: woId,
+          message: message.content ?? '',
+          madeByEmail: message.role === 'user' ? derivedTenantEmail : 'Pillar Assistant',
+          madeByName: message.role === 'user' ? derivedTenantName : 'Pillar Assistant',
+        });
+      }
     }
 
     //CC the tenant if they created the work order, if a pm created the work order then a different email is sent to the tenant
@@ -100,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
       from: 'pillar@pillarhq.co',
-      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.address ?? ''} ${body.unit ?? ''}`,
+      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.property.address ?? ''} ${body.property.unit ?? ''}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -169,29 +167,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             </tr>
             <tr>
               <td>Address</td>
-              <td>${body.address}</td>
+              <td>${body.property.address}</td>
             </tr>
             <tr>
               <td>Unit</td>
-              <td>${body.unit ?? 'No Unit'}</td>
+              <td>${body.property.unit ?? 'No Unit'}</td>
             </tr>
             <tr>
               <td>City</td>
-              <td>${body.city}</td>
+              <td>${body.property.city}</td>
             </tr>
             <tr>
               <td>State</td>
-              <td>${body.state}</td>
+              <td>${body.property.state}</td>
             </tr>
             <tr>
               <td>Postal Code</td>
-              <td>${body.postalCode}</td>
+              <td>${body.property.postalCode}</td>
             </tr>
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+              ?.map((m: ChatCompletionRequestMessage) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
               .join(' ')}
           </div>
           <br/>

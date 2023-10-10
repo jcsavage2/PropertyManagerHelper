@@ -4,8 +4,7 @@ import { INDEXES, PillarDynamoTable } from '..';
 import { constructNameEmailString, generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
 import { PAGE_SIZE, STATUS } from '@/constants';
-import { AssignTechnicianBody } from '@/pages/api/assign-technician';
-import { PTE_Type, StatusType } from '@/types';
+import { AssignTechnicianBody, PTE_Type, PropertyType, PropertyTypeWithId, StatusType } from '@/types';
 
 export interface IGetAllWorkOrdersForUserProps {
   email: string;
@@ -40,15 +39,6 @@ type CreateWorkOrderProps = {
 
 export type UpdateImagesProps = { pk: string; sk: string; images: string[]; addNew?: boolean; };
 
-export type PropertyAddress = {
-  address: string;
-  unit?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-};
-
 export interface IWorkOrder {
   pk: string;
   sk: string;
@@ -71,7 +61,7 @@ export interface IWorkOrder {
   createdBy: string;
   createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
   tenantName: string;
-  address: PropertyAddress;
+  address: PropertyType;
   status: StatusType;
   assignedTo: Set<string>;
   viewedWO: string[];
@@ -155,7 +145,7 @@ export class WorkOrderEntity {
         tenantName,
         ...(images.length && { images }),
         status,
-        address: this.generateAddress({ address, country, city, state, postalCode, unit }),
+        address: this.generateAddress({ address, country, city, state, postalCode, unit } as PropertyType),
         issue: issue.toLowerCase(),
         organization,
         location,
@@ -313,7 +303,7 @@ export class WorkOrderEntity {
     workOrderId,
     technicianEmail,
     technicianName,
-    address,
+    property,
     status,
     issueDescription,
     permissionToEnter,
@@ -330,7 +320,7 @@ export class WorkOrderEntity {
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
         sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
-        address: this.generateAddress(address),
+        address: this.generateAddress(property),
         GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
         GSI3SK: ksuID,
         issue: issueDescription.toLowerCase(),
@@ -405,14 +395,7 @@ export class WorkOrderEntity {
     state,
     postalCode,
     unit,
-  }: {
-    address: string;
-    country: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    unit?: string;
-  }) {
+  }: PropertyType | PropertyTypeWithId) {
     return {
       address,
       unit,

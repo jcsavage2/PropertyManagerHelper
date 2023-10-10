@@ -1,31 +1,14 @@
 import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
-import { PropertyAddress, WorkOrderEntity } from '@/database/entities/work-order';
+import { WorkOrderEntity } from '@/database/entities/work-order';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
-import { PTE_Type, StatusType } from '@/types';
+import { AssignTechnicianSchema } from '@/types';
 import { deconstructKey } from '@/utils';
 import twilio from "twilio";
 import { UserEntity } from '@/database/entities/user';
-
-export type AssignTechnicianBody = {
-  organization: string;
-  ksuID: string; //need to pass ksuID from original WO record
-  technicianEmail: string;
-  technicianName: string;
-  workOrderId: string;
-  address: PropertyAddress;
-  status: StatusType;
-  issueDescription: string;
-  permissionToEnter: PTE_Type;
-  pmEmail: string;
-  pmName: string;
-  tenantEmail: string;
-  tenantName: string;
-  oldAssignedTo: Set<string>;
-};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
@@ -34,11 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const body = req.body as AssignTechnicianBody;
-    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName, tenantName, tenantEmail, oldAssignedTo } = body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID || !pmName || !tenantEmail || !tenantName || !oldAssignedTo) {
-      throw new Error('Invalid params to assign technician');
-    }
+    const body = AssignTechnicianSchema.parse(req.body);
+    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, property, status, issueDescription, permissionToEnter, organization, pmName, tenantName, tenantEmail, oldAssignedTo } = body;
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
@@ -48,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       organization,
       ksuID,
       workOrderId: deconstructKey(workOrderId),
-      address,
+      property,
       technicianEmail,
       technicianName,
       status,
@@ -166,5 +146,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     console.error(error);
   }
 }
-
-// As a technician I would want to see: street address, unit, city, state, zip, status, issueDescription. Upon clicking a work Order I could see comments etc...

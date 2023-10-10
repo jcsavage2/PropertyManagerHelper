@@ -22,8 +22,8 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
 import { StatusOptionType, StatusType } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
-import WorkOrdersTable from '@/components/work-orders-table';
 import { toast } from 'react-toastify';
+import WorkOrdersTable from '@/components/work-orders-table';
 
 export type HandleUpdateStatusProps = {
   val: SingleValue<StatusOptionType>;

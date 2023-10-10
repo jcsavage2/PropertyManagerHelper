@@ -4,17 +4,12 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "./auth/[...nextauth]";
 import { IUser, userRoles } from "@/database/entities/user";
-
-export type CreateCommentBody = {
-  comment: string;
-  email: string;
-  name: string;
-  workOrderId: string;
-};
+import { deconstructKey } from "@/utils";
+import { CreateCommentSchema } from "@/components/add-comment-modal";
 
 /**
  * 
- * @returns newly created comment.
+ * @returns newly created comment or error message on failure.
  */
 export default async function handler(
   req: NextApiRequest,
@@ -30,24 +25,24 @@ export default async function handler(
     return;
   }
   try {
-    const body = req.body as CreateCommentBody;
+    const body = CreateCommentSchema.parse(req.body);
     const {
       comment,
       email,
       name,
-      workOrderId
     } = body;
 
     const eventEntity = new EventEntity();
     const newComment = await eventEntity.create({
-      workOrderId,
+      workOrderId: deconstructKey(body.workOrderId),
       madeByEmail: email,
       madeByName: name,
       message: comment,
     });
 
     return res.status(200).json({ response: JSON.stringify(newComment) });
-  } catch (error) {
+  } catch (error: any) {
     console.log({ error });
+    return res.status(500).json({ response: error?.message });
   }
 }

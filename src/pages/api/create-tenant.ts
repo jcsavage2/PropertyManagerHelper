@@ -6,25 +6,8 @@ import { IUser, UserEntity, userRoles } from '@/database/entities/user';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { getInviteTenantSendgridEmailBody } from '@/utils';
-
-export type CreateTenantBody = {
-  tenantEmail: string;
-  tenantName: string;
-  pmEmail: string;
-  pmName: string;
-  address: string;
-  unit?: string;
-  state: string;
-  city: string;
-  country: 'US' | 'CA';
-  postalCode: string;
-  numBeds: number;
-  numBaths: number;
-  createNewProperty: boolean;
-  organization: string;
-  organizationName: string;
-  propertyUUId: string;
-};
+import { CreateTenantSchema } from '@/components/add-tenant-modal';
+import { INVALID_PARAM_ERROR } from '@/constants';
 
 /**
  *
@@ -41,42 +24,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const body = req.body as CreateTenantBody;
-    const {
-      pmEmail,
-      pmName,
-      tenantEmail,
-      tenantName,
-      organization,
-      organizationName,
-      address,
-      country = 'US',
-      city,
-      state,
-      postalCode,
-      unit,
-      numBeds,
-      numBaths,
-      propertyUUId,
-      createNewProperty,
-    } = body;
+    const body = CreateTenantSchema.parse(req.body);
+    const { pmEmail, pmName, tenantEmail, tenantName, organization, organizationName, property, createNewProperty } = body;
 
-    if (
-      !pmName ||
-      !pmEmail ||
-      !tenantEmail ||
-      !tenantName ||
-      !address ||
-      !city ||
-      !state ||
-      !postalCode ||
-      !numBeds ||
-      !numBaths ||
-      !propertyUUId ||
-      !organization ||
-      !organizationName
-    ) {
-      throw new Error('create-tenant Error: Missing required fields.');
+    if (!property) {
+      throw new Error(INVALID_PARAM_ERROR('property'));
     }
 
     const userEntity = new UserEntity();
@@ -88,17 +40,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       tenantName,
       pmEmail,
       pmName,
-      propertyUUId,
-      address,
-      country,
-      city,
-      state,
-      postalCode,
-      unit,
+      propertyUUId: property.propertyUUId,
+      address: property.address,
+      country: property.country,
+      city: property.city,
+      state: property.state,
+      postalCode: property.postalCode,
+      unit: property.unit,
+      numBeds: property.numBeds,
+      numBaths: property.numBaths,
       organization,
       organizationName,
-      numBeds,
-      numBaths,
     });
 
     // Create Property if necessary
@@ -107,15 +59,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         tenantEmail,
         propertyManagerEmail: pmEmail,
         organization,
-        address,
-        city,
-        country,
-        postalCode,
-        state,
-        unit,
-        uuid: propertyUUId,
-        numBeds,
-        numBaths,
+        uuid: property.propertyUUId,
+        address: property.address,
+        country: property.country,
+        city: property.city,
+        state: property.state,
+        postalCode: property.postalCode,
+        unit: property.unit,
+        numBeds: property.numBeds,
+        numBaths: property.numBaths,
       });
     }
 

@@ -5,17 +5,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "./auth/[...nextauth]";
 import { IUser, userRoles } from "@/database/entities/user";
-
-
-export type RemoveTechnicianBody = {
-  workOrderId: string;
-  pmEmail: string;
-  pmName: string
-  technicianEmail: string;
-  technicianName: string;
-  oldAssignedTo: Set<string>;
-  oldViewedWO: string[];
-};
+import { RemoveTechnicianSchema } from "@/types";
 
 export default async function handler(
   req: NextApiRequest,
@@ -31,11 +21,9 @@ export default async function handler(
     return;
   }
   try {
-    const body = req.body as RemoveTechnicianBody;
+    const body = RemoveTechnicianSchema.parse(req.body);
     const { workOrderId, pmEmail, technicianEmail, technicianName, pmName, oldAssignedTo, oldViewedWO } = body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !pmName || !oldAssignedTo || !oldViewedWO) {
-      return res.status(400).json({ response: "Missing one parameter of: workOrderId, pmEmail, technicianEmail, technicianName, oldAssignedTo, oldViewedWO" });
-    }
+
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
     await eventEntity.create({

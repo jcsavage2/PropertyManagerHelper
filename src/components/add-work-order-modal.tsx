@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
-import { OptionType, PTE_Type, SendEmailApiRequest } from '@/types';
+import { OptionType } from '@/types';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
@@ -12,10 +12,24 @@ import { SingleValue } from 'react-select';
 import { GetUser } from '@/pages/api/get-user';
 import { ENTITIES } from '@/database/entities';
 import { useDevice } from '@/hooks/use-window-size';
-import { PTE } from '@/constants';
+import { PTE, USER_PERMISSION_ERROR } from '@/constants';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
-import { v4 as uuidv4 } from 'uuid';
 import { toggleBodyScroll } from '@/utils';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CreateWorkOrderFullSchema } from '@/pages/work-order-chatbot';
+import { PropertyType, optionalString, lowerCaseRequiredEmail, requiredString, validatePTE } from '@/types/zodvalidators';
+import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
+
+export const AddWorkOrderModalSchema = z.object({
+  issueDescription: requiredString,
+  tenantEmail: lowerCaseRequiredEmail,
+  permissionToEnter: validatePTE,
+  issueLocation: optionalString,
+  additionalDetails: optionalString,
+});
+export type AddWorkOrderModalSchemaType = z.infer<typeof AddWorkOrderModalSchema>;
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -29,11 +43,8 @@ export const AddWorkOrderModal = ({
   const { user } = useSessionUser();
   const { userType, altName } = useUserContext();
   const { isMobile } = useDevice();
-  const [isBrowser, setIsBrowser] = useState(false);
+
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
 
   const customStyles = {
     content: {
@@ -55,123 +66,87 @@ export const AddWorkOrderModal = ({
     },
   };
 
+  const [isBrowser, setIsBrowser] = useState(false);
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
   isBrowser && Modal.setAppElement('#workOrder');
 
-  const [tenantEmail, setTenantEmail] = useState<string>('');
-  const [issueDescription, setIssueDescription] = useState('');
-  const [issueLocation, setIssueLocation] = useState('');
-  const [additionalDetails, setAdditionalDetails] = useState('');
-  const [submitWorkOrderLoading, setSubmitWorkOrderLoading] = useState(false);
-  const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { isSubmitting, isValid },
+  } = useForm<AddWorkOrderModalSchemaType>({
+    resolver: zodResolver(AddWorkOrderModalSchema),
+  });
 
   function closeModal() {
     setAddWorkOrderModalIsOpen(false);
-    setIssueDescription('');
-    setIssueLocation('');
-    setAdditionalDetails('');
-    setTenantEmail('');
+    reset();
     setShowAdditionalOptions(false);
   }
 
-  const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setPermissionToEnter(e.currentTarget.value as PTE_Type);
-    },
-    [setPermissionToEnter]
-  );
-
-  const handleCreateWorkOrder: FormEventHandler<HTMLFormElement> = useCallback(
-    async (event) => {
+  const handleCreateWorkOrder: SubmitHandler<AddWorkOrderModalSchemaType> = useCallback(
+    async (params) => {
       try {
-        event.preventDefault();
-        if (!user || !user?.email || !user?.name) throw new Error('user must be logged in');
-        if (userType !== 'PROPERTY_MANAGER' || !user?.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization)
-          throw new Error('user must be a property manager in an organization');
-        if (!tenantEmail) {
-          throw new Error('No tenant selected');
-        }
-        if (!userType) {
-          throw new Error('No userType');
-        }
-        setSubmitWorkOrderLoading(true);
+        if (userType !== userRoles.PROPERTY_MANAGER || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
 
-        //get tenant primary property
-        const getTenantResponse = await axios.post('/api/get-user', { email: tenantEmail, userType: ENTITIES.TENANT } as GetUser);
+        //Fetch additional tenant info
+        const getTenantResponse = await axios.post('/api/get-user', { email: params.tenantEmail, userType: ENTITIES.TENANT } as GetUser);
+        if (getTenantResponse.status !== 200) throw new Error('Error getting tenant');
+
         const tenant = JSON.parse(getTenantResponse.data.response) as IUser;
         const addressMap: Record<string, any> = tenant.addresses;
         let primaryAddress: any;
-        Object.entries(addressMap).forEach((pair) => {
+        Object.entries(addressMap).forEach((pair: any) => {
           if (pair[1].isPrimary) {
             primaryAddress = pair[1];
           }
         });
-
-        const body: SendEmailApiRequest = {
-          issueDescription,
-          issueLocation,
-          additionalDetails,
-          messages: [],
-          pmEmail: user.email,
-          pmName: altName ?? user.name,
-          creatorEmail: user.email,
-          creatorName: altName ?? user.name,
-          createdByType: userRoles.PROPERTY_MANAGER,
-          permissionToEnter: permissionToEnter,
+        const property = {
           address: primaryAddress.address,
+          unit: primaryAddress.unit,
           state: primaryAddress.state,
           city: primaryAddress.city,
-          unit: primaryAddress.unit,
           postalCode: primaryAddress.postalCode,
-          tenantEmail,
-          tenantName: tenant.name,
-          woId: uuidv4(),
-          images: [],
-          organization: user.organization,
-        };
+          country: primaryAddress.country,
+          numBeds: primaryAddress.numBeds,
+          numBaths: primaryAddress.numBaths,
+        } as PropertyType;
 
-        const res = await axios.post('/api/create-work-order', { ...body });
-        if (res.status !== 200) throw new Error('Error creating and sending WO email');
+        const validatedBody = CreateWorkOrderFullSchema.parse({
+          ...params,
+          organization: user?.organization ?? '',
+          pmEmail: user?.email ?? '',
+          pmName: altName ?? user?.name ?? '',
+          creatorEmail: user?.email ?? '',
+          creatorName: altName ?? user?.name ?? '',
+          woId: uuidv4(),
+          createdByType: userType ?? '',
+          tenantName: tenant.name,
+          property,
+        });
+        console.log(validatedBody)
+        const res = await axios.post('/api/create-work-order', { ...validatedBody });
+        if (res.status !== 200) throw new Error(res.data.response);
 
         toast.success('Successfully Submitted Work Order!', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });
         onSuccessfulAdd();
-        setIssueDescription('');
-        setIssueLocation('');
-        setAdditionalDetails('');
-        setTenantEmail('');
-        setSubmitWorkOrderLoading(false);
-        setShowAdditionalOptions(false);
+        closeModal();
       } catch (err) {
         console.log({ err });
         toast.error('Error Submitting Work Order. Please Try Again', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });
-        setSubmitWorkOrderLoading(false);
       }
     },
-    [user, userType, tenantEmail, issueDescription, issueLocation, additionalDetails, permissionToEnter, onSuccessfulAdd, altName]
-  );
-
-  const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setIssueDescription(e.currentTarget.value);
-    },
-    [setIssueDescription]
-  );
-  const handleIssueLocationChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setIssueLocation(e.currentTarget.value);
-    },
-    [setIssueLocation]
-  );
-  const handleAdditionalDetailsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setAdditionalDetails(e.currentTarget.value);
-    },
-    [setAdditionalDetails]
+    [user, userType, altName, onSuccessfulAdd]
   );
 
   return (
@@ -191,49 +166,37 @@ export const AddWorkOrderModal = ({
         <p className="clear-left text-lg md:w-2/5 mx-auto pt-0.5">Create New Work Order</p>
       </div>
 
-      <form onSubmit={handleCreateWorkOrder} className="flex flex-col">
+      <form onSubmit={handleSubmit(handleCreateWorkOrder)} className="flex flex-col">
         <div className="flex flex-col mt-4">
           <label htmlFor="issueDescription">What is the issue?* </label>
           <input
             className="rounded px-1 border-solid border-2 border-slate-200 mb-1"
             id="issueDescription"
             type={'text'}
-            value={issueDescription}
-            onChange={handleIssueDescriptionChange}
+            {...register("issueDescription")}
           />
           <div className="mb-5">
-            <TenantSelect
-              label={'Select Tenant*'}
-              user={user}
-              userType={userType}
-              onChange={(option: SingleValue<OptionType>) => {
-                if (!option) return;
-                setTenantEmail(option.value);
-              }}
-              shouldFetch={addWorkOrderModalIsOpen}
+            <Controller
+              control={control}
+              name="tenantEmail"
+              render={({ field: { onChange, value } }) => (
+                <TenantSelect
+                  label={'Optionally attach an existing tenant to this property'}
+                  user={user}
+                  userType={userType}
+                  onChange={async (option: SingleValue<OptionType>) => {
+                    onChange(option?.value ?? undefined);
+                  }}
+                  shouldFetch={addWorkOrderModalIsOpen}
+                />
+              )}
             />
           </div>
           <div className="mb-5">
             <p className="mt-2">Permission To Enter Property* </p>
-            <input
-              className="rounded px-1"
-              id="permission-yes"
-              name={'permission'}
-              type={'radio'}
-              value={PTE.YES}
-              checked={permissionToEnter === PTE.YES}
-              onChange={handlePermissionChange}
-            />
+            <input className="rounded px-1" id="permission-yes" type={'radio'} value={PTE.YES} {...register('permissionToEnter')} />
             <label htmlFor="permission-yes">{PTE.YES}</label>
-            <input
-              className="rounded px-1 ml-4"
-              id="permission-no"
-              name={'permission'}
-              type={'radio'}
-              value={PTE.NO}
-              checked={permissionToEnter === PTE.NO}
-              onChange={handlePermissionChange}
-            />
+            <input className="rounded px-1 ml-4" id="permission-no" type={'radio'} value={PTE.NO} {...register('permissionToEnter')} />
             <label htmlFor="permission-no">{PTE.NO}</label>
           </div>
 
@@ -260,27 +223,24 @@ export const AddWorkOrderModal = ({
                 className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
                 id="issueLocation"
                 type={'text'}
-                value={issueLocation}
-                onChange={handleIssueLocationChange}
+                {...register('issueLocation')}
               />
               <label htmlFor="additionalDetails">Additional Details </label>
               <input
                 className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
                 id="additionalDetails"
                 type={'text'}
-                value={additionalDetails}
-                onChange={handleAdditionalDetailsChange}
+                {...register('additionalDetails')}
               />
             </>
           )}
         </div>
-
         <button
           className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
           type="submit"
-          disabled={!issueDescription || !tenantEmail || submitWorkOrderLoading}
+          disabled={isSubmitting || !isValid}
         >
-          {submitWorkOrderLoading ? <LoadingSpinner /> : 'Add Work Order'}
+          {isSubmitting ? <LoadingSpinner /> : 'Add Work Order'}
         </button>
       </form>
     </Modal>

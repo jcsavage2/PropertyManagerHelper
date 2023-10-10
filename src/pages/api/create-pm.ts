@@ -1,22 +1,16 @@
 import { Data } from '@/database';
-import { ICreatePMUser, IUser, UserEntity } from '@/database/entities/user';
+import { IUser, UserEntity } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import sendgrid from '@sendgrid/mail';
 import { userRoles } from '@/database/entities/user';
-
-export type CreatePMBody = {
-  pmName: string;
-  isAdmin: boolean;
-  pmEmail: string;
-  organization: string;
-  organizationName: string;
-};
+import { CreatePMSchema } from '@/components/add-property-manager-modal';
+import { MISSING_ENV } from '@/constants';
 
 /**
  *
- * @returns `ContextUser` object.
+ * @returns created pm object or an error message on failure.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
@@ -29,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const body = req.body as ICreatePMUser;
+    const body = CreatePMSchema.parse(req.body);
     const { organization, organizationName, userEmail, userName, isAdmin } = body;
 
     const userEntity = new UserEntity();
@@ -37,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
-      throw new Error('missing SENDGRID_API_KEY env variable.');
+      throw new Error(MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY'));
     }
     sendgrid.setApiKey(apiKey);
 
@@ -104,7 +98,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     return res.status(200).json({ response: JSON.stringify(newPM) });
-  } catch (error) {
+  } catch (error: any) {
     console.log({ error });
+    return res.status(500).json({ response: error?.message });
   }
 }

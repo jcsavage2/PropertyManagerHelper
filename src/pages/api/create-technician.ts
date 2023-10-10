@@ -4,15 +4,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import sendgrid from '@sendgrid/mail';
-
-export type CreateTechnicianBody = {
-  technicianEmail: string;
-  technicianName: string;
-  pmEmail: string;
-  pmName: string;
-  organization: string;
-  organizationName: string;
-};
+import { CreateTechnicianSchema } from '@/components/add-technician-modal';
+import { MISSING_ENV } from '@/constants';
 
 /**
  *
@@ -29,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
   try {
-    const body = req.body as CreateTechnicianBody;
+    const body = CreateTechnicianSchema.parse(req.body);
     const { technicianEmail, technicianName, organization, organizationName, pmEmail, pmName } = body;
 
     const userEntity = new UserEntity();
@@ -40,9 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
-      throw new Error('missing SENDGRID_API_KEY env variable.');
+      throw new Error(MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY'));
     }
     sendgrid.setApiKey(apiKey);
+
     await sendgrid.send({
       to: technicianEmail,
       from: "pillar@pillarhq.co",

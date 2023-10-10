@@ -208,7 +208,7 @@ const Tenants = () => {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
   return (
-    <div id="testing" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
+    <div id="tenants" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
       <ConfirmationModal
         confirmationModalIsOpen={confirmDeleteModalIsOpen}

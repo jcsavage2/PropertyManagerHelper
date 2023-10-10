@@ -8,11 +8,10 @@ import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { OptionType, PTE_Type } from '@/types';
-import { AssignTechnicianBody } from '@/pages/api/assign-technician';
+import { AssignTechnicianSchema, OptionType, PTE_Type, RemoveTechnicianSchema } from '@/types';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
-import { PTE, STATUS, TECHNICIAN_DELIM } from '@/constants';
+import { PTE, STATUS, TECHNICIAN_DELIM, USER_PERMISSION_ERROR } from '@/constants';
 import { BsTrashFill } from 'react-icons/bs';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
@@ -24,7 +23,6 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
 import Modal from 'react-modal';
 import { userRoles } from '@/database/entities/user';
-import { RemoveTechnicianBody } from '@/pages/api/remove-technician';
 import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
 import { MdOutlineClear } from 'react-icons/md';
 import { UpdateViewedWORequest } from '@/pages/api/update-viewed-wo-list';
@@ -74,7 +72,6 @@ const WorkOrder = ({
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
@@ -87,37 +84,44 @@ const WorkOrder = ({
     }
   }, []);
 
-  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(async (e) => {
-    e.preventDefault();
-    setUploadingFiles(true);
-    const selectedFs = e.target.files ?? [];
-    const formData = new FormData();
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setUploadingFiles(true);
+      const selectedFs = e.target.files ?? [];
+      const formData = new FormData();
 
-    // Append all selected files to the FormData
-    for (const imageFile of selectedFs) {
-      formData.append('image', imageFile);
-    }
-    formData.append("uuid", workOrderId);
+      // Append all selected files to the FormData
+      for (const imageFile of selectedFs) {
+        formData.append('image', imageFile);
+      }
+      formData.append('uuid', workOrderId);
 
-    try {
-      const response = await axios.post('/api/upload-images', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      try {
+        const response = await axios.post('/api/upload-images', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
 
-      if (response.status === 200) {
-        await axios.post("/api/add-images-to-work-order", { pk: workOrder?.pk, sk: workOrder?.sk, images: [...(response?.data?.files ?? []), ...(workOrder?.images ?? [])] });
-        setUploadedFiles(response?.data?.files ?? []);
-        toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
-        setUploadingFiles(false);
-      } else {
+        if (response.status === 200) {
+          await axios.post('/api/add-images-to-work-order', {
+            pk: workOrder?.pk,
+            sk: workOrder?.sk,
+            images: [...(response?.data?.files ?? []), ...(workOrder?.images ?? [])],
+          });
+          setUploadedFiles(response?.data?.files ?? []);
+          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
+          setUploadingFiles(false);
+        } else {
+          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+          setUploadingFiles(false);
+        }
+      } catch (error) {
         toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
         setUploadingFiles(false);
       }
-    } catch (error) {
-      toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
-      setUploadingFiles(false);
-    }
-  }, [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId]);
+    },
+    [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId]
+  );
 
   //Return a list of technician options based on string search input
   //Can also be used to get all technicians for an org by omitting the search string
@@ -271,7 +275,7 @@ const WorkOrder = ({
         sk: workOrderId,
         email: user.email,
         name: altName ?? user.name,
-        permissionToEnter: newValue
+        permissionToEnter: newValue,
       });
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
@@ -327,12 +331,12 @@ const WorkOrder = ({
     setIsUpdatingAssignedTechnicians(true);
     try {
       if (!user?.email || !workOrder || userType !== ENTITIES.PROPERTY_MANAGER || !user.organization) {
-        throw new Error('User must be a property manager in an organization to assign or remove technicians');
+        throw new Error(USER_PERMISSION_ERROR);
       }
       const actionType = actionMeta.action;
       if (actionType === 'select-option') {
         const selectedTechnician = actionMeta.option as OptionType;
-        await axios.post('/api/assign-technician', {
+        const validatedBody = AssignTechnicianSchema.parse({
           organization: user.organization,
           workOrderId,
           ksuID: workOrder.GSI1SK,
@@ -347,21 +351,23 @@ const WorkOrder = ({
           tenantName: workOrder?.tenantName,
           tenantEmail: workOrder?.tenantEmail,
           oldAssignedTo: workOrder?.assignedTo ?? [],
-        } as AssignTechnicianBody);
+        });
+        await axios.post('/api/assign-technician', { ...validatedBody });
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as OptionType;
         const technicianName = removedTechnician.label.includes(' (viewed)')
           ? removedTechnician.label.replace(' (viewed)', '')
           : removedTechnician.label;
-        await axios.post('/api/remove-technician', {
+        const validatedBody = RemoveTechnicianSchema.parse({
           workOrderId: deconstructKey(workOrderId),
           pmEmail: user.email,
           pmName: altName ?? user.name,
           technicianEmail: removedTechnician.value,
           technicianName: technicianName,
           oldAssignedTo: workOrder?.assignedTo ?? [],
-          oldViewedWO: workOrder?.viewedWO ?? []
-        } as RemoveTechnicianBody);
+          oldViewedWO: workOrder?.viewedWO ?? [],
+        });
+        await axios.post('/api/remove-technician', { ...validatedBody });
       }
       await getWorkOrder();
       await getWorkOrderEvents(true);
@@ -420,7 +426,7 @@ const WorkOrder = ({
     updateViewedList();
   }, [workOrder, user, userType, workOrderId]);
 
-  const PTEOptions: { value: PTE_Type; label: PTE_Type; }[] = [
+  const PTEOptions: { value: PTE_Type; label: PTE_Type }[] = [
     { value: PTE.YES, label: PTE.YES },
     { value: PTE.NO, label: PTE.NO },
   ];
@@ -562,7 +568,7 @@ const WorkOrder = ({
               classNamePrefix="select"
               value={{ value: workOrder.permissionToEnter, label: workOrder.permissionToEnter }}
               onChange={(v: { value: PTE_Type; label: PTE_Type } | null) => {
-                if(isUpdatingPTE) return;
+                if (isUpdatingPTE) return;
                 v?.value && handleUpdatePTE(v.value);
               }}
               defaultValue={undefined}

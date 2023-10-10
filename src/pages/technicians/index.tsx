@@ -113,7 +113,7 @@ const Technicians = () => {
   }
 
   return (
-    <div id="testing" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
+    <div id="technicians" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
       <ConfirmationModal
         confirmationModalIsOpen={confirmDeleteModalIsOpen}
@@ -250,7 +250,7 @@ const Technicians = () => {
           </div>
         )}
         {techs.length && startKey && !techsLoading ? (
-          <div className="w-full flex items-center justify-center mb-8">
+          <div className="w-full flex items-center justify-center mb-24">
             <button
               onClick={() => fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)}
               className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
@@ -258,7 +258,7 @@ const Technicians = () => {
               Load more
             </button>
           </div>
-        ) : <div className="mb-8"></div>}
+        ) : <div className="mb-24"></div>}
       </div>
       <AddTechnicianModal
         technicianModalIsOpen={addTechModalIsOpen}

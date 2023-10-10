@@ -4,6 +4,7 @@ import { INDEXES, PillarDynamoTable } from '..';
 import { generateAddress, generateKey } from '@/utils';
 import { PAGE_SIZE } from '@/constants';
 import { INVITE_STATUS, InviteStatusType } from '@/utils/user-types';
+import { CreatePMSchemaType } from '@/components/add-property-manager-modal';
 
 interface IBaseUser {
   pk: string;
@@ -23,14 +24,6 @@ export interface ICreateTechnician {
   organizationName: string;
 }
 
-export interface ICreatePMUser {
-  userEmail: string;
-  userName: string;
-  organization: string;
-  organizationName: string;
-  isAdmin: boolean;
-}
-
 interface ICreateUser {
   email: string;
 }
@@ -44,7 +37,7 @@ interface ICreateTenant {
   organization: string;
   organizationName: string;
   phone?: string;
-  country: 'US' | 'CA';
+  country: string;
   city: string;
   state: string;
   postalCode: string;
@@ -184,7 +177,7 @@ export class UserEntity {
     return updatedUser.Attributes ?? null;
   }
 
-  public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: ICreatePMUser) {
+  public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: CreatePMSchemaType) {
     try {
       const lowerCaseUserEmail = userEmail.toLowerCase();
       const result = await this.userEntity.update(

@@ -1,18 +1,43 @@
-import { useUserContext } from "@/context/user";
-import axios from "axios";
-import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-toastify";
-import Modal from "react-modal";
-import { CSSTransition } from "react-transition-group";
-import { CreateTenantBody } from "@/pages/api/create-tenant";
-import { StateSelect } from "./state-select";
-import { useDevice } from "@/hooks/use-window-size";
-import PropertySelector from "./property-selector";
-import { IProperty } from "@/database/entities/property";
-import { v4 as uuid } from "uuid";
-import { useSessionUser } from "@/hooks/auth/use-session-user";
-import { LoadingSpinner } from "./loading-spinner/loading-spinner";
-import { deconstructKey, toggleBodyScroll } from "@/utils";
+import { useUserContext } from '@/context/user';
+import axios from 'axios';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import Modal from 'react-modal';
+import { CSSTransition } from 'react-transition-group';
+import { StateSelect } from './state-select';
+import { useDevice } from '@/hooks/use-window-size';
+import PropertySelector from './property-selector';
+import { v4 as uuid } from 'uuid';
+import { useSessionUser } from '@/hooks/auth/use-session-user';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { toggleBodyScroll } from '@/utils';
+import { userRoles } from '@/database/entities/user';
+import { validatePropertyWithId, lowerCaseRequiredEmail, lowerCaseRequiredString } from '@/types/zodvalidators';
+import { z } from 'zod';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { API_STATUS, EMAIL_MATCHING_ERROR, USER_PERMISSION_ERROR, defaultProperty, defaultPropertyWithId } from '@/constants';
+
+//Used to validate tenant info in stage 0
+export const TenantInfoSchema = z.object({
+  tenantEmail: lowerCaseRequiredEmail,
+  tenantName: lowerCaseRequiredString,
+  organization: z.string().min(1),
+  organizationName: z.string().min(1),
+  pmEmail: lowerCaseRequiredEmail,
+  pmName: lowerCaseRequiredString,
+});
+export type TenantInfoSchemaType = z.infer<typeof TenantInfoSchema>;
+
+//Used to validate address input
+export const AddressSchema = z.object({
+  property: z.union([validatePropertyWithId, z.null()]).default(defaultPropertyWithId),
+});
+export type AddressSchemaType = z.infer<typeof AddressSchema>;
+
+//Used to validate params in api
+export const CreateTenantSchema = AddressSchema.merge(TenantInfoSchema).merge(z.object({ createNewProperty: z.boolean().default(true) }));
+export type CreateTenantSchemaType = z.infer<typeof CreateTenantSchema>;
 
 export const AddTenantModal = ({
   tenantModalIsOpen,
@@ -24,212 +49,115 @@ export const AddTenantModal = ({
   onSuccessfulAdd: () => void;
 }) => {
   const { user } = useSessionUser();
-  const [isBrowser, setIsBrowser] = useState(false);
   const { isMobile } = useDevice();
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
-  const { altName } = useUserContext();
+  const { altName, userType } = useUserContext();
 
   const customStyles = {
     content: {
-      top: "50%",
-      left: "50%",
-      right: "auto",
-      bottom: "auto",
-      transform: "translate(-50%, -50%)",
-      width: isMobile ? "90%" : "60%",
-      maxHeight: "90%",
-      backgroundColor: "rgba(255, 255, 255)",
+      top: '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      transform: 'translate(-50%, -50%)',
+      width: isMobile ? '90%' : '60%',
+      maxHeight: '90%',
+      backgroundColor: 'rgba(255, 255, 255)',
     },
     overLay: {
-      position: "fixed",
+      position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(25, 255, 255, 0.75)",
+      backgroundColor: 'rgba(25, 255, 255, 0.75)',
     },
   };
 
   const [stage, setStage] = useState(0);
-
-  isBrowser && Modal.setAppElement("#testing");
-
-  const [tenantName, setTenantName] = useState("");
-  const [tenantEmail, setTenantEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [unit, setUnit] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [numBeds, setNumBeds] = useState(1);
-  const [numBaths, setNumBaths] = useState(1);
   const [createNewProperty, setCreateNewProperty] = useState(true);
-  const [selectedProperty, setSelectedProperty] = useState<IProperty | null>(null);
-  const [createNewTenantLoading, setCreateNewTenantLoading] = useState(false);
 
-  const handleTenantNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setTenantName(e.currentTarget.value);
-    },
-    [setTenantName]
-  );
-  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setTenantEmail(e.currentTarget.value);
-    },
-    [setTenantEmail]
-  );
-  const handleAddressChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setAddress(e.currentTarget.value);
-    },
-    [setAddress]
-  );
-  const handleUnitChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setUnit(e.currentTarget.value);
-    },
-    [setUnit]
-  );
-  const handleCityChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setCity(e.currentTarget.value);
-    },
-    [setCity]
-  );
-  const handlePostalCodeChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setPostalCode(e.currentTarget.value);
-    },
-    [setPostalCode]
-  );
-  const handleNumBedsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setNumBeds(Number(e.currentTarget.value) || 1);
-    },
-    [setCity]
-  );
-  const handleNumBathsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setNumBaths(Number(e.currentTarget.value) || 1);
-    },
-    [setPostalCode]
-  );
+  const [isBrowser, setIsBrowser] = useState(false);
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+  isBrowser && Modal.setAppElement('#tenants');
 
-  const handleCreateNewTenant: FormEventHandler<HTMLFormElement> = useCallback(
-    async (event) => {
+  const tenantInfoForm = useForm<TenantInfoSchemaType>({ resolver: zodResolver(TenantInfoSchema) });
+  const createNewPropertyForm = useForm<AddressSchemaType>({ resolver: zodResolver(AddressSchema) });
+  const useExistingPropertyForm = useForm<AddressSchemaType>({ resolver: zodResolver(AddressSchema) });
+
+  const closeModal = () => {
+    tenantInfoForm.reset();
+    createNewPropertyForm.reset();
+    useExistingPropertyForm.reset();
+    setStage(0);
+    setTenantModalIsOpen(false);
+  };
+
+  const handleValidateTenantInfo: SubmitHandler<TenantInfoSchemaType> = async (params) => {
+    if (params.tenantEmail === params.pmEmail) {
+      console.log('email matching error');
+      tenantInfoForm.setError('tenantEmail', { message: EMAIL_MATCHING_ERROR });
+      return;
+    }
+
+    setStage(1);
+  };
+
+  const handleCreateNewTenant: SubmitHandler<AddressSchemaType> = useCallback(
+    async (params) => {
       try {
-        event.preventDefault();
-        if (!user || !user.name || !user.email) {
-          throw new Error("user needs to be a Property Manager.");
-        }
-        if (!user.organization || !user.organizationName) {
-          throw new Error("User needs to be part of an organization to add tenants.");
-        }
-        setCreateNewTenantLoading(true);
+        if (userType !== userRoles.PROPERTY_MANAGER || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
 
-        let body: CreateTenantBody;
-        const pmName = altName ?? user.name
-        if (createNewProperty) {
-          body = {
-            tenantEmail,
-            tenantName,
-            pmEmail: user.email,
-            pmName,
-            address,
-            unit,
-            state,
-            city,
-            country: "US",
-            postalCode,
-            numBeds,
-            numBaths,
-            createNewProperty,
-            organization: user.organization,
-            organizationName: user.organizationName,
-            propertyUUId: uuid(),
-          };
-        } else {
-          if (!selectedProperty) throw new Error("No property selected with use existing property option.");
-          body = {
-            tenantEmail,
-            tenantName,
-            pmEmail: user.email,
-            pmName,
-            address: selectedProperty.address,
-            unit: selectedProperty.unit,
-            state: selectedProperty.state,
-            city: selectedProperty.city,
-            country: "US",
-            postalCode: selectedProperty.postalCode,
-            numBeds: selectedProperty.numBeds,
-            numBaths: selectedProperty.numBaths,
-            createNewProperty,
-            organization: user.organization,
-            organizationName: user.organizationName,
-            propertyUUId: deconstructKey(selectedProperty.pk),
-          };
-        }
+        const body = {
+          ...params,
+          ...tenantInfoForm.getValues(),
+          createNewProperty,
+        };
+        const validatedBody = CreateTenantSchema.parse(body);
+        console.log(validatedBody);
 
-        const { data } = await axios.post("/api/create-tenant", { ...body });
-        const { response } = data;
-        const parsedUser = JSON.parse(response);
+        const res = await axios.post('/api/create-tenant', validatedBody);
+        if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);
+
+        const parsedUser = JSON.parse(res.data.response);
         if (parsedUser) {
+          closeModal();
           onSuccessfulAdd();
-          toast.success("Tenant Created!", {
+          toast.success('Tenant Created!', {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
           });
           setTenantModalIsOpen(false);
         }
 
-        setTenantName("");
-        setTenantEmail("");
-        setAddress("");
-        setUnit("");
-        setState("");
-        setCity("");
-        setPostalCode("");
-        setNumBeds(1);
-        setNumBaths(1);
-        setSelectedProperty(null);
-        setCreateNewTenantLoading(false);
         setStage(0);
       } catch (err) {
         console.log({ err });
-        toast.error("Error Creating Tenant. Please Try Again", {
+        toast.error('Error Creating Tenant. Please Try Again', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });
-        setCreateNewTenantLoading(false);
       }
     },
-    [
-      user,
-      createNewProperty,
-      setStage,
-      onSuccessfulAdd,
-      tenantEmail,
-      tenantName,
-      setTenantModalIsOpen,
-      address,
-      unit,
-      state,
-      city,
-      postalCode,
-      numBeds,
-      numBaths,
-      selectedProperty,
-      altName
-    ]
+    [user, userType, setStage, onSuccessfulAdd, setTenantModalIsOpen, createNewProperty, tenantInfoForm]
   );
+
+  const renderPreviousButton = () => {
+    return (
+      <button
+        onClick={() => setStage(0)}
+        className="bg-blue-200 p-3 mt-7 text-gray-600 w-full hover:bg-blue-300 rounded disabled:opacity-25"
+        type="button"
+      >
+        Previous
+      </button>
+    );
+  };
 
   return (
     <Modal
       isOpen={tenantModalIsOpen}
-      onRequestClose={() => setTenantModalIsOpen(false)}
       onAfterOpen={() => toggleBodyScroll(true)}
       onAfterClose={() => toggleBodyScroll(false)}
       contentLabel="Add Tenant Modal"
@@ -237,159 +165,180 @@ export const AddTenantModal = ({
       style={customStyles}
     >
       <div className="w-full text-right">
-        <button
-          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          onClick={() => setTenantModalIsOpen(false)}
-        >
+        <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={() => closeModal()}>
           X Close
         </button>
       </div>
 
-      <form onSubmit={handleCreateNewTenant}>
-        <CSSTransition in={stage === 0} timeout={500} classNames="slide" unmountOnExit style={{ display: "grid" }}>
-          <div>
+      <CSSTransition in={stage === 0} timeout={500} classNames="slide" unmountOnExit>
+        <form onSubmit={tenantInfoForm.handleSubmit(handleValidateTenantInfo)}>
+          <div style={{ display: 'grid' }}>
             <input
               className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
               id="name"
               placeholder="Tenant Full Name*"
-              type={"text"}
-              value={tenantName}
-              onChange={handleTenantNameChange}
+              type={'text'}
+              {...tenantInfoForm.register('tenantName')}
             />
+            {tenantInfoForm.formState.errors.tenantName && (
+              <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantName.message}</div>
+            )}
             <input
               className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
               id="email"
               placeholder="Tenant Email*"
-              type={"email"}
-              value={tenantEmail}
-              onChange={handleEmailChange}
+              type={'email'}
+              {...tenantInfoForm.register('tenantEmail')}
             />
+            {tenantInfoForm.formState.errors.tenantEmail && (
+              <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantEmail.message}</div>
+            )}
+            <input type="hidden" {...tenantInfoForm.register('pmEmail')} value={user?.email ?? ''} />
+            <input type="hidden" {...tenantInfoForm.register('pmName')} value={altName ?? user?.name ?? ''} />
+            <input type="hidden" {...tenantInfoForm.register('organization')} value={user?.organization ?? ''} />
+            <input type="hidden" {...tenantInfoForm.register('organizationName')} value={user?.organizationName ?? ''} />
             <button
-              onClick={() => setStage(1)}
               className="bg-blue-200 p-3 mt-7 text-gray-500 hover:bg-blue-300 rounded disabled:opacity-25"
-              type="button"
-              disabled={!tenantName || !tenantEmail}
+              type="submit"
+              disabled={tenantInfoForm.formState.isSubmitting || !tenantInfoForm.formState.isValid}
             >
               Next
             </button>
           </div>
-        </CSSTransition>
-        <CSSTransition in={stage === 1} timeout={500} classNames="slide" unmountOnExit style={{ display: "grid" }}>
-          <div>
-            <div className="flex mt-2 flex-row items-center md:w-3/4 w-full mx-auto justify-center">
-              <div
-                onClick={() => {
-                  setCreateNewProperty(true);
-                }}
-                className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${createNewProperty && "bg-blue-200 border-blue-200"
-                  }`}
-              >
-                {isMobile ? "New Property" : "Create New Property"}
-              </div>
-              <div
-                onClick={() => {
-                  setCreateNewProperty(false);
-                }}
-                className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${!createNewProperty && "bg-blue-200 border-blue-200"
-                  }`}
-              >
-                {isMobile ? "Existing Property" : "Use Existing Property"}
-              </div>
+        </form>
+      </CSSTransition>
+      <CSSTransition in={stage === 1} timeout={500} classNames="slide" unmountOnExit style={{ display: 'grid' }}>
+        <>
+          <div className="flex mt-2 flex-row items-center md:w-3/4 w-full mx-auto justify-center">
+            <div
+              onClick={() => {
+                setCreateNewProperty(true);
+                createNewPropertyForm.reset({ property: defaultProperty });
+              }}
+              className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
+                createNewProperty && 'bg-blue-200 border-blue-200'
+              }`}
+            >
+              {isMobile ? 'New Property' : 'Create New Property'}
             </div>
-            {createNewProperty ? (
-              <div className="w-full">
-                <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
-                  id="address"
-                  placeholder="Street Address*"
-                  type={"text"}
-                  value={address}
-                  onChange={handleAddressChange}
-                />
-                <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
-                  id="address"
-                  placeholder="Unit Number"
-                  type={"text"}
-                  value={unit}
-                  onChange={handleUnitChange}
-                />
-                <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
-                  id="city"
-                  placeholder="City*"
-                  type={"text"}
-                  value={city}
-                  onChange={handleCityChange}
-                />
-                <div className="w-full mt-5">
-                  <StateSelect label={null} placeholder="State*" state={state} setState={setState} />
-                </div>
-
-                <input
-                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5 w-full"
-                  id="postalCode"
-                  placeholder="Zip*"
-                  type={"text"}
-                  value={postalCode}
-                  onChange={handlePostalCodeChange}
-                />
-
-                <div className={`flex flex-row mt-4 items-center w-full`}>
-                  <label className="text-gray-600 text-center mr-4" htmlFor="beds">
-                    Beds*:{" "}
-                  </label>
-                  <input
-                    className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto"
-                    type="number"
-                    id="beds"
-                    step={1}
-                    min={1}
-                    max={10}
-                    value={numBeds}
-                    onChange={handleNumBedsChange}
-                  />
-                  <label className="text-gray-600 text-center ml-2 mr-4" htmlFor="beds">
-                    Baths*:{" "}
-                  </label>
-                  <input
-                    className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto"
-                    type="number"
-                    id="baths"
-                    min={1}
-                    max={10}
-                    step={0.5}
-                    value={numBaths}
-                    onChange={handleNumBathsChange}
-                  />
-                </div>
-              </div>
-            ) : (
-              <PropertySelector selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} orgId={user?.organization ?? ""} />
-            )}
-            <button
-              onClick={() => setStage(0)}
-              className="bg-blue-200 p-3 mt-7 text-gray-600 w-full hover:bg-blue-300 rounded disabled:opacity-25"
-              type="button"
-              disabled={!tenantName || !tenantEmail}
+            <div
+              onClick={() => {
+                setCreateNewProperty(false);
+                useExistingPropertyForm.reset();
+              }}
+              className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
+                !createNewProperty && 'bg-blue-200 border-blue-200'
+              }`}
             >
-              Previous
-            </button>
-            <button
-              className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-              type="submit"
-              disabled={
-                createNewTenantLoading ||
-                !tenantName ||
-                !tenantEmail ||
-                (createNewProperty ? !address || !state || !city || !postalCode : !selectedProperty)
-              }
-            >
-              {createNewTenantLoading ? <LoadingSpinner /> : "Add Tenant"}
-            </button>
+              {isMobile ? 'Existing Property' : 'Use Existing Property'}
+            </div>
           </div>
-        </CSSTransition>
-      </form>
+          {stage === 1 ? (
+            createNewProperty ? (
+              <form onSubmit={createNewPropertyForm.handleSubmit(handleCreateNewTenant)}>
+                <div style={{ display: 'grid' }}>
+                  <div className="w-full" style={{ display: 'grid' }}>
+                    <label htmlFor="address">Address* </label>
+                    <input
+                      className="rounded px-1 border-solid border-2 border-slate-200 text-gray-600"
+                      placeholder="123 some street"
+                      id="address"
+                      type={'text'}
+                      {...createNewPropertyForm.register('property.address')}
+                    />
+                    <label htmlFor="unit">Unit </label>
+                    <input
+                      className="rounded px-1 border-solid border-2 border-slate-200"
+                      id="unit"
+                      placeholder="1704"
+                      type={'text'}
+                      {...createNewPropertyForm.register('property.unit')}
+                    />
+                    <Controller
+                      control={createNewPropertyForm.control}
+                      name="property.state"
+                      render={({ field: { onChange, value } }) => (
+                        <StateSelect state={value} setState={onChange} label={'State*'} placeholder="Select..." />
+                      )}
+                    />
+                    <label htmlFor="address">City*</label>
+                    <input
+                      className="rounded px-1 border-solid border-2 border-slate-200"
+                      id="address"
+                      type={'text'}
+                      placeholder="Springfield"
+                      {...createNewPropertyForm.register('property.city')}
+                    />
+                    <label htmlFor="address">Zip* </label>
+                    <input
+                      className="rounded px-1 border-solid border-2 border-slate-200"
+                      id="address"
+                      type={'text'}
+                      {...createNewPropertyForm.register('property.postalCode')}
+                      placeholder="000000"
+                    />
+                    <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
+                      <label className="text-center mr-4" htmlFor="beds">
+                        Beds*:{' '}
+                      </label>
+                      <input
+                        className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto"
+                        type="number"
+                        id="beds"
+                        step={1}
+                        min={1}
+                        max={10}
+                        {...createNewPropertyForm.register('property.numBeds')}
+                      />
+                      <label className="text-center ml-2 mr-4" htmlFor="baths">
+                        Baths*:{' '}
+                      </label>
+                      <input
+                        className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto"
+                        type="number"
+                        id="baths"
+                        min={1}
+                        max={10}
+                        step={0.5}
+                        {...createNewPropertyForm.register('property.numBaths')}
+                      />
+                      <input type="hidden" {...createNewPropertyForm.register('property.propertyUUId')} value={uuid()} />
+                    </div>
+                  </div>
+                  {renderPreviousButton()}
+                  <button
+                    className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                    type="submit"
+                    disabled={createNewPropertyForm.formState.isSubmitting || !createNewPropertyForm.formState.isValid}
+                  >
+                    {createNewPropertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={useExistingPropertyForm.handleSubmit(handleCreateNewTenant)}>
+                <div style={{ display: 'grid' }}>
+                  <Controller
+                    control={useExistingPropertyForm.control}
+                    name="property"
+                    render={({ field: { onChange, value } }) => (
+                      <PropertySelector selectedProperty={value} setSelectedProperty={onChange} orgId={user?.organization ?? ''} />
+                    )}
+                  />
+                  {renderPreviousButton()}
+                  <button
+                    className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                    type="submit"
+                    disabled={useExistingPropertyForm.formState.isSubmitting || !useExistingPropertyForm.formState.isValid}
+                  >
+                    {useExistingPropertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
+                  </button>
+                </div>
+              </form>
+            )
+          ) : null}
+        </>
+      </CSSTransition>
     </Modal>
   );
 };

@@ -3,7 +3,7 @@ import { findIssueSample } from "@/constants";
 import {  generatePrompt, processAiResponse } from "@/utils";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
-import { AiJSONResponse, ApiRequest } from "@/types";
+import { AiJSONResponse, ChatbotRequest } from "@/types";
 import chalk from "chalk";
 import { Data } from "@/database";
 import { getServerSession } from "next-auth";
@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
 
-  const body = req.body as ApiRequest;
+  const body = req.body as ChatbotRequest;
   const { userMessage, messages, unitInfo, streetAddress, ...workOrderData } = body;
   try {
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo, streetAddress);

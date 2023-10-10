@@ -4,7 +4,6 @@ import Modal from 'react-modal';
 import { useDevice } from '@/hooks/use-window-size';
 import * as xlsx from 'xlsx';
 import { BiError } from 'react-icons/bi';
-import { CreateTenantBody } from '@/pages/api/create-tenant';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { v4 as uuid } from 'uuid';
@@ -16,11 +15,19 @@ import { AiOutlineLink } from 'react-icons/ai';
 import { GetS3BucketRequest } from '@/pages/api/get-s3bucket';
 import { toggleBodyScroll } from '@/utils';
 import { ENTITIES } from '@/database/entities';
+import { CreateTenantSchema, CreateTenantSchemaType } from './add-tenant-modal';
+import { z } from 'zod';
+import { optionalStringCaseSensitive, validatePropertyWithId, requiredNumber } from '@/types/zodvalidators';
+import { userRoles } from '@/database/entities/user';
+import { EMAIL_MATCHING_ERROR } from '@/constants';
 
-type ImportTenantObject = CreateTenantBody & {
-  key: number;
-  error?: string;
-};
+const ImportTenantSchema = CreateTenantSchema.merge(
+  z.object({
+    key: requiredNumber,
+    error: optionalStringCaseSensitive,
+  })
+);
+type ImportTenantSchemaType = z.infer<typeof ImportTenantSchema>;
 
 export const ImportTenantsModal = ({
   modalIsOpen,
@@ -38,8 +45,7 @@ export const ImportTenantsModal = ({
   useEffect(() => {
     setIsBrowser(true);
   }, []);
-
-  isBrowser && Modal.setAppElement('#testing');
+  isBrowser && Modal.setAppElement('#tenants');
 
   const customStyles = {
     content: {
@@ -62,7 +68,7 @@ export const ImportTenantsModal = ({
     },
   };
 
-  const [uploadList, setUploadList] = useState<ImportTenantObject[]>([]);
+  const [uploadList, setUploadList] = useState<ImportTenantSchemaType[]>([]);
   const [formattingError, setFormattingError] = useState<boolean>(false);
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
   const [importTenantsLoading, setImportTenantsLoading] = useState<boolean>(false);
@@ -87,18 +93,18 @@ export const ImportTenantsModal = ({
     }
   }, [uploadList]);
 
-  const renderPreUploadTenantCard = (tenant: ImportTenantObject, index: number) => {
+  const renderPreUploadTenantCard = (tenant: ImportTenantSchemaType, index: number) => {
     return (
       <div className="flex flex-row justify-between items-center w-full p-2 first:mt-0 mt-2 border-2 rounded border-slate-300" key={index}>
         <div className="flex flex-col text-gray-600 text-sm">
-          <p className="font-bold">{tenant.tenantName}</p>
+          <p className="font-bold">{toTitleCase(tenant.tenantName)}</p>
           <p className="mb-1">{tenant.tenantEmail}</p>
           <div>
             <p>
-              {tenant.address} {tenant.unit && tenant.unit}
+              {tenant.property?.address && toTitleCase(tenant.property?.address)} {tenant.property?.unit && toTitleCase(tenant.property.unit)}
             </p>
             <p>
-              {tenant.city}, {tenant.state} {tenant.postalCode}
+              {tenant.property?.city && toTitleCase(tenant.property?.city)}, {tenant.property?.state && toTitleCase(tenant.property?.state)} {tenant.property?.postalCode}
             </p>
           </div>
           {tenant.error && (
@@ -164,76 +170,96 @@ export const ImportTenantsModal = ({
 
   const processTenantFile = useCallback(
     async (parsed: any[]) => {
-      if (!user || !user.email || !user.name || userType !== 'PROPERTY_MANAGER' || !user?.roles?.includes(ENTITIES.PROPERTY_MANAGER) || !user.organization) {
-        alert('User must be a property manager part of an organization to import tenants');
-        return;
+      try {
+        if (
+          !user ||
+          !user.email ||
+          !user.name ||
+          userType !== userRoles.PROPERTY_MANAGER ||
+          !user?.roles?.includes(ENTITIES.PROPERTY_MANAGER) ||
+          !user.organization
+        ) {
+          alert('User must be a property manager part of an organization to import tenants');
+          return;
+        }
+        parsed.forEach((row: any, index: number) => {
+          const {
+            Name: tenantName,
+            Email: tenantEmail,
+            Unit: unit,
+            Address: address,
+            City: city,
+            State: state,
+            'Postal Code': postalCode,
+            Beds: numBeds,
+            Baths: numBaths,
+          } = row;
+
+          if(tenantEmail === user.email){
+            alert('You cannot add yourself as a tenant, please modify your file and try again');
+            throw Error(EMAIL_MATCHING_ERROR);
+          }
+
+          //Construct error message for any missing fields
+          let missingFields = '';
+          if (!tenantName) missingFields += 'Name, ';
+          if (!tenantEmail) missingFields += 'Email, ';
+          if (!address) missingFields += 'Address, ';
+          if (!city) missingFields += 'City, ';
+          if (!state) missingFields += 'State, ';
+          if (!postalCode) missingFields += 'Postal Code, ';
+          if (!numBeds) missingFields += 'Beds, ';
+          if (!numBaths) missingFields += 'Baths, ';
+          if (missingFields.length) missingFields = missingFields.slice(0, -2);
+
+          const property = validatePropertyWithId.parse({
+            propertyUUId: uuid(),
+            address,
+            unit,
+            city,
+            state,
+            postalCode,
+            country: 'US',
+            numBeds,
+            numBaths,
+          });
+
+          const tenant: ImportTenantSchemaType = ImportTenantSchema.parse({
+            key: index,
+            tenantEmail: tenantEmail?.toLowerCase(),
+            tenantName: tenantName && toTitleCase(tenantName),
+            property,
+            pmEmail: user.email,
+            pmName: altName ?? user.name,
+            createNewProperty: true,
+            organization: user!.organization!,
+            organizationName: user!.organizationName!,
+            error: missingFields.length > 0 ? `Missing required field(s): {${missingFields}}` : undefined,
+          });
+
+          setUploadList((prev) => [...prev, tenant]);
+        });
+      } catch (err: any) {
+        setFileUploadError(err?.message || 'Error uploading file');
       }
-      parsed.forEach((row: any, index: number) => {
-        const {
-          Name: tenantName,
-          Email: tenantEmail,
-          Unit: unit,
-          Address: address,
-          City: city,
-          State: state,
-          'Postal Code': postalCode,
-          Beds: numBeds,
-          Baths: numBaths,
-        } = row;
-
-        //Construct error message for any missing fields
-        let missingFields = '';
-        if (!tenantName) missingFields += 'Name, ';
-        if (!tenantEmail) missingFields += 'Email, ';
-        if (!address) missingFields += 'Address, ';
-        if (!city) missingFields += 'City, ';
-        if (!state) missingFields += 'State, ';
-        if (!postalCode) missingFields += 'Postal Code, ';
-        if (!numBeds) missingFields += 'Beds, ';
-        if (!numBaths) missingFields += 'Baths, ';
-        if (missingFields.length) missingFields = missingFields.slice(0, -2);
-
-        const tenant: ImportTenantObject = {
-          key: index,
-          tenantEmail: tenantEmail?.toLowerCase(),
-          tenantName: tenantName && toTitleCase(tenantName),
-          address,
-          city,
-          state,
-          postalCode: postalCode?.toString(),
-          unit: unit?.toString(),
-          country: 'US',
-          pmEmail: user.email,
-          pmName: altName ?? user.name,
-          numBeds,
-          numBaths,
-          createNewProperty: true,
-          propertyUUId: uuid(),
-          organization: user!.organization!,
-          organizationName: user!.organizationName!,
-          error: missingFields.length > 0 ? `Missing required field(s): {${missingFields}}` : undefined,
-        };
-        setUploadList((prev) => [...prev, tenant]);
-      });
     },
-    [setUploadList, user, altName]
+    [setUploadList, user, altName, userType]
   );
 
   const handleImportTenants = async () => {
-    if (!user || !user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(ENTITIES.PROPERTY_MANAGER) || !user.organization) {
+    if (!user || !user.email || userType !== userRoles.PROPERTY_MANAGER || !user.roles?.includes(ENTITIES.PROPERTY_MANAGER) || !user.organization) {
       alert('User must be a property manager in an organization to import tenants');
       return;
     }
     setImportTenantsLoading(true);
     setImportTenantProgress(0);
 
-    let errorList: ImportTenantObject[] = [];
+    let errorList: ImportTenantSchemaType[] = [];
 
     for (let index = 0; index < uploadList.length; index++) {
       const tenant = uploadList[index];
-      const body: CreateTenantBody = {
+      const body: CreateTenantSchemaType = {
         ...tenant,
-        country: 'US',
       };
 
       await axios
@@ -327,8 +353,8 @@ export const ImportTenantsModal = ({
                 //Reset file input
                 //@ts-ignore
                 document.getElementById('fileUpload').value = '';
+                setFileUploadError(null);
               }}
-              disabled={uploadList.length === 0}
               className="text-base disabled:opacity-30 disabled:hover:cursor-auto disabled:hover:text-white disabled:hover:bg-red-400 hover:bg-red-500 h-7 w-7 flex items-center justify-center bg-red-400 hover:cursor-pointer text-white rounded-lg"
             >
               X
@@ -360,7 +386,7 @@ export const ImportTenantsModal = ({
                 </div>
               </div>
 
-              {uploadList.map((value: ImportTenantObject, index: number) => {
+              {uploadList.map((value: ImportTenantSchemaType, index: number) => {
                 return renderPreUploadTenantCard(value, index);
               })}
             </>

@@ -129,7 +129,7 @@ const Properties = () => {
           </div>
         )}
         {properties.length && startKey && !propertiesLoading ? (
-          <div className="w-full flex items-center justify-center mb-8">
+          <div className="w-full flex items-center justify-center mb-24">
             <button
               onClick={() => {
                 fetchProperties(false);
@@ -139,12 +139,12 @@ const Properties = () => {
               Load more
             </button>
           </div>
-        ) : <div className="mb-8"></div>}
+        ) : <div className="mb-24"></div>}
       </div>
       <AddPropertyModal
         addPropertyModalIsOpen={addPropertyModalIsOpen}
         setAddPropertyModalIsOpen={setAddPropertyModalIsOpen}
-        onClose={() => fetchProperties(true)}
+        onSuccess={() => fetchProperties(true)}
       />
       {isMobile && <BottomNavigationPanel />}
     </div>
