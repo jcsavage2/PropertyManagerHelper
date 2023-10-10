@@ -82,6 +82,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
 
+    const existingTenant = await userEntity.get({ email: tenantEmail });
+    if (existingTenant) {
+      return res.status(403).json({ response: "User Already Exists" });
+    }
+
     // Create Tenant
     const newTenant = await userEntity.createTenant({
       tenantEmail,

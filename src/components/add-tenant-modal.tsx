@@ -131,7 +131,7 @@ export const AddTenantModal = ({
         setCreateNewTenantLoading(true);
 
         let body: CreateTenantBody;
-        const pmName = altName ?? user.name
+        const pmName = altName ?? user.name;
         if (createNewProperty) {
           body = {
             tenantEmail,
@@ -199,7 +199,7 @@ export const AddTenantModal = ({
         setStage(0);
       } catch (err) {
         console.log({ err });
-        toast.error("Error Creating Tenant. Please Try Again", {
+        toast.error((err as any)?.response?.data?.response ?? "Error Creating Tenant. Please Try Again", {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });
