@@ -100,6 +100,10 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
         }
       } catch (err) {
         console.log({ err });
+        toast.error((err as any)?.response?.data?.response ?? "Error Creating Technician. Please Try Again", {
+          position: toast.POSITION.TOP_CENTER,
+          draggable: false,
+        });
       }
     },
     [user, userType, email, name, onSuccessfulAdd, setTechnicianModalIsOpen, altName]
