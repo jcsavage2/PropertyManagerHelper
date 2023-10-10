@@ -48,6 +48,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const derivedTenantEmail = body.createdByType === userRoles.TENANT ? creatorEmail : tenantEmail!;
     const derivedTenantName = body.createdByType === userRoles.TENANT ? creatorName : tenantName!;
 
+    const workOrderId = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+    const existingWorkOrder = await workOrderEntity.get({ pk: workOrderId, sk: workOrderId });
+    if (existingWorkOrder) {
+      return res.status(403).json({ response: "Work Order with that ID Already Exists" });
+    }
+
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
       uuid: woId,
@@ -191,8 +197,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
             ${body.messages
-              ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-              .join(' ')}
+          ?.map((m) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
+          .join(' ')}
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
