@@ -69,8 +69,8 @@ export const AddPropertyManagerModal = ({
         if (!userType) {
           throw new Error('No userType');
         }
-        if(!user.isAdmin){
-          throw new Error("User must be an admin to create pms")
+        if (!user.isAdmin) {
+          throw new Error("User must be an admin to create pms");
         }
         setCreatePMLoading(true);
 
@@ -94,7 +94,7 @@ export const AddPropertyManagerModal = ({
         setPMName('');
       } catch (err) {
         console.log({ err });
-        toast.error('Error Creating PM. Please Try Again', {
+        toast.error((err as any)?.response?.data?.response ?? 'Error Creating PM. Please Try Again', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });

@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const session = await getServerSession(req, res, options);
   // @ts-ignore
   const sessionUser: IUser = session?.user;
-  
+
   //User must be an admin pm to create a pm
   if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER) || !sessionUser?.isAdmin) {
     res.status(401);
@@ -31,8 +31,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const body = req.body as ICreatePMUser;
     const { organization, organizationName, userEmail, userName, isAdmin } = body;
-
     const userEntity = new UserEntity();
+
+    const existingTenant = await userEntity.get({ email: userEmail });
+    if (existingTenant) {
+      return res.status(403).json({ response: "User Already Exists" });
+    }
+
     const newPM = await userEntity.createPropertyManager({ organization, organizationName, userEmail, userName, isAdmin });
 
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
