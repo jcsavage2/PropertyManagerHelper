@@ -201,6 +201,7 @@ export default function WorkOrderChatbot() {
     setIssueDescription('');
     setIssueLocation('');
     setAdditionalDetails('');
+    _setWoId(uuidv4());
     setSubmitAnywaysSkip(false);
     setSubmittingWorkOrderLoading(false);
     return;
