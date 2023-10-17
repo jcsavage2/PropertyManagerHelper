@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import sendgrid from '@sendgrid/mail';
 import { userRoles } from '@/database/entities/user';
+import { INVITE_STATUS } from '@/constants';
 
 export type CreatePMBody = {
   pmName: string;
@@ -33,8 +34,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { organization, organizationName, userEmail, userName, isAdmin } = body;
     const userEntity = new UserEntity();
 
+    //If pm created pm row exists, don't overwrite row
     const existingPM = await userEntity.get({ email: userEmail });
-    if (existingPM) {
+    if (existingPM && existingPM.status !== INVITE_STATUS.CREATED) {
       return res.status(403).json({ response: "User Already Exists" });
     }
 
