@@ -21,3 +21,17 @@ export const PTE = {
 export const PAGE_SIZE = 60;
 
 export const TECHNICIAN_DELIM = '##NAME##';
+
+export const INVITE_STATUS = {
+  JOINED: 'JOINED',
+  INVITED: 'INVITED',
+  CREATED: 'CREATED',
+  RE_INVITED: "RE_INVITED"
+} as const;
+
+export const ALL_TENANTS_FILTER = {
+  JOINED: true,
+  INVITED: true,
+  CREATED: true,
+  RE_INVITED: true,
+}

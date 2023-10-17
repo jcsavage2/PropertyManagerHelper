@@ -6,6 +6,7 @@ import axios from 'axios';
 import { OptionType } from '@/types';
 import { IUser, userRoles } from '@/database/entities/user';
 import { ENTITIES } from '@/database/entities';
+import { ALL_TENANTS_FILTER } from '@/constants';
 
 export const TenantSelect = ({
   label,
@@ -40,7 +41,7 @@ export const TenantSelect = ({
           organization: user.organization,
           startKey: undefined,
           tenantSearchString: _searchString,
-          statusFilter: { JOINED: true, INVITED: true }
+          statusFilter: ALL_TENANTS_FILTER
         } as GetTenantsForOrgRequest);
         const response = JSON.parse(data.response);
         const processedTenants = response.tenants.map((tenant: IUser) => {

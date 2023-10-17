@@ -6,7 +6,7 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { generateKey, getInviteTenantSendgridEmailBody } from '@/utils';
 import { ENTITIES, ENTITY_KEY } from '@/database/entities';
-import { INVITE_STATUS } from '@/utils/user-types';
+import { INVITE_STATUS } from '@/constants';
 
 export type ReinviteTenantsBody = {
   tenants: { name: string; email: string; }[];
