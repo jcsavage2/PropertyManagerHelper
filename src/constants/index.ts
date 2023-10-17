@@ -28,6 +28,9 @@ export const defaultPropertyWithId = { ...defaultProperty, propertyUUId: '' }
 export const API_STATUS = {
   SUCCESS: 200,
   INTERNAL_SERVER_ERROR: 500,
+  FORBIDDEN: 403,
+  UNAUTHORIZED: 401,
+  BAD_REQUEST: 400,
 }
 export const USER_PERMISSION_ERROR = 'User does not have permission to perform this action.';
 export const MISSING_ENV = (envName: string) => `Missing ${envName} environment variable.`;

@@ -134,7 +134,7 @@ export const AddTenantModal = ({
         setStage(0);
       } catch (err) {
         console.log({ err });
-        toast.error('Error Creating Tenant. Please Try Again', {
+        toast.error((err as any)?.response?.data?.response ?? "Error Creating Tenant. Please Try Again", {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });

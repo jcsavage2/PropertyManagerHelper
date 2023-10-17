@@ -74,6 +74,7 @@ export const AddPropertyManagerModal = ({
         if (userType !== userRoles.PROPERTY_MANAGER || !user?.isAdmin || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
+        //TODO: fix and handle on api side
         if(user?.email === params.userEmail){
           setError('userEmail', { message: EMAIL_MATCHING_ERROR })
           return
@@ -91,7 +92,7 @@ export const AddPropertyManagerModal = ({
         reset()
       } catch (err) {
         console.log({ err });
-        toast.error('Error Creating PM. Please Try Again', {
+        toast.error((err as any)?.response?.data?.response ?? 'Error Creating PM. Please Try Again', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });

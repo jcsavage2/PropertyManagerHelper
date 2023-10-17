@@ -27,6 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const userEntity = new UserEntity();
 
+    const existingTechnician = await userEntity.get({ email: technicianEmail });
+    if (existingTechnician) {
+      return res.status(403).json({ response: "User Already Exists" });
+    }
+
     const newTechnician = await userEntity.createTechnician({ technicianName, technicianEmail, organization, organizationName, pmEmail, pmName });
 
     const authLink = `https://pillarhq.co/?authredirect=true`;

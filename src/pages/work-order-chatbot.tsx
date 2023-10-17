@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { hasAllIssueInfo } from '@/utils';
-import { AddressOptionType, AiJSONResponse, ChatbotRequest, ChatbotRequestSchema, IssueInformation, OptionType, PTE_Type } from '@/types';
+import { AddressOptionType, AiJSONResponse, ChatbotRequest, ChatbotRequestSchema, CreateWorkOrderFullSchema, CreateWorkOrderSchemaType, IssueInformation, OptionType, PTE_Type } from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
@@ -13,36 +13,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
 import { UpdateUser } from './api/update-user';
-import {
-  optionalString,
-  validateProperty,
-  lowerCaseRequiredEmail,
-  lowerCaseRequiredString,
-  requiredString,
-  validatePTE,
-  validateUserRole,
-} from '@/types/zodvalidators';
-import { z } from 'zod';
-
-export const CreateWorkOrderFullSchema = z.object({
-  issueDescription: requiredString,
-  issueLocation: optionalString,
-  additionalDetails: optionalString,
-  permissionToEnter: validatePTE,
-  tenantEmail: lowerCaseRequiredEmail,
-  tenantName: lowerCaseRequiredString,
-  pmEmail: lowerCaseRequiredEmail,
-  pmName: lowerCaseRequiredString,
-  messages: z.array(z.any()).default([]).optional(),
-  creatorEmail: lowerCaseRequiredEmail,
-  creatorName: lowerCaseRequiredString,
-  createdByType: validateUserRole,
-  property: validateProperty,
-  woId: z.string().min(1),
-  images: z.array(z.string()).default([]).optional(),
-  organization: lowerCaseRequiredString,
-});
-export type CreateWorkOrderSchemaType = z.infer<typeof CreateWorkOrderFullSchema>;
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -126,10 +96,12 @@ export default function WorkOrderChatbot() {
 
   //If the user has only one address, select it automatically
   useEffect(() => {
-    if (addressesOptions && addressesOptions.length === 1) {
+    if(!addressesOptions) return;
+    if (addressesOptions.length === 1) {
       setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(true);
     } else {
+      setSelectedAddress(addressesOptions[0])
       setAddressHasBeenSelected(false);
     }
   }, [addressesOptions]);
@@ -140,7 +112,7 @@ export default function WorkOrderChatbot() {
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, permissionToEnter]);
+  }, [messages, permissionToEnter, selectedAddress]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
@@ -177,9 +149,6 @@ export default function WorkOrderChatbot() {
     },
     [setPermissionToEnter]
   );
-  const handleAddressSelectChange = (value: AddressOptionType) => {
-    setSelectedAddress(value);
-  };
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
@@ -200,6 +169,7 @@ export default function WorkOrderChatbot() {
         creatorName: user.name,
         permissionToEnter,
         pmEmail: user.pmEmail,
+        pmName: user.pmName,
         organization: user.organization,
         property: {
           address: parsedAddress.address,
@@ -219,19 +189,22 @@ export default function WorkOrderChatbot() {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
-      setMessages([]);
-      setIssueDescription('');
-      setIssueLocation('');
-      setAdditionalDetails('');
-      _setWoId(uuidv4()); 
-      setSubmitAnywaysSkip(false);
     } catch (error: any) {
-      console.log({ error });
-      toast.error('Error Submitting Work Order. Please Try Again', {
+      console.log({ error }); 
+      const statusCode = error.response?.status
+      const message = error.response?.data?.response
+      toast.error(message && statusCode === API_STATUS.FORBIDDEN ? message : 'Error Submitting Work Order. Please Try Again', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
     }
+
+    setMessages([]);
+    setIssueDescription('');
+    setIssueLocation('');
+    setAdditionalDetails('');
+    _setWoId(uuidv4());
+    setSubmitAnywaysSkip(false);
 
     setSubmittingWorkOrderLoading(false);
     return;
@@ -257,14 +230,14 @@ export default function WorkOrderChatbot() {
 
         if (response.status === 200) {
           setUploadedFiles(response?.data?.files ?? []);
-          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
+          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER, draggable: false });
           setUploadingFiles(false);
         } else {
-          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
           setUploadingFiles(false);
         }
       } catch (error) {
-        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
         setUploadingFiles(false);
       }
     },
@@ -313,8 +286,8 @@ export default function WorkOrderChatbot() {
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
-
-      if (err.response.status === 500) {
+      console.log({err})
+      if (err.response?.status === API_STATUS.INTERNAL_SERVER_ERROR) {
         setHasConnectionWithGPT(false);
         assistantMessage = 'Sorry - I am having trouble connecting to my server. Please complete this form manually or try again later.';
       }
@@ -342,11 +315,11 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<OptionType>) => {
-              //@ts-ignore
-              handleAddressSelectChange(v);
+            onChange={(v: SingleValue<AddressOptionType>) => {
+              if(!v) return;
+              setSelectedAddress(v);
             }}
-            value={{ label: addressesOptions?.[0]?.label, value: addressesOptions?.[0]?.value }}
+            value={{ label: selectedAddress?.label ?? 'No addresses available', value: selectedAddress }}
             options={addressesOptions}
           />
           <div className="w-full flex flex-row items-center mt-4 mb-2">

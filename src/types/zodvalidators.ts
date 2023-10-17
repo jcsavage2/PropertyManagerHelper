@@ -9,12 +9,12 @@ export const lowerCaseRequiredString = requiredString.toLowerCase();
 export const nullableString = z.string().nullable().transform((val) => (val?.length ? val : null));
 
 //Empty strings resolve to undefined
-export const optionalStringCaseSensitive = z
+export const optionalString = z
   .string()
   .trim()
   .optional()
   .transform((val) => (val?.length ? val : undefined));
-export const optionalString = z
+export const lowerCaseOptionalString = z
   .string()
   .toLowerCase()
   .trim()
@@ -22,6 +22,8 @@ export const optionalString = z
   .transform((val) => (val?.length ? val : undefined));
 
 export const lowerCaseRequiredEmail = z.string().email({ message: 'Please use a valid email' }).min(1).toLowerCase().trim();
+export const lowerCaseOptionalEmail = z.string().email({ message: 'Please use a valid email' }).min(1).toLowerCase().trim().optional(); 
+
 export const requiredNumber = z.coerce.number();
 
 export const validatePTE = z.enum([PTE.YES, PTE.NO]);

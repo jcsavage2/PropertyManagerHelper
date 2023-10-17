@@ -1,4 +1,4 @@
-import { STATUS } from '@/constants';
+import { API_STATUS, MISSING_ENV, STATUS } from '@/constants';
 import { Data } from '@/database';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
@@ -9,13 +9,14 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { userRoles } from '@/database/entities/user';
-import { CreateWorkOrderFullSchema } from '../work-order-chatbot';
 import { ChatCompletionRequestMessage } from 'openai';
+import { ApiError } from 'next/dist/server/api-utils';
+import { CreateWorkOrderFullSchema } from '@/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const session = await getServerSession(req, res, options);
   if (!session) {
-    res.status(401);
+    res.status(API_STATUS.UNAUTHORIZED);
     return;
   }
   try {
@@ -37,12 +38,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       pmName,
       woId,
     } = body;
-
-    if (body.createdByType !== userRoles.TENANT && (!tenantEmail || !tenantName || !pmName)) {
-      throw new Error("Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
+    console.log(body)
+    
+    if (createdByType !== userRoles.TENANT && (!tenantEmail || !tenantName || !pmName)) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, "Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
     }
-    const derivedTenantEmail = body.createdByType === userRoles.TENANT ? creatorEmail : tenantEmail!;
-    const derivedTenantName = body.createdByType === userRoles.TENANT ? creatorName : tenantName!;
+    const derivedTenantEmail = createdByType === userRoles.TENANT ? creatorEmail : tenantEmail!;
+    const derivedTenantName = createdByType === userRoles.TENANT ? creatorName : tenantName!;
+
+    const workOrderId = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+    const existingWorkOrder = await workOrderEntity.get({ pk: workOrderId, sk: workOrderId });
+    if (existingWorkOrder) {
+      throw new ApiError(API_STATUS.FORBIDDEN, 'Work Order with that ID Already Exists');
+    }
 
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
@@ -72,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     /** SEND THE EMAIL TO THE USER */
     const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
     if (!apiKey) {
-      throw new Error('missing SENDGRID_API_KEY env variable.');
+      throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY'));
     }
     sendgrid.setApiKey(apiKey);
 
@@ -90,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     //CC the tenant if they created the work order, if a pm created the work order then a different email is sent to the tenant
-    const ccString = body.createdByType === userRoles.TENANT ? creatorEmail.toLowerCase() : '';
+    const ccString = body.createdByType === userRoles.TENANT ? creatorEmail : '';
 
     const shortenedWorkOrderIdString = woId.substring(woId.length - 4);
 
@@ -280,7 +288,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error.statusCode || 500).json({ response: error.message });
+    console.log(error.response.body.errors)
+    return res.status(error.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json({ response: error.message });
   }
 
   return res.status(200).json({ response: 'Successfully sent email' });

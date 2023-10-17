@@ -12,6 +12,8 @@ import {
   nullableString,
   validateUserRole,
   optionalString,
+  lowerCaseOptionalEmail,
+  lowerCaseOptionalString,
 } from './zodvalidators';
 
 export type StatusType = (typeof STATUS)[keyof typeof STATUS];
@@ -154,3 +156,28 @@ export type FinishFormRequest = z.infer<typeof FinishFormRequestSchema>;
 //   userMessage: string;
 //   messages: ChatCompletionRequestMessage[];
 // };
+
+export const CreateWorkOrderFullSchema = z.object({
+  issueDescription: requiredString,
+  issueLocation: optionalString,
+  additionalDetails: optionalString,
+  permissionToEnter: validatePTE,
+  tenantEmail: lowerCaseOptionalEmail,
+  tenantName: lowerCaseOptionalString,
+  pmEmail: lowerCaseRequiredEmail,
+  pmName: lowerCaseOptionalString,
+  messages: z.array(z.any()).default([]).optional(),
+  creatorEmail: lowerCaseRequiredEmail,
+  creatorName: lowerCaseRequiredString,
+  createdByType: validateUserRole,
+  property: validateProperty,
+  woId: z.string().min(1),
+  images: z.array(z.string()).default([]).optional(),
+  organization: lowerCaseRequiredString,
+});
+export type CreateWorkOrderSchemaType = z.infer<typeof CreateWorkOrderFullSchema>;
+
+export type ApiError = {
+  message: string;
+  code: number;
+};

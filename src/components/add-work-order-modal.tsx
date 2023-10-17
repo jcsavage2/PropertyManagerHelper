@@ -140,7 +140,7 @@ export const AddWorkOrderModal = ({
         closeModal();
       } catch (err) {
         console.log({ err });
-        toast.error('Error Submitting Work Order. Please Try Again', {
+        toast.error((err as any)?.response?.data?.response ?? 'Error Submitting Work Order. Please Try Again', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
         });
