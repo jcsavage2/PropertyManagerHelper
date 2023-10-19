@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import sendgrid from '@sendgrid/mail';
 import { CreateTechnicianSchema } from '@/components/add-technician-modal';
-import { MISSING_ENV } from '@/constants';
+import { INVITE_STATUS, MISSING_ENV } from '@/constants';
 
 /**
  *
@@ -27,8 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const userEntity = new UserEntity();
 
+    //If pm created technician row exists, don't overwrite row
     const existingTechnician = await userEntity.get({ email: technicianEmail });
-    if (existingTechnician) {
+    if (existingTechnician && existingTechnician.status !== INVITE_STATUS.CREATED) {
       return res.status(403).json({ response: "User Already Exists" });
     }
 

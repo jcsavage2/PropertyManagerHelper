@@ -1,15 +1,6 @@
 import { useUserContext } from '@/context/user';
 import { IUser } from '@/database/entities/user';
 
-export const INVITE_STATUS = {
-  JOINED: 'JOINED',
-  INVITED: 'INVITED',
-  CREATED: 'CREATED',
-  RE_INVITED: "RE_INVITED"
-} as const;
-
-export type InviteStatusType = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];
-
 /**
  * @returns boolean, true if the current user is a tenant user.
  */

@@ -18,9 +18,9 @@ import { CiCircleRemove } from 'react-icons/ci';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { MdClear } from 'react-icons/md';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
-import { INVITE_STATUS } from '@/utils/user-types';
 import { AiOutlineMail } from 'react-icons/ai';
 import { ReinviteTenantsBody } from '../api/reinvite-tenants';
+import { INVITE_STATUS } from '@/constants';
 
 export type SearchTenantsBody = {
   orgId: string;

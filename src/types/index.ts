@@ -1,5 +1,4 @@
 import { ChatCompletionRequestMessage } from 'openai';
-import { PTE, STATUS } from '../constants';
 import { z } from 'zod';
 import {
   validatePropertyWithId,
@@ -15,8 +14,8 @@ import {
   lowerCaseOptionalEmail,
   lowerCaseOptionalString,
 } from './zodvalidators';
+import { INVITE_STATUS, PTE, STATUS } from '../constants';
 
-export type StatusType = (typeof STATUS)[keyof typeof STATUS];
 export type PTE_Type = (typeof PTE)[keyof typeof PTE];
 
 export type PropertyType = z.infer<typeof validateProperty>;
@@ -181,3 +180,6 @@ export type ApiError = {
   message: string;
   code: number;
 };
+export type StatusType = (typeof STATUS)[keyof typeof STATUS];
+
+export type InviteStatusType = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];

@@ -7,7 +7,7 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { getInviteTenantSendgridEmailBody } from '@/utils';
 import { CreateTenantSchema } from '@/components/add-tenant-modal';
-import { INVALID_PARAM_ERROR } from '@/constants';
+import { INVALID_PARAM_ERROR, INVITE_STATUS } from '@/constants';
 
 /**
  *
@@ -34,8 +34,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
 
+    //If pm created tenant row exists, don't overwrite row
     const existingTenant = await userEntity.get({ email: tenantEmail });
-    if (existingTenant) {
+    if (existingTenant && existingTenant.status !== INVITE_STATUS.CREATED) {
       return res.status(403).json({ response: "User Already Exists" });
     }
 

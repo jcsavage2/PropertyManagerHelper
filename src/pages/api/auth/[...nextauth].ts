@@ -6,7 +6,8 @@ import { DynamoDBClientConfig } from '@/database';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { UserEntity } from '@/database/entities/user';
-import { INVITE_STATUS, InviteStatusType } from '@/utils/user-types';
+import { InviteStatusType } from '@/types';
+import { INVITE_STATUS } from '@/constants';
 
 const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const clientSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;

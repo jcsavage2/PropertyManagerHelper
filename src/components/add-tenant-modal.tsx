@@ -115,7 +115,6 @@ export const AddTenantModal = ({
           createNewProperty,
         };
         const validatedBody = CreateTenantSchema.parse(body);
-        console.log(validatedBody);
 
         const res = await axios.post('/api/create-tenant', validatedBody);
         if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);

@@ -24,6 +24,20 @@ export const TECHNICIAN_DELIM = '##NAME##';
 export const defaultProperty = { address: '', city: '', country: 'US', postalCode: '', unit: undefined, numBeds: 1, numBaths: 1, state: STATE_OPTIONS[0].value }
 export const defaultPropertyWithId = { ...defaultProperty, propertyUUId: '' }
 
+export const INVITE_STATUS = {
+  JOINED: 'JOINED',
+  INVITED: 'INVITED',
+  CREATED: 'CREATED',
+  RE_INVITED: "RE_INVITED"
+} as const;
+
+export const ALL_TENANTS_FILTER = {
+  JOINED: true,
+  INVITED: true,
+  CREATED: true,
+  RE_INVITED: true,
+}
+
 // ERRORS //
 export const API_STATUS = {
   SUCCESS: 200,
