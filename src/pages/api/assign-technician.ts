@@ -91,9 +91,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const twilioClient = twilio(smsApiKey, smsAuthToken);
         twilioClient.messages.create({
-          to: technicianUser.phone,
+          to: "+15619010188",
           from: "+18449092150",
-          body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `
+          body: `You've been assigned a work order in Pillar by ${pmName}!\n\n Issue: ${issueDescription}\n\n Address: ${address.address}\n\n ${address.unit && `${address.unit && `Unit: ${address.unit}`}`}\n\n ${tenantName && `Tenant: ${tenantName}`}\n\n ${permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`} View the full work order at ${workOrderLink}\n\n 
+          `
         });
       } catch (err) {
         console.log({ err });
@@ -153,6 +154,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
           <h1>You've Been Assigned To A Work Order by ${pmName}</h1>
           <a href="${workOrderLink}">View Work Order in PILLAR</a>
+          <p>Issue: ${issueDescription}</p>
+          <p>Address: ${address.address}</p>
+          ${address.unit && `<p>Unit: ${address.unit}</p>`}
+          ${tenantName && `<p>Tenant: ${tenantName}</p>`}
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
           </p>
