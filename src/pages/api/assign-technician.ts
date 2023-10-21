@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         twilioClient.messages.create({
           to: technicianUser?.phone,
           from: "+18449092150",
-          body: `You've been assigned a work order in Pillar by ${pmName}!\n\n Issue: ${issueDescription}\n\n Address: ${address.address}\n\n ${!!address.unit ? `${`Unit: ${address.unit}`}\n\n` : ``} ${tenantName && `Tenant: ${tenantName}`}\n\n ${permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`} View the full work order at ${workOrderLink}\n\n 
+          body: `You've been assigned a work order in Pillar by ${pmName}!\n\nIssue: ${issueDescription}\n\nAddress: ${address.address}\n\n${!!address.unit ? `${`Unit: ${address.unit}`}\n\n` : ``}${tenantName && `Tenant: ${tenantName}`}\n\n${permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`}View the full work order at ${workOrderLink}\n\n 
           `
         });
       } catch (err) {
