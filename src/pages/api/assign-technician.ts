@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const twilioClient = twilio(smsApiKey, smsAuthToken);
         twilioClient.messages.create({
-          to: "+15619010188",
+          to: technicianUser?.phone,
           from: "+18449092150",
           body: `You've been assigned a work order in Pillar by ${pmName}!\n\n Issue: ${issueDescription}\n\n Address: ${address.address}\n\n ${!!address.unit ? `${`Unit: ${address.unit}`}\n\n` : ``} ${tenantName && `Tenant: ${tenantName}`}\n\n ${permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`} View the full work order at ${workOrderLink}\n\n 
           `
