@@ -55,7 +55,7 @@ const Tenants = () => {
       if (!user || !userType) return;
       setTenantsLoading(true);
       try {
-        if (!user || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         //Reset filter options on initial fetch

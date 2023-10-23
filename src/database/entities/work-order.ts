@@ -48,7 +48,7 @@ export interface IWorkOrder {
   permissionToEnter: PTE_Type;
   tenantEmail: string;
   createdBy: string;
-  createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
+  createdByType: UserType;
   tenantName: string;
   address: Property;
   status: WoStatus;
