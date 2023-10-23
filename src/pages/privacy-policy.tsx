@@ -26,9 +26,9 @@ const PrivacyPolicy = () => {
       <p className="mb-4">We may store your personal information for an extended period of time, depending on how we need to use the information. For example, we will keep your email, name, and address on file as long as you have an account with us or as long as the property management team needs to store records of your maintenance requests. We store this information in order to provide our services of coordinating and storing maintenance requests for the property management team and its tenants.</p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">Information Security</h2>
-      <p>We use appropriate technical and organizational measures to protect the information we collect and store. Unfortunately, no security measures can be 100% secure, and we cannot guarantee the security of your information. ApiResponse leaks and malicious attacks do happen. Please understand that while we do our best to protect your data, providing your personal information is at your own risk.</p>
+      <p>We use appropriate technical and organizational measures to protect the information we collect and store. Unfortunately, no security measures can be 100% secure, and we cannot guarantee the security of your information. Data leaks and malicious attacks do happen. Please understand that while we do our best to protect your data, providing your personal information is at your own risk.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">ApiResponse Management</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2">Data Management</h2>
       <p className="mb-4">Updating and deleting data is controlled by the property management users in our application. If you are a tenant and would like to have your data updated or deleted in our system, please contact your property management team to do so.</p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">{"Children's Privacy"}</h2>

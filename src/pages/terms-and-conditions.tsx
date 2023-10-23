@@ -13,7 +13,7 @@ const TermsAndCondittions = () => {
       <h2 className="text-xl font-semibold mt-6 mb-2">Scope of Service</h2>
       <p className="mb-4">Pillar is a platform that allows you to submit WOs for issues in your apartment. We do not perform the repairs; we facilitate the process by passing maintenance requests to the Property Management team.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">ApiResponse Usage and Privacy Policy</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2">Data Usage and Privacy Policy</h2>
       <p className="mb-4">Your name, address, and email is provided by the Property Management team. We use this data to process maintenance requests and facilitate communication between tenants and the property management team for resolution. For more details on how we handle your data, please refer to our <Link href="/privacy-policy" className="text-blue-500 hover:underline">Privacy Policy</Link>.</p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">Legal Compliance and Dispute Resolution</h2>
