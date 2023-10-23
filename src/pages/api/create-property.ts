@@ -1,29 +1,32 @@
-import { Data } from '@/database';
 import { PropertyEntity } from '@/database/entities/property';
-import { IUser, UserEntity, userRoles } from '@/database/entities/user';
+import { IUser, UserEntity, USER_TYPE } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { v4 as uuid } from 'uuid';
 import { options } from './auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-import { CreatevalidateProperty } from '@/components/add-property-modal';
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { CreatePropertySchema } from '@/types/customschemas';
+import { CreateProperty } from '@/types';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse } from './_utils';
 
 /**
  *
  * @returns New property or error message on failure.
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  //@ts-ignore
-  const sessionUser: IUser = session?.user;
-  
-  //User must be a pm to create properties
-  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = CreatevalidateProperty.parse(req.body);
-    const { address, country = 'US', city, state, postalCode, unit, pmEmail, numBeds, numBaths, tenantEmail, organization } = body;
+    const session = await getServerSession(req, res, options);
+    //@ts-ignore
+    const sessionUser: IUser = session?.user;
+
+    //User must be a pm to create properties
+    if (!session || !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+    
+    const body: CreateProperty = CreatePropertySchema.parse(req.body);
+    const { address, country, city, state, postalCode, unit, pmEmail, numBeds, numBaths, tenantEmail, organization } = body;
 
     const propertyEntity = new PropertyEntity();
     const userEntity = new UserEntity();
@@ -61,9 +64,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    return res.status(200).json({ response: JSON.stringify(newProperty) });
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newProperty) });
   } catch (error: any) {
     console.log({ error });
-    return res.status(500).json({ response: error?.message });
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

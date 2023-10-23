@@ -3,18 +3,18 @@ import axios from 'axios';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import Select from 'react-select';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
-import { GetPropertiesApiRequest } from '@/pages/api/get-all-properties';
-import { PropertyType, PropertyTypeWithId } from '@/types/zodvalidators';
 import { deconstructKey } from '@/utils';
+import { GetProperties, PropertyWithId } from '@/types';
+import { GetPropertiesSchema } from '@/types/customschemas';
 
 const PropertySelector = ({
   selectedProperty,
   setSelectedProperty,
-  orgId,
+  organization,
 }: {
-  selectedProperty: PropertyTypeWithId | null;
-  setSelectedProperty: Dispatch<SetStateAction<PropertyTypeWithId | null>>;
-  orgId?: string;
+  selectedProperty: PropertyWithId | null;
+  setSelectedProperty: Dispatch<SetStateAction<PropertyWithId | null>>;
+  organization?: string;
 }) => {
   const [properties, setProperties] = useState<IProperty[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
@@ -25,28 +25,22 @@ const PropertySelector = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    //TOD: add try catch plus error handling
     async function getProperties() {
       setLoading(true);
       try {
-        if (!orgId || !orgId.length) {
-          throw new Error('Must provide either email or orgId to fetch properties');
-        }
-
         const { data } = await axios.post('/api/get-all-properties', {
           startKey: undefined,
-          orgId: orgId,
-        } as GetPropertiesApiRequest);
+          organization: organization,
+        });
         const response = JSON.parse(data.response);
         setProperties(response.properties);
       } catch (err) {
         console.log(err);
       }
-
       setLoading(false);
     }
     getProperties();
-  }, [orgId]);
+  }, [organization]);
 
   const addressSet = new Set();
   const unitSet = new Set();

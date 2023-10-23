@@ -7,10 +7,11 @@ import { AddPropertyModal } from '@/components/add-property-modal';
 import React from 'react';
 import { IProperty } from '@/database/entities/property';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { GetPropertiesApiRequest } from '../api/get-all-properties';
 import { getPageLayout, toTitleCase } from '@/utils';
 import { StartKey } from '@/database/entities';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { GetProperties } from '@/types';
+import { GetPropertiesSchema } from '@/types/customschemas';
 
 const Properties = () => {
   const { user } = useSessionUser();
@@ -18,20 +19,16 @@ const Properties = () => {
   const [properties, setProperties] = useState<IProperty[]>([]);
   const { isMobile } = useDevice();
   const [propertiesLoading, setPropertiesLoading] = useState(true);
-  const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
+  const [startKey, setStartKey] = useState<StartKey>(undefined);
 
   const fetchProperties = useCallback(
     async (isInitial: boolean) => {
       setPropertiesLoading(true);
       try {
-        if (!user?.organization) {
-          throw new Error('User does not have an organization');
-        }
-        const params: GetPropertiesApiRequest = {
-          orgId: user!.organization!,
+        const { data } = await axios.post('/api/get-all-properties', {
+          organization: user?.organization,
           startKey: isInitial ? undefined : startKey,
-        };
-        const { data } = await axios.post('/api/get-all-properties', params);
+        });
         const response = JSON.parse(data.response);
         const _properties = response.properties as IProperty[];
         isInitial ? setProperties(_properties) : setProperties([...properties, ..._properties]);

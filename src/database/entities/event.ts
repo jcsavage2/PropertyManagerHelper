@@ -2,8 +2,8 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
-import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
 import { PAGE_SIZE } from '@/constants';
+import { GetWorkOrderEvents } from '@/types';
 
 type CreateEventProps = {
   workOrderId: string;

@@ -3,29 +3,26 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString, constructNameEmailString } from '@/utils';
+import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString, constructNameEmailString, renderToastError } from '@/utils';
 import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { AssignTechnicianSchema, OptionType, PTE_Type, RemoveTechnicianSchema } from '@/types';
+import { DeleteEntity, Option, PTE_Type} from '@/types';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
-import { PTE, STATUS, TECHNICIAN_DELIM, USER_PERMISSION_ERROR } from '@/constants';
+import { API_STATUS, PTE, WO_STATUS, TECHNICIAN_DELIM, USER_PERMISSION_ERROR } from '@/constants';
 import { BsTrashFill } from 'react-icons/bs';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import ConfirmationModal from './confirmation-modal';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/router';
-import { DeleteRequest } from '@/pages/api/delete';
 import { ENTITIES, StartKey } from '@/database/entities';
-import { GetTechsForOrgRequest } from '@/pages/api/get-techs-for-org';
 import Modal from 'react-modal';
-import { userRoles } from '@/database/entities/user';
-import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
+import { USER_TYPE } from '@/database/entities/user';
 import { MdOutlineClear } from 'react-icons/md';
-import { UpdateViewedWORequest } from '@/pages/api/update-viewed-wo-list';
+import { AssignTechnicianSchema, DeleteEntitySchema, GetSchema, GetTechsForOrgSchema, GetWorkOrderEventsSchema, RemoveTechnicianSchema, UpdateViewedWORequestSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
 
 const WorkOrder = ({
   workOrderId,
@@ -53,8 +50,8 @@ const WorkOrder = ({
   const [isUpdatingAssignedTechnicians, setIsUpdatingAssignedTechnicians] = useState(false); //Will disable technician select
 
   //Technician state
-  const [technicianOptions, setTechnicianOptions] = useState<OptionType[]>([]);
-  const [assignedTechnicians, setAssignedTechnicians] = useState<OptionType[]>([]);
+  const [technicianOptions, setTechnicianOptions] = useState<Option[]>([]);
+  const [assignedTechnicians, setAssignedTechnicians] = useState<Option[]>([]);
 
   //Modals
   const [openAddCommentModal, setOpenAddCommentModal] = useState(false);
@@ -102,7 +99,7 @@ const WorkOrder = ({
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 
-        if (response.status === 200) {
+        if (response.status === API_STATUS.SUCCESS) {
           await axios.post('/api/add-images-to-work-order', {
             pk: workOrder?.pk,
             sk: workOrder?.sk,
@@ -130,16 +127,14 @@ const WorkOrder = ({
       if (!user) return [];
       setFetchingTechnicians(true);
       try {
-        if (!user.email || !user.organization) {
-          throw new Error('user must be in an organization');
-        }
-        const body: GetTechsForOrgRequest = {
+
+        const { data } = await axios.post('/api/get-techs-for-org', {
           organization: user.organization,
           startKey: undefined,
           techSearchString: _searchString,
-        };
-        const { data } = await axios.post('/api/get-techs-for-org', body);
+        });
         const response = JSON.parse(data.response);
+        
         if (!response.techs) {
           setFetchingTechnicians(false);
           return [];
@@ -147,7 +142,7 @@ const WorkOrder = ({
         const mappedTechnicians = response.techs.map((technician: any) => {
           return {
             value: technician.email,
-            label: technician.name,
+            label: toTitleCase(technician.name),
           };
         });
 
@@ -179,19 +174,19 @@ const WorkOrder = ({
       const assignedToList = Array.from(_workOrder.assignedTo ?? []);
       if (_workOrder && assignedToList.length > 0 && mappedTechnicians.length > 0) {
         assignedToList.forEach((str: string) => {
-          let technician: OptionType | undefined;
+          let technician: Option | undefined;
           //Backwards compatible with old assignedTo format
           if (str.includes(TECHNICIAN_DELIM)) {
             const keys: string[] = deconstructNameEmailString(str);
-            technician = mappedTechnicians.find((technician: OptionType) => technician.value === keys[0]);
+            technician = mappedTechnicians.find((technician: Option) => technician.value === keys[0]);
           } else {
             //str is just tech email in this case
-            technician = mappedTechnicians.find((technician: OptionType) => technician.value === str);
+            technician = mappedTechnicians.find((technician: Option) => technician.value === str);
           }
 
           if (technician) {
             //Only allow PMs to see who has viewed
-            if (userType === userRoles.PROPERTY_MANAGER && _workOrder.viewedWO && _workOrder.viewedWO.includes(technician.value)) {
+            if (userType === USER_TYPE.PROPERTY_MANAGER && _workOrder.viewedWO && _workOrder.viewedWO.includes(technician.value)) {
               technician.label = technician.label + ' (viewed)';
             }
             setAssignedTechnicians((prev) => [...prev, { value: technician!.value, label: technician!.label }]);
@@ -216,8 +211,9 @@ const WorkOrder = ({
         const { data } = await axios.post('/api/get-work-order-events', {
           workOrderId: deconstructKey(workOrderId),
           startKey,
-        } as GetWorkOrderEvents);
+        });
         const response = JSON.parse(data.response);
+        
         initialFetch ? setEvents(response.events) : setEvents((prev) => [...prev, ...response.events]);
         setEventsStartKey(response.startKey);
       } catch (err) {
@@ -232,30 +228,25 @@ const WorkOrder = ({
     if (!workOrderId) return;
     setIsUpdatingStatus(true);
     try {
-      if (!user || !user.name || !user.email) {
-        throw new Error('User or workOrderId not found');
+      if (!user  || !user.roles?.includes(USER_TYPE.TECHNICIAN) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        throw new Error(USER_PERMISSION_ERROR);
       }
-      if (!user.roles?.includes(userRoles.TECHNICIAN) && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-        throw new Error('User must be a technician or pm to update status');
-      }
-      const { data } = await axios.post('/api/update-work-order', {
+      const params = UpdateWorkOrderSchema.parse({
         pk: workOrderId,
         sk: workOrderId,
         status: status,
         email: user.email,
         name: altName ?? user.name,
-      });
+      })
+      const { data } = await axios.post('/api/update-work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrder(updatedWorkOrder);
       }
       await getWorkOrderEvents(true);
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
-      toast.error('Error updating work order status', {
-        position: 'top-right',
-        draggable: false,
-      });
+      renderToastError(e, 'Error updating work order status');
     }
     setIsUpdatingStatus(false);
   };
@@ -264,31 +255,26 @@ const WorkOrder = ({
     if (!workOrderId) return;
     setIsUpdatingPTE(true);
     try {
-      if (!user || !user.name || !user.email) {
-        throw new Error('User or workOrderId not found');
+      if (!user || !user.roles?.includes(USER_TYPE.TENANT) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        throw new Error(USER_PERMISSION_ERROR);
       }
-      if (!user.roles?.includes(userRoles.TENANT) && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-        throw new Error('User must be a tenant or property manager to update status');
-      }
-      const { data } = await axios.post('/api/update-work-order', {
+      const params = UpdateWorkOrderSchema.parse({
         pk: workOrderId,
         sk: workOrderId,
         email: user.email,
         name: altName ?? user.name,
         permissionToEnter: newValue,
-      });
+      })
+      const { data } = await axios.post('/api/update-work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrder(updatedWorkOrder);
       }
       await getWorkOrderEvents(true);
       setIsUpdatingPTE(false);
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
-      toast.error('Error updating work order status', {
-        position: 'top-right',
-        draggable: false,
-      });
+      renderToastError(e, 'Error updating work order permission to enter');
     }
     setIsUpdatingPTE(false);
   };
@@ -297,16 +283,16 @@ const WorkOrder = ({
     async (workOrderId: string) => {
       if (!workOrderId) return;
       try {
-        if (workOrder?.status === STATUS.DELETED || !user || !user.email || !user.name) {
-          throw new Error('deleteWorkOrder missing params');
+        if (!user || userType !== ENTITIES.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
-        const params: DeleteRequest = {
+        const params: DeleteEntity = DeleteEntitySchema.parse({
           pk: workOrderId,
           sk: workOrderId,
           entity: ENTITIES.WORK_ORDER,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
-        };
+        });
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
           router.push('/work-orders');
@@ -316,27 +302,24 @@ const WorkOrder = ({
           });
           afterDelete();
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast.error('Error Deleting Work Order. Please Try Again', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error deleting work order');
       }
     },
-    [workOrder?.status, workOrderId, user, router, afterDelete, altName]
+    [user, router, afterDelete, altName, userType]
   );
 
-  const handleAssignTechnician = async (_assignedTechnicians: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
+  const handleAssignTechnician = async (_assignedTechnicians: MultiValue<Option>, actionMeta: ActionMeta<Option>) => {
     setIsUpdatingAssignedTechnicians(true);
     try {
-      if (!user?.email || !workOrder || userType !== ENTITIES.PROPERTY_MANAGER || !user.organization) {
+      if (!user || !workOrder || userType !== USER_TYPE.PROPERTY_MANAGER) {
         throw new Error(USER_PERMISSION_ERROR);
       }
       const actionType = actionMeta.action;
       if (actionType === 'select-option') {
-        const selectedTechnician = actionMeta.option as OptionType;
-        const validatedBody = AssignTechnicianSchema.parse({
+        const selectedTechnician = actionMeta.option as Option;
+        await axios.post('/api/assign-technician', {
           organization: user.organization,
           workOrderId,
           ksuID: workOrder.GSI1SK,
@@ -351,32 +334,29 @@ const WorkOrder = ({
           tenantName: workOrder?.tenantName,
           tenantEmail: workOrder?.tenantEmail,
           oldAssignedTo: workOrder?.assignedTo ?? [],
+          property: workOrder?.address
         });
-        await axios.post('/api/assign-technician', { ...validatedBody });
       } else if (actionType === 'remove-value') {
-        const removedTechnician = actionMeta.removedValue as OptionType;
+        const removedTechnician = actionMeta.removedValue as Option;
         const technicianName = removedTechnician.label.includes(' (viewed)')
           ? removedTechnician.label.replace(' (viewed)', '')
           : removedTechnician.label;
-        const validatedBody = RemoveTechnicianSchema.parse({
+
+        await axios.post('/api/remove-technician', {
           workOrderId: deconstructKey(workOrderId),
           pmEmail: user.email,
           pmName: altName ?? user.name,
           technicianEmail: removedTechnician.value,
-          technicianName: technicianName,
+          technicianName,
           oldAssignedTo: workOrder?.assignedTo ?? [],
           oldViewedWO: workOrder?.viewedWO ?? [],
         });
-        await axios.post('/api/remove-technician', { ...validatedBody });
       }
       await getWorkOrder();
       await getWorkOrderEvents(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Error assigning or removing Technician. Please Try Again', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
+      renderToastError(err, 'Error assigning or removing technician from work order');
     }
     setIsUpdatingAssignedTechnicians(false);
   };
@@ -403,7 +383,7 @@ const WorkOrder = ({
 
   useEffect(() => {
     const updateViewedList = async () => {
-      if (!user || !workOrder || !workOrderId || !userType || userType !== userRoles.TECHNICIAN || !workOrder.assignedTo) return;
+      if (!user || !workOrder || !workOrderId || !userType || userType !== USER_TYPE.TECHNICIAN || !workOrder.assignedTo) return;
       const assignedToList = Array.from(workOrder.assignedTo);
       //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
       if (
@@ -412,13 +392,13 @@ const WorkOrder = ({
       ) {
         //Handle async update viewed list
         const newViewedWOList: string[] = [...(workOrder.viewedWO ?? []), user.email];
-        const params: UpdateViewedWORequest = {
+        const params = UpdateViewedWORequestSchema.parse({
           pk: workOrderId,
           sk: workOrderId,
           email: user.email,
           newViewedWOList,
           pmEmail: workOrder.pmEmail,
-        };
+        })
         await axios.post('/api/update-viewed-wo-list', params);
         await getWorkOrder();
       }
@@ -448,7 +428,7 @@ const WorkOrder = ({
               <div className="flex flex-row items-center">
                 {!isMobile ? (
                   <>
-                    {userType !== 'TENANT' ? (
+                    {userType !== USER_TYPE.TENANT ? (
                       <a
                         href="#wo-modal-comments"
                         className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4"
@@ -457,10 +437,10 @@ const WorkOrder = ({
                       </a>
                     ) : null}
 
-                    {userType === 'PROPERTY_MANAGER' && workOrder.status !== STATUS.DELETED && (
+                    {userType === USER_TYPE.PROPERTY_MANAGER && workOrder.status !== WO_STATUS.DELETED && (
                       <div
                         onClick={() => {
-                          if (workOrder.status === STATUS.DELETED) return;
+                          if (workOrder.status === WO_STATUS.DELETED) return;
                           setConfirmDeleteModalIsOpen(true);
                         }}
                       >
@@ -481,13 +461,13 @@ const WorkOrder = ({
         >
           <div className="font-bold">Status</div>
           <div className="flex flex-row mt-0.5">
-            {workOrder.status !== STATUS.DELETED ? (
+            {workOrder.status !== WO_STATUS.DELETED ? (
               <>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.TO_DO)}
-                  className={`${workOrder.status === STATUS.TO_DO && 'bg-blue-200'} ${
-                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                  onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.TO_DO)}
+                  className={`${workOrder.status === WO_STATUS.TO_DO && 'bg-blue-200'} ${
+                    userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
                   } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <GoTasklist />
@@ -495,9 +475,9 @@ const WorkOrder = ({
                 </button>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) => !isUpdatingStatus && userType !== userRoles.TENANT && handleUpdateStatus(e, STATUS.COMPLETE)}
-                  className={`${workOrder.status === STATUS.COMPLETE && 'bg-blue-200'} ${
-                    userType !== userRoles.TENANT && 'hover:bg-blue-100'
+                  onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.COMPLETE)}
+                  className={`${workOrder.status === WO_STATUS.COMPLETE && 'bg-blue-200'} ${
+                    userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
                   } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
@@ -505,7 +485,7 @@ const WorkOrder = ({
                 </button>
               </>
             ) : (
-              <p className="text-red-600">{STATUS.DELETED}</p>
+              <p className="text-red-600">{WO_STATUS.DELETED}</p>
             )}
           </div>
 
@@ -572,7 +552,7 @@ const WorkOrder = ({
                 v?.value && handleUpdatePTE(v.value);
               }}
               defaultValue={undefined}
-              isDisabled={(!user?.roles?.includes(userRoles.PROPERTY_MANAGER) && !user?.roles?.includes(userRoles.TENANT)) || isUpdatingPTE}
+              isDisabled={(!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) && !user?.roles?.includes(USER_TYPE.TENANT)) || isUpdatingPTE}
               placeholder={workOrder.permissionToEnter as PTE_Type}
             />
           </div>
@@ -581,7 +561,7 @@ const WorkOrder = ({
             {workOrder.address?.unit ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit) : toTitleCase(workOrder.address.address)}
           </div>
           <div className="font-bold mt-4">Tenant</div>
-          <div className="mt-0.5">{workOrder.tenantName}</div>
+          <div className="mt-0.5">{toTitleCase(workOrder.tenantName)}</div>
           <div className="font-bold mt-4">Location</div>
           <div className="mt-0.5">{workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}</div>
           {workOrder.additionalDetails && workOrder.additionalDetails.length > 0 ? (
@@ -615,7 +595,7 @@ const WorkOrder = ({
                           className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 last-of-type:mb-0 py-2 px-3 text-left"
                         >
                           <div className="mb-0.5 flex flex-row">
-                            <p className="font-bold mr-2">{event.madeByName} </p>
+                            <p className="font-bold mr-2">{toTitleCase(event.madeByName)} </p>
                             <p className="text-slate-600">
                               {formattedDateTime[0]} @ {formattedDateTime[1]}
                             </p>
@@ -646,8 +626,8 @@ const WorkOrder = ({
           ) : null}
         </div>
         <div className="w-full box-border text-sm fixed bottom-0 border-t border-slate-200 md:text-right bg-white text-gray-600 py-4 md:px-6 text-center">
-          Created by {workOrder.createdByType === userRoles.TENANT ? 'Tenant' : 'Property Manager:'}{' '}
-          {workOrder.createdByType === userRoles.TENANT ? workOrder.tenantEmail : workOrder.pmEmail}
+          Created by {workOrder.createdByType === USER_TYPE.TENANT ? 'Tenant' : 'Property Manager:'}{' '}
+          {workOrder.createdByType === USER_TYPE.TENANT ? workOrder.tenantEmail : workOrder.pmEmail}
         </div>
 
         {/* Other modals */}

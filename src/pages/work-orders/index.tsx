@@ -16,17 +16,17 @@ import { useUserContext } from '@/context/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 
 // Types
-import { IGetAllWorkOrdersForUserProps, IWorkOrder } from '@/database/entities/work-order';
-import { getPageLayout, toggleBodyScroll } from '@/utils';
+import { IWorkOrder } from '@/database/entities/work-order';
+import { getPageLayout, renderToastError, toggleBodyScroll } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
-import { StatusOptionType, StatusType } from '@/types';
+import { StatusOption, WoStatus } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
-import { toast } from 'react-toastify';
 import WorkOrdersTable from '@/components/work-orders-table';
+import { GetAllWorkOrdersForUserSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
 
 export type HandleUpdateStatusProps = {
-  val: SingleValue<StatusOptionType>;
+  val: SingleValue<StatusOption>;
   pk: string;
   sk: string;
 };
@@ -43,7 +43,7 @@ const WorkOrders = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [workOrders, setWorkOrders] = useState<IWorkOrder[]>([]);
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState<Record<StatusType, boolean>>({
+  const [statusFilter, setStatusFilter] = useState<Record<WoStatus, boolean>>({
     TO_DO: true,
     COMPLETE: true,
   });
@@ -80,20 +80,15 @@ const WorkOrders = () => {
   const handleUpdateStatus = async ({ val, pk, sk }: HandleUpdateStatusProps) => {
     setIsFetching(true);
     try {
-      if (!user || !user.name || !user.email) {
-        throw new Error('User not found');
-      }
-      const { data } = await axios.post('/api/update-work-order', { pk, sk, status: val?.value, email: user.email, name: altName ?? user.name });
+      const params = UpdateWorkOrderSchema.parse({ pk, sk, status: val?.value, email: user?.email, name: altName ?? user?.name })
+      const { data } = await axios.post('/api/update-work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrders(workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)));
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
-      toast.error('Error updating work order status', {
-        position: 'top-right',
-        draggable: false,
-      });
+      renderToastError(e, "Error updating work order status");
     }
     setIsFetching(false);
   };
@@ -104,15 +99,13 @@ const WorkOrders = () => {
       if (router.query.workOrderId || !user || !userType) return;
       setIsFetching(true);
       try {
-        const body: IGetAllWorkOrdersForUserProps = {
+        const { data } = await axios.post('/api/get-all-work-orders-for-user', {
           email: user.email,
           userType,
           orgId: orgMode ? user?.organization ?? '' : undefined,
           startKey: initialFetch ? undefined : startKey,
           statusFilter,
-        };
-
-        const { data } = await axios.post('/api/get-all-work-orders-for-user', { ...body });
+        });
 
         const response = JSON.parse(data.response);
         const orders: IWorkOrder[] = response.workOrders;
@@ -121,12 +114,12 @@ const WorkOrders = () => {
         if (orders.length) {
           sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
         }
-      } catch (e) {
+      } catch (e: any) {
         console.log(e);
       }
       setIsFetching(false);
     },
-    [router.query.workOrderId, user, userType, orgMode, startKey, statusFilter, workOrders]
+    [router.query.workOrderId, user, userType, orgMode, startKey, statusFilter]
   );
 
   /**

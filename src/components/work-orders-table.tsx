@@ -5,25 +5,25 @@ import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import Link from 'next/link';
-import { STATUS } from '@/constants';
+import { WO_STATUS } from '@/constants';
 import { GoTasklist } from 'react-icons/go';
-import { StatusType, StatusOptionType } from '@/types';
+import { WoStatus, StatusOption } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 
-export const StatusOptions: StatusOptionType[] = [
-  { value: STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
-  { value: STATUS.COMPLETE, label: 'Complete', icon: <AiOutlineCheck className="text-green-500" /> },
+export const StatusOptions: StatusOption[] = [
+  { value: WO_STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
+  { value: WO_STATUS.COMPLETE, label: 'Complete', icon: <AiOutlineCheck className="text-green-500" /> },
 ];
 
 interface IWorkOrdersTableProps {
   workOrders: IWorkOrder[];
   isFetching: boolean;
-  statusFilter: Record<StatusType, boolean>;
-  setStatusFilter: (statusFilter: Record<StatusType, boolean>) => void;
+  statusFilter: Record<WoStatus, boolean>;
+  setStatusFilter: (statusFilter: Record<WoStatus, boolean>) => void;
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
 }
@@ -48,21 +48,21 @@ export const WorkOrdersTable = ({
   ];
 
   const renderWoCardStatus = (workOrder: IWorkOrder) => {
-    if (workOrder.status === STATUS.DELETED) {
-      return <p className="text-red-600 ml-1">{STATUS.DELETED}</p>;
+    if (workOrder.status === WO_STATUS.DELETED) {
+      return <p className="text-red-600 ml-1">{WO_STATUS.DELETED}</p>;
     }
-    if (userType === userRoles.TENANT) {
-      const index = workOrder.status === STATUS.TO_DO ? 0 : 1;
+    if (userType === USER_TYPE.TENANT) {
+      const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
       return (
-        <div className={`${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200 ' : 'bg-green-200'} px-2 py-1 rounded-lg`}>
+        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-yellow-200 ' : 'bg-green-200'} px-2 py-1 rounded-lg`}>
           {formattedStatusOptions({ value: StatusOptions[index].value, label: StatusOptions[index].label, icon: StatusOptions[index].icon })}
         </div>
       );
     }
     return (
       <Select
-        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === STATUS.TO_DO && 'bg-yellow-200'} ${
-          workOrder.status === STATUS.COMPLETE && 'bg-green-200'
+        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === WO_STATUS.TO_DO && 'bg-yellow-200'} ${
+          workOrder.status === WO_STATUS.COMPLETE && 'bg-green-200'
         }`}
         value={StatusOptions.find((o) => o.value === workOrder.status)!}
         onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}

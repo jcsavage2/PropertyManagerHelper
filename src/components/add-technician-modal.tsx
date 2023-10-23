@@ -4,30 +4,21 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'reac
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { toggleBodyScroll } from '@/utils';
+import { renderToastError, toggleBodyScroll } from '@/utils';
 import { useDevice } from '@/hooks/use-window-size';
-import { userRoles } from '@/database/entities/user';
-import { API_STATUS, EMAIL_MATCHING_ERROR, USER_PERMISSION_ERROR } from '@/constants';
+import { USER_TYPE } from '@/database/entities/user';
+import { USER_PERMISSION_ERROR } from '@/constants';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { lowerCaseRequiredEmail, lowerCaseRequiredString } from '@/types/zodvalidators';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CreateTechnician } from '@/types';
+import { CreateTechnicianSchema } from '@/types/customschemas';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 export type AddTechnicianModalProps = {
   technicianModalIsOpen: boolean;
   setTechnicianModalIsOpen: Dispatch<SetStateAction<boolean>>;
   onSuccessfulAdd: () => void;
 };
-
-export const CreateTechnicianSchema = z.object({
-  technicianEmail: lowerCaseRequiredEmail,
-  technicianName: lowerCaseRequiredString,
-  pmEmail: lowerCaseRequiredEmail,
-  pmName: lowerCaseRequiredString,
-  organization: z.string().min(1),
-  organizationName: z.string().min(1),
-});
-export type CreateTechnicianSchemaType = z.infer<typeof CreateTechnicianSchema>;
 
 export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIsOpen, onSuccessfulAdd }: AddTechnicianModalProps) => {
   const { user } = useSessionUser();
@@ -66,20 +57,14 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
     setTechnicianModalIsOpen(false);
   }
 
-  const handleCreateNewTechnician: SubmitHandler<CreateTechnicianSchemaType> = useCallback(
+  const handleCreateNewTechnician: SubmitHandler<CreateTechnician> = useCallback(
     async (params) => {
       try {
-        if (!user?.roles?.includes(userRoles.PROPERTY_MANAGER) || userType !== userRoles.PROPERTY_MANAGER) {
+        if (!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
           throw new Error(USER_PERMISSION_ERROR);
         }
 
-        if(user?.email === params.technicianEmail){
-          setError('technicianEmail', { message: EMAIL_MATCHING_ERROR })
-          return
-        }
-
         const res = await axios.post('/api/create-technician', params)
-        if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);
         
         const parsedUser = JSON.parse(res.data.response);
         if (parsedUser.modified) {
@@ -88,12 +73,8 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           closeModal()
         }
       } catch (err) {
-        toast.error('Error creating technician', { position: toast.POSITION.TOP_CENTER, draggable: false });
         console.log({ err });
-        toast.error((err as any)?.response?.data?.response ?? "Error Creating Technician. Please Try Again", {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error Creating Technician');
       }
     },
     [user, userType]
@@ -103,9 +84,8 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
-    setError,
     reset,
-  } = useForm<CreateTechnicianSchemaType>({ resolver: zodResolver(CreateTechnicianSchema)});
+  } = useForm<CreateTechnician>({ resolver: zodResolver(CreateTechnicianSchema), mode: 'all'});
 
   return (
     <Modal
@@ -128,7 +108,9 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           id="name"
           placeholder="Technician Full Name*"
           type={'text'}
-          {...register('technicianName')}
+          {...register('technicianName', {
+            required: true
+          })}
         />
         {errors.technicianName && <p className="text-red-500 text-xs">{errors.technicianName.message}</p>}
         <input
@@ -136,7 +118,9 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           id="email"
           placeholder="Technician Email*"
           type="email"
-          {...register('technicianEmail')}
+          {...register('technicianEmail', {
+            required: true
+          })}
         />
         {errors.technicianEmail && <p className="text-red-500 text-xs">{errors.technicianEmail.message}</p>}
         <input type="hidden" {...register('pmEmail')} value={user?.email ?? ''} />
@@ -144,7 +128,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
         <button className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
-          Add Technician
+          {isSubmitting ? <LoadingSpinner /> : 'Create Technician'}
         </button>
       </form>
     </Modal>

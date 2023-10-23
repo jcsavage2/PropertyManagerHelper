@@ -1,40 +1,30 @@
-import { Data } from '@/database';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { WorkOrderEntity } from '@/database/entities/work-order';
 import { deconstructKey } from '@/utils';
 import sendgrid from '@sendgrid/mail';
-
-export type UpdateViewedWORequest = {
-  pk: string;
-  sk: string;
-  newViewedWOList: string[];
-  email: string;
-  pmEmail: string;
-};
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse, initializeSendgrid } from './_utils';
+import { UpdateViewedWORequestSchema } from '@/types/customschemas';
+import { UpdateViewedWORequest } from '@/types';
 
 /*
-* This function is called when a user opens a work order.
-*/
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
+ * This function is called when a user opens a work order.
+ */
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
-    if (!apiKey) {
-      throw new Error('missing SENDGRID_API_KEY env variable.');
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
-    sendgrid.setApiKey(apiKey);
-    const body = req.body as UpdateViewedWORequest;
+
+    const body: UpdateViewedWORequest = UpdateViewedWORequestSchema.parse(req.body);
     const { pk, sk, email, newViewedWOList, pmEmail } = body;
-    if(!pk || !sk || !email || !newViewedWOList || !pmEmail) {
-      throw new Error('Missing pk, sk, email, oldViewedWOList, or pmEmail');
-    }
     const woEntity = new WorkOrderEntity();
+
+    initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(pk)}`;
     const wo = await woEntity.update({ pk, viewedWO: newViewedWOList });
@@ -98,6 +88,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </body>
       </html>`,
     });
-    return res.status(200).json({ response: JSON.stringify(wo) });
-  } catch (error) { }
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(wo) });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+  }
 }

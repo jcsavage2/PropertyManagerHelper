@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { useDevice } from '@/hooks/use-window-size';
 
 const Home = () => {
@@ -27,10 +27,10 @@ const Home = () => {
   }
 
   //If user is logged in and is not a PM, then route them to their respective page
-  if (user && userType && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-    if (user?.roles.includes(userRoles.TENANT)) {
+  if (user && userType && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+    if (user?.roles.includes(USER_TYPE.TENANT)) {
       router.push('/work-order-chatbot');
-    } else if (user?.roles.includes(userRoles.TECHNICIAN)) {
+    } else if (user?.roles.includes(USER_TYPE.TECHNICIAN)) {
       router.push('/work-orders');
     }
   }
@@ -42,7 +42,7 @@ const Home = () => {
         <br />
         {user && user.email ? (
           <div className="flex flex-col justify-center w-full items-center">
-            {user?.roles.includes(userRoles.PROPERTY_MANAGER) ? (
+            {user?.roles.includes(USER_TYPE.PROPERTY_MANAGER) ? (
               <div className="w-3/4 mx-auto mb-4 ">
                 Hey {user?.name}, you are currently viewing Pillar as a {userType}
               </div>
@@ -74,17 +74,17 @@ const Home = () => {
           </button>
         )}
 
-        {user?.roles.includes(userRoles.PROPERTY_MANAGER) ? (
+        {user?.roles.includes(USER_TYPE.PROPERTY_MANAGER) ? (
           <>
             <div className="mt-8" style={{ display: 'grid', gridTemplateColumns: '1fr', rowGap: '2em' }}>
               <button
                 className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
                 onClick={() => {
-                  if (!user?.roles?.includes(userRoles.TENANT) || userType === userRoles.TENANT) return;
-                  setUserType(userRoles.TENANT);
+                  if (!user?.roles?.includes(USER_TYPE.TENANT) || userType === USER_TYPE.TENANT) return;
+                  setUserType(USER_TYPE.TENANT);
                   router.push('/work-order-chatbot');
                 }}
-                disabled={!user?.roles?.includes(userRoles.TENANT) || userType === userRoles.TENANT}
+                disabled={!user?.roles?.includes(USER_TYPE.TENANT) || userType === USER_TYPE.TENANT}
               >
                 Switch to Tenant view
               </button>
@@ -92,22 +92,22 @@ const Home = () => {
               <button
                 className={`justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12`}
                 onClick={async () => {
-                  if (!user?.roles.includes(userRoles.PROPERTY_MANAGER) || userType === userRoles.PROPERTY_MANAGER) return;
-                  setUserType(userRoles.PROPERTY_MANAGER);
+                  if (!user?.roles.includes(USER_TYPE.PROPERTY_MANAGER) || userType === USER_TYPE.PROPERTY_MANAGER) return;
+                  setUserType(USER_TYPE.PROPERTY_MANAGER);
                   router.push('/work-orders');
                 }}
-                disabled={!user?.roles?.includes(userRoles.PROPERTY_MANAGER) || userType === userRoles.PROPERTY_MANAGER}
+                disabled={!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType === USER_TYPE.PROPERTY_MANAGER}
               >
                 Switch to Property Manager view
               </button>
               <button
                 className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
                 onClick={async () => {
-                  if (!user?.roles?.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN) return;
-                  setUserType(userRoles.TECHNICIAN);
+                  if (!user?.roles?.includes(USER_TYPE.TECHNICIAN) || userType === USER_TYPE.TECHNICIAN) return;
+                  setUserType(USER_TYPE.TECHNICIAN);
                   router.push('/work-orders');
                 }}
-                disabled={!user?.roles?.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN}
+                disabled={!user?.roles?.includes(USER_TYPE.TECHNICIAN) || userType === USER_TYPE.TECHNICIAN}
               >
                 Switch to Technician view
               </button>

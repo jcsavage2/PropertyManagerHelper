@@ -1,26 +1,27 @@
-import { API_STATUS, MISSING_ENV, STATUS } from '@/constants';
-import { Data } from '@/database';
+import { API_STATUS, USER_PERMISSION_ERROR, WO_STATUS } from '@/constants';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
-import { generateKey } from '@/utils';
+import { generateKey, toTitleCase } from '@/utils';
 import sendgrid from '@sendgrid/mail';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { ChatCompletionRequestMessage } from 'openai';
-import { ApiError } from 'next/dist/server/api-utils';
-import { CreateWorkOrderFullSchema } from '@/types';
+import { CreateWorkOrderSchema } from '@/types/customschemas';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse, initializeSendgrid } from './_utils';
+import { CreateWorkOrder } from '@/types';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(API_STATUS.UNAUTHORIZED);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = CreateWorkOrderFullSchema.parse(req.body);
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+
+    const body: CreateWorkOrder = CreateWorkOrderSchema.parse(req.body);
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
@@ -38,15 +39,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       pmName,
       woId,
     } = body;
-    console.log(body)
-    
-    if (createdByType !== userRoles.TENANT && (!tenantEmail || !tenantName || !pmName)) {
+
+    if (createdByType !== USER_TYPE.TENANT && (!tenantEmail || !tenantName || !pmName)) {
       throw new ApiError(API_STATUS.BAD_REQUEST, "Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
     }
-    const derivedTenantEmail = createdByType === userRoles.TENANT ? creatorEmail : tenantEmail!;
-    const derivedTenantName = createdByType === userRoles.TENANT ? creatorName : tenantName!;
+    
+    const derivedTenantEmail = createdByType === USER_TYPE.TENANT ? creatorEmail : tenantEmail!;
+    const derivedTenantName = createdByType === USER_TYPE.TENANT ? creatorName : tenantName!;
 
     const workOrderId = generateKey(ENTITY_KEY.WORK_ORDER, woId);
+
+    //Don't overwrite existing work orders
     const existingWorkOrder = await workOrderEntity.get({ pk: workOrderId, sk: workOrderId });
     if (existingWorkOrder) {
       throw new ApiError(API_STATUS.FORBIDDEN, 'Work Order with that ID Already Exists');
@@ -67,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       state: property.state,
       images: images ?? [],
       organization,
-      status: STATUS.TO_DO,
+      status: WO_STATUS.TO_DO,
       createdBy: creatorEmail,
       createdByType,
       tenantEmail: derivedTenantEmail,
@@ -78,11 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
 
     /** SEND THE EMAIL TO THE USER */
-    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
-    if (!apiKey) {
-      throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY'));
-    }
-    sendgrid.setApiKey(apiKey);
+    initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
     if (body.messages) {
       body.messages.pop();
@@ -91,14 +90,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         await eventEntity.create({
           workOrderId: woId,
           message: message.content ?? '',
-          madeByEmail: message.role === 'user' ? derivedTenantEmail : 'Pillar Assistant',
-          madeByName: message.role === 'user' ? derivedTenantName : 'Pillar Assistant',
+          madeByEmail: message.role === 'user' ? derivedTenantEmail : 'pillar assistant',
+          madeByName: message.role === 'user' ? derivedTenantName : 'pillar assistant',
         });
       }
     }
 
     //CC the tenant if they created the work order, if a pm created the work order then a different email is sent to the tenant
-    const ccString = body.createdByType === userRoles.TENANT ? creatorEmail : '';
+    const ccString = body.createdByType === USER_TYPE.TENANT ? creatorEmail : '';
 
     const shortenedWorkOrderIdString = woId.substring(woId.length - 4);
 
@@ -106,7 +105,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
       from: 'pillar@pillarhq.co',
-      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${body.property.address ?? ''} ${body.property.unit ?? ''}`,
+      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${toTitleCase(body.property.address) ?? ''} ${
+        toTitleCase(body.property.unit) ?? ''
+      }`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -175,19 +176,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             </tr>
             <tr>
               <td>Address</td>
-              <td>${body.property.address}</td>
+              <td>${toTitleCase(body.property.address)}</td>
             </tr>
             <tr>
               <td>Unit</td>
-              <td>${body.property.unit ?? 'No Unit'}</td>
+              <td>${toTitleCase(body.property.unit ?? 'No Unit')}</td>
             </tr>
             <tr>
               <td>City</td>
-              <td>${body.property.city}</td>
+              <td>${toTitleCase(body.property.city)}</td>
             </tr>
             <tr>
               <td>State</td>
-              <td>${body.property.state}</td>
+              <td>${toTitleCase(body.property.state)}</td>
             </tr>
             <tr>
               <td>Postal Code</td>
@@ -196,9 +197,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
-            ${body.messages
-              ?.map((m: ChatCompletionRequestMessage) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`)
-              .join(' ')}
+            ${
+              body.messages
+                ?.map(
+                  (m: ChatCompletionRequestMessage) =>
+                    `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`
+                )
+                .join(' ') ?? 'No user chat history'
+            }
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -210,11 +216,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     //If the tenant didn't create the work order, make sure they are notified
-    if (body.createdByType !== userRoles.TENANT) {
+    if (body.createdByType !== USER_TYPE.TENANT) {
       await sendgrid.send({
         to: derivedTenantEmail,
         from: 'pillar@pillarhq.co',
-        subject: `${pmName} created a Work Order for you! "${body.issueDescription}"`,
+        subject: `${toTitleCase(pmName)} created a Work Order for you! "${body.issueDescription}"`,
         html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html lang="en">
         <head>
@@ -266,7 +272,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         <body>
           <div class="container" style="margin-left: 20px;margin-right: 20px;">
             <h2>New Work Order Request</h2>
-            <p>${pmName} created a Work Order for you! "${body.issueDescription}"</p>
+            <p>${toTitleCase(pmName)} created a Work Order for you! "${body.issueDescription}"</p>
             <p>You can view your work order <a href="${workOrderLink}">here</a></p>
             
             <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -286,11 +292,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       madeByName: creatorName,
       message: `Work Order Created!`,
     });
+
+    return res.status(API_STATUS.SUCCESS).json({ response: 'Successfully sent email' });
   } catch (error: any) {
     console.log({ error });
-    console.log(error.response.body.errors)
-    return res.status(error.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json({ response: error.message });
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
-
-  return res.status(200).json({ response: 'Successfully sent email' });
 }

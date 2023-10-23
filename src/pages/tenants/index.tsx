@@ -6,21 +6,20 @@ import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import { ImportTenantsModal } from '@/components/import-tenants-modal';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { GetTenantsForOrgRequest } from '../api/get-all-tenants-for-org';
-import { useUserContext } from '@/context/user';
-import { IUser, userRoles } from '@/database/entities/user';
-import { createdToFormattedDateTime, getPageLayout, toTitleCase } from '@/utils';
+import { IUser, USER_TYPE } from '@/database/entities/user';
+import { createdToFormattedDateTime, getPageLayout, renderToastError, toTitleCase } from '@/utils';
 import ConfirmationModal from '@/components/confirmation-modal';
 import { ENTITIES, StartKey } from '@/database/entities';
-import { DeleteRequest } from '../api/delete';
 import { toast } from 'react-toastify';
 import { CiCircleRemove } from 'react-icons/ci';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { MdClear } from 'react-icons/md';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { AiOutlineMail } from 'react-icons/ai';
-import { ReinviteTenantsBody } from '../api/reinvite-tenants';
-import { INVITE_STATUS } from '@/constants';
+import { DEFAULT_DELETE_USER, INVITE_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { DeleteEntity, DeleteUser, Property } from '@/types';
+import { useUserContext } from '@/context/user';
+import { DeleteEntitySchema  } from '@/types/customschemas';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -36,7 +35,7 @@ const Tenants = () => {
   const [addTenantModalIsOpen, setAddTenantModalIsOpen] = useState(false);
   const [importTenantModalIsOpen, setImportTenantModalIsOpen] = useState(false);
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
-  const [toDelete, setToDelete] = useState<{ pk: string; sk: string; name: string; roles: string[]; }>({ pk: '', sk: '', name: '', roles: [] });
+  const [toDelete, setToDelete] = useState<DeleteUser>(DEFAULT_DELETE_USER);
   const [tenants, setTenants] = useState<IUser[]>([]);
   const [tenantsToReinvite, setTenantsToReinvite] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
@@ -56,25 +55,27 @@ const Tenants = () => {
       if (!user || !userType) return;
       setTenantsLoading(true);
       try {
-        if (!user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
-          throw new Error('user must be a property manager in an organization');
+        if (!user || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
         //Reset filter options on initial fetch
         if (isInitial && !_searchString) {
           setTenantSearchString('');
         }
-        const body: GetTenantsForOrgRequest = {
+
+        const { data } = await axios.post('/api/get-all-tenants-for-org', {
           organization: user.organization,
           startKey: isInitial ? undefined : startKey,
           statusFilter: statusFilter,
           tenantSearchString: _searchString,
           fetchAllTenants
-        };
-        const { data } = await axios.post('/api/get-all-tenants-for-org', body);
+        });
         const response = JSON.parse(data.response);
         const _tenants: IUser[] = response.tenants;
         setStartKey(response.startKey);
         const unsortedTenants = (isInitial || fetchAllTenants) ? _tenants : [...tenants, ..._tenants];
+
+        //Sort tenants alphabetically by primary address, in the future we want to update sort keys to globally sort results
         const sortedTenants = unsortedTenants.sort((a, b) => {
           const primaryAddressA = Object.values(a.addresses ?? []).find((a: any) => !!a.isPrimary);
           const primaryAddressB = Object.values(b.addresses ?? []).find((a: any) => !!a.isPrimary);
@@ -97,16 +98,13 @@ const Tenants = () => {
   }, [user, statusFilter, userType]);
 
   const handleDeleteTenant = useCallback(
-    async ({ pk, sk, name, roles }: { pk: string; sk: string; name: string; roles: string[]; }) => {
+    async ({ pk, sk, roles }: DeleteUser) => {
       setTenantsLoading(true);
       try {
-        if (!pk || !sk || !name || !roles) {
-          throw new Error('To delete a tenant, a pk sk name, and roles must be present');
+        if (!user || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
-        if (!user || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.name || !user.email) {
-          throw new Error('Only property managers can delete tenants');
-        }
-        const params: DeleteRequest = {
+        const params: DeleteEntity = DeleteEntitySchema.parse({
           pk: pk,
           sk: sk,
           entity: ENTITIES.USER,
@@ -114,7 +112,7 @@ const Tenants = () => {
           currentUserRoles: roles,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
-        };
+        });
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
           toast.success('Tenant Deleted!', {
@@ -123,30 +121,26 @@ const Tenants = () => {
           });
           setTenants(tenants.filter((t) => t.pk !== pk));
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast.error('Error Deleting Tenant. Please Try Again', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error Deleting Tenant');
       }
       setConfirmDeleteModalIsOpen(false);
       setTenantsLoading(false);
     },
-    [user, tenants, altName]
+    [user, tenants, altName, userType]
   );
 
   const handleReinviteTenants = useCallback(
     async ({ _tenants }: { _tenants: { name: string; email: string; }[]; }) => {
       setResendingInvite(true);
       try {
-        if (!user || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.name || !user.email || !user.organizationName) {
-          throw new Error('Only property managers can reinvite tenants');
+        if (!user || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
         if (!_tenants) {
           throw new Error('Missing required params for reinvite tenants');
         }
-
 
         const batchedTenants = _tenants.reduce((batches, tenant, i) => {
           const batchNumber = Math.floor(i / 5);
@@ -159,12 +153,11 @@ const Tenants = () => {
 
         const batchedRequests =
           Object.values(batchedTenants).map((tenants) => {
-            const params: ReinviteTenantsBody = {
+            return axios.post('/api/reinvite-tenants', {
               pmName: altName ?? user.name,
               tenants,
-              organizationName: user.organizationName ?? "",
-            };
-            return axios.post('/api/reinvite-tenants', params);
+              organizationName: user.organizationName,
+            });
           });
 
         const allResponses = await Promise.all(batchedRequests);
@@ -204,7 +197,7 @@ const Tenants = () => {
     [user, altName, tenants]
   );
 
-  if (user && !user.organization && userType !== 'PROPERTY_MANAGER') {
+  if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
   return (
@@ -214,8 +207,8 @@ const Tenants = () => {
         confirmationModalIsOpen={confirmDeleteModalIsOpen}
         setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
         onConfirm={() => handleDeleteTenant(toDelete)}
-        childrenComponents={<div className="text-center">Are you sure you want to delete the tenant record for {toDelete.name}?</div>}
-        onCancel={() => setToDelete({ pk: '', sk: '', name: '', roles: [] })}
+        childrenComponents={<div className="text-center">Are you sure you want to delete the tenant record for {toTitleCase(toDelete.name)}?</div>}
+        onCancel={() => setToDelete(DEFAULT_DELETE_USER)}
       />
 
       <ConfirmationModal
@@ -246,7 +239,7 @@ const Tenants = () => {
                       className="bg-blue-100 text-gray-600 rounded px-4 py-1 w-full flex flex-row items-center justify-center last:mb-0 mb-3"
                     >
                       <div className="flex flex-col overflow-hidden w-11/12">
-                        <p>{tenant.name}</p> <p>{tenant.email}</p>
+                        <p>{toTitleCase(tenant.name)}</p> <p>{tenant.email}</p>
                       </div>
                       <MdClear
                         className={`h-6 w-6 cursor-pointer ${resendingInvite && 'opacity-50 pointer-events-none'}`}
@@ -465,9 +458,9 @@ const Tenants = () => {
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">
-                    {tenants.map((tenant: IUser, index: number) => {
-                      const primaryAddress: any = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
-                      const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
+                    {tenants.map((tenant: IUser) => {
+                      const primaryAddress: Property = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
+                      const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''}`;
                       return (
                         <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
                           <td className="border-b border-t px-2 py-1">{`${toTitleCase(tenant.name)}`}</td>

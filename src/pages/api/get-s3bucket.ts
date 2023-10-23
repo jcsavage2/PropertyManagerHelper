@@ -1,26 +1,25 @@
-import { BucketClient, Data } from '@/database';
+import { BucketClient } from '@/database';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
-
-export type GetS3BucketRequest = {
-  bucket: string;
-  key: string;
-};
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { GetS3BucketSchema } from '@/types/customschemas';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse } from './_utils';
 
 /*
  * Retrieves the value for the given key from the given s3 bucket.
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const { bucket, key } = req.body as GetS3BucketRequest;
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+
+    const { bucket, key } = GetS3BucketSchema.parse(req.body);
 
     const url = await getSignedUrl(
       BucketClient,
@@ -31,9 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       { expiresIn: 3600 }
     );
 
-    return res.status(200).json({ response: url });
+    return res.status(API_STATUS.SUCCESS).json({ response: url });
   } catch (error: any) {
-    console.log({ error });
-    return res.status(500).json({ response: JSON.stringify(error) });
+    console.error(error);
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

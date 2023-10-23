@@ -1,12 +1,12 @@
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE, UserType } from '@/database/entities/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { signOut } from 'next-auth/react';
 import router from 'next/router';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 export type UserContext = {
-  userType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN' | null;
-  setUserType: (type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => void;
+  userType: UserType | null;
+  setUserType: (type: UserType) => void;
   altName: string | null;
   setAltName: (name: string | null) => void;
   logOut: () => void;
@@ -38,8 +38,8 @@ export const UserContextProvider = (props: any) => {
       role = localUserType as any;
     } else {
       //Select PM role if exists, otherwise pick first role
-      if (user?.roles.includes(userRoles.PROPERTY_MANAGER)) {
-        role = userRoles.PROPERTY_MANAGER;
+      if (user?.roles.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        role = USER_TYPE.PROPERTY_MANAGER;
       } else {
         role = user?.roles[0];
       }
@@ -62,9 +62,9 @@ export const UserContextProvider = (props: any) => {
     //Redirect on initial log in
     const hasRouted = localStorage.getItem('PILLAR:ROUTED') as UserContext['userType'] | null;
     if (hasRouted) return;
-    if (role === userRoles.TENANT) {
+    if (role === USER_TYPE.TENANT) {
       router.push('/work-order-chatbot');
-    } else if (role === userRoles.TECHNICIAN) {
+    } else if (role === USER_TYPE.TECHNICIAN) {
       router.push('/work-orders');
     } else {
       //PM
@@ -73,7 +73,7 @@ export const UserContextProvider = (props: any) => {
     localStorage.setItem('PILLAR:ROUTED', 'true');
   }, [user, userType]);
 
-  const setUserType = useCallback((type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => {
+  const setUserType = useCallback((type: UserType) => {
     localStorage.setItem('PILLAR:USER_TYPE', type);
     setType(type);
   }, []);

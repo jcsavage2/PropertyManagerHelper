@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { hasAllIssueInfo } from '@/utils';
-import { AddressOptionType, AiJSONResponse, ChatbotRequest, ChatbotRequestSchema, CreateWorkOrderFullSchema, CreateWorkOrderSchemaType, IssueInformation, OptionType, PTE_Type } from '@/types';
+import { hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
+import { AddressOption, AiJSONResponse, ChatbotRequest, CreateWorkOrder, IssueInformation, PTE_Type } from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { API_STATUS, PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
-import { UpdateUser } from './api/update-user';
+import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@/types/customschemas';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -23,7 +23,7 @@ export default function WorkOrderChatbot() {
   const [platform, setPlatform] = useState<'Desktop' | 'iOS' | 'Android'>();
 
   const [isUsingAI, _setIsUsingAI] = useState(true);
-  const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<AddressOption | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
   const [issueDescription, setIssueDescription] = useState('');
@@ -51,7 +51,7 @@ export default function WorkOrderChatbot() {
     additionalDetails,
   };
 
-  const addressesOptions: AddressOptionType[] = useMemo(() => {
+  const addressesOptions: AddressOption[] = useMemo(() => {
     if (!user?.addresses) return [];
     return (
       Object.values(user?.addresses)?.map(
@@ -59,7 +59,7 @@ export default function WorkOrderChatbot() {
           ({
             label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
             value: address,
-          } as AddressOptionType)
+          } as AddressOption)
       ) ?? []
     );
   }, [user?.addresses]);
@@ -83,25 +83,27 @@ export default function WorkOrderChatbot() {
     const hasSeenDownloadModal = localStorage.getItem('Pillar::HAS_SEEN');
     if ((platform === 'iOS' || platform === 'Android') && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
       async function updateUserHasSeenDownloadPrompt() {
-        if (user?.pk && user.sk) {
-          const body: UpdateUser = { pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true };
-          await axios.post('/api/update-user', { ...body });
-          localStorage.setItem('Pillar::HAS_SEEN', 'true');
-        }
+        const params = UpdateUserSchema.parse({ pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true });
+        await axios.post('/api/update-user', params);
+        localStorage.setItem('Pillar::HAS_SEEN', 'true');
       }
-      setDownloadModalIsOpen(true);
-      updateUserHasSeenDownloadPrompt();
+      try {
+        setDownloadModalIsOpen(true);
+        updateUserHasSeenDownloadPrompt();
+      } catch (err: any) {
+        console.log({ err });
+      }
     }
   }, [platform, user]);
 
   //If the user has only one address, select it automatically
   useEffect(() => {
-    if(!addressesOptions) return;
+    if (!addressesOptions) return;
     if (addressesOptions.length === 1) {
       setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(true);
     } else {
-      setSelectedAddress(addressesOptions[0])
+      setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(false);
     }
   }, [addressesOptions]);
@@ -159,12 +161,12 @@ export default function WorkOrderChatbot() {
       }
 
       const parsedAddress = selectedAddress?.value;
-      const params: CreateWorkOrderSchemaType = CreateWorkOrderFullSchema.parse({
+      const params: CreateWorkOrder = CreateWorkOrderSchema.parse({
         issueDescription,
         issueLocation,
         additionalDetails,
         messages,
-        createdByType: userRoles.TENANT,
+        createdByType: USER_TYPE.TENANT,
         creatorEmail: user.email,
         creatorName: user.name,
         permissionToEnter,
@@ -182,21 +184,15 @@ export default function WorkOrderChatbot() {
         woId,
       });
 
-      const res = await axios.post('/api/create-work-order', { ...params });
-      if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);
+      const res = await axios.post('/api/create-work-order', params);
 
       toast.success('Successfully Submitted Work Order. An email has been sent to you as confirmation', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
     } catch (error: any) {
-      console.log({ error }); 
-      const statusCode = error.response?.status
-      const message = error.response?.data?.response
-      toast.error(message && statusCode === API_STATUS.FORBIDDEN ? message : 'Error Submitting Work Order. Please Try Again', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
+      console.log({ error });
+      renderToastError(error, 'Error Submitting Work Order');
     }
 
     setMessages([]);
@@ -286,7 +282,9 @@ export default function WorkOrderChatbot() {
       setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
-      console.log({err})
+      console.log({ err });
+
+      //Handle openAI server downtime
       if (err.response?.status === API_STATUS.INTERNAL_SERVER_ERROR) {
         setHasConnectionWithGPT(false);
         assistantMessage = 'Sorry - I am having trouble connecting to my server. Please complete this form manually or try again later.';
@@ -315,8 +313,8 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<AddressOptionType>) => {
-              if(!v) return;
+            onChange={(v: SingleValue<AddressOption>) => {
+              if (!v) return;
               setSelectedAddress(v);
             }}
             value={{ label: selectedAddress?.label ?? 'No addresses available', value: selectedAddress }}
@@ -339,7 +337,7 @@ export default function WorkOrderChatbot() {
     return <LoadingSpinner containerClass={'mt-4'} />;
   }
 
-  if (!user?.roles?.includes(userRoles.TENANT)) {
+  if (!user?.roles?.includes(USER_TYPE.TENANT)) {
     return <p className="p-4">User must have the tenant Role assigned to them by a property manager or Owner.</p>;
   }
   const customStyles = {
@@ -477,7 +475,7 @@ export default function WorkOrderChatbot() {
                                 <form className="mt-2" onSubmit={() => {}}>
                                   <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />
                                 </form>
-                                <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : 'Property'}* </p>
+                                <p className="mt-2">Permission To Enter {selectedAddress ? toTitleCase(selectedAddress.label) : 'Property'}* </p>
                                 <div>
                                   <input
                                     className="rounded px-1"

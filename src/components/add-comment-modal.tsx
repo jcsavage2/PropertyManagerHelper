@@ -2,18 +2,17 @@ import axios from 'axios';
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
-import { toggleBodyScroll } from '@/utils';
+import { renderToastError, toggleBodyScroll } from '@/utils';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useUserContext } from '@/context/user';
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { userRoles } from '@/database/entities/user';
-import { z } from 'zod';
-import { ENTITY_KEY } from '@/database/entities';
-import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
-import { lowerCaseRequiredEmail, lowerCaseRequiredString } from '@/types/zodvalidators';
+import { USER_TYPE } from '@/database/entities/user';
+import { USER_PERMISSION_ERROR } from '@/constants';
+import { CreateComment } from '@/types';
+import { CreateCommentSchema } from '@/types/customschemas';
 
 export type AddCommentModalProps = {
   addCommentModalIsOpen: boolean;
@@ -21,14 +20,6 @@ export type AddCommentModalProps = {
   setAddCommentModalIsOpen: Dispatch<SetStateAction<boolean>>;
   onSuccessfulAdd: () => void;
 };
-
-export const CreateCommentSchema = z.object({
-  comment: lowerCaseRequiredString,
-  email: lowerCaseRequiredEmail,
-  name: lowerCaseRequiredString,
-  workOrderId: z.string().startsWith(ENTITY_KEY.WORK_ORDER),
-})
-export type CreateCommentSchemaType = z.infer<typeof CreateCommentSchema>
 
 export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddCommentModalIsOpen, onSuccessfulAdd }: AddCommentModalProps) => {
   const { user } = useSessionUser();
@@ -66,27 +57,25 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
     setAddCommentModalIsOpen(false);
   }
 
-  const { register, handleSubmit, formState: { isSubmitting, isValid }, reset } = useForm<CreateCommentSchemaType>({ resolver: zodResolver(CreateCommentSchema) });
+  const { register, handleSubmit, formState: { isSubmitting, isValid, errors }, reset } = useForm<CreateComment>({ resolver: zodResolver(CreateCommentSchema), mode: 'all' });
 
-  const handleCreateNewComment: SubmitHandler<CreateCommentSchemaType> = useCallback(
+  const handleCreateNewComment: SubmitHandler<CreateComment> = useCallback(
     async (params) => {
       try {
-        if(userType === userRoles.TENANT){
+        if(userType === USER_TYPE.TENANT){
           throw new Error(USER_PERMISSION_ERROR);
         }
         const res = await axios.post('/api/create-comment', params)
-        if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);
         
         const parsedResponse = JSON.parse(res.data.response);
         if (parsedResponse.modified) {
           toast.success('Comment Successfully Added', { position: toast.POSITION.TOP_CENTER, draggable: false });
           onSuccessfulAdd();
-          setAddCommentModalIsOpen(false);
         }
-        reset();
+        closeModal()
       } catch (err) {
         console.log({ err });
-        toast.error('Error adding comment',  { position: toast.POSITION.TOP_CENTER, draggable: false });
+        renderToastError(err, 'Error creating comment');
       }
     },
     [userType]
@@ -114,8 +103,11 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
           id="comment"
           placeholder={"Ex. 'Toilet was leaking from tank, not bowl'"}
           type={'text'}
-          {...register('comment')}
+          {...register('comment', {
+            required: true
+          })}
         />
+        {errors.comment && <p className="text-red-500 text-xs mt-1 italic">{errors.comment.message}</p>}
         <input type="hidden" {...register('workOrderId')} value={workOrderId} />
         <input type="hidden" {...register('email')} value={user?.email ?? ''} />
         <input type="hidden" {...register('name')} value={altName ?? user?.name ?? ''} />

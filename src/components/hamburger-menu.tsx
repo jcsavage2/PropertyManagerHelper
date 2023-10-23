@@ -4,7 +4,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useCallback, useState } from 'react';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 
 const HamburgerMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,23 +30,23 @@ const HamburgerMenu = () => {
       {isOpen && (
         <div className="absolute left-0 bg-blue-400 mt-0 w-full grid z-10" style={{ top: '7dvh', height: '93dvh' }} onClick={() => setIsOpen(false)}>
           <div className="flex flex-col h-12">
-            {user && (user?.roles?.includes(userRoles.PROPERTY_MANAGER) || user?.roles?.length > 1) ? (
+            {user && (user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || user?.roles?.length > 1) ? (
               <Link className={linkStyle} href={'/'}>
                 Home
               </Link>
             ) : null}
 
-            {user && userType === userRoles.TENANT && (
+            {user && userType === USER_TYPE.TENANT && (
               <Link className={linkStyle} href={'/work-order-chatbot'}>
                 New Work Order
               </Link>
             )}
-            {(user && userType === userRoles.TENANT) || userType === userRoles.TECHNICIAN ? (
+            {(user && userType === USER_TYPE.TENANT) || userType === USER_TYPE.TECHNICIAN ? (
               <Link className={linkStyle} href={'/work-orders'}>
                 Work Orders
               </Link>
             ) : null}
-            {user && userType === userRoles.PROPERTY_MANAGER && (
+            {user && userType === USER_TYPE.PROPERTY_MANAGER && (
               <Link className={linkStyle} href={'/work-orders'}>
                 Admin Portal
               </Link>

@@ -7,37 +7,16 @@ import { CSSTransition } from 'react-transition-group';
 import { StateSelect } from './state-select';
 import { useDevice } from '@/hooks/use-window-size';
 import PropertySelector from './property-selector';
-import { v4 as uuid } from 'uuid';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
-import { toggleBodyScroll } from '@/utils';
-import { userRoles } from '@/database/entities/user';
-import { validatePropertyWithId, lowerCaseRequiredEmail, lowerCaseRequiredString } from '@/types/zodvalidators';
-import { z } from 'zod';
+import { renderToastError, toggleBodyScroll } from '@/utils';
+import { USER_TYPE } from '@/database/entities/user';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { API_STATUS, EMAIL_MATCHING_ERROR, USER_PERMISSION_ERROR, defaultProperty, defaultPropertyWithId } from '@/constants';
-
-//Used to validate tenant info in stage 0
-export const TenantInfoSchema = z.object({
-  tenantEmail: lowerCaseRequiredEmail,
-  tenantName: lowerCaseRequiredString,
-  organization: z.string().min(1),
-  organizationName: z.string().min(1),
-  pmEmail: lowerCaseRequiredEmail,
-  pmName: lowerCaseRequiredString,
-});
-export type TenantInfoSchemaType = z.infer<typeof TenantInfoSchema>;
-
-//Used to validate address input
-export const AddressSchema = z.object({
-  property: z.union([validatePropertyWithId, z.null()]).default(defaultPropertyWithId),
-});
-export type AddressSchemaType = z.infer<typeof AddressSchema>;
-
-//Used to validate params in api
-export const CreateTenantSchema = AddressSchema.merge(TenantInfoSchema).merge(z.object({ createNewProperty: z.boolean().default(true) }));
-export type CreateTenantSchemaType = z.infer<typeof CreateTenantSchema>;
+import { USER_PERMISSION_ERROR, DEFAULT_PROPERTY_WITH_ID } from '@/constants';
+import { CreateTenant_Address, CreateTenant_TenantInfo } from '@/types';
+import { CreateTenant_AddressSchema, CreateTenantSchema, CreateTenant_TenantInfoSchema } from '@/types/customschemas';
+import { v4 as uuidv4 } from 'uuid';
 
 export const AddTenantModal = ({
   tenantModalIsOpen,
@@ -82,32 +61,33 @@ export const AddTenantModal = ({
   }, []);
   isBrowser && Modal.setAppElement('#tenants');
 
-  const tenantInfoForm = useForm<TenantInfoSchemaType>({ resolver: zodResolver(TenantInfoSchema) });
-  const createNewPropertyForm = useForm<AddressSchemaType>({ resolver: zodResolver(AddressSchema) });
-  const useExistingPropertyForm = useForm<AddressSchemaType>({ resolver: zodResolver(AddressSchema) });
+  const tenantInfoForm = useForm<CreateTenant_TenantInfo>({
+    resolver: zodResolver(CreateTenant_TenantInfoSchema),
+    mode: 'all',
+  });
+  const propertyForm = useForm<CreateTenant_Address>({
+    resolver: zodResolver(CreateTenant_AddressSchema),
+    defaultValues: { property: DEFAULT_PROPERTY_WITH_ID },
+    mode: 'all',
+  });
 
   const closeModal = () => {
-    tenantInfoForm.reset();
-    createNewPropertyForm.reset();
-    useExistingPropertyForm.reset();
-    setStage(0);
     setTenantModalIsOpen(false);
+    tenantInfoForm.reset();
+    propertyForm.reset();
+    setCreateNewProperty(true);
+    setStage(0);
   };
 
-  const handleValidateTenantInfo: SubmitHandler<TenantInfoSchemaType> = async (params) => {
-    if (params.tenantEmail === params.pmEmail) {
-      console.log('email matching error');
-      tenantInfoForm.setError('tenantEmail', { message: EMAIL_MATCHING_ERROR });
-      return;
-    }
-
+  const handleValidateTenantInfo: SubmitHandler<CreateTenant_TenantInfo> = async () => {
     setStage(1);
+    propertyForm.setValue('property.propertyUUId', uuidv4());
   };
 
-  const handleCreateNewTenant: SubmitHandler<AddressSchemaType> = useCallback(
+  const handleCreateNewTenant: SubmitHandler<CreateTenant_Address> = useCallback(
     async (params) => {
       try {
-        if (userType !== userRoles.PROPERTY_MANAGER || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
+        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
 
         const body = {
           ...params,
@@ -116,10 +96,9 @@ export const AddTenantModal = ({
         };
         const validatedBody = CreateTenantSchema.parse(body);
 
-        const res = await axios.post('/api/create-tenant', validatedBody);
-        if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);
+        const { data } = await axios.post('/api/create-tenant', validatedBody);
 
-        const parsedUser = JSON.parse(res.data.response);
+        const parsedUser = JSON.parse(data.response);
         if (parsedUser) {
           closeModal();
           onSuccessfulAdd();
@@ -131,12 +110,9 @@ export const AddTenantModal = ({
         }
 
         setStage(0);
-      } catch (err) {
+      } catch (err: any) {
         console.log({ err });
-        toast.error((err as any)?.response?.data?.response ?? "Error Creating Tenant. Please Try Again", {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error Creating Tenant. Please Try Again');
       }
     },
     [user, userType, setStage, onSuccessfulAdd, setTenantModalIsOpen, createNewProperty, tenantInfoForm]
@@ -150,6 +126,18 @@ export const AddTenantModal = ({
         type="button"
       >
         Previous
+      </button>
+    );
+  };
+
+  const renderSubmitButton = () => {
+    return (
+      <button
+        className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+        type="submit"
+        disabled={propertyForm.formState.isSubmitting || !propertyForm.formState.isValid}
+      >
+        {propertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
       </button>
     );
   };
@@ -177,7 +165,9 @@ export const AddTenantModal = ({
               id="name"
               placeholder="Tenant Full Name*"
               type={'text'}
-              {...tenantInfoForm.register('tenantName')}
+              {...tenantInfoForm.register('tenantName', {
+                required: true,
+              })}
             />
             {tenantInfoForm.formState.errors.tenantName && (
               <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantName.message}</div>
@@ -187,7 +177,9 @@ export const AddTenantModal = ({
               id="email"
               placeholder="Tenant Email*"
               type={'email'}
-              {...tenantInfoForm.register('tenantEmail')}
+              {...tenantInfoForm.register('tenantEmail', {
+                required: true,
+              })}
             />
             {tenantInfoForm.formState.errors.tenantEmail && (
               <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantEmail.message}</div>
@@ -210,9 +202,9 @@ export const AddTenantModal = ({
         <>
           <div className="flex mt-2 flex-row items-center md:w-3/4 w-full mx-auto justify-center">
             <div
-              onClick={() => {
-                setCreateNewProperty(true);
-                createNewPropertyForm.reset({ property: defaultProperty });
+              onClick={() => { setCreateNewProperty(true)
+                propertyForm.setValue('property', DEFAULT_PROPERTY_WITH_ID)
+                propertyForm.setValue('property.propertyUUId', uuidv4())
               }}
               className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
                 createNewProperty && 'bg-blue-200 border-blue-200'
@@ -221,10 +213,9 @@ export const AddTenantModal = ({
               {isMobile ? 'New Property' : 'Create New Property'}
             </div>
             <div
-              onClick={() => {
-                setCreateNewProperty(false);
-                useExistingPropertyForm.reset();
-              }}
+              onClick={() => { setCreateNewProperty(false)
+                propertyForm.setValue('property', null)
+              } }
               className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
                 !createNewProperty && 'bg-blue-200 border-blue-200'
               }`}
@@ -234,7 +225,7 @@ export const AddTenantModal = ({
           </div>
           {stage === 1 ? (
             createNewProperty ? (
-              <form onSubmit={createNewPropertyForm.handleSubmit(handleCreateNewTenant)}>
+              <form onSubmit={propertyForm.handleSubmit(handleCreateNewTenant)}>
                 <div style={{ display: 'grid' }}>
                   <div className="w-full" style={{ display: 'grid' }}>
                     <label htmlFor="address">Address* </label>
@@ -243,18 +234,26 @@ export const AddTenantModal = ({
                       placeholder="123 some street"
                       id="address"
                       type={'text'}
-                      {...createNewPropertyForm.register('property.address')}
+                      {...propertyForm.register('property.address', {
+                        required: true,
+                      })}
                     />
+                    {propertyForm.formState.errors.property?.address && (
+                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.address?.message}</div>
+                    )}
                     <label htmlFor="unit">Unit </label>
                     <input
                       className="rounded px-1 border-solid border-2 border-slate-200"
                       id="unit"
                       placeholder="1704"
                       type={'text'}
-                      {...createNewPropertyForm.register('property.unit')}
+                      {...propertyForm.register('property.unit')}
                     />
+                    {propertyForm.formState.errors.property?.unit && (
+                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.unit?.message}</div>
+                    )}
                     <Controller
-                      control={createNewPropertyForm.control}
+                      control={propertyForm.control}
                       name="property.state"
                       render={({ field: { onChange, value } }) => (
                         <StateSelect state={value} setState={onChange} label={'State*'} placeholder="Select..." />
@@ -266,16 +265,26 @@ export const AddTenantModal = ({
                       id="address"
                       type={'text'}
                       placeholder="Springfield"
-                      {...createNewPropertyForm.register('property.city')}
+                      {...propertyForm.register('property.city', {
+                        required: true,
+                      })}
                     />
+                    {propertyForm.formState.errors.property?.city && (
+                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.city?.message}</div>
+                    )}
                     <label htmlFor="address">Zip* </label>
                     <input
                       className="rounded px-1 border-solid border-2 border-slate-200"
                       id="address"
                       type={'text'}
-                      {...createNewPropertyForm.register('property.postalCode')}
+                      {...propertyForm.register('property.postalCode', {
+                        required: true,
+                      })}
                       placeholder="000000"
                     />
+                    {propertyForm.formState.errors.property?.postalCode && (
+                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.postalCode?.message}</div>
+                    )}
                     <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
                       <label className="text-center mr-4" htmlFor="beds">
                         Beds*:{' '}
@@ -287,7 +296,9 @@ export const AddTenantModal = ({
                         step={1}
                         min={1}
                         max={10}
-                        {...createNewPropertyForm.register('property.numBeds')}
+                        {...propertyForm.register('property.numBeds', {
+                          required: true,
+                        })}
                       />
                       <label className="text-center ml-2 mr-4" htmlFor="baths">
                         Baths*:{' '}
@@ -299,39 +310,28 @@ export const AddTenantModal = ({
                         min={1}
                         max={10}
                         step={0.5}
-                        {...createNewPropertyForm.register('property.numBaths')}
+                        {...propertyForm.register('property.numBaths', {
+                          required: true,
+                        })}
                       />
-                      <input type="hidden" {...createNewPropertyForm.register('property.propertyUUId')} value={uuid()} />
                     </div>
                   </div>
                   {renderPreviousButton()}
-                  <button
-                    className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-                    type="submit"
-                    disabled={createNewPropertyForm.formState.isSubmitting || !createNewPropertyForm.formState.isValid}
-                  >
-                    {createNewPropertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
-                  </button>
+                  {renderSubmitButton()}
                 </div>
               </form>
             ) : (
-              <form onSubmit={useExistingPropertyForm.handleSubmit(handleCreateNewTenant)}>
+              <form onSubmit={propertyForm.handleSubmit(handleCreateNewTenant)}>
                 <div style={{ display: 'grid' }}>
                   <Controller
-                    control={useExistingPropertyForm.control}
+                    control={propertyForm.control}
                     name="property"
                     render={({ field: { onChange, value } }) => (
-                      <PropertySelector selectedProperty={value} setSelectedProperty={onChange} orgId={user?.organization ?? ''} />
+                      <PropertySelector selectedProperty={value} setSelectedProperty={onChange} organization={user?.organization ?? ''} />
                     )}
                   />
                   {renderPreviousButton()}
-                  <button
-                    className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-                    type="submit"
-                    disabled={useExistingPropertyForm.formState.isSubmitting || !useExistingPropertyForm.formState.isValid}
-                  >
-                    {useExistingPropertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
-                  </button>
+                  {renderSubmitButton()}
                 </div>
               </form>
             )

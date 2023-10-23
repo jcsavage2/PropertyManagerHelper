@@ -4,25 +4,18 @@ import Modal from 'react-modal';
 import { SingleValue } from 'react-select';
 import { StateSelect } from './state-select';
 import { useDevice } from '@/hooks/use-window-size';
-import { OptionType } from '@/types';
+import { CreateProperty, Option } from '@/types';
 import { toast } from 'react-toastify';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { TenantSelect } from './tenant-select';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
-import { toggleBodyScroll } from '@/utils';
+import { renderToastError, toggleBodyScroll } from '@/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { API_STATUS, USER_PERMISSION_ERROR, defaultProperty } from '@/constants';
-import { validateProperty, lowerCaseRequiredEmail } from '@/types/zodvalidators';
-
-export const CreatevalidateProperty = z.union([
-  validateProperty,
-  z.object({ tenantEmail: lowerCaseRequiredEmail, organization: z.string().min(1), pmEmail: lowerCaseRequiredEmail }),
-]);
-export type CreatevalidatePropertyType = z.infer<typeof CreatevalidateProperty>;
+import { USER_PERMISSION_ERROR, DEFAULT_PROPERTY } from '@/constants';
+import { CreatePropertySchema } from '@/types/customschemas';
 
 export const AddPropertyModal = ({
   addPropertyModalIsOpen,
@@ -67,14 +60,13 @@ export const AddPropertyModal = ({
     setAddPropertyModalIsOpen(false);
   }
 
-  const handleCreateNewProperty: SubmitHandler<CreatevalidatePropertyType> = useCallback(
+  const handleCreateNewProperty: SubmitHandler<CreateProperty> = useCallback(
     async (params) => {
       try {
-        if (userType !== userRoles.PROPERTY_MANAGER || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
+        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         const res = await axios.post('/api/create-property', params);
-        if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);
 
         toast.success('Property Created!', {
           position: toast.POSITION.TOP_CENTER,
@@ -84,10 +76,7 @@ export const AddPropertyModal = ({
         onSuccess();
       } catch (err: any) {
         console.log({ err });
-        toast.error('Error Creating Property. Please Try Again', {
-          draggable: false,
-          position: toast.POSITION.TOP_CENTER,
-        });
+        renderToastError(err, 'Error creating property');
       }
     },
     [user, userType]
@@ -96,10 +85,10 @@ export const AddPropertyModal = ({
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting, isValid },
+    formState: { isSubmitting, isValid, errors },
     control,
     reset,
-  } = useForm<CreatevalidatePropertyType>({ resolver: zodResolver(CreatevalidateProperty), defaultValues: defaultProperty });
+  } = useForm<CreateProperty>({ resolver: zodResolver(CreatePropertySchema), defaultValues: DEFAULT_PROPERTY, mode: 'all' });
 
   return (
     <div>
@@ -125,8 +114,11 @@ export const AddPropertyModal = ({
             placeholder="123 some street"
             id="address"
             type={'text'}
-            {...register('address')}
+            {...register('address', {
+              required: true,
+            })}
           />
+          {errors.address && <p className="text-red-500 text-xs mt-1 italic">{errors.address.message}</p>}
           <label htmlFor="unit">Unit </label>
           <input className="rounded px-1 border-solid border-2 border-slate-200" id="unit" placeholder="1704" type={'text'} {...register('unit')} />
           <Controller
@@ -140,14 +132,18 @@ export const AddPropertyModal = ({
             id="address"
             type={'text'}
             placeholder="Springfield"
-            {...register('city')}
+            {...register('city', {
+              required: true,
+            })}
           />
           <label htmlFor="address">Zip* </label>
           <input
             className="rounded px-1 border-solid border-2 border-slate-200"
             id="address"
             type={'text'}
-            {...register('postalCode')}
+            {...register('postalCode', {
+              required: true,
+            })}
             placeholder="000000"
           />
           <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
@@ -185,7 +181,7 @@ export const AddPropertyModal = ({
                 label={'Optionally attach an existing tenant to this property'}
                 user={user}
                 userType={userType}
-                onChange={(option: SingleValue<OptionType>) => onChange(option?.value ?? undefined)}
+                onChange={(option: SingleValue<Option>) => onChange(option?.value ?? undefined)}
                 shouldFetch={addPropertyModalIsOpen}
               />
             )}

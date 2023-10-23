@@ -12,22 +12,13 @@ import { toast } from 'react-toastify';
 import Papa from 'papaparse';
 import { useUserContext } from '@/context/user';
 import { AiOutlineLink } from 'react-icons/ai';
-import { GetS3BucketRequest } from '@/pages/api/get-s3bucket';
 import { toggleBodyScroll } from '@/utils';
 import { ENTITIES } from '@/database/entities';
-import { CreateTenantSchema, CreateTenantSchemaType } from './add-tenant-modal';
-import { z } from 'zod';
-import { optionalStringCaseSensitive, validatePropertyWithId, requiredNumber } from '@/types/zodvalidators';
-import { userRoles } from '@/database/entities/user';
-import { EMAIL_MATCHING_ERROR } from '@/constants';
-
-const ImportTenantSchema = CreateTenantSchema.merge(
-  z.object({
-    key: requiredNumber,
-    error: optionalStringCaseSensitive,
-  })
-);
-type ImportTenantSchemaType = z.infer<typeof ImportTenantSchema>;
+import { validatePropertyWithId } from '@/types/basevalidators';
+import { USER_TYPE } from '@/database/entities/user';
+import { USER_PERMISSION_ERROR } from '@/constants';
+import { GetS3BucketSchema, ImportTenantSchema } from '@/types/customschemas';
+import { CreateTenant, ImportTenant } from '@/types';
 
 export const ImportTenantsModal = ({
   modalIsOpen,
@@ -68,7 +59,7 @@ export const ImportTenantsModal = ({
     },
   };
 
-  const [uploadList, setUploadList] = useState<ImportTenantSchemaType[]>([]);
+  const [uploadList, setUploadList] = useState<ImportTenant[]>([]);
   const [formattingError, setFormattingError] = useState<boolean>(false);
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
   const [importTenantsLoading, setImportTenantsLoading] = useState<boolean>(false);
@@ -93,18 +84,19 @@ export const ImportTenantsModal = ({
     }
   }, [uploadList]);
 
-  const renderPreUploadTenantCard = (tenant: ImportTenantSchemaType, index: number) => {
+  const renderPreUploadTenantCard = (tenant: ImportTenant, index: number) => {
     return (
       <div className="flex flex-row justify-between items-center w-full p-2 first:mt-0 mt-2 border-2 rounded border-slate-300" key={index}>
         <div className="flex flex-col text-gray-600 text-sm">
-          <p className="font-bold">{toTitleCase(tenant.tenantName)}</p>
+          <p className="font-bold">{toTitleCase(tenant.tenantName ?? '')}</p>
           <p className="mb-1">{tenant.tenantEmail}</p>
           <div>
             <p>
               {tenant.property?.address && toTitleCase(tenant.property?.address)} {tenant.property?.unit && toTitleCase(tenant.property.unit)}
             </p>
             <p>
-              {tenant.property?.city && toTitleCase(tenant.property?.city)}, {tenant.property?.state && toTitleCase(tenant.property?.state)} {tenant.property?.postalCode}
+              {tenant.property?.city && toTitleCase(tenant.property?.city)}, {tenant.property?.state && toTitleCase(tenant.property?.state)}{' '}
+              {tenant.property?.postalCode}
             </p>
           </div>
           {tenant.error && (
@@ -175,7 +167,7 @@ export const ImportTenantsModal = ({
           !user ||
           !user.email ||
           !user.name ||
-          userType !== userRoles.PROPERTY_MANAGER ||
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
           !user?.roles?.includes(ENTITIES.PROPERTY_MANAGER) ||
           !user.organization
         ) {
@@ -194,11 +186,6 @@ export const ImportTenantsModal = ({
             Beds: numBeds,
             Baths: numBaths,
           } = row;
-
-          if(tenantEmail === user.email){
-            alert('You cannot add yourself as a tenant, please modify your file and try again');
-            throw Error(EMAIL_MATCHING_ERROR);
-          }
 
           //Construct error message for any missing fields
           let missingFields = '';
@@ -224,7 +211,7 @@ export const ImportTenantsModal = ({
             numBaths,
           });
 
-          const tenant: ImportTenantSchemaType = ImportTenantSchema.parse({
+          const tenant: ImportTenant = ImportTenantSchema.parse({
             key: index,
             tenantEmail: tenantEmail?.toLowerCase(),
             tenantName: tenantName && toTitleCase(tenantName),
@@ -247,23 +234,23 @@ export const ImportTenantsModal = ({
   );
 
   const handleImportTenants = async () => {
-    if (!user || !user.email || userType !== userRoles.PROPERTY_MANAGER || !user.roles?.includes(ENTITIES.PROPERTY_MANAGER) || !user.organization) {
-      alert('User must be a property manager in an organization to import tenants');
+    if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(ENTITIES.PROPERTY_MANAGER)) {
+      alert(USER_PERMISSION_ERROR);
       return;
     }
     setImportTenantsLoading(true);
     setImportTenantProgress(0);
 
-    let errorList: ImportTenantSchemaType[] = [];
+    let errorList: ImportTenant[] = [];
 
     for (let index = 0; index < uploadList.length; index++) {
       const tenant = uploadList[index];
-      const body: CreateTenantSchemaType = {
+      const params: CreateTenant = {
         ...tenant,
       };
 
       await axios
-        .post('/api/create-tenant', { ...body })
+        .post('/api/create-tenant', params)
         .then((res) => {
           setImportTenantProgress((prev) => prev + 1);
         })
@@ -298,7 +285,7 @@ export const ImportTenantsModal = ({
       const res = await axios.post('/api/get-s3bucket', {
         bucket: 'pillar-file-storage',
         key: downloadName,
-      } as GetS3BucketRequest);
+      });
 
       const downloadLink = document.createElement('a');
       downloadLink.href = res.data.response;
@@ -386,7 +373,7 @@ export const ImportTenantsModal = ({
                 </div>
               </div>
 
-              {uploadList.map((value: ImportTenantSchemaType, index: number) => {
+              {uploadList.map((value: ImportTenant, index: number) => {
                 return renderPreUploadTenantCard(value, index);
               })}
             </>

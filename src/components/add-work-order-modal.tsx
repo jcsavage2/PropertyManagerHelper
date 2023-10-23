@@ -2,34 +2,22 @@ import axios from 'axios';
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
-import { OptionType } from '@/types';
+import { AddWorkOrder, Option, Property } from '@/types';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
-import { IUser, userRoles } from '@/database/entities/user';
+import { IUser, USER_TYPE } from '@/database/entities/user';
 import { TenantSelect } from './tenant-select';
 import { SingleValue } from 'react-select';
-import { GetUser } from '@/pages/api/get-user';
 import { ENTITIES } from '@/database/entities';
 import { useDevice } from '@/hooks/use-window-size';
 import { PTE, USER_PERMISSION_ERROR } from '@/constants';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
-import { toggleBodyScroll } from '@/utils';
+import { renderToastError, toggleBodyScroll } from '@/utils';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CreateWorkOrderFullSchema } from '@/pages/work-order-chatbot';
-import { PropertyType, optionalString, lowerCaseRequiredEmail, requiredString, validatePTE } from '@/types/zodvalidators';
 import { v4 as uuidv4 } from 'uuid';
-import { z } from 'zod';
-
-export const AddWorkOrderModalSchema = z.object({
-  issueDescription: requiredString,
-  tenantEmail: lowerCaseRequiredEmail,
-  permissionToEnter: validatePTE,
-  issueLocation: optionalString,
-  additionalDetails: optionalString,
-});
-export type AddWorkOrderModalSchemaType = z.infer<typeof AddWorkOrderModalSchema>;
+import { AddWorkOrderModalSchema, CreateWorkOrderSchema, GetUserSchema } from '@/types/customschemas';
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -45,6 +33,9 @@ export const AddWorkOrderModal = ({
   const { isMobile } = useDevice();
 
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
+  const [tenant, setTenant] = useState<IUser>();
+  const [property, setProperty] = useState<Property>();
+  const [userLoading, setUserLoading] = useState(false);
 
   const customStyles = {
     content: {
@@ -77,9 +68,12 @@ export const AddWorkOrderModal = ({
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting, isValid },
-  } = useForm<AddWorkOrderModalSchemaType>({
+    getValues,
+    formState: { isSubmitting, isValid, errors },
+  } = useForm<AddWorkOrder>({
     resolver: zodResolver(AddWorkOrderModalSchema),
+    mode: 'all',
+    defaultValues: { permissionToEnter: PTE.YES },
   });
 
   function closeModal() {
@@ -88,14 +82,14 @@ export const AddWorkOrderModal = ({
     setShowAdditionalOptions(false);
   }
 
-  const handleCreateWorkOrder: SubmitHandler<AddWorkOrderModalSchemaType> = useCallback(
-    async (params) => {
+  //Fetch user name and property info when pm selects tenantEmail
+  useEffect(() => {
+    if (!getValues().tenantEmail) return;
+    async function getUserProperty() {
+      setUserLoading(true);
       try {
-        if (userType !== userRoles.PROPERTY_MANAGER || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
-
         //Fetch additional tenant info
-        const getTenantResponse = await axios.post('/api/get-user', { email: params.tenantEmail, userType: ENTITIES.TENANT } as GetUser);
-        if (getTenantResponse.status !== 200) throw new Error('Error getting tenant');
+        const getTenantResponse = await axios.post('/api/get-user', { email: getValues().tenantEmail, userType: USER_TYPE.TENANT });
 
         const tenant = JSON.parse(getTenantResponse.data.response) as IUser;
         const addressMap: Record<string, any> = tenant.addresses;
@@ -114,23 +108,36 @@ export const AddWorkOrderModal = ({
           country: primaryAddress.country,
           numBeds: primaryAddress.numBeds,
           numBaths: primaryAddress.numBaths,
-        } as PropertyType;
+        } as Property;
+        setTenant(tenant);
+        setProperty(property);
+      } catch (err: any) {
+        console.log(err)
+      }
+      setUserLoading(false);
+    }
+    getUserProperty();
+  }, [getValues().tenantEmail]);
 
-        const validatedBody = CreateWorkOrderFullSchema.parse({
+  const handleCreateWorkOrder: SubmitHandler<AddWorkOrder> = useCallback(
+    async (params) => {
+      try {
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
+          throw new Error(USER_PERMISSION_ERROR);
+
+        const validatedBody = CreateWorkOrderSchema.parse({
           ...params,
-          organization: user?.organization ?? '',
-          pmEmail: user?.email ?? '',
-          pmName: altName ?? user?.name ?? '',
-          creatorEmail: user?.email ?? '',
-          creatorName: altName ?? user?.name ?? '',
+          organization: user.organization,
+          pmEmail: user.email,
+          pmName: altName ?? user.name,
+          creatorEmail: user.email,
+          creatorName: altName ?? user.name,
           woId: uuidv4(),
-          createdByType: userType ?? '',
-          tenantName: tenant.name,
+          createdByType: userType,
+          tenantName: tenant?.name,
           property,
         });
-        console.log(validatedBody)
-        const res = await axios.post('/api/create-work-order', { ...validatedBody });
-        if (res.status !== 200) throw new Error(res.data.response);
+        const res = await axios.post('/api/create-work-order', validatedBody);
 
         toast.success('Successfully Submitted Work Order!', {
           position: toast.POSITION.TOP_CENTER,
@@ -138,15 +145,12 @@ export const AddWorkOrderModal = ({
         });
         onSuccessfulAdd();
         closeModal();
-      } catch (err) {
+      } catch (err: any) {
         console.log({ err });
-        toast.error((err as any)?.response?.data?.response ?? 'Error Submitting Work Order. Please Try Again', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error Creating Work Order');
       }
     },
-    [user, userType, altName, onSuccessfulAdd]
+    [user, userType, altName, onSuccessfulAdd, tenant, property]
   );
 
   return (
@@ -173,8 +177,9 @@ export const AddWorkOrderModal = ({
             className="rounded px-1 border-solid border-2 border-slate-200 mb-1"
             id="issueDescription"
             type={'text'}
-            {...register("issueDescription")}
+            {...register('issueDescription', { required: true })}
           />
+          {errors.issueDescription && <p className="text-red-500 text-xs">{errors.issueDescription.message}</p>}
           <div className="mb-5">
             <Controller
               control={control}
@@ -184,7 +189,7 @@ export const AddWorkOrderModal = ({
                   label={'Optionally attach an existing tenant to this property'}
                   user={user}
                   userType={userType}
-                  onChange={async (option: SingleValue<OptionType>) => {
+                  onChange={async (option: SingleValue<Option>) => {
                     onChange(option?.value ?? undefined);
                   }}
                   shouldFetch={addWorkOrderModalIsOpen}
@@ -238,9 +243,9 @@ export const AddWorkOrderModal = ({
         <button
           className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
           type="submit"
-          disabled={isSubmitting || !isValid}
+          disabled={isSubmitting || !isValid || userLoading}
         >
-          {isSubmitting ? <LoadingSpinner /> : 'Add Work Order'}
+          {isSubmitting ? <LoadingSpinner /> : userLoading ? "Loading user info..." : 'Add Work Order'}
         </button>
       </form>
     </Modal>

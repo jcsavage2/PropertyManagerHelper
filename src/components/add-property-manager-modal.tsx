@@ -5,22 +5,14 @@ import Modal from 'react-modal';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { useDevice } from '@/hooks/use-window-size';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { API_STATUS, EMAIL_MATCHING_ERROR, USER_PERMISSION_ERROR } from '@/constants';
-import { lowerCaseRequiredEmail, lowerCaseRequiredString } from '@/types/zodvalidators';
-
-export const CreatePMSchema = z.object({
-  userEmail: lowerCaseRequiredEmail,
-  userName: lowerCaseRequiredString,
-  organization: z.string().min(1),
-  organizationName: z.string().min(1),
-  isAdmin: z.boolean(),
-}) 
-export type CreatePMSchemaType = z.infer<typeof CreatePMSchema>
+import { renderToastError } from '@/utils';
+import { CreatePMSchema } from '@/types/customschemas';
+import { USER_PERMISSION_ERROR } from '@/constants';
+import { CreatePMSchemaType } from '@/types';
 
 export const AddPropertyManagerModal = ({
   addPMModalIsOpen,
@@ -66,17 +58,16 @@ export const AddPropertyManagerModal = ({
     setAddPMModalIsOpen(false);
   }
 
-  const { register, handleSubmit, setError, formState: { errors, isSubmitting, isValid }, reset } = useForm<CreatePMSchemaType>({ resolver: zodResolver(CreatePMSchema) });
+  const { register, handleSubmit, formState: { errors, isSubmitting, isValid }, reset } = useForm<CreatePMSchemaType>({ resolver: zodResolver(CreatePMSchema), mode: "all" });
 
   const handleCreatePM: SubmitHandler<CreatePMSchemaType> = useCallback(
     async (params) => {
       try {
-        if (userType !== userRoles.PROPERTY_MANAGER || !user?.isAdmin || !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
+        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user?.isAdmin || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
 
         const res = await axios.post('api/create-pm', params);
-        if (res.status !== API_STATUS.SUCCESS) throw new Error(res.data.response);
 
         toast.success('Successfully Created PM!', {
           position: toast.POSITION.TOP_CENTER,
@@ -84,13 +75,9 @@ export const AddPropertyManagerModal = ({
         });
         onSuccessfulAdd();
         closeModal()
-        reset()
-      } catch (err) {
+      } catch (err: any) {
         console.log({ err });
-        toast.error((err as any)?.response?.data?.response ?? 'Error Creating PM. Please Try Again', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, "Error Creating PM");
       }
     },
     [user, userType]
@@ -118,7 +105,9 @@ export const AddPropertyManagerModal = ({
           id="name"
           placeholder="Full Name*"
           type={'text'}
-          {...register('userName')}
+          {...register('userName', {
+            required: true
+          })}
         />
         {errors.userName && <p className="text-red-500 text-xs mt-1 italic">{errors.userName.message}</p>}
         <input
@@ -126,7 +115,9 @@ export const AddPropertyManagerModal = ({
           id="email"
           placeholder="Email*"
           type="email"
-          {...register('userEmail')}
+          {...register('userEmail', {
+            required: true
+          })}
         />
         {errors.userEmail && <p className="text-red-500 text-xs mt-1 italic">{errors.userEmail.message}</p>}
         <div className="flex flex-row items-center justify-center h-4 mt-5">
@@ -137,7 +128,9 @@ export const AddPropertyManagerModal = ({
             className="rounded px-1 border-solid border-2 w-4 h-4 border-slate-200"
             id="isAdmin"
             type="checkbox"
-            {...register('isAdmin')}
+            {...register('isAdmin', {
+            required: true
+          })}
           />
         </div>
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
