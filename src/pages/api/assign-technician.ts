@@ -86,7 +86,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         twilioClient.messages.create({
           to: technicianUser.phone,
           from: '+18449092150',
-          body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `,
+          body: `You've been assigned a work order in Pillar by ${toTitleCase(pmName)}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(
+            property.address
+          )}\n\n${!!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``}${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${
+            permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`
+          }View the full work order at ${workOrderLink}\n\n 
+          `,
         });
       } catch (err) {
         console.log({ err });
@@ -147,6 +152,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
           <h1>You've Been Assigned To A Work Order by ${toTitleCase(pmName)}</h1>
           <a href="${workOrderLink}">View Work Order in PILLAR</a>
+          <p>Issue: ${issueDescription}</p>
+          <p>Address: ${toTitleCase(property.address)}</p>
+          ${property.unit ? `<p>Unit: ${toTitleCase(property.unit)}</p>` : ``}
+          ${tenantName && `<p>Tenant: ${toTitleCase(tenantName)}</p>`}
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
           </p>
