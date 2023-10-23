@@ -57,7 +57,7 @@ export default function WorkOrderChatbot() {
       Object.values(user?.addresses)?.map(
         (address: any) =>
           ({
-            label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
+            label: `${toTitleCase(address?.address)} ${address?.unit ? toTitleCase(address?.unit) : ''}`.trim(),
             value: address,
           } as AddressOption)
       ) ?? []
