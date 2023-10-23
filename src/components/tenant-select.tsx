@@ -2,11 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { SingleValue } from 'react-select';
 import AsyncSelect from 'react-select/async';
 import axios from 'axios';
-import { GetTenantsForOrg, Option } from '@/types';
+import { Option } from '@/types';
 import { IUser, USER_TYPE, UserType } from '@/database/entities/user';
-import { ENTITIES } from '@/database/entities';
 import { ALL_TENANTS_FILTER, USER_PERMISSION_ERROR } from '@/constants';
-import { GetTenantsForOrgSchema } from '@/types/customschemas';
+import { toTitleCase } from '@/utils';
 
 export const TenantSelect = ({
   label,
@@ -28,7 +27,7 @@ export const TenantSelect = ({
     async (_searchString?: string) => {
       setTenantOptionsLoading(true);
       try {
-        if (!user || userType !== ENTITIES.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
 
@@ -39,7 +38,7 @@ export const TenantSelect = ({
         });
         const response = JSON.parse(data.response);
         const processedTenants = response.tenants.map((tenant: IUser) => {
-          return { value: tenant.email, label: `${tenant.name} (${tenant.email})` };
+          return { value: tenant.email, label: `${toTitleCase(tenant.name)} (${tenant.email})` };
         });
         if (!_searchString) {
           setTenantOptions(processedTenants);

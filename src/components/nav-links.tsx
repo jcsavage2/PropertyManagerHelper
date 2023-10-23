@@ -53,7 +53,7 @@ export const NavLinks = () => {
           {user && (user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || user?.roles?.length > 1) ? <Link className='hover:text-gray-500 text-lg' href={"/"}>Home</Link> : null}
           {user?.email && (<Link onClick={handleClick} className='hover:text-gray-500 text-lg' href={"/"}>{"Sign Out"}</Link>)}
           {user && userType === USER_TYPE.TENANT && <Link className='hover:text-gray-500 text-lg' href={"/work-order-chatbot"}>New Work Order</Link>}
-          {user && userType === USER_TYPE.TENANT || userType === USER_TYPE.TECHNICIAN ? <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Work Orders</Link> : null}
+          {user && (userType === USER_TYPE.TENANT || userType === USER_TYPE.TECHNICIAN) ? <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Work Orders</Link> : null}
           {user && userType === USER_TYPE.PROPERTY_MANAGER && <Link className='hover:text-gray-500 text-lg' href={"/work-orders"}>Admin Portal</Link>}
           <Link className={'hover:text-gray-500 text-lg'} href={'/terms-and-conditions'}>
             {'Terms And Conditions'}

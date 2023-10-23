@@ -2,8 +2,8 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { Table } from 'dynamodb-toolbox';
 import { S3Client } from '@aws-sdk/client-s3';
-import { MISSING_ENV } from '@/constants';
 import { ApiError as _ApiError } from 'next/dist/server/api-utils';
+import { MISSING_ENV } from '@/pages/api/_utils';
 
 const accessKeyId = process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY;
