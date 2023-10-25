@@ -186,7 +186,7 @@ export const AddWorkOrderModal = ({
               name="tenantEmail"
               render={({ field: { onChange, value } }) => (
                 <TenantSelect
-                  label={'Optionally attach an existing tenant to this property'}
+                  label={'Select Tenant*'}
                   user={user}
                   userType={userType}
                   onChange={async (option: SingleValue<Option>) => {
@@ -196,6 +196,7 @@ export const AddWorkOrderModal = ({
                 />
               )}
             />
+            {errors.tenantEmail && <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>}
           </div>
           <div className="mb-5">
             <p className="mt-2">Permission To Enter Property* </p>
@@ -245,7 +246,7 @@ export const AddWorkOrderModal = ({
           type="submit"
           disabled={isSubmitting || !isValid || userLoading}
         >
-          {isSubmitting ? <LoadingSpinner /> : userLoading ? "Loading user info..." : 'Add Work Order'}
+          {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading user info...' : 'Add Work Order'}
         </button>
       </form>
     </Modal>
