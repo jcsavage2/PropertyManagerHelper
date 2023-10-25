@@ -42,11 +42,10 @@ export class OrganizationEntity {
   });
 
   public async create({ name, uuid }: CreateOrgProps) {
-    const orgId = generateKey(ENTITY_KEY.ORGANIZATION, uuid);
     const result = await this.organizationEntity.update(
       {
-        pk: orgId,
-        sk: orgId,
+        pk: uuid,
+        sk: uuid,
         name,
       },
       { returnValues: 'ALL_NEW', strictSchemaCheck: true }
@@ -54,7 +53,7 @@ export class OrganizationEntity {
     return result.Attributes;
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string }) {
+  public async delete({ pk, sk }: { pk: string; sk: string; }) {
     const params = {
       pk,
       sk,
