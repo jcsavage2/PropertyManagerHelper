@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const body: GetAllWorkOrdersForUser = GetAllWorkOrdersForUserSchema.parse(req.body);
     const { email, userType, orgId, startKey, statusFilter, reverse } = body;
-    console.log("Startkey1: ", startKey)
+
     const workOrderEntity = new WorkOrderEntity();
     const response = await workOrderEntity.getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse });
     const workOrders = response.workOrders

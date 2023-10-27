@@ -180,7 +180,6 @@ export class WorkOrderEntity {
     const workOrders: IWorkOrder[] = [];
     let pk: string = '';
     let index: undefined | string;
-    console.log("startkey: ", startKey)
     if (orgId) {
       pk = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, orgId);
       index = INDEXES.GSI4;
