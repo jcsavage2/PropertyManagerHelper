@@ -56,8 +56,8 @@ export const AddPropertyModal = ({
   };
 
   function closeModal() {
-    reset();
     setAddPropertyModalIsOpen(false);
+    reset();
   }
 
   const handleCreateNewProperty: SubmitHandler<CreateProperty> = useCallback(
@@ -126,6 +126,7 @@ export const AddPropertyModal = ({
             name="state"
             render={({ field: { onChange, value } }) => <StateSelect state={value} setState={onChange} label={'State*'} placeholder="Select..." />}
           />
+          {errors.state && <p className="text-red-500 text-xs mt-1 italic">{errors.state.message}</p>}
           <label htmlFor="address">City*</label>
           <input
             className="rounded px-1 border-solid border-2 border-slate-200"
@@ -136,6 +137,7 @@ export const AddPropertyModal = ({
               required: true,
             })}
           />
+          {errors.city && <p className="text-red-500 text-xs mt-1 italic">{errors.city.message}</p>}
           <label htmlFor="address">Zip* </label>
           <input
             className="rounded px-1 border-solid border-2 border-slate-200"
@@ -146,6 +148,7 @@ export const AddPropertyModal = ({
             })}
             placeholder="000000"
           />
+          {errors.postalCode && <p className="text-red-500 text-xs mt-1 italic">{errors.postalCode.message}</p>}
           <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
             <label className="text-center mr-4" htmlFor="beds">
               Beds*:{' '}

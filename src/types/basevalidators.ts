@@ -44,7 +44,7 @@ export const validatePropertyWithId = validateProperty.extend({ propertyUUId: lo
 // -- Other -- //
 export const validatePTE = z.enum([PTE.YES, PTE.NO]);
 export const validateUserType = z.enum([USER_TYPE.TENANT, USER_TYPE.TECHNICIAN, USER_TYPE.PROPERTY_MANAGER]);
-export const validateStartKey = z.union([z.undefined(), z.object({ pk: requiredString, sk: requiredString })]);
+export const validateStartKey = z.any().optional();
 
 export const validateInviteStatusFilter = z.object({
   JOINED: z.boolean(),
