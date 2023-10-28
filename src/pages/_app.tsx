@@ -8,10 +8,13 @@ import React, { useEffect } from 'react';
 import { UserContextProvider } from '@/context/user';
 import { NavLinks } from '@/components/nav-links';
 import * as Fullstory from "@fullstory/browser";
+import * as amplitude from '@amplitude/analytics-browser';
 
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
   useEffect(() => {
+    amplitude.init('ff368b4943b9a03a49b2c3b925e62021');
+
     if (process.env.NEXT_PUBLIC_IS_LOCAL) {
       return;
     } else {
