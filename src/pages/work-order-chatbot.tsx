@@ -208,6 +208,7 @@ export default function WorkOrderChatbot() {
     }
 
     setMessages([]);
+    setUserMessage('');
     setIssueDescription('');
     setIssueLocation('');
     setAdditionalDetails('');
@@ -549,7 +550,13 @@ export default function WorkOrderChatbot() {
                   )}
                   {!isResponding && issueDescription.length > 0 && !submitAnywaysSkip && !hasAllIssueInfo(workOrder, isUsingAI) && (
                     <button
-                      onClick={() => setSubmitAnywaysSkip(true)}
+                      onClick={() => {
+                        setSubmitAnywaysSkip(true)
+                        setMessages((prev) => {
+                          prev[prev.length - 1] = { role: 'assistant', content: 'Please complete the form below. When complete, press submit to send your work order!' }
+                          return prev
+                        });
+                      }}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
                       {'Submit Anyways?'}
