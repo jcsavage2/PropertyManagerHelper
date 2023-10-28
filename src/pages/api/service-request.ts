@@ -20,16 +20,15 @@ const gpt_model = 'gpt-4-0613';
  * We have two flows we need to handle: gather issue info, then gather user info.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
-
-  const body = req.body as ApiRequest;
-  const { userMessage, messages, unitInfo, streetAddress, ...workOrderData } = body;
   try {
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    const body = req.body as ApiRequest;
+    const { userMessage, messages, unitInfo, streetAddress, ...workOrderData } = body;
+
     const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo, streetAddress);
     const response = await openai.createChatCompletion({
       max_tokens: 1000,
