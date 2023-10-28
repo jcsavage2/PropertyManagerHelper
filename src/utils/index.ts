@@ -4,10 +4,7 @@ import { AiJSONResponse, UserInfo, WorkOrder } from '@/types';
 import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
 
-export const hasAllIssueInfo = (workOrder: WorkOrder, isUsingAI: boolean) => {
-  if (!isUsingAI) {
-    return !!workOrder.issueDescription;
-  }
+export const hasAllIssueInfo = (workOrder: WorkOrder) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
 };
 

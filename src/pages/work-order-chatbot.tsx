@@ -21,7 +21,6 @@ export default function WorkOrderChatbot() {
 
   const [platform, setPlatform] = useState<"Desktop" | "iOS" | "Android">();
 
-  const [isUsingAI, _setIsUsingAI] = useState(true);
   const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
@@ -106,13 +105,9 @@ export default function WorkOrderChatbot() {
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
-      if (isUsingAI) {
         setUserMessage(e.currentTarget.value);
-      } else {
-        setIssueDescription(e.currentTarget.value);
-      }
     },
-    [setUserMessage, setIssueDescription, isUsingAI]
+    [setUserMessage]
   );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -247,17 +242,6 @@ export default function WorkOrderChatbot() {
     e.preventDefault();
     const lastUserMessage = userMessage;
     try {
-      if (!isUsingAI) {
-        setMessages([
-          ...messages,
-          { role: 'user', content: issueDescription },
-          {
-            role: 'assistant',
-            content:
-              "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request.",
-          },
-        ]);
-      }
       if(!selectedAddress) {
         alert('Please make sure to select an address, or contact your property manager for assistance.');
         return
@@ -464,7 +448,7 @@ export default function WorkOrderChatbot() {
                             {message.content}
                           </p>
                           {index === lastSystemMessageIndex &&
-                            (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && (
+                            (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
                               <>
                                 <div
                                   data-testid="final-response"
@@ -542,7 +526,7 @@ export default function WorkOrderChatbot() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {!isResponding && !submitAnywaysSkip && !hasAllIssueInfo(workOrder, isUsingAI) && (issueDescription.length > 0 || errorCount > 0) && (
+                  {!isResponding && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
                     <button
                       onClick={() => {
                         setSubmitAnywaysSkip(true)
@@ -550,6 +534,9 @@ export default function WorkOrderChatbot() {
                           prev[prev.length - 1] = { role: 'assistant', content: 'Please complete the form below. When complete, press submit to send your work order!' }
                           return prev
                         });
+                        if (issueDescription.length === 0) {
+                          setIssueDescription(userMessage);
+                        }
                       }}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
@@ -558,7 +545,7 @@ export default function WorkOrderChatbot() {
                   )}
                 </div>
                 <div id="chatbox-footer" className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center" style={{ height: '12dvh' }}>
-                  {(hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && messages.length > 1 ? (
+                  {(hasAllIssueInfo(workOrder) || submitAnywaysSkip) && messages.length > 1 ? (
                     <button
                       onClick={handleSubmitWorkOrder}
                       disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles}
@@ -579,17 +566,17 @@ export default function WorkOrderChatbot() {
                       }}
                     >
                       <textarea
-                        value={isUsingAI ? userMessage : issueDescription}
+                        value={userMessage}
                         data-testid="userMessageInput"
                         className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
-                        placeholder={messages.length ? (hasAllIssueInfo(workOrder, isUsingAI) ? '' : '') : 'Tell us about your issue.'}
+                        placeholder={messages.length ? (hasAllIssueInfo(workOrder) ? '' : '') : 'Tell us about your issue.'}
                         onChange={handleChange}
                       />
                       <button
                         data-testid="send"
                         type="submit"
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                        disabled={isResponding || (isUsingAI ? !userMessage || userMessage.length === 0 : !issueDescription) || !addressHasBeenSelected}
+                        disabled={isResponding || !userMessage || userMessage.length === 0 || !addressHasBeenSelected}
                       >
                         Send
                       </button>
