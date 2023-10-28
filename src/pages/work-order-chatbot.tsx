@@ -548,7 +548,7 @@ export default function WorkOrderChatbot() {
                         setMessages([
                           ...messages,
                           { role: 'user', content: userMessage },
-                          { role: 'assistant', content: 'Please fill out the form, and click submit to send your work order!' },
+                          { role: 'assistant', content: 'Please fill out the form and click submit to send your work order!' },
                         ]);
                       }}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
