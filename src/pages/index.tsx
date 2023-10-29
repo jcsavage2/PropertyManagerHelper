@@ -28,7 +28,7 @@ const Home = () => {
 
   //If user is only a tenant, then redirect to chatbot, otherwise redirect to work orders
   if (user && userType) {
-    if (user?.roles.length === 1 && user?.roles.includes(userRoles.TENANT)) {
+    if (userType === userRoles.TENANT) {
       router.push('/work-order-chatbot');
     } else {
       router.push('/work-orders');
