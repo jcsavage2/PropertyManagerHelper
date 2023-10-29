@@ -78,7 +78,7 @@ const Properties = () => {
                     <div className="pl-2 text-gray-800">
                       <p className="text-xl ">{toTitleCase(property.address)} </p>
                       <p className="text-sm mt-2">{toTitleCase(property.city)} </p>
-                      <p className="text-sm mt-1">{toTitleCase(property.state)} </p>
+                      <p className="text-sm mt-1">{property.state.toUpperCase()} </p>
                       <p className="text-sm mt-1">{toTitleCase(property.postalCode)} </p>
                       <p className="text-sm mt-1">{toTitleCase(property.unit)} </p>
                     </div>
@@ -107,7 +107,7 @@ const Properties = () => {
                         <tr key={`${property.pk}-${property.sk}`} className="h-20">
                           <td className="border-b border-t px-4 py-1">{toTitleCase(property.address)}</td>
                           <td className="border-b border-t px-4 py-1">{toTitleCase(property.city)}</td>
-                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.state)}</td>
+                          <td className="border-b border-t px-4 py-1">{property.state.toUpperCase()}</td>
                           <td className="border-b border-t px-4 py-1">{toTitleCase(property.postalCode)}</td>
                           <td className="border-b border-t px-4 py-1">{toTitleCase(property.unit)}</td>
                         </tr>

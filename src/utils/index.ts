@@ -5,10 +5,7 @@ import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
 import { toast } from 'react-toastify';
 
-export const hasAllIssueInfo = (workOrder: IssueInformation, isUsingAI: boolean) => {
-  if (!isUsingAI) {
-    return !!workOrder.issueDescription;
-  }
+export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
 };
 

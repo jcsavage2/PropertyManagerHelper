@@ -16,13 +16,11 @@ import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
-  const [lastUserMessage, setLastUserMessage] = useState('');
   const { user, sessionStatus } = useSessionUser();
   const { isMobile } = useDevice();
 
   const [platform, setPlatform] = useState<'Desktop' | 'iOS' | 'Android'>();
 
-  const [isUsingAI, _setIsUsingAI] = useState(true);
   const [selectedAddress, setSelectedAddress] = useState<AddressOption | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
@@ -32,13 +30,13 @@ export default function WorkOrderChatbot() {
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
-  const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
-  const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
+  const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false); // Allows the user to finish and submit the work order using a form
+  const [errorCount, setErrorCount] = useState(0); // Tracks the number of errors for the openAI endpoint service-request
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
   const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
 
   const [uploadingFiles, setUploadingFiles] = useState(false);
-  const [woId, _setWoId] = useState(uuidv4());
+  const [woId, setWoId] = useState(uuidv4());
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const [downloadModalIsOpen, setDownloadModalIsOpen] = useState(false);
@@ -114,17 +112,13 @@ export default function WorkOrderChatbot() {
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, permissionToEnter, selectedAddress]);
+  }, [messages, permissionToEnter, submitAnywaysSkip, selectedAddress]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
-      if (isUsingAI) {
         setUserMessage(e.currentTarget.value);
-      } else {
-        setIssueDescription(e.currentTarget.value);
-      }
     },
-    [setUserMessage, setIssueDescription, isUsingAI]
+    [setUserMessage]
   );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -196,13 +190,15 @@ export default function WorkOrderChatbot() {
     }
 
     setMessages([]);
+    setUserMessage('');
     setIssueDescription('');
     setIssueLocation('');
     setAdditionalDetails('');
-    _setWoId(uuidv4());
+    setWoId(uuidv4());
     setSubmitAnywaysSkip(false);
 
     setSubmittingWorkOrderLoading(false);
+    setErrorCount(0);
     return;
   };
 
@@ -241,24 +237,16 @@ export default function WorkOrderChatbot() {
   );
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
+    setIsResponding(true);
     e.preventDefault();
+    const lastUserMessage = userMessage;
     try {
-      if (!isUsingAI) {
-        setMessages([
-          ...messages,
-          { role: 'user', content: issueDescription },
-          {
-            role: 'assistant',
-            content:
-              "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request.",
-          },
-        ]);
+      if(!selectedAddress) {
+        alert('Please make sure to select an address, or contact your property manager for assistance.');
+        return
       }
 
-      if (userMessage === '' || !selectedAddress) return;
       setMessages([...messages, { role: 'user', content: userMessage }]);
-      setIsResponding(true);
-      setLastUserMessage(userMessage);
       setUserMessage('');
 
       const parsedAddress = selectedAddress.value;
@@ -278,22 +266,29 @@ export default function WorkOrderChatbot() {
       parsed.additionalDetails && setAdditionalDetails(parsed.additionalDetails);
 
       const newMessage = parsed.aiMessage;
-      setIsResponding(false);
-      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: newMessage }]);
+      setMessages([
+        ...messages,
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: newMessage },
+      ]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
       console.log({ err });
 
-      //Handle openAI server downtime
-      if (err.response?.status === API_STATUS.INTERNAL_SERVER_ERROR) {
-        setHasConnectionWithGPT(false);
-        assistantMessage = 'Sorry - I am having trouble connecting to my server. Please complete this form manually or try again later.';
+      if(errorCount >= 1) {
+        assistantMessage = 'Sorry - Looks like I am having some connection issues right now. Feel free to try again later, or use the button below to submit your work order.';
       }
+      setErrorCount((prev) => prev + 1);
 
-      setIsResponding(false);
-      setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: assistantMessage }]);
+      //Manually set assistant message and reset user message to their last input
+      setMessages([
+        ...messages,
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: assistantMessage },
+      ]);
       setUserMessage(lastUserMessage);
     }
+    setIsResponding(false);
   };
 
   const renderChatHeader = () => {
@@ -436,14 +431,13 @@ export default function WorkOrderChatbot() {
                             {message.content}
                           </p>
                           {index === lastSystemMessageIndex &&
-                            (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
+                            (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
                               <>
                                 <div
                                   data-testid="final-response"
                                   style={{ display: 'grid', gridTemplateColumns: '1fr', rowGap: '0rem', marginTop: '1rem' }}
                                 >
-                                  {!hasConnectionWithGPT ||
-                                    (submitAnywaysSkip && (
+                                  {submitAnywaysSkip && (
                                       <>
                                         <label htmlFor="issueDescription">{isMobile ? 'Issue*' : 'Issue Details*'}</label>
                                         <input
@@ -462,7 +456,7 @@ export default function WorkOrderChatbot() {
                                           onChange={handleIssueLocationChange}
                                         />
                                       </>
-                                    ))}
+                                    )}
                                   <label htmlFor="additionalDetails">{isMobile ? 'Details' : 'Additional Details'}</label>
                                   <input
                                     className="rounded px-1"
@@ -510,9 +504,18 @@ export default function WorkOrderChatbot() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {!isResponding && issueDescription.length > 0 && !submitAnywaysSkip && !hasAllIssueInfo(workOrder, isUsingAI) && (
+                  {!isResponding && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
                     <button
-                      onClick={() => setSubmitAnywaysSkip(true)}
+                      onClick={() => {
+                        setSubmitAnywaysSkip(true)
+                        setMessages((prev) => {
+                          prev[prev.length - 1] = { role: 'assistant', content: 'Please complete the form below. When complete, press submit to send your work order!' }
+                          return prev
+                        });
+                        if (issueDescription.length === 0) {
+                          setIssueDescription(userMessage);
+                        }
+                      }}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
                       {'Submit Anyways?'}
@@ -520,7 +523,7 @@ export default function WorkOrderChatbot() {
                   )}
                 </div>
                 <div id="chatbox-footer" className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center" style={{ height: '12dvh' }}>
-                  {((hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && messages.length > 1) || !hasConnectionWithGPT ? (
+                  {(hasAllIssueInfo(workOrder) || submitAnywaysSkip) && messages.length > 1 ? (
                     <button
                       onClick={handleSubmitWorkOrder}
                       disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles}
@@ -541,17 +544,17 @@ export default function WorkOrderChatbot() {
                       }}
                     >
                       <textarea
-                        value={isUsingAI ? userMessage : issueDescription}
+                        value={userMessage}
                         data-testid="userMessageInput"
                         className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
-                        placeholder={messages.length ? (hasAllIssueInfo(workOrder, isUsingAI) ? '' : '') : 'Tell us about your issue.'}
+                        placeholder={messages.length ? (hasAllIssueInfo(workOrder) ? '' : '') : 'Tell us about your issue.'}
                         onChange={handleChange}
                       />
                       <button
                         data-testid="send"
                         type="submit"
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                        disabled={isResponding || (isUsingAI ? !userMessage : !issueDescription) || !addressHasBeenSelected}
+                        disabled={isResponding || !userMessage || userMessage.length === 0 || !addressHasBeenSelected}
                       >
                         Send
                       </button>

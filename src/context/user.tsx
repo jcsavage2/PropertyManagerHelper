@@ -1,7 +1,6 @@
 import { USER_TYPE, UserType } from '@/database/entities/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { signOut } from 'next-auth/react';
-import router from 'next/router';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 export type UserContext = {
@@ -26,6 +25,7 @@ export const UserContextProvider = (props: any) => {
   const [userType, setType] = useState<UserContext['userType']>(defaultState);
   const [altName, _setAltName] = useState<string | null>(null);
 
+  // Set userType and altName using session user and local storage
   useEffect(() => {
     if (userType || !user) return;
     const localUserType = localStorage.getItem('PILLAR:USER_TYPE') as UserContext['userType'] | null;
@@ -58,19 +58,6 @@ export const UserContextProvider = (props: any) => {
         setAltName(null);
       }
     }
-
-    //Redirect on initial log in
-    const hasRouted = localStorage.getItem('PILLAR:ROUTED') as UserContext['userType'] | null;
-    if (hasRouted) return;
-    if (role === USER_TYPE.TENANT) {
-      router.push('/work-order-chatbot');
-    } else if (role === USER_TYPE.TECHNICIAN) {
-      router.push('/work-orders');
-    } else {
-      //PM
-      router.push('/work-orders');
-    }
-    localStorage.setItem('PILLAR:ROUTED', 'true');
   }, [user, userType]);
 
   const setUserType = useCallback((type: UserType) => {

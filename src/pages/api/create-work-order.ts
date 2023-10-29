@@ -201,7 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
               body.messages
                 ?.map(
                   (m: ChatCompletionRequestMessage) =>
-                    `<p style="font-weight: normal;"><span style="font-weight: bold;" >${m.role}: </span>${m.content}</p>`
+                    `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(m.role)}: </span>${m.content}</p>`
                 )
                 .join(' ') ?? 'No user chat history'
             }
