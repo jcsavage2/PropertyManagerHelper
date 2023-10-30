@@ -8,10 +8,11 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { USER_TYPE } from '@/database/entities/user';
-import { API_STATUS, PTE } from '@/constants';
+import { PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
+import * as amplitude from "@amplitude/analytics-browser";
 import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@/types/customschemas';
 
 export default function WorkOrderChatbot() {
@@ -54,10 +55,10 @@ export default function WorkOrderChatbot() {
     return (
       Object.values(user?.addresses)?.map(
         (address: any) =>
-          ({
-            label: `${toTitleCase(address?.address)} ${address?.unit ? toTitleCase(address?.unit) : ''}`.trim(),
-            value: address,
-          } as AddressOption)
+        ({
+          label: `${toTitleCase(address?.address)} ${address?.unit ? toTitleCase(address?.unit) : ''}`.trim(),
+          value: address,
+        } as AddressOption)
       ) ?? []
     );
   }, [user?.addresses]);
@@ -116,7 +117,7 @@ export default function WorkOrderChatbot() {
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
-        setUserMessage(e.currentTarget.value);
+      setUserMessage(e.currentTarget.value);
     },
     [setUserMessage]
   );
@@ -241,9 +242,9 @@ export default function WorkOrderChatbot() {
     e.preventDefault();
     const lastUserMessage = userMessage;
     try {
-      if(!selectedAddress) {
+      if (!selectedAddress) {
         alert('Please make sure to select an address, or contact your property manager for assistance.');
-        return
+        return;
       }
 
       setMessages([...messages, { role: 'user', content: userMessage }]);
@@ -275,7 +276,7 @@ export default function WorkOrderChatbot() {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
       console.log({ err });
 
-      if(errorCount >= 1) {
+      if (errorCount >= 1) {
         assistantMessage = 'Sorry - Looks like I am having some connection issues right now. Feel free to try again later, or use the button below to submit your work order.';
       }
       setErrorCount((prev) => prev + 1);
@@ -409,9 +410,8 @@ export default function WorkOrderChatbot() {
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
                         <div
-                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
-                            !!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
-                          }`}
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
+                            }`}
                         >
                           {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
@@ -438,25 +438,25 @@ export default function WorkOrderChatbot() {
                                   style={{ display: 'grid', gridTemplateColumns: '1fr', rowGap: '0rem', marginTop: '1rem' }}
                                 >
                                   {submitAnywaysSkip && (
-                                      <>
-                                        <label htmlFor="issueDescription">{isMobile ? 'Issue*' : 'Issue Details*'}</label>
-                                        <input
-                                          className="rounded px-1"
-                                          id="issueDescription"
-                                          type={'text'}
-                                          value={issueDescription}
-                                          onChange={handleIssueDescriptionChange}
-                                        />
-                                        <label htmlFor="issueLocation">{isMobile ? 'Location*' : 'Issue Location*'}</label>
-                                        <input
-                                          className="rounded px-1"
-                                          id="issueLocation"
-                                          type={'text'}
-                                          value={issueLocation}
-                                          onChange={handleIssueLocationChange}
-                                        />
-                                      </>
-                                    )}
+                                    <>
+                                      <label htmlFor="issueDescription">{isMobile ? 'Issue*' : 'Issue Details*'}</label>
+                                      <input
+                                        className="rounded px-1"
+                                        id="issueDescription"
+                                        type={'text'}
+                                        value={issueDescription}
+                                        onChange={handleIssueDescriptionChange}
+                                      />
+                                      <label htmlFor="issueLocation">{isMobile ? 'Location*' : 'Issue Location*'}</label>
+                                      <input
+                                        className="rounded px-1"
+                                        id="issueLocation"
+                                        type={'text'}
+                                        value={issueLocation}
+                                        onChange={handleIssueLocationChange}
+                                      />
+                                    </>
+                                  )}
                                   <label htmlFor="additionalDetails">{isMobile ? 'Details' : 'Additional Details'}</label>
                                   <input
                                     className="rounded px-1"
@@ -466,7 +466,7 @@ export default function WorkOrderChatbot() {
                                     onChange={handleAdditionalDetailsChange}
                                   />
                                 </div>
-                                <form className="mt-2" onSubmit={() => {}}>
+                                <form className="mt-2" onSubmit={() => { }}>
                                   <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />
                                 </form>
                                 <p className="mt-2">Permission To Enter {selectedAddress ? toTitleCase(selectedAddress.label) : 'Property'}* </p>
@@ -507,10 +507,10 @@ export default function WorkOrderChatbot() {
                   {!isResponding && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
                     <button
                       onClick={() => {
-                        setSubmitAnywaysSkip(true)
+                        setSubmitAnywaysSkip(true);
                         setMessages((prev) => {
-                          prev[prev.length - 1] = { role: 'assistant', content: 'Please complete the form below. When complete, press submit to send your work order!' }
-                          return prev
+                          prev[prev.length - 1] = { role: 'assistant', content: 'Please complete the form below. When complete, press submit to send your work order!' };
+                          return prev;
                         });
                         if (issueDescription.length === 0) {
                           setIssueDescription(userMessage);
