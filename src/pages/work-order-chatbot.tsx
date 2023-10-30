@@ -150,6 +150,18 @@ export default function WorkOrderChatbot() {
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
     try {
+      amplitude.track("Submit Work Order", {
+        status: "attempt",
+        messages: messages.length,
+        issueDescription,
+        issueLocation,
+        additionalDetails,
+        createdByType: USER_TYPE.TENANT,
+        organization: user?.organization ?? "None",
+        permissionToEnter,
+        workOrderId: woId
+
+      });
       if (!user || !user.organization || !user.pmEmail || !user.email) {
         alert('Your user account is not set up properly, please contact your property manager for assistance.');
         return;
@@ -180,13 +192,34 @@ export default function WorkOrderChatbot() {
       });
 
       const res = await axios.post('/api/create-work-order', params);
-
+      amplitude.track("Submit Work Order", {
+        status: "success",
+        issueDescription,
+        issueLocation,
+        messages: messages.length,
+        additionalDetails,
+        createdByType: USER_TYPE.TENANT,
+        organization: user?.organization ?? "None",
+        permissionToEnter,
+        workOrderId: woId
+      });
       toast.success('Successfully Submitted Work Order. An email has been sent to you as confirmation', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
     } catch (error: any) {
       console.log({ error });
+      amplitude.track("Submit Work Order", {
+        status: "failure",
+        issueDescription,
+        issueLocation,
+        messages: messages.length,
+        additionalDetails,
+        createdByType: USER_TYPE.TENANT,
+        organization: user?.organization ?? "None",
+        permissionToEnter,
+        workOrderId: woId
+      });
       renderToastError(error, 'Error Submitting Work Order');
     }
 
@@ -238,10 +271,16 @@ export default function WorkOrderChatbot() {
   );
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    setIsResponding(true);
     e.preventDefault();
+    setIsResponding(true);
     const lastUserMessage = userMessage;
     try {
+      amplitude.track("Form Action", {
+        name: "Submit Text",
+        message: userMessage,
+        issueDescription,
+        issueLocation
+      });
       if (!selectedAddress) {
         alert('Please make sure to select an address, or contact your property manager for assistance.');
         return;
