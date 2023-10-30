@@ -1,28 +1,29 @@
-import { Data } from '@/database';
-import { StartKey } from '@/database/entities';
 import { UserEntity } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { GetPM } from '@/types';
+import { GetPMSchema } from '@/types/customschemas';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse } from './_utils';
 
-export type GetPMsForOrgRequest = {
-  organization: string;
-  startKey: StartKey;
-};
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const { organization, startKey} = req.body as GetPMsForOrgRequest;
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+
+    const body: GetPM = GetPMSchema.parse(req.body);
+    const { organization, startKey } = body;
+
     const userEntity = new UserEntity();
     const response = await userEntity.getAllPMsForOrg({ organization, startKey });
-    return res.status(200).json({ response: JSON.stringify({ pms: response.pms, startKey: response.startKey }) });
-  } catch (error) {
+
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify({ pms: response.pms, startKey: response.startKey }) });
+  } catch (error: any) {
     console.log({ error });
-    return res.status(500).json({ response: '' });
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

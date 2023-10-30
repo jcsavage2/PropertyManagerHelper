@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SingleValue } from 'react-select';
 import AsyncSelect from 'react-select/async';
-import { GetTenantsForOrgRequest } from '@/pages/api/get-all-tenants-for-org';
 import axios from 'axios';
-import { OptionType } from '@/types';
-import { IUser, userRoles } from '@/database/entities/user';
-import { ENTITIES } from '@/database/entities';
-import { ALL_TENANTS_FILTER } from '@/constants';
+import { Option } from '@/types';
+import { IUser, USER_TYPE, UserType } from '@/database/entities/user';
+import { ALL_TENANTS_FILTER, USER_PERMISSION_ERROR } from '@/constants';
+import { toTitleCase } from '@/utils';
 
 export const TenantSelect = ({
   label,
@@ -17,35 +16,29 @@ export const TenantSelect = ({
 }: {
   label: string;
   user: IUser | null;
-  userType: 'PROPERTY_MANAGER' | 'TECHNICIAN' | 'TENANT' | null;
-  onChange: (option: SingleValue<OptionType>) => void;
+  userType: UserType | null;
+  onChange: (option: SingleValue<Option>) => void;
   shouldFetch: boolean;
 }) => {
-  const [tenantOptions, setTenantOptions] = useState<OptionType[]>([]);
+  const [tenantOptions, setTenantOptions] = useState<Option[]>([]);
   const [tenantOptionsLoading, setTenantOptionsLoading] = useState<boolean>(false);
 
   const handleGetTenants = useCallback(
     async (_searchString?: string) => {
       setTenantOptionsLoading(true);
       try {
-        if (
-          !user ||
-          !user.email ||
-          userType !== ENTITIES.PROPERTY_MANAGER ||
-          !user.roles?.includes(userRoles.PROPERTY_MANAGER) ||
-          !user.organization
-        ) {
-          throw new Error('user must be a property manager in an organization');
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
+
         const { data } = await axios.post('/api/get-all-tenants-for-org', {
           organization: user.organization,
-          startKey: undefined,
           tenantSearchString: _searchString,
-          statusFilter: ALL_TENANTS_FILTER
-        } as GetTenantsForOrgRequest);
+          statusFilter: ALL_TENANTS_FILTER,
+        });
         const response = JSON.parse(data.response);
         const processedTenants = response.tenants.map((tenant: IUser) => {
-          return { value: tenant.email, label: `${tenant.name} (${tenant.email})` };
+          return { value: tenant.email, label: `${toTitleCase(tenant.name)} (${tenant.email})` };
         });
         if (!_searchString) {
           setTenantOptions(processedTenants);
@@ -77,7 +70,7 @@ export const TenantSelect = ({
         defaultOptions={tenantOptions}
         loadOptions={(searchString: string) => handleGetTenants(searchString)}
         id="tenant"
-        onChange={(value: SingleValue<OptionType>) => onChange(value)}
+        onChange={(value: SingleValue<Option>) => onChange(value)}
         isClearable={true}
         menuPortalTarget={document.body}
         captureMenuScroll={true}

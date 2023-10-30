@@ -8,14 +8,15 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { CiCircleRemove } from 'react-icons/ci';
-import { createdToFormattedDateTime, getPageLayout, toTitleCase } from '@/utils';
-import { IUser, userRoles } from '@/database/entities/user';
+import { createdToFormattedDateTime, getPageLayout, renderToastError, toTitleCase } from '@/utils';
+import { IUser, USER_TYPE } from '@/database/entities/user';
 import { MdClear } from 'react-icons/md';
 import ConfirmationModal from '@/components/confirmation-modal';
 import { toast } from 'react-toastify';
 import { ENTITIES, StartKey } from '@/database/entities';
-import { DeleteRequest } from '../api/delete';
-import { GetTechsForOrgRequest } from '../api/get-techs-for-org';
+import { DEFAULT_DELETE_USER, USER_PERMISSION_ERROR } from '@/constants';
+import { DeleteEntity, DeleteUser } from '@/types';
+import { DeleteEntitySchema, GetTechsForOrgSchema } from '@/types/customschemas';
 
 const Technicians = () => {
   const { user } = useSessionUser();
@@ -24,7 +25,7 @@ const Technicians = () => {
 
   const [addTechModalIsOpen, setAddTechModalIsOpen] = useState(false);
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
-  const [toDelete, setToDelete] = useState<{ pk: string; sk: string; name: string; roles: string[] }>({ pk: '', sk: '', name: '', roles: [] });
+  const [toDelete, setToDelete] = useState<DeleteUser>(DEFAULT_DELETE_USER);
   const [techs, setTechs] = useState<IUser[]>([]);
   const [techsLoading, setTechsLoading] = useState(true);
   const [techSearchString, setTechSearchString] = useState<string>('');
@@ -35,19 +36,19 @@ const Technicians = () => {
       if (!user || !userType) return;
       setTechsLoading(true);
       try {
-        if (!user.email || userType !== 'PROPERTY_MANAGER' || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
-          throw new Error('user must be a property manager in an organization');
+        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
         //Reset filter options on initial fetch
         if (isInitial && !_searchString) {
           setTechSearchString('');
         }
-        const body: GetTechsForOrgRequest = {
+
+        const { data } = await axios.post('/api/get-techs-for-org', {
           organization: user.organization,
           startKey: isInitial ? undefined : startKey,
           techSearchString: _searchString,
-        };
-        const { data } = await axios.post('/api/get-techs-for-org', body);
+        });
         const response = JSON.parse(data.response);
         const _techs: IUser[] = response.techs;
         setStartKey(response.startKey);
@@ -57,7 +58,7 @@ const Technicians = () => {
       }
       setTechsLoading(false);
     },
-    [user, userType, techSearchString, startKey]
+    [user, userType, startKey, techs]
   );
 
   useEffect(() => {
@@ -66,24 +67,21 @@ const Technicians = () => {
 
   
   const handleDeleteTech = useCallback(
-    async ({ pk, sk, name, roles }: { pk: string; sk: string; name: string; roles: string[]; }) => {
+    async ({ pk, sk, roles }: DeleteUser) => {
       setTechsLoading(true);
       try {
-        if (!pk || !sk || !name || !roles) {
-          throw new Error('To delete a tech, a pk sk name, and roles must be present');
+        if (!user || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
-        if (!user || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.email || !user.name) {
-          throw new Error('User must be a pm to delete techs');
-        }
-        const params: DeleteRequest = {
-          pk: pk,
-          sk: sk,
+        const params: DeleteEntity = DeleteEntitySchema.parse({
+          pk,
+          sk,
           entity: ENTITIES.USER,
           roleToDelete: ENTITIES.TECHNICIAN,
           currentUserRoles: roles,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
-        };
+        });
         const { data } = await axios.post('/api/delete', params);
         if (data.response) {
           toast.success('Technician Deleted!', {
@@ -95,12 +93,9 @@ const Technicians = () => {
 
         //TODO: delete technician should unassign them from all wo roles
         //Update this when you add fetching from technician entity to get all assigned WOs
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast.error('Error Deleting Technician. Please Try Again', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error Deleting Technician');
       }
       setConfirmDeleteModalIsOpen(false);
       setTechsLoading(false);
@@ -108,19 +103,19 @@ const Technicians = () => {
     [user, userType, techs]
   );
 
-  if (user && !user.organization && userType !== 'PROPERTY_MANAGER') {
+  if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
 
   return (
-    <div id="testing" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
+    <div id="technicians" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
       <ConfirmationModal
         confirmationModalIsOpen={confirmDeleteModalIsOpen}
         setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
         onConfirm={() => handleDeleteTech(toDelete)}
-        childrenComponents={<div className="text-center">Are you sure you want to delete the technician record for {toDelete.name}?</div>}
-        onCancel={() => setToDelete({ pk: '', sk: '', name: '', roles: [] })}
+        childrenComponents={<div className="text-center">Are you sure you want to delete the technician record for {toTitleCase(toDelete.name)}?</div>}
+        onCancel={() => setToDelete(DEFAULT_DELETE_USER)}
       />
       <div className="lg:max-w-5xl">
         <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
@@ -250,7 +245,7 @@ const Technicians = () => {
           </div>
         )}
         {techs.length && startKey && !techsLoading ? (
-          <div className="w-full flex items-center justify-center mb-8">
+          <div className="w-full flex items-center justify-center mb-24">
             <button
               onClick={() => fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)}
               className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
@@ -258,7 +253,7 @@ const Technicians = () => {
               Load more
             </button>
           </div>
-        ) : <div className="mb-8"></div>}
+        ) : <div className="mb-24"></div>}
       </div>
       <AddTechnicianModal
         technicianModalIsOpen={addTechModalIsOpen}

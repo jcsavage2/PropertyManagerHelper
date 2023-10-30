@@ -10,18 +10,18 @@ import { ENTITIES } from '@/database/entities';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useEffect, useState } from 'react';
-import { userRoles } from '@/database/entities/user';
-import { OptionType } from '@/types';
+import { USER_TYPE } from '@/database/entities/user';
+import { Option } from '@/types';
 
 export const PortalLeftPanel = () => {
   const router = useRouter();
   const { userType, altName, setAltName } = useUserContext();
   const { user } = useSessionUser();
-  const [altNameOptions, setAltNameOptions] = useState<OptionType[]>([]);
+  const [altNameOptions, setAltNameOptions] = useState<Option[]>([]);
 
   useEffect(() => {
-    if (!user || userType !== userRoles.PROPERTY_MANAGER || !user.altNames || !user.name) return;
-    let options: OptionType[] = user.altNames.map((name) => ({ label: name, value: name }));
+    if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.altNames || !user.name) return;
+    let options: Option[] = user.altNames.map((name) => ({ label: name, value: name }));
     options.push({ label: user.name, value: user.name });
     setAltNameOptions(options)
   }, [user, userType]);
@@ -33,7 +33,7 @@ export const PortalLeftPanel = () => {
       {userType === ENTITIES.PROPERTY_MANAGER && (
         <>
           <p className="mt-2">{'Hey, ' + (altName ? altName : user?.name)}</p>
-          <Select options={altNameOptions} className="mb-4 mt-2" placeholder={"Change acting name"} onChange={(newValue: SingleValue<OptionType>) => {
+          <Select options={altNameOptions} className="mb-4 mt-2" placeholder={"Change acting name"} onChange={(newValue: SingleValue<Option>) => {
             if (!newValue || !user?.name) return;
             if(newValue.value === user.name){
               setAltName(null);

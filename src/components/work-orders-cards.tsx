@@ -4,22 +4,22 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Select from 'react-select';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
-import { PTE, STATUS } from '@/constants';
+import { PTE, WO_STATUS } from '@/constants';
 import { StatusOptions } from './work-orders-table';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { HandleUpdateStatusProps } from '../pages/work-orders';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
-import { StatusType } from '@/types';
+import { WoStatus } from '@/types';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 
 interface IWorkOrdersCardsProps {
   workOrders: IWorkOrder[];
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   isFetching: boolean;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
-  statusFilter: Record<StatusType, boolean>;
-  setStatusFilter: (statusFilter: Record<StatusType, boolean>) => void;
+  statusFilter: Record<WoStatus, boolean>;
+  setStatusFilter: (statusFilter: Record<WoStatus, boolean>) => void;
 }
 
 export const WorkOrdersCards = ({
@@ -34,13 +34,13 @@ export const WorkOrdersCards = ({
   const { userType } = useUserContext();
 
   const renderWoCardStatus = (workOrder: IWorkOrder) => {
-    if (workOrder.status === STATUS.DELETED) {
-      return <p className="text-red-600 ml-1">{STATUS.DELETED}</p>;
+    if (workOrder.status === WO_STATUS.DELETED) {
+      return <p className="text-red-600 ml-1">{WO_STATUS.DELETED}</p>;
     }
-    if (userType === userRoles.TENANT) {
-      const index = workOrder.status === STATUS.TO_DO ? 0 : 1;
+    if (userType === USER_TYPE.TENANT) {
+      const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
       return (
-        <div className={`${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200 w-20' : 'bg-green-200 w-24'} px-2 py-1 rounded-lg`}>
+        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-yellow-200 w-20' : 'bg-green-200 w-24'} px-2 py-1 rounded-lg`}>
           {formattedStatusOptions({ value: StatusOptions[index].value, label: StatusOptions[index].label, icon: StatusOptions[index].icon })}
         </div>
       );
@@ -52,7 +52,7 @@ export const WorkOrdersCards = ({
       rounded 
       p-1 
       w-48
-      ${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
+      ${workOrder.status === WO_STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
     `}
         value={StatusOptions.find((o) => o.value === workOrder.status)}
         blurInputOnSelect={false}

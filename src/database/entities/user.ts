@@ -3,7 +3,7 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateAddress, generateKey } from '@/utils';
 import { INVITE_STATUS, PAGE_SIZE } from '@/constants';
-import { InviteStatusType } from '@/types';
+import { CreatePMSchemaType, InviteStatus } from '@/types';
 
 interface IBaseUser {
   pk: string;
@@ -16,19 +16,11 @@ interface IBaseUser {
 export interface ICreateTechnician {
   technicianName: string;
   technicianEmail: string;
-  status?: InviteStatusType;
+  status?: InviteStatus;
   pmEmail: string;
   pmName: string;
   organization: string;
   organizationName: string;
-}
-
-export interface ICreatePMUser {
-  userEmail: string;
-  userName: string;
-  organization: string;
-  organizationName: string;
-  isAdmin: boolean;
 }
 
 interface ICreateUser {
@@ -44,7 +36,7 @@ interface ICreateTenant {
   organization: string;
   organizationName: string;
   phone?: string;
-  country: 'US' | 'CA';
+  country: string;
   city: string;
   state: string;
   postalCode: string;
@@ -54,7 +46,13 @@ interface ICreateTenant {
   numBaths: number;
 }
 
-export type UserType = 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
+export const USER_TYPE = {
+  TECHNICIAN: 'TECHNICIAN', 
+  PROPERTY_MANAGER: 'PROPERTY_MANAGER', 
+  TENANT: 'TENANT', 
+} as const;
+
+export type UserType = typeof USER_TYPE[keyof typeof USER_TYPE];
 
 export interface IUser extends IBaseUser {
   pk: string;
@@ -74,18 +72,11 @@ export interface IUser extends IBaseUser {
   pmName?: string;
   hasSeenDownloadPrompt?: boolean;
   phone?: string;
-  roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
-  status: InviteStatusType;
+  roles: Array<UserType>;
+  status: InviteStatus;
   isAdmin: boolean;
   altNames: string[];
 }
-
-export const userRoles = {
-  TECHNICIAN: 'TECHNICIAN', // Ability to update Work Orders
-  PROPERTY_MANAGER: 'PROPERTY_MANAGER', // Ability to Add New Tenants,
-  TENANT: 'TENANT', // Ability to Create and Modify Work Orders
-  ORG_OWNER: 'ORG_OWNER', // Ability to add PMs, See Org-View of outstanding Work Orders, Technicians, etc.
-} as const;
 
 export class UserEntity {
   /**
@@ -138,7 +129,7 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           pmEmail: lowerCasePMEmail,
           pmName,
-          roles: { $add: [userRoles.TENANT] },
+          roles: { $add: [USER_TYPE.TENANT] },
           GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, lowerCasePMEmail),
           GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
           GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization.toLowerCase()),
@@ -171,7 +162,7 @@ export class UserEntity {
     }
   }
 
-  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatusType; }) {
+  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatus; }) {
     const updatedUser = await this.userEntity.update(
       {
         pk, sk,
@@ -184,7 +175,7 @@ export class UserEntity {
     return updatedUser.Attributes ?? null;
   }
 
-  public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: ICreatePMUser) {
+  public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: CreatePMSchemaType) {
     try {
       const lowerCaseUserEmail = userEmail.toLowerCase();
       const result = await this.userEntity.update(
@@ -193,7 +184,7 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization.toLowerCase()),
           GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
-          roles: { $add: [userRoles.PROPERTY_MANAGER] },
+          roles: { $add: [USER_TYPE.PROPERTY_MANAGER] },
           email: lowerCaseUserEmail,
           name: userName,
           isAdmin,
@@ -219,7 +210,7 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           pmEmail: lowerCasePMEmail,
           pmName,
-          roles: { $add: [userRoles.TECHNICIAN] },
+          roles: { $add: [USER_TYPE.TECHNICIAN] },
           GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, lowerCasePMEmail),
           GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
           GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization.toLowerCase()),
@@ -270,7 +261,7 @@ export class UserEntity {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
     const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
-    const shouldDeleteIndexing: boolean = (roleToDelete === userRoles.TENANT && !isTech) || (roleToDelete === userRoles.TECHNICIAN && !isTenant);
+    const shouldDeleteIndexing: boolean = (roleToDelete === USER_TYPE.TENANT && !isTech) || (roleToDelete === USER_TYPE.TECHNICIAN && !isTenant);
 
     const params = {
       pk,

@@ -7,10 +7,12 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { createdToFormattedDateTime, getPageLayout, toTitleCase } from '@/utils';
-import { IUser, userRoles } from '@/database/entities/user';
+import { IUser, USER_TYPE } from '@/database/entities/user';
 import { ENTITIES, StartKey } from '@/database/entities';
-import { GetPMsForOrgRequest } from '../api/get-all-pms-for-org';
 import { AddPropertyManagerModal } from '@/components/add-property-manager-modal';
+import { USER_PERMISSION_ERROR } from '@/constants';
+import { GetPM } from '@/types';
+import { GetPMSchema } from '@/types/customschemas';
 
 const Technicians = () => {
   const { user } = useSessionUser();
@@ -27,20 +29,19 @@ const Technicians = () => {
       if (!user || !userType) return;
       setPMsLoading(true);
       try {
-        if (!user.email || userType !== ENTITIES.PROPERTY_MANAGER || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
-          throw new Error('user must be a property manager in an organization');
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
-        const body: GetPMsForOrgRequest = {
+        const { data } = await axios.post('/api/get-all-pms-for-org', {
           organization: user.organization,
           startKey: isInitial ? undefined : startKey,
-        };
-        const { data } = await axios.post('/api/get-all-pms-for-org', body);
+        });
         const response = JSON.parse(data.response);
         const _pms: IUser[] = response.pms;
         setStartKey(response.startKey);
         isInitial ? setPMs(_pms) : setPMs((prev) => [...prev, ..._pms]);
       } catch (err) {
-        ({ err });
+        console.log({ err });
       }
       setPMsLoading(false);
     },
@@ -51,7 +52,7 @@ const Technicians = () => {
     fetchPMs(true);
   }, [user, userType]);
 
-  if (user && !user.organization && userType !== ENTITIES.PROPERTY_MANAGER) {
+  if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
 

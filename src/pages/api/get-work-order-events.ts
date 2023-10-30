@@ -1,35 +1,29 @@
-import { Data } from "@/database";
-import { StartKey } from "@/database/entities";
-import { EventEntity } from "@/database/entities/event";
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
-import { options } from "./auth/[...nextauth]";
+import { EventEntity } from '@/database/entities/event';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { GetWorkOrderEventsSchema } from '@/types/customschemas';
+import { GetWorkOrderEvents } from '@/types';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse } from './_utils';
 
-
-export type GetWorkOrderEvents = {
-  workOrderId: string;
-  startKey?: StartKey;
-};
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = req.body as GetWorkOrderEvents;
-    const { workOrderId } = body;
-    if (!workOrderId) {
-      return res.status(400).json({ response: "Missing workOrderId" });
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
+
+    const body: GetWorkOrderEvents = GetWorkOrderEventsSchema.parse(req.body);
+    const { workOrderId } = body;
+
     const eventEntity = new EventEntity();
     const { events, startKey } = await eventEntity.getEvents({ workOrderId, startKey: body.startKey });
-    return res.status(200).json({ response: JSON.stringify({ events, startKey }) });
-  } catch (error) {
+
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify({ events, startKey }) });
+  } catch (error: any) {
     console.error(error);
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

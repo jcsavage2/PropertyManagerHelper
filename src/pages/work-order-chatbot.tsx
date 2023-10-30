@@ -1,27 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { hasAllIssueInfo } from '@/utils';
-import { AddressOptionType, AiJSONResponse, ApiRequest, PTE_Type, SendEmailApiRequest, WorkOrder } from '@/types';
+import { hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
+import { AddressOption, AiJSONResponse, ChatbotRequest, CreateWorkOrder, IssueInformation, PTE_Type } from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { userRoles } from '@/database/entities/user';
-import { PTE } from '@/constants';
+import { USER_TYPE } from '@/database/entities/user';
+import { API_STATUS, PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
-import { UpdateUser } from './api/update-user';
+import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@/types/customschemas';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
   const { user, sessionStatus } = useSessionUser();
   const { isMobile } = useDevice();
 
-  const [platform, setPlatform] = useState<"Desktop" | "iOS" | "Android">();
+  const [platform, setPlatform] = useState<'Desktop' | 'iOS' | 'Android'>();
 
-  const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<AddressOption | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
   const [issueDescription, setIssueDescription] = useState('');
@@ -39,61 +39,72 @@ export default function WorkOrderChatbot() {
   const [woId, setWoId] = useState(uuidv4());
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  const [isBrowser, setIsBrowser] = useState(false);
   const [downloadModalIsOpen, setDownloadModalIsOpen] = useState(false);
 
-  const addressesOptions: AddressOptionType[] = useMemo(() => {
+  const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
+
+  const workOrder: IssueInformation = {
+    issueDescription,
+    issueLocation,
+    additionalDetails,
+  };
+
+  const addressesOptions: AddressOption[] = useMemo(() => {
     if (!user?.addresses) return [];
     return (
       Object.values(user?.addresses)?.map(
         (address: any) =>
-        ({
-          label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
-          value: address,
-        } as AddressOptionType)
+          ({
+            label: `${toTitleCase(address?.address)} ${address?.unit ? toTitleCase(address?.unit) : ''}`.trim(),
+            value: address,
+          } as AddressOption)
       ) ?? []
     );
   }, [user?.addresses]);
 
+  const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
   }, []);
+  if (isBrowser && document.querySelector('#chatbot')) {
+    Modal.setAppElement('#chatbot');
+  }
 
   useEffect(() => {
     if (isBrowser) {
       const isDesktop = window.innerWidth >= 800;
-      setPlatform(isDesktop ? "Desktop" : window.navigator.userAgent.toLowerCase().includes("android") ? "Android" : "iOS");
+      setPlatform(isDesktop ? 'Desktop' : window.navigator.userAgent.toLowerCase().includes('android') ? 'Android' : 'iOS');
     }
   }, [isBrowser]);
 
   useEffect(() => {
-    const hasSeenDownloadModal = localStorage.getItem("Pillar::HAS_SEEN");
-    if ((platform === "iOS" || platform === "Android") && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
+    const hasSeenDownloadModal = localStorage.getItem('Pillar::HAS_SEEN');
+    if ((platform === 'iOS' || platform === 'Android') && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
       async function updateUserHasSeenDownloadPrompt() {
-        if (user?.pk && user.sk) {
-          const body: UpdateUser = { pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true };
-          await axios.post("/api/update-user", { ...body });
-          localStorage.setItem("Pillar::HAS_SEEN", "true");
-        }
+        const params = UpdateUserSchema.parse({ pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true });
+        await axios.post('/api/update-user', params);
+        localStorage.setItem('Pillar::HAS_SEEN', 'true');
       }
-      setDownloadModalIsOpen(true);
-      updateUserHasSeenDownloadPrompt();
+      try {
+        setDownloadModalIsOpen(true);
+        updateUserHasSeenDownloadPrompt();
+      } catch (err: any) {
+        console.log({ err });
+      }
     }
   }, [platform, user]);
 
   //If the user has only one address, select it automatically
   useEffect(() => {
-    if (addressesOptions && addressesOptions.length === 1) {
+    if (!addressesOptions) return;
+    if (addressesOptions.length === 1) {
       setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(true);
     } else {
+      setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(false);
     }
   }, [addressesOptions]);
-
-  if (isBrowser && document.querySelector("#chatbot")) {
-    Modal.setAppElement('#chatbot');
-  }
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -101,7 +112,7 @@ export default function WorkOrderChatbot() {
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, permissionToEnter, submitAnywaysSkip]);
+  }, [messages, permissionToEnter, submitAnywaysSkip, selectedAddress]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
@@ -137,61 +148,45 @@ export default function WorkOrderChatbot() {
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    if (!user || !user.organization || !user.pmEmail || !user.email) {
-      alert('Your user account is not set up properly, please contact your property manager for assistance.');
-      return;
-    }
-    if (!selectedAddress) {
-      toast.error('Error Submitting Work Order. Please Try Again', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
-      setSubmittingWorkOrderLoading(false);
-      return;
-    }
-
-    const parsedAddress = selectedAddress.value;
-    const body: SendEmailApiRequest = {
-      issueDescription,
-      issueLocation,
-      additionalDetails,
-      messages,
-      createdByType: userRoles.TENANT,
-      creatorEmail: user.email,
-      creatorName: user.name,
-      permissionToEnter,
-      pmEmail: user.pmEmail,
-      organization: user.organization,
-      address: parsedAddress.address,
-      state: parsedAddress.state,
-      city: parsedAddress.city,
-      unit: parsedAddress.unit,
-      postalCode: parsedAddress.postalCode,
-      images: uploadedFiles,
-      woId
-    };
-
     try {
-      const res = await axios.post('/api/create-work-order', body);
-      if (res.status === 200) {
-        toast.success("Successfully Submitted Work Order. An email has been sent to you as confirmation", {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
-      } else {
-        toast.error('Error Submitting Work Order. Please Try Again', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
-        setSubmittingWorkOrderLoading(false);
+      if (!user || !user.organization || !user.pmEmail || !user.email) {
+        alert('Your user account is not set up properly, please contact your property manager for assistance.');
         return;
       }
-    } catch (err) {
-      console.log({ err });
-      toast.error((err as any)?.response?.data?.response ?? 'Error Submitting Work Order. Please Try Again', {
+
+      const parsedAddress = selectedAddress?.value;
+      const params: CreateWorkOrder = CreateWorkOrderSchema.parse({
+        issueDescription,
+        issueLocation,
+        additionalDetails,
+        messages,
+        createdByType: USER_TYPE.TENANT,
+        creatorEmail: user.email,
+        creatorName: user.name,
+        permissionToEnter,
+        pmEmail: user.pmEmail,
+        pmName: user.pmName,
+        organization: user.organization,
+        property: {
+          address: parsedAddress.address,
+          state: parsedAddress.state,
+          city: parsedAddress.city,
+          unit: parsedAddress.unit,
+          postalCode: parsedAddress.postalCode,
+        },
+        images: uploadedFiles,
+        woId,
+      });
+
+      const res = await axios.post('/api/create-work-order', params);
+
+      toast.success('Successfully Submitted Work Order. An email has been sent to you as confirmation', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
+    } catch (error: any) {
+      console.log({ error });
+      renderToastError(error, 'Error Submitting Work Order');
     }
 
     setMessages([]);
@@ -201,41 +196,45 @@ export default function WorkOrderChatbot() {
     setAdditionalDetails('');
     setWoId(uuidv4());
     setSubmitAnywaysSkip(false);
+
     setSubmittingWorkOrderLoading(false);
     setErrorCount(0);
     return;
   };
 
-  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(async (e) => {
-    e.preventDefault();
-    setUploadingFiles(true);
-    const selectedFs = e.target.files ?? [];
-    const formData = new FormData();
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setUploadingFiles(true);
+      const selectedFs = e.target.files ?? [];
+      const formData = new FormData();
 
-    // Append all selected files to the FormData
-    for (const imageFile of selectedFs) {
-      formData.append('image', imageFile);
-    }
-    formData.append("uuid", woId);
+      // Append all selected files to the FormData
+      for (const imageFile of selectedFs) {
+        formData.append('image', imageFile);
+      }
+      formData.append('uuid', woId);
 
-    try {
-      const response = await axios.post('/api/upload-images', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      try {
+        const response = await axios.post('/api/upload-images', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
 
-      if (response.status === 200) {
-        setUploadedFiles(response?.data?.files ?? []);
-        toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
-        setUploadingFiles(false);
-      } else {
-        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+        if (response.status === 200) {
+          setUploadedFiles(response?.data?.files ?? []);
+          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER, draggable: false });
+          setUploadingFiles(false);
+        } else {
+          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
+          setUploadingFiles(false);
+        }
+      } catch (error) {
+        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
         setUploadingFiles(false);
       }
-    } catch (error) {
-      toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
-      setUploadingFiles(false);
-    }
-  }, [woId]);
+    },
+    [woId]
+  );
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     setIsResponding(true);
@@ -250,14 +249,14 @@ export default function WorkOrderChatbot() {
       setMessages([...messages, { role: 'user', content: userMessage }]);
       setUserMessage('');
 
-      const parsedAddress = selectedAddress!.value;
-      const body: ApiRequest = {
+      const parsedAddress = selectedAddress.value;
+      const body: ChatbotRequest = ChatbotRequestSchema.parse({
         userMessage,
         messages,
         ...workOrder,
         unitInfo: parsedAddress.numBeds && parsedAddress.numBaths ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms` : '',
         streetAddress: parsedAddress.address.toLowerCase(),
-      };
+      });
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
@@ -274,6 +273,7 @@ export default function WorkOrderChatbot() {
       ]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
+      console.log({ err });
 
       if(errorCount >= 1) {
         assistantMessage = 'Sorry - Looks like I am having some connection issues right now. Feel free to try again later, or use the button below to submit your work order.';
@@ -289,14 +289,6 @@ export default function WorkOrderChatbot() {
       setUserMessage(lastUserMessage);
     }
     setIsResponding(false);
-  };
-
-  const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
-
-  const workOrder: WorkOrder = {
-    issueDescription,
-    issueLocation,
-    additionalDetails,
   };
 
   const renderChatHeader = () => {
@@ -316,10 +308,11 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<{ label: string; value: any; }>) => {
+            onChange={(v: SingleValue<AddressOption>) => {
+              if (!v) return;
               setSelectedAddress(v);
             }}
-            value={{ label: addressesOptions?.[0]?.label, value: addressesOptions?.[0]?.value }}
+            value={{ label: selectedAddress?.label ?? 'No addresses available', value: selectedAddress }}
             options={addressesOptions}
           />
           <div className="w-full flex flex-row items-center mt-4 mb-2">
@@ -339,7 +332,7 @@ export default function WorkOrderChatbot() {
     return <LoadingSpinner containerClass={'mt-4'} />;
   }
 
-  if (!user?.roles?.includes(userRoles.TENANT)) {
+  if (!user?.roles?.includes(USER_TYPE.TENANT)) {
     return <p className="p-4">User must have the tenant Role assigned to them by a property manager or Owner.</p>;
   }
   const customStyles = {
@@ -369,26 +362,18 @@ export default function WorkOrderChatbot() {
 
   return (
     <div id="chatbot">
-      <Modal
-        isOpen={downloadModalIsOpen}
-        onRequestClose={closeModal}
-        contentLabel="Add Comment Modal"
-        ariaHideApp={false}
-        style={customStyles}
-      >
+      <Modal isOpen={downloadModalIsOpen} onRequestClose={closeModal} contentLabel="Add Comment Modal" ariaHideApp={false} style={customStyles}>
         <div className="p-6">
-          <h2 className="text-center text-2xl font-bold mb-4">
-            Instructions to Save Pillar App to Your Home Screen
-          </h2>
+          <h2 className="text-center text-2xl font-bold mb-4">Instructions to Save Pillar App to Your Home Screen</h2>
 
           <div className="space-y-2">
-            {platform === "iOS" ? (
+            {platform === 'iOS' ? (
               <>
                 <p>1. Tap the share icon (square with an arrow pointing out of it) at the bottom of the screen.</p>
                 <p>{'2. Scroll down and tap "Add to Home Screen".'}</p>
                 <p>{'3. Name it as you wish and then tap "Add" on the top-right.'}</p>
               </>
-            ) : platform === "Android" ? (
+            ) : platform === 'Android' ? (
               <>
                 <p>{'1. Tap the menu button (three dots) on the top-right of the screen.'}</p>
                 <p>{'2. Tap "Add to Home screen".'}</p>
@@ -398,10 +383,7 @@ export default function WorkOrderChatbot() {
             )}
           </div>
 
-          <button
-            onClick={closeModal}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
+          <button onClick={closeModal} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             Close
           </button>
         </div>
@@ -427,8 +409,9 @@ export default function WorkOrderChatbot() {
                     messages.map((message, index) => (
                       <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
                         <div
-                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
-                            }`}
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
+                            !!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
+                          }`}
                         >
                           {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                             <div className="text-left mb-1 text-gray-700">
@@ -483,15 +466,10 @@ export default function WorkOrderChatbot() {
                                     onChange={handleAdditionalDetailsChange}
                                   />
                                 </div>
-                                <form className='mt-2' onSubmit={() => { }}>
-                                  <input
-                                    type="file"
-                                    multiple name="image"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                  />
+                                <form className="mt-2" onSubmit={() => {}}>
+                                  <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />
                                 </form>
-                                <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : 'Property'}* </p>
+                                <p className="mt-2">Permission To Enter {selectedAddress ? toTitleCase(selectedAddress.label) : 'Property'}* </p>
                                 <div>
                                   <input
                                     className="rounded px-1"
@@ -551,7 +529,7 @@ export default function WorkOrderChatbot() {
                       disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? "Files Uploading..." : 'Submit Work Order'}
+                      {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? 'Files Uploading...' : 'Submit Work Order'}
                     </button>
                   ) : (
                     <form

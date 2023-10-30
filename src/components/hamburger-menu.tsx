@@ -4,7 +4,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useCallback, useState } from 'react';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 
 const HamburgerMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,17 +32,17 @@ const HamburgerMenu = () => {
           <div className="flex flex-col h-12">
             {user ? (
               <>
-                {userType === userRoles.TENANT && (
+                {userType === USER_TYPE.TENANT && (
                   <Link className={linkStyle} href={'/work-order-chatbot'}>
                     New Work Order
                   </Link>
                 )}
-                {(userType === userRoles.TENANT) || userType === userRoles.TECHNICIAN ? (
+                {(userType === USER_TYPE.TENANT) || userType === USER_TYPE.TECHNICIAN ? (
                   <Link className={linkStyle} href={'/work-orders'}>
                     Work Orders
                   </Link>
                 ) : null}
-                {userType === userRoles.PROPERTY_MANAGER && (
+                {userType === USER_TYPE.PROPERTY_MANAGER && (
                   <Link className={linkStyle} href={'/work-orders'}>
                     Admin Portal
                   </Link>

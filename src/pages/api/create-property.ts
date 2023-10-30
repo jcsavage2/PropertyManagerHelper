@@ -1,49 +1,35 @@
-import { Data } from '@/database';
 import { PropertyEntity } from '@/database/entities/property';
-import { IUser, UserEntity, userRoles } from '@/database/entities/user';
+import { IUser, UserEntity, USER_TYPE } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { v4 as uuid } from 'uuid';
 import { options } from './auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-
-export type CreatePropertyBody = {
-  address: string;
-  country: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  unit?: string;
-  pmEmail: string;
-  organization: string;
-  numBeds: number;
-  numBaths: number;
-  tenantEmail?: string;
-};
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { CreatePropertySchema } from '@/types/customschemas';
+import { CreateProperty } from '@/types';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse } from './_utils';
 
 /**
  *
- * @returns `ContextUser` object.
+ * @returns New property or error message on failure.
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  //@ts-ignore
-  const sessionUser: IUser = session?.user;
-  
-  //User must be a pm to create properties
-  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = req.body as CreatePropertyBody;
-    const { address, country = 'US', city, state, postalCode, unit, pmEmail, numBeds, numBaths, tenantEmail, organization } = body;
+    const session = await getServerSession(req, res, options);
+    //@ts-ignore
+    const sessionUser: IUser = session?.user;
+
+    //User must be a pm to create properties
+    if (!session || !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+    
+    const body: CreateProperty = CreatePropertySchema.parse(req.body);
+    const { address, country, city, state, postalCode, unit, pmEmail, numBeds, numBaths, tenantEmail, organization } = body;
 
     const propertyEntity = new PropertyEntity();
     const userEntity = new UserEntity();
-
-    if (!pmEmail || !address || !city || !state || !postalCode || !numBeds || !numBaths || !organization) {
-      throw new Error('create-property Error: Missing required fields.');
-    }
 
     // Create Property
     const id = uuid();
@@ -78,9 +64,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    return res.status(200).json({ response: JSON.stringify(newProperty) });
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newProperty) });
   } catch (error: any) {
     console.log({ error });
-    return res.status(500).json(error.statusCode || 500);
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

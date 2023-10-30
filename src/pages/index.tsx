@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { useDevice } from '@/hooks/use-window-size';
 
 const Home = () => {
@@ -28,7 +28,7 @@ const Home = () => {
 
   //If user is only a tenant, then redirect to chatbot, otherwise redirect to work orders
   if (user && userType) {
-    if (userType === userRoles.TENANT) {
+    if (userType === USER_TYPE.TENANT) {
       router.push('/work-order-chatbot');
     } else {
       router.push('/work-orders');

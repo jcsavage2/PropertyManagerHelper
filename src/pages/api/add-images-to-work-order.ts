@@ -1,38 +1,36 @@
-import { Data } from '@/database';
-import { UpdateImagesProps, WorkOrderEntity } from '@/database/entities/work-order';
+import { WorkOrderEntity } from '@/database/entities/work-order';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse } from './_utils';
+import { UpdateImagesSchema } from '@/types/customschemas';
+import { UpdateImages } from '@/types';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = req.body as UpdateImagesProps;
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+
+    const body: UpdateImages = UpdateImagesSchema.parse(req.body);
     const workOrderEntity = new WorkOrderEntity();
 
-    const {
-      images,
-      pk,
-      sk,
-      addNew
-    } = body as UpdateImagesProps;
+    const { images, pk, sk, addNew } = body;
 
     /** Add the images to THE WORK ORDER */
     const workOrder = await workOrderEntity.updateImages({
       pk,
       sk,
       images,
-      addNew
+      addNew,
     });
 
+    return res.status(API_STATUS.SUCCESS).json({ response: 'Successfully added images' });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error.statusCode || 500).json({ response: error.message });
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
-
-  return res.status(200).json({ response: 'Successfully sent email' });
 }

@@ -1,17 +1,18 @@
 import { TECHNICIAN_DELIM, findIssueSample } from '@/constants';
 import { ChatCompletionRequestMessage } from 'openai';
-import { AiJSONResponse, UserInfo, WorkOrder } from '@/types';
+import { AiJSONResponse, IssueInformation } from '@/types';
 import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
+import { toast } from 'react-toastify';
 
-export const hasAllIssueInfo = (workOrder: WorkOrder) => {
+export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
 };
 
-export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: WorkOrder; aiResponse: AiJSONResponse }) => {
-  const merged: WorkOrder = workOrder;
+export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: IssueInformation; aiResponse: AiJSONResponse }) => {
+  const merged: IssueInformation = workOrder;
   for (const workOrderKey of Object.keys(workOrder)) {
-    const aiValue = aiResponse?.[workOrderKey as keyof WorkOrder];
+    const aiValue = aiResponse?.[workOrderKey as keyof IssueInformation];
     if (aiValue) {
       //@ts-ignore
       merged[workOrderKey as keyof WorkOrder] = aiValue;
@@ -21,13 +22,8 @@ export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrd
 };
 
 /** Checks if we have all the info we need to submit the work order */
-export const hasAllInfo = (workOrder: WorkOrder) => {
+export const hasAllInfo = (workOrder: IssueInformation) => {
   return Object.values(workOrder).every((value) => !!value); // this works because we need permission to enter to be true.
-};
-
-export const hasAllUserInfo = (userInfo: UserInfo) => {
-  const { address, state, city, postalCode, tenantEmail, tenantName, permissionToEnter } = userInfo;
-  return !!address && !!state && !!city && !!postalCode && !!tenantEmail && !!tenantName && !!permissionToEnter;
 };
 
 /**
@@ -36,7 +32,7 @@ export const hasAllUserInfo = (userInfo: UserInfo) => {
  * @returns An initial prompt which is dynamically generated based on the information we already have.
  * Depending on the information that the program has, the prompt will ask user for either issue information or user information.
  */
-export const generatePrompt = (workOrder: WorkOrder, unitInfo: string, streetAddress: string): ChatCompletionRequestMessage => {
+export const generatePrompt = (workOrder: IssueInformation, unitInfo: string, streetAddress: string): ChatCompletionRequestMessage => {
   return {
     role: 'system',
     content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is. \
@@ -44,9 +40,10 @@ export const generatePrompt = (workOrder: WorkOrder, unitInfo: string, streetAdd
         and should contain all of the keys: ${Object.keys(findIssueSample).join(', ')}, even if there are no values. \
         Here is the current state of the work order: ${JSON.stringify(workOrder)}. \
         Once you have values for "issueDescription" and "issueLocation", ask the user if they would like to provide any additional details. Let the user know that the "additionalDetails" field is optional. \
-        ${streetAddress.includes('romar dr') && (
+        ${
+          streetAddress.includes('romar dr') &&
           'The user lives in a townhouse with central AC. If the user mentions an issue with their AC, mark the location as "Central AC".'
-        )}
+        }
         ${
           unitInfo.length > 0 &&
           `The user has an apartment with ${unitInfo}. Use this information to finish the work order by asking as few questions as possible.`
@@ -91,13 +88,7 @@ export const generatePrompt = (workOrder: WorkOrder, unitInfo: string, streetAdd
  * @param response string response from GPT; no format requirements
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
-export const processAiResponse = ({
-  response,
-  workOrderData,
-}: {
-  response: string;
-  workOrderData: WorkOrder;
-}): string | null => {
+export const processAiResponse = ({ response, workOrderData }: { response: string; workOrderData: IssueInformation }): string | null => {
   try {
     let returnValue: string | null = null;
     const jsonStart = response.indexOf('{');
@@ -130,7 +121,8 @@ export function generateAddressKey({ unit, address }: { unit?: string; address: 
   return `${address?.toLowerCase()} ${unitString}`;
 }
 
-export function toTitleCase(str: string) {
+export function toTitleCase(str: string | undefined) {
+  if (!str) return '';
   return str
     ?.toLowerCase()
     ?.split(' ')
@@ -151,7 +143,7 @@ export function generateKey(entityIdentifier: EntityTypeValues | string, secondI
  * @returns The second identifier for a key; the part after the #
  */
 export function deconstructKey(key: string): string {
-  if(!key || key.length === 0) return key;
+  if (!key || key.length === 0) return key;
   return key.split('#')[1];
 }
 
@@ -159,12 +151,12 @@ export function deconstructKey(key: string): string {
  * @returns string[] [Email, Name]
  */
 export function deconstructNameEmailString(key: string): string[] {
-  if(!key || key.length === 0) return [key];
+  if (!key || key.length === 0) return [key];
   return key.split(TECHNICIAN_DELIM);
 }
 
 /**
- * @returns Email{technicianDelim}Name
+ * @returns Email##NAME##Name
  */
 export function constructNameEmailString(email: string, name: string): string {
   return [email, TECHNICIAN_DELIM, name].join('');
@@ -185,7 +177,7 @@ export function generateKSUID() {
 export function setToShortenedString(set: Set<string>): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
-  const firstVal = arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0];
+  const firstVal = toTitleCase(arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]);
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
 }
 
@@ -239,14 +231,16 @@ export function getPageLayout(isMobile: boolean) {
 }
 
 export function toggleBodyScroll(open: boolean) {
-  if(open) {
+  if (open) {
     document.body.classList.add('modal-open');
-  }else{
+  } else {
     document.body.classList.remove('modal-open');
   }
 }
 
 export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: string, pmName: string): string {
+  const displayPmName = toTitleCase(pmName);
+  const displayTenantName = toTitleCase(tenantName);
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html lang="en">
   <head>
@@ -278,8 +272,8 @@ export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: s
   
   <body>
     <div class="container" style="margin-left: 20px;margin-right: 20px;">
-      <h2>${pmName} invited you to manage your work orders in Pillar</h2>
-      <p>Dear ${tenantName},</p>
+      <h2>${displayPmName} invited you to manage your work orders in Pillar</h2>
+      <p>Dear ${displayTenantName},</p>
       <p>We are launching a new Program called Pillar that let's you convieniently submit your maintenance requests online at any time!</p>
       <p>Here is how to use it:</p>
       <h3>Instructions</h3>
@@ -294,9 +288,18 @@ export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: s
       
       <p>As always, feel free to call or email me with any questions!</p>
       <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
-        Regards,<br> ${pmName}
+        Regards,<br> ${displayPmName}
       </p>
     </div>
   </body>
-  </html>`
+  </html>`;
+}
+
+// Handles rendering api error messages to toast when necessary, otherwise uses defaultMesssage
+export function renderToastError(e: any, defaultMessage: string){
+  const errorMessage: string = e.response?.data?.userErrorMessage ?? defaultMessage
+  toast.error(errorMessage, {
+    position: toast.POSITION.TOP_CENTER,
+    draggable: false,
+  });
 }

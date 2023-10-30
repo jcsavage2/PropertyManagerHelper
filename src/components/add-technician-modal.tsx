@@ -1,12 +1,18 @@
 import { useUserContext } from '@/context/user';
 import axios from 'axios';
-import { Dispatch, FormEventHandler, SetStateAction, useCallback, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
-import { CreateTechnicianBody } from '@/pages/api/create-technician';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { toggleBodyScroll } from '@/utils';
+import { renderToastError, toggleBodyScroll } from '@/utils';
 import { useDevice } from '@/hooks/use-window-size';
+import { USER_TYPE } from '@/database/entities/user';
+import { USER_PERMISSION_ERROR } from '@/constants';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CreateTechnician } from '@/types';
+import { CreateTechnicianSchema } from '@/types/customschemas';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 export type AddTechnicianModalProps = {
   technicianModalIsOpen: boolean;
@@ -16,12 +22,8 @@ export type AddTechnicianModalProps = {
 
 export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIsOpen, onSuccessfulAdd }: AddTechnicianModalProps) => {
   const { user } = useSessionUser();
-  const [isBrowser, setIsBrowser] = useState(false);
   const { isMobile } = useDevice();
   const { userType, altName } = useUserContext();
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
 
   const customStyles = {
     content: {
@@ -44,70 +46,46 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
     },
   };
 
-  isBrowser && Modal.setAppElement('#testing');
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-
-  const handleNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setName(e.currentTarget.value);
-    },
-    [setName]
-  );
-  const handleEmailChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setEmail(e.currentTarget.value);
-    },
-    [setEmail]
-  );
+  const [isBrowser, setIsBrowser] = useState(false);
+  isBrowser && Modal.setAppElement('#technicians');
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
 
   function closeModal() {
-    setName('');
-    setEmail('');
+    reset()
     setTechnicianModalIsOpen(false);
   }
 
-  const handleCreateNewTechnician: FormEventHandler<HTMLFormElement> = useCallback(
-    async (event) => {
+  const handleCreateNewTechnician: SubmitHandler<CreateTechnician> = useCallback(
+    async (params) => {
       try {
-        event.preventDefault();
-        if (
-          !user ||
-          !user.email ||
-          !user.roles?.includes('PROPERTY_MANAGER') ||
-          userType !== 'PROPERTY_MANAGER' ||
-          !user.organization ||
-          !user.organizationName ||
-          !user.name
-        ) {
-          throw new Error('user needs to be a Property Manager in an organization');
+        if (!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
-        const { data } = await axios.post('/api/create-technician', {
-          technicianEmail: email,
-          technicianName: name,
-          pmEmail: user.email,
-          pmName: altName ?? user.name,
-          organization: user.organization,
-          organizationName: user.organizationName,
-        } as CreateTechnicianBody);
-        const { response } = data;
-        const parsedUser = JSON.parse(response);
+
+        const res = await axios.post('/api/create-technician', params)
+        
+        const parsedUser = JSON.parse(res.data.response);
         if (parsedUser.modified) {
-          toast.success('Technician Created', { draggable: false });
+          toast.success('Technician Created!', { position: toast.POSITION.TOP_CENTER, draggable: false });
           onSuccessfulAdd();
-          setTechnicianModalIsOpen(false);
+          closeModal()
         }
       } catch (err) {
         console.log({ err });
-        toast.error((err as any)?.response?.data?.response ?? "Error Creating Technician. Please Try Again", {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error Creating Technician');
       }
     },
-    [user, userType, email, name, onSuccessfulAdd, setTechnicianModalIsOpen, altName]
+    [user, userType]
   );
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+  } = useForm<CreateTechnician>({ resolver: zodResolver(CreateTechnicianSchema), mode: 'all'});
 
   return (
     <Modal
@@ -124,25 +102,33 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
         </button>
       </div>
 
-      <form onSubmit={handleCreateNewTechnician} style={{ display: 'grid' }}>
+      <form onSubmit={handleSubmit(handleCreateNewTechnician)} style={{ display: 'grid' }}>
         <input
           className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
           id="name"
           placeholder="Technician Full Name*"
           type={'text'}
-          value={name}
-          onChange={handleNameChange}
+          {...register('technicianName', {
+            required: true
+          })}
         />
+        {errors.technicianName && <p className="text-red-500 text-xs">{errors.technicianName.message}</p>}
         <input
           className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
           id="email"
           placeholder="Technician Email*"
           type="email"
-          value={email}
-          onChange={handleEmailChange}
+          {...register('technicianEmail', {
+            required: true
+          })}
         />
-        <button className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={!name || !email}>
-          Add Technician
+        {errors.technicianEmail && <p className="text-red-500 text-xs">{errors.technicianEmail.message}</p>}
+        <input type="hidden" {...register('pmEmail')} value={user?.email ?? ''} />
+        <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
+        <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
+        <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
+        <button className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
+          {isSubmitting ? <LoadingSpinner /> : 'Create Technician'}
         </button>
       </form>
     </Modal>

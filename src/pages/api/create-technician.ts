@@ -1,58 +1,50 @@
-import { Data } from '@/database';
-import { UserEntity, userRoles } from '@/database/entities/user';
+import { UserEntity, USER_TYPE } from '@/database/entities/user';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import sendgrid from '@sendgrid/mail';
-import { INVITE_STATUS } from '@/constants';
-
-export type CreateTechnicianBody = {
-  technicianEmail: string;
-  technicianName: string;
-  pmEmail: string;
-  pmName: string;
-  organization: string;
-  organizationName: string;
-};
+import { API_STATUS, INVITE_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { errorToResponse, initializeSendgrid } from './_utils';
+import { ApiError, ApiResponse } from './_types';
+import { CreateTechnician } from '@/types';
+import { CreateTechnicianSchema } from '@/types/customschemas';
+import { toTitleCase } from '@/utils';
 
 /**
  *
  * @returns `ContextUser` object.
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  // @ts-ignore
-  const sessionUser: IUser = session?.user;
-
-  //User must be a pm to create technicians
-  if (!session || !sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = req.body as CreateTechnicianBody;
+    const session = await getServerSession(req, res, options);
+    // @ts-ignore
+    const sessionUser: IUser = session?.user;
+
+    //User must be a pm to create technicians
+    if (!session || !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+
+    const body: CreateTechnician = CreateTechnicianSchema.parse(req.body);
     const { technicianEmail, technicianName, organization, organizationName, pmEmail, pmName } = body;
 
     const userEntity = new UserEntity();
 
-    //If pm created technician row exists, don't overwrite row
+    //Don't overwrite existing technician
     const existingTechnician = await userEntity.get({ email: technicianEmail });
     if (existingTechnician && existingTechnician.status !== INVITE_STATUS.CREATED) {
-      return res.status(403).json({ response: "User Already Exists" });
+      throw new ApiError(API_STATUS.FORBIDDEN, 'User already exists.', true);
     }
 
     const newTechnician = await userEntity.createTechnician({ technicianName, technicianEmail, organization, organizationName, pmEmail, pmName });
 
     const authLink = `https://pillarhq.co/?authredirect=true`;
 
-    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
-    if (!apiKey) {
-      throw new Error('missing SENDGRID_API_KEY env variable.');
-    }
-    sendgrid.setApiKey(apiKey);
+    initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
+
     await sendgrid.send({
       to: technicianEmail,
-      from: "pillar@pillarhq.co",
+      from: 'pillar@pillarhq.co',
       subject: `Create Your Account With Pillar Work Order Management`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
@@ -102,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
           <h1>You've Been Invited To Create a Technician Account With Pillar</h1>
-          <a href="${authLink}">Login to Pillar to see view work orders for ${organizationName}</a>
+          <a href="${authLink}">Login to Pillar to see view work orders for ${toTitleCase(organizationName)}</a>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
           </p>
@@ -111,8 +103,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </html>`,
     });
 
-    return res.status(200).json({ response: JSON.stringify(newTechnician) });
-  } catch (error) {
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newTechnician) });
+  } catch (error: any) {
     console.log({ error });
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

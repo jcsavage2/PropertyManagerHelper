@@ -3,18 +3,8 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { constructNameEmailString, generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
-import { PAGE_SIZE, STATUS } from '@/constants';
-import { AssignTechnicianBody } from '@/pages/api/assign-technician';
-import { PTE_Type, StatusType } from '@/types';
-
-export interface IGetAllWorkOrdersForUserProps {
-  email: string;
-  userType: UserType;
-  orgId?: string;
-  startKey: StartKey;
-  statusFilter: Record<StatusType, boolean>;
-  reverse?: boolean;
-}
+import { PAGE_SIZE, WO_STATUS } from '@/constants';
+import { AssignTechnicianBody, GetAllWorkOrdersForUser, PTE_Type, Property, PropertyWithId, UpdateImages, WoStatus } from '@/types';
 
 type CreateWorkOrderProps = {
   uuid: string;
@@ -32,21 +22,10 @@ type CreateWorkOrderProps = {
   country: string;
   postalCode: string;
   pmEmail: string;
-  status: StatusType;
+  status: WoStatus;
   issue: string;
   location: string;
   additionalDetails: string;
-};
-
-export type UpdateImagesProps = { pk: string; sk: string; images: string[]; addNew?: boolean; };
-
-export type PropertyAddress = {
-  address: string;
-  unit?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
 };
 
 export interface IWorkOrder {
@@ -69,10 +48,10 @@ export interface IWorkOrder {
   permissionToEnter: PTE_Type;
   tenantEmail: string;
   createdBy: string;
-  createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
+  createdByType: UserType;
   tenantName: string;
-  address: PropertyAddress;
-  status: StatusType;
+  address: Property;
+  status: WoStatus;
   assignedTo: Set<string>;
   viewedWO: string[];
 }
@@ -155,7 +134,7 @@ export class WorkOrderEntity {
         tenantName,
         ...(images.length && { images }),
         status,
-        address: this.generateAddress({ address, country, city, state, postalCode, unit }),
+        address: this.generateAddress({ address, country, city, state, postalCode, unit } as Property),
         issue: issue.toLowerCase(),
         organization,
         location,
@@ -186,7 +165,7 @@ export class WorkOrderEntity {
       {
         pk: pk,
         sk: sk,
-        status: STATUS.DELETED,
+        status: WO_STATUS.DELETED,
       },
       { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
@@ -197,11 +176,10 @@ export class WorkOrderEntity {
    *
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
-  public async getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse = true }: IGetAllWorkOrdersForUserProps) {
+  public async getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse = true }: GetAllWorkOrdersForUser) {
     const workOrders: IWorkOrder[] = [];
     let pk: string = '';
     let index: undefined | string;
-
     if (orgId) {
       pk = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, orgId);
       index = INDEXES.GSI4;
@@ -230,22 +208,22 @@ export class WorkOrderEntity {
       const options = {
         ...(statusFilter.COMPLETE && !statusFilter.TO_DO && {
           filters: [
-            { attr: 'status', eq: STATUS.COMPLETE },
+            { attr: 'status', eq: WO_STATUS.COMPLETE },
           ],
         }),
         ...(!statusFilter.COMPLETE && statusFilter.TO_DO && {
           filters: [
-            { attr: 'status', eq: STATUS.TO_DO },
+            { attr: 'status', eq: WO_STATUS.TO_DO },
           ],
         }),
         ...(statusFilter.COMPLETE && statusFilter.TO_DO && {
           filters: [
-            { attr: 'status', ne: STATUS.DELETED },
+            { attr: 'status', ne: WO_STATUS.DELETED },
           ],
         }),
         ...(!statusFilter.COMPLETE && !statusFilter.TO_DO && {
           filters: [
-            { attr: 'status', eq: STATUS.DELETED },
+            { attr: 'status', eq: WO_STATUS.DELETED },
           ],
         }),
         limit: remainingWOToFetch,
@@ -270,7 +248,7 @@ export class WorkOrderEntity {
     viewedWO
   }: {
     pk: string;
-    status?: StatusType;
+    status?: WoStatus;
     permissionToEnter?: PTE_Type;
     assignedTo?: string[];
     viewedWO?: string[];
@@ -318,7 +296,7 @@ export class WorkOrderEntity {
     workOrderId,
     technicianEmail,
     technicianName,
-    address,
+    property,
     status,
     issueDescription,
     permissionToEnter,
@@ -335,7 +313,7 @@ export class WorkOrderEntity {
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
         sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
-        address: this.generateAddress(address),
+        address: this.generateAddress(property),
         GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
         GSI3SK: ksuID,
         issue: issueDescription.toLowerCase(),
@@ -360,7 +338,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ workOrderId, technicianEmail, technicianName, assignedTo, viewedWO }: { workOrderId: string; technicianEmail: string; technicianName: string; assignedTo: Set<string>; viewedWO: string[]; }) {
+  public async removeTechnician({ workOrderId, technicianEmail, technicianName, assignedTo, viewedWO }: { workOrderId: string; technicianEmail: string; technicianName: string; assignedTo: string[]; viewedWO: string[]; }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
@@ -394,7 +372,7 @@ export class WorkOrderEntity {
     }
   }
 
-  public async updateImages({ pk, sk, images, addNew }: UpdateImagesProps) {
+  public async updateImages({ pk, sk, images, addNew }: UpdateImages) {
     try {
       const updatedWorkOrder = (await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })).Attributes;
       return updatedWorkOrder;
@@ -410,14 +388,7 @@ export class WorkOrderEntity {
     state,
     postalCode,
     unit,
-  }: {
-    address: string;
-    country: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    unit?: string;
-  }) {
+  }: Property | PropertyWithId) {
     return {
       address,
       unit,

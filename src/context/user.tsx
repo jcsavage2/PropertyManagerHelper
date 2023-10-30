@@ -1,11 +1,11 @@
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE, UserType } from '@/database/entities/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { signOut } from 'next-auth/react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 export type UserContext = {
-  userType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN' | null;
-  setUserType: (type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => void;
+  userType: UserType | null;
+  setUserType: (type: UserType) => void;
   altName: string | null;
   setAltName: (name: string | null) => void;
   logOut: () => void;
@@ -38,8 +38,8 @@ export const UserContextProvider = (props: any) => {
       role = localUserType as any;
     } else {
       //Select PM role if exists, otherwise pick first role
-      if (user?.roles.includes(userRoles.PROPERTY_MANAGER)) {
-        role = userRoles.PROPERTY_MANAGER;
+      if (user?.roles.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        role = USER_TYPE.PROPERTY_MANAGER;
       } else {
         role = user?.roles[0];
       }
@@ -60,7 +60,7 @@ export const UserContextProvider = (props: any) => {
     }
   }, [user, userType]);
 
-  const setUserType = useCallback((type: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN') => {
+  const setUserType = useCallback((type: UserType) => {
     localStorage.setItem('PILLAR:USER_TYPE', type);
     setType(type);
   }, []);

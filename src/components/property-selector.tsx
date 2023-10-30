@@ -3,16 +3,18 @@ import axios from 'axios';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import Select from 'react-select';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
-import { GetPropertiesApiRequest } from '@/pages/api/get-all-properties';
+import { deconstructKey } from '@/utils';
+import { GetProperties, PropertyWithId } from '@/types';
+import { GetPropertiesSchema } from '@/types/customschemas';
 
 const PropertySelector = ({
   selectedProperty,
   setSelectedProperty,
-  orgId,
+  organization,
 }: {
-  selectedProperty: IProperty | null;
-  setSelectedProperty: Dispatch<SetStateAction<IProperty | null>>;
-  orgId?: string;
+  selectedProperty: PropertyWithId | null;
+  setSelectedProperty: Dispatch<SetStateAction<PropertyWithId | null>>;
+  organization?: string;
 }) => {
   const [properties, setProperties] = useState<IProperty[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
@@ -20,31 +22,25 @@ const PropertySelector = ({
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [selectedZip, setSelectedZip] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    //TOD: add try catch plus error handling
     async function getProperties() {
       setLoading(true);
       try {
-        if (!orgId || !orgId.length) {
-          throw new Error('Must provide either email or orgId to fetch properties');
-        }
-
         const { data } = await axios.post('/api/get-all-properties', {
           startKey: undefined,
-          orgId: orgId,
-        } as GetPropertiesApiRequest);
+          organization: organization,
+        });
         const response = JSON.parse(data.response);
         setProperties(response.properties);
       } catch (err) {
         console.log(err);
       }
-
       setLoading(false);
     }
     getProperties();
-  }, [orgId]);
+  }, [organization]);
 
   const addressSet = new Set();
   const unitSet = new Set();
@@ -177,7 +173,23 @@ const PropertySelector = ({
           {!selectedProperty
             ? filteredOptions.map((o: IProperty) => {
                 return (
-                  <div key={o.pk + o.sk} onClick={() => setSelectedProperty(o)} className="bg-gray-200 rounded mt-1 p-1 cursor-pointer">
+                  <div
+                    key={o.pk + o.sk}
+                    onClick={() =>
+                      // Convert DB Entity to Type for form validation
+                      setSelectedProperty({
+                        propertyUUId: deconstructKey(o.pk), 
+                        address: o.address,
+                        city: o.city,
+                        state: o.state,
+                        country: 'US',
+                        postalCode: o.postalCode,
+                        numBaths: o.numBaths,
+                        numBeds: o.numBeds,
+                      })
+                    }
+                    className="bg-gray-200 rounded mt-1 p-1 cursor-pointer"
+                  >
                     <p className="text-sm text-gray-800">
                       {o.address.trim()} {o.unit ? ' ' + o.unit : ''}
                     </p>
@@ -186,7 +198,9 @@ const PropertySelector = ({
                 );
               })
             : null}
-          {filteredOptions.length === 0 && !selectedProperty && <p className="text-base text-red-500 text-center">Sorry, no properties found. Try creating a property first.</p>}
+          {filteredOptions.length === 0 && !selectedProperty && (
+            <p className="text-base text-red-500 text-center">Sorry, no properties found. Try creating a property first.</p>
+          )}
         </>
       )}
 
