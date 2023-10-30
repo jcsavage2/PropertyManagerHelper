@@ -22,7 +22,7 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import Modal from 'react-modal';
 import { USER_TYPE } from '@/database/entities/user';
 import { MdOutlineClear } from 'react-icons/md';
-import { AssignTechnicianSchema, DeleteEntitySchema, GetSchema, GetTechsForOrgSchema, GetWorkOrderEventsSchema, RemoveTechnicianSchema, UpdateViewedWORequestSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
+import { DeleteEntitySchema, UpdateViewedWORequestSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
 
 const WorkOrder = ({
   workOrderId,
@@ -327,7 +327,6 @@ const WorkOrder = ({
           pmName: altName ?? user.name,
           technicianEmail: selectedTechnician.value,
           technicianName: selectedTechnician.label,
-          address: workOrder.address,
           status: workOrder.status,
           permissionToEnter: workOrder?.permissionToEnter,
           issueDescription: workOrder?.issue,

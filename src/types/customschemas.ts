@@ -17,7 +17,6 @@ import {
   requiredNumber,
   validatePropertyWithId,
 } from './basevalidators';
-import { DEFAULT_PROPERTY_WITH_ID } from '@/constants';
 
 export const GetSchema = z.object({
   pk: requiredString,

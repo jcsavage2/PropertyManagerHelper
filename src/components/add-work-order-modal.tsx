@@ -17,7 +17,7 @@ import { renderToastError, toggleBodyScroll } from '@/utils';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { v4 as uuidv4 } from 'uuid';
-import { AddWorkOrderModalSchema, CreateWorkOrderSchema, GetUserSchema } from '@/types/customschemas';
+import { AddWorkOrderModalSchema, CreateWorkOrderSchema } from '@/types/customschemas';
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -75,6 +75,7 @@ export const AddWorkOrderModal = ({
     mode: 'all',
     defaultValues: { permissionToEnter: PTE.YES },
   });
+  const formValues = getValues();
 
   function closeModal() {
     setAddWorkOrderModalIsOpen(false);
@@ -84,12 +85,12 @@ export const AddWorkOrderModal = ({
 
   //Fetch user name and property info when pm selects tenantEmail
   useEffect(() => {
-    if (!getValues().tenantEmail) return;
+    if (!formValues.tenantEmail) return;
     async function getUserProperty() {
       setUserLoading(true);
       try {
         //Fetch additional tenant info
-        const getTenantResponse = await axios.post('/api/get-user', { email: getValues().tenantEmail, userType: USER_TYPE.TENANT });
+        const getTenantResponse = await axios.post('/api/get-user', { email: formValues.tenantEmail, userType: USER_TYPE.TENANT });
 
         const tenant = JSON.parse(getTenantResponse.data.response) as IUser;
         const addressMap: Record<string, any> = tenant.addresses;
@@ -117,7 +118,7 @@ export const AddWorkOrderModal = ({
       setUserLoading(false);
     }
     getUserProperty();
-  }, [getValues().tenantEmail]);
+  }, [formValues.tenantEmail]);
 
   const handleCreateWorkOrder: SubmitHandler<AddWorkOrder> = useCallback(
     async (params) => {
@@ -137,7 +138,7 @@ export const AddWorkOrderModal = ({
           tenantName: tenant?.name,
           property,
         });
-        const res = await axios.post('/api/create-work-order', validatedBody);
+        await axios.post('/api/create-work-order', validatedBody);
 
         toast.success('Successfully Submitted Work Order!', {
           position: toast.POSITION.TOP_CENTER,
