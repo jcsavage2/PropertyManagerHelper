@@ -9,7 +9,7 @@ import { USER_TYPE } from '@/database/entities/user';
 import { useDevice } from '@/hooks/use-window-size';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { renderToastError } from '@/utils';
+import { renderToastError, toggleBodyScroll } from '@/utils';
 import { CreatePMSchema } from '@/types/customschemas';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { CreatePMSchemaType } from '@/types';
@@ -86,7 +86,8 @@ export const AddPropertyManagerModal = ({
   return (
     <Modal
       isOpen={addPMModalIsOpen}
-      onAfterOpen={() => { }}
+      onAfterOpen={() => toggleBodyScroll(true)}
+      onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Create PM Modal"
       closeTimeoutMS={200}
