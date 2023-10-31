@@ -13,7 +13,7 @@ import * as amplitude from '@amplitude/analytics-browser';
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
   useEffect(() => {
-    amplitude.init('ff368b4943b9a03a49b2c3b925e62021');
+    amplitude.init('ff368b4943b9a03a49b2c3b925e62021', { defaultTracking: true });
 
     if (process.env.NEXT_PUBLIC_IS_LOCAL) {
       return;
