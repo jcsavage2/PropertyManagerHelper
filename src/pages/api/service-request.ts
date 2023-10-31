@@ -22,6 +22,7 @@ const gpt_model = 'gpt-4-0613';
  * We have two flows we need to handle: gather issue info, then gather user info.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
+  res.setTimeout(30000);
   try {
     const session = await getServerSession(req, res, options);
     if (!session) {
