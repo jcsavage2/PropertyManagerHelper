@@ -29,8 +29,7 @@ export const UserContextProvider = (props: any) => {
   const [altName, _setAltName] = useState<string | null>(null);
   const [hasInitialized3P, setHasInitialized3P] = useState(false);
 
-  // Set userType and altName using session user and local storage
-
+  // Initialize 3P modules
   useEffect(() => {
     if (user && !userIsPillarOwner(user) && !hasInitialized3P && !process.env.NEXT_PUBLIC_IS_LOCAL) {
       amplitude.init('ff368b4943b9a03a49b2c3b925e62021', {
@@ -42,6 +41,7 @@ export const UserContextProvider = (props: any) => {
     }
   }, [hasInitialized3P, user]);
 
+  // Set userType and altName using session user and local storage
   useEffect(() => {
     if (userType || !user) return;
     const localUserType = localStorage.getItem('PILLAR:USER_TYPE') as UserContext['userType'] | null;
