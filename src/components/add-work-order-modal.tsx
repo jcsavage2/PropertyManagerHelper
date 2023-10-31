@@ -18,6 +18,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { v4 as uuidv4 } from 'uuid';
 import { AddWorkOrderModalSchema, CreateWorkOrderSchema } from '@/types/customschemas';
+import * as amplitude from "@amplitude/analytics-browser";
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -113,7 +114,7 @@ export const AddWorkOrderModal = ({
         setTenant(tenant);
         setProperty(property);
       } catch (err: any) {
-        console.log(err)
+        console.log(err);
       }
       setUserLoading(false);
     }
@@ -122,7 +123,18 @@ export const AddWorkOrderModal = ({
 
   const handleCreateWorkOrder: SubmitHandler<AddWorkOrder> = useCallback(
     async (params) => {
+      const woId = uuidv4();
       try {
+        amplitude.track("Submit Work Order", {
+          status: "attempt",
+          issueDescription: params.issueDescription,
+          issueLocation: params.issueLocation ?? "None",
+          additionalDetails: params.additionalDetails ?? "None",
+          createdByType: USER_TYPE.PROPERTY_MANAGER,
+          organization: user?.organization ?? "None",
+          permissionToEnter: params.permissionToEnter,
+          workOrderId: woId
+        });
         if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
           throw new Error(USER_PERMISSION_ERROR);
 
@@ -133,13 +145,23 @@ export const AddWorkOrderModal = ({
           pmName: altName ?? user.name,
           creatorEmail: user.email,
           creatorName: altName ?? user.name,
-          woId: uuidv4(),
+          woId,
           createdByType: userType,
           tenantName: tenant?.name,
           property,
         });
         await axios.post('/api/create-work-order', validatedBody);
 
+        amplitude.track("Submit Work Order", {
+          status: "success",
+          issueDescription: params.issueDescription,
+          issueLocation: params.issueLocation ?? "None",
+          additionalDetails: params.additionalDetails ?? "None",
+          createdByType: USER_TYPE.PROPERTY_MANAGER,
+          organization: user?.organization ?? "None",
+          permissionToEnter: params.permissionToEnter,
+          workOrderId: woId
+        });
         toast.success('Successfully Submitted Work Order!', {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
@@ -147,6 +169,16 @@ export const AddWorkOrderModal = ({
         onSuccessfulAdd();
         closeModal();
       } catch (err: any) {
+        amplitude.track("Submit Work Order", {
+          status: "failure",
+          issueDescription: params.issueDescription,
+          issueLocation: params.issueLocation ?? "None",
+          additionalDetails: params.additionalDetails ?? "None",
+          createdByType: USER_TYPE.PROPERTY_MANAGER,
+          organization: user?.organization ?? "None",
+          permissionToEnter: params.permissionToEnter,
+          workOrderId: woId
+        });
         console.log({ err });
         renderToastError(err, 'Error Creating Work Order');
       }
