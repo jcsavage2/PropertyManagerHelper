@@ -2,6 +2,9 @@ import { USER_TYPE, UserType } from '@/database/entities/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { signOut } from 'next-auth/react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import * as Fullstory from "@fullstory/browser";
+import * as amplitude from '@amplitude/analytics-browser';
+import { userIsPillarOwner } from '@/utils/use-user-is-not-pillar-owner';
 
 export type UserContext = {
   userType: UserType | null;
@@ -14,9 +17,9 @@ export type UserContext = {
 export const UserContext = createContext<UserContext>({
   userType: null,
   altName: null,
-  setAltName: () => {},
-  setUserType: () => {},
-  logOut: () => {},
+  setAltName: () => { },
+  setUserType: () => { },
+  logOut: () => { },
 });
 
 export const UserContextProvider = (props: any) => {
@@ -24,6 +27,19 @@ export const UserContextProvider = (props: any) => {
   const defaultState = user?.roles?.length === 1 ? user?.roles[0] : null;
   const [userType, setType] = useState<UserContext['userType']>(defaultState);
   const [altName, _setAltName] = useState<string | null>(null);
+  const [hasInitialized3P, setHasInitialized3P] = useState(false);
+
+  // Initialize 3P modules
+  useEffect(() => {
+    if (user && !userIsPillarOwner(user) && !hasInitialized3P && !process.env.NEXT_PUBLIC_IS_LOCAL) {
+      amplitude.init('ff368b4943b9a03a49b2c3b925e62021', {
+        defaultTracking: true,
+        ...(user?.email && { userId: user?.email })
+      });
+      Fullstory.init({ orgId: 'o-1PYDZB-na1' });
+      setHasInitialized3P(true);
+    }
+  }, [hasInitialized3P, user]);
 
   // Set userType and altName using session user and local storage
   useEffect(() => {
@@ -54,7 +70,7 @@ export const UserContextProvider = (props: any) => {
         } else {
           setAltName(localAltName);
         }
-      }else{
+      } else {
         setAltName(null);
       }
     }
@@ -66,10 +82,10 @@ export const UserContextProvider = (props: any) => {
   }, []);
 
   const setAltName = useCallback((name: string | null) => {
-    if(name){
+    if (name) {
       localStorage.setItem('PILLAR:ALT_NAME', name);
       _setAltName(name);
-    }else{
+    } else {
       localStorage.removeItem('PILLAR:ALT_NAME');
       _setAltName(null);
     }

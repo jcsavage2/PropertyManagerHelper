@@ -1,12 +1,12 @@
-import { SessionProviderProps } from "next-auth/react";
+import { IUser } from "@/database/entities/user";
 
-export const userIsPillarOwner = (session: SessionProviderProps["session"]): boolean => {
-  return session?.user?.email ? [
+export const userIsPillarOwner = (user: IUser): boolean => {
+  return user?.email ? [
     "mitchposk@gmail.com",
     "mitchposk+tenant@gmail.com",
     "mitchposk+technician@gmail.com",
     "dylan.m.goren@gmail.com",
     "dylan@gpillarhq.com",
     "jcsavage@umich.edu"
-  ].includes(session?.user?.email) : false;
+  ].includes(user?.email) : false;
 };
