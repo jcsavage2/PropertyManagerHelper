@@ -1,6 +1,6 @@
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
-import { SessionProvider, SessionProviderProps } from "next-auth/react";
+import { SessionProvider, SessionProviderProps, useSession } from "next-auth/react";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Head from 'next/head';
@@ -9,21 +9,22 @@ import { UserContextProvider } from '@/context/user';
 import { NavLinks } from '@/components/nav-links';
 import * as Fullstory from "@fullstory/browser";
 import * as amplitude from '@amplitude/analytics-browser';
+import { userIsPillarOwner } from '@/utils/use-user-is-not-pillar-owner';
 
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
   useEffect(() => {
-    amplitude.init('ff368b4943b9a03a49b2c3b925e62021', {
-      defaultTracking: true,
-      ...(session?.user?.email && { userId: session?.user?.email })
-    });
-
     if (process.env.NEXT_PUBLIC_IS_LOCAL) {
       return;
     } else {
+      amplitude.init('ff368b4943b9a03a49b2c3b925e62021', {
+        defaultTracking: true,
+        ...(session?.user?.email && { userId: session?.user?.email })
+      });
       Fullstory.init({ orgId: 'o-1PYDZB-na1' });
     }
-  }, []);
+  }, [session]);
+
   return (
     <SessionProvider
       session={session}
