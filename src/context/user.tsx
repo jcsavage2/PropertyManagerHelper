@@ -36,7 +36,9 @@ export const UserContextProvider = (props: any) => {
         defaultTracking: true,
         ...(user?.email && { userId: user?.email })
       });
-      Fullstory.init({ orgId: 'o-1PYDZB-na1' });
+      Fullstory.init({ orgId: 'o-1PYDZB-na1' }, () => {
+        user.email && Fullstory.identify(user.email);
+      });
       setHasInitialized3P(true);
     }
   }, [hasInitialized3P, user]);
