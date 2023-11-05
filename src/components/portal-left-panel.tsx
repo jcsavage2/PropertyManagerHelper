@@ -12,6 +12,7 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useEffect, useState } from 'react';
 import { USER_TYPE } from '@/database/entities/user';
 import { Option } from '@/types';
+import { toTitleCase } from '@/utils';
 
 export const PortalLeftPanel = () => {
   const router = useRouter();
@@ -22,7 +23,7 @@ export const PortalLeftPanel = () => {
   useEffect(() => {
     if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.altNames || !user.name) return;
     let options: Option[] = user.altNames.map((name) => ({ label: name, value: name }));
-    options.push({ label: user.name, value: user.name });
+    options.push({ label: toTitleCase(user.name), value: toTitleCase(user.name) });
     setAltNameOptions(options)
   }, [user, userType]);
 
@@ -32,10 +33,10 @@ export const PortalLeftPanel = () => {
       <hr style={{ height: '2px', color: '#e5e7eb', backgroundColor: '#e5e7eb' }} />
       {userType === ENTITIES.PROPERTY_MANAGER && (
         <>
-          <p className="mt-2">{'Hey, ' + (altName ? altName : user?.name)}</p>
+          <p className="mt-2">{'Hey, ' + (altName ? toTitleCase(altName) : toTitleCase(user?.name))}</p>
           <Select options={altNameOptions} className="mb-4 mt-2" placeholder={"Change acting name"} onChange={(newValue: SingleValue<Option>) => {
             if (!newValue || !user?.name) return;
-            if(newValue.value === user.name){
+            if(newValue.value === toTitleCase(user?.name)){
               setAltName(null);
               return;
             }
