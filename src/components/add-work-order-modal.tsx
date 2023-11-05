@@ -9,7 +9,6 @@ import { useUserContext } from '@/context/user';
 import { IUser, USER_TYPE } from '@/database/entities/user';
 import { TenantSelect } from './tenant-select';
 import { SingleValue } from 'react-select';
-import { ENTITIES } from '@/database/entities';
 import { useDevice } from '@/hooks/use-window-size';
 import { PTE, USER_PERMISSION_ERROR } from '@/constants';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';

@@ -232,9 +232,11 @@ export function getPageLayout(isMobile: boolean) {
 
 export function toggleBodyScroll(open: boolean) {
   if (open) {
-    document.body.classList.add('modal-open');
+    document.body.style.overflowY = 'hidden';
+    document.body.style.overflowX = 'hidden';
   } else {
-    document.body.classList.remove('modal-open');
+    document.body.style.overflowX = 'hidden';
+    document.body.style.overflowY = 'auto';
   }
 }
 
