@@ -12,6 +12,9 @@ import { ApiError, ApiResponse } from './_types';
 import { AssignTechnicianSchema } from '@/types/customschemas';
 import { MISSING_ENV, errorToResponse, initializeSendgrid } from './_utils';
 import { AssignTechnicianBody } from '@/types';
+import { init, track } from '@amplitude/analytics-node';
+
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -76,6 +79,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const technicianUser = await userEntity.get({ email: technicianEmail });
     if (technicianUser?.phone) {
       try {
+        await init('ff368b4943b9a03a49b2c3b925e62021').promise;
+        track("SMS Notification", {
+          status: "attempt",
+          assignedTo: technicianEmail,
+          assignedBy: pmEmail
+        },
+          { user_id: pmEmail }
+        );
         const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
         const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
         if (!smsApiKey || !smsAuthToken) {
@@ -88,12 +99,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           from: '+18449092150',
           body: `You've been assigned a work order in Pillar by ${toTitleCase(pmName)}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(
             property.address
-          )}\n\n${!!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``}${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${
-            permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`
-          }View the full work order at ${workOrderLink}\n\n 
+          )}\n\n${!!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``}${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`
+            }View the full work order at ${workOrderLink}\n\n 
           `,
         });
+        track("SMS Notification", {
+          status: "success",
+          assignedTo: technicianEmail,
+          assignedBy: pmEmail
+        },
+          { user_id: pmEmail }
+        );
       } catch (err) {
+        track("SMS Notification", {
+          status: "failed",
+          assignedTo: technicianEmail,
+          assignedBy: pmEmail
+        },
+          { user_id: pmEmail }
+        );
         console.log({ err });
       }
     }
