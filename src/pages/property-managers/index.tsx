@@ -49,7 +49,7 @@ const Technicians = () => {
       }
       setPMsLoading(false);
     },
-    [user, userType, startKey],
+    [user, userType, startKey]
   );
 
   useEffect(() => {
@@ -137,7 +137,7 @@ const Technicians = () => {
                       return (
                         <tr key={`${pm.pk}-${pm.sk}`} className="h-20">
                           <td className="border-b border-t px-4 py-1">{`${toTitleCase(
-                            pm.name,
+                            pm.name
                           )}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.email}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.status}`}</td>

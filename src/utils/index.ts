@@ -41,16 +41,16 @@ export const hasAllInfo = (workOrder: IssueInformation) => {
 export const generatePrompt = (
   workOrder: IssueInformation,
   unitInfo: string,
-  streetAddress: string,
+  streetAddress: string
 ): ChatCompletionRequestMessage => {
   return {
     role: 'system',
     content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is. \
         All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(
-          findIssueSample,
+          findIssueSample
         )}
         and should contain all of the keys: ${Object.keys(findIssueSample).join(
-          ', ',
+          ', '
         )}, even if there are no values. \
         Here is the current state of the work order: ${JSON.stringify(workOrder)}. \
         Once you have values for "issueDescription" and "issueLocation", ask the user if they would like to provide any additional details. Let the user know that the "additionalDetails" field is optional. \
@@ -205,7 +205,7 @@ export function setToShortenedString(set: Set<string>): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
   const firstVal = toTitleCase(
-    arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0],
+    arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]
   );
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
 }
@@ -272,7 +272,7 @@ export function toggleBodyScroll(open: boolean) {
 export function getInviteTenantSendgridEmailBody(
   tenantName: string,
   authLink: string,
-  pmName: string,
+  pmName: string
 ): string {
   const displayPmName = toTitleCase(pmName);
   const displayTenantName = toTitleCase(tenantName);

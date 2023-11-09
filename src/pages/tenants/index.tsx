@@ -100,7 +100,7 @@ const Tenants = () => {
       }
       setTenantsLoading(false);
     },
-    [user, userType, startKey, tenants, statusFilter],
+    [user, userType, startKey, tenants, statusFilter]
   );
 
   useEffect(() => {
@@ -142,7 +142,7 @@ const Tenants = () => {
       setConfirmDeleteModalIsOpen(false);
       setTenantsLoading(false);
     },
-    [user, tenants, altName, userType],
+    [user, tenants, altName, userType]
   );
 
   const handleReinviteTenants = useCallback(
@@ -169,7 +169,7 @@ const Tenants = () => {
             batches[batchNumber].push(tenant);
             return batches;
           },
-          {} as Record<number, { name: string; email: string }[]>,
+          {} as Record<number, { name: string; email: string }[]>
         );
 
         const batchedRequests = Object.values(batchedTenants).map((tenants) => {
@@ -201,7 +201,7 @@ const Tenants = () => {
             {
               position: toast.POSITION.TOP_CENTER,
               draggable: false,
-            },
+            }
           );
         }
 
@@ -216,7 +216,7 @@ const Tenants = () => {
       setTenantsToReinvite(tenants.filter((t) => t.status === INVITE_STATUS.INVITED));
       setResendingInvite(false);
     },
-    [user, altName, tenants],
+    [user, altName, tenants]
   );
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
@@ -287,7 +287,7 @@ const Tenants = () => {
                         onClick={() => {
                           if (resendingInvite) return;
                           setTenantsToReinvite(
-                            tenantsToReinvite.filter((t) => t.email !== tenant.email),
+                            tenantsToReinvite.filter((t) => t.email !== tenant.email)
                           );
                         }}
                       />
@@ -477,7 +477,7 @@ const Tenants = () => {
               ) : null}
               {tenants.map((tenant: IUser, index) => {
                 const primaryAddress = Object.values(tenant.addresses ?? []).find(
-                  (a: any) => !!a.isPrimary,
+                  (a: any) => !!a.isPrimary
                 );
                 const displayAddress = `${primaryAddress.address} ${
                   primaryAddress.unit ? ' ' + primaryAddress.unit : ''
@@ -556,7 +556,7 @@ const Tenants = () => {
                   <tbody className="text-gray-700">
                     {tenants.map((tenant: IUser) => {
                       const primaryAddress: Property = Object.values(tenant.addresses ?? []).find(
-                        (a: any) => !!a.isPrimary,
+                        (a: any) => !!a.isPrimary
                       );
                       const displayAddress = `${primaryAddress.address} ${
                         primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''
@@ -564,7 +564,7 @@ const Tenants = () => {
                       return (
                         <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
                           <td className="border-b border-t px-2 py-1">{`${toTitleCase(
-                            tenant.name,
+                            tenant.name
                           )}`}</td>
                           <td className="border-b border-t px-2 py-1">{`${tenant.email}`}</td>
                           <td className="border-b border-t">
@@ -639,7 +639,7 @@ const Tenants = () => {
               onClick={() =>
                 fetchTenants(
                   false,
-                  tenantSearchString.length !== 0 ? tenantSearchString : undefined,
+                  tenantSearchString.length !== 0 ? tenantSearchString : undefined
                 )
               }
               className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"

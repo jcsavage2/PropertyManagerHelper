@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     ) {
       throw new ApiError(
         API_STATUS.BAD_REQUEST,
-        'Invalid params to delete, when trying to delete a user, you must specify the role to delete',
+        'Invalid params to delete, when trying to delete a user, you must specify the role to delete'
       );
     }
 
@@ -75,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         if (!currentUserRoles || !currentUserRoles.length) {
           throw new ApiError(
             API_STATUS.INTERNAL_SERVER_ERROR,
-            "User doesn't have any roles to delete",
+            "User doesn't have any roles to delete"
           );
         }
 
@@ -94,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       if (!roleToDelete || entity !== ENTITIES.USER) {
         throw new ApiError(
           API_STATUS.BAD_REQUEST,
-          "Can't delete user record unless the entity to delete is a user",
+          "Can't delete user record unless the entity to delete is a user"
         );
       }
       //@ts-ignore

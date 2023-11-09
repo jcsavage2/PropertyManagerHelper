@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const prompt: ChatCompletionRequestMessage = generatePrompt(
       workOrderData,
       unitInfo,
-      streetAddress,
+      streetAddress
     );
     const response = await openai.createChatCompletion(
       {
@@ -51,13 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           {
             role: 'system',
             content: `Reformat your response into JSON formatted like this: ${JSON.stringify(
-              findIssueSample,
+              findIssueSample
             )}, with no additional text.`,
           },
         ],
         temperature: 0,
       },
-      { headers: { 'Content-Type': 'application/json' } },
+      { headers: { 'Content-Type': 'application/json' } }
     );
 
     const aiResponse = response.data.choices[0].message?.content ?? '';
@@ -86,13 +86,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             {
               role: 'system',
               content: `Reformat your response into JSON formatted like this: ${JSON.stringify(
-                findIssueSample,
+                findIssueSample
               )}, with no additional text.`,
             },
           ],
           temperature: 0,
         },
-        { headers: { 'Content-Type': 'application/json' } },
+        { headers: { 'Content-Type': 'application/json' } }
       );
       const newAiResponse = newResponse.data.choices[0].message?.content ?? '';
 
@@ -125,7 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const isOpenAIError = !!err?.response?.status;
     return res
       .status(
-        isOpenAIError ? err.response.status : err?.statusCode ?? API_STATUS.INTERNAL_SERVER_ERROR,
+        isOpenAIError ? err.response.status : err?.statusCode ?? API_STATUS.INTERNAL_SERVER_ERROR
       )
       .json(errorToResponse(err));
   }

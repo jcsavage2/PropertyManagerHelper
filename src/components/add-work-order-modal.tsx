@@ -189,7 +189,7 @@ export const AddWorkOrderModal = ({
         renderToastError(err, 'Error Creating Work Order');
       }
     },
-    [user, userType, altName, onSuccessfulAdd, tenant, property],
+    [user, userType, altName, onSuccessfulAdd, tenant, property]
   );
 
   return (

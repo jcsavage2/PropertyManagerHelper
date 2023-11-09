@@ -90,7 +90,7 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           status: INVITE_STATUS.CREATED,
         },
-        { returnValues: 'ALL_NEW' },
+        { returnValues: 'ALL_NEW' }
       );
       return result.Attributes;
     } catch (err) {
@@ -134,7 +134,7 @@ export class UserEntity {
           GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
           GSI4PK: generateKey(
             ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT,
-            organization.toLowerCase(),
+            organization.toLowerCase()
           ),
           GSI4SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
           email: lowerCaseTenantEmail,
@@ -156,7 +156,7 @@ export class UserEntity {
             numBeds,
           }),
         },
-        { returnValues: 'ALL_NEW' },
+        { returnValues: 'ALL_NEW' }
       );
       return tenant.Attributes ?? null;
     } catch (err) {
@@ -183,7 +183,7 @@ export class UserEntity {
         ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
         ...(status && { status }),
       },
-      { returnValues: 'ALL_NEW' },
+      { returnValues: 'ALL_NEW' }
     );
 
     return updatedUser.Attributes ?? null;
@@ -204,7 +204,7 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           GSI4PK: generateKey(
             ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER,
-            organization.toLowerCase(),
+            organization.toLowerCase()
           ),
           GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
           roles: { $add: [USER_TYPE.PROPERTY_MANAGER] },
@@ -215,7 +215,7 @@ export class UserEntity {
           organizationName,
           status: INVITE_STATUS.INVITED,
         },
-        { returnValues: 'ALL_NEW' },
+        { returnValues: 'ALL_NEW' }
       );
       return result.Attributes;
     } catch (err) {
@@ -243,12 +243,12 @@ export class UserEntity {
           roles: { $add: [USER_TYPE.TECHNICIAN] },
           GSI1PK: generateKey(
             ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN,
-            lowerCasePMEmail,
+            lowerCasePMEmail
           ),
           GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
           GSI4PK: generateKey(
             ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN,
-            organization.toLowerCase(),
+            organization.toLowerCase()
           ),
           GSI4SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
           email: lowerCaseTechnicianEmail,
@@ -257,7 +257,7 @@ export class UserEntity {
           organizationName,
           status: INVITE_STATUS.INVITED,
         },
-        { returnValues: 'ALL_NEW' },
+        { returnValues: 'ALL_NEW' }
       );
       return tenant.Attributes ?? null;
     } catch (err) {
@@ -514,7 +514,7 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           addresses: newAddresses,
         },
-        { returnValues: 'ALL_NEW' },
+        { returnValues: 'ALL_NEW' }
       );
       return result;
     } catch (err) {

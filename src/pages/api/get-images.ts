@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           new GetObjectCommand({
             Bucket: 'pillar-file-storage',
             Key: decoded,
-          }),
+          })
         );
 
         if (response.Body) {
@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // Convert each image buffer to a data URI
           return `data:image/jpeg;base64,${body.toString('base64')}`;
         }
-      }),
+      })
     );
     res.status(API_STATUS.SUCCESS).json({ images });
   } catch (error) {

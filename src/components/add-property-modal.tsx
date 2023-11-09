@@ -82,7 +82,7 @@ export const AddPropertyModal = ({
         renderToastError(err, 'Error creating property');
       }
     },
-    [user, userType],
+    [user, userType]
   );
 
   const {

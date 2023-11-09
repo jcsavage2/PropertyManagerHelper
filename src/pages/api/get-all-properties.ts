@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (body.pmEmail && body.organization) {
       throw new ApiError(
         API_STATUS.BAD_REQUEST,
-        'Attempting to get properties with org AND pm info',
+        'Attempting to get properties with org AND pm info'
       );
     }
     const propertyEntity = new PropertyEntity();
@@ -39,11 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    return res
-      .status(API_STATUS.SUCCESS)
-      .json({
-        response: JSON.stringify({ properties: response.properties, startKey: response.startKey }),
-      });
+    return res.status(API_STATUS.SUCCESS).json({
+      response: JSON.stringify({ properties: response.properties, startKey: response.startKey }),
+    });
   } catch (error: any) {
     console.log({ error });
     return res

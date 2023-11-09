@@ -91,7 +91,7 @@ const WorkOrders = () => {
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrders(
-          workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)),
+          workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo))
         );
       }
     } catch (e: any) {
@@ -127,7 +127,7 @@ const WorkOrders = () => {
       }
       setIsFetching(false);
     },
-    [router.query.workOrderId, user, userType, orgMode, startKey, statusFilter],
+    [router.query.workOrderId, user, userType, orgMode, startKey, statusFilter]
   );
 
   /**

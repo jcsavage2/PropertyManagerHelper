@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
-      workOrderId,
+      workOrderId
     )}`;
 
     /**
@@ -87,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             assignedTo: technicianEmail,
             assignedBy: pmEmail,
           },
-          { user_id: pmEmail },
+          { user_id: pmEmail }
         );
         const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
         const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
@@ -100,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           to: technicianUser.phone,
           from: '+18449092150',
           body: `You've been assigned a work order in Pillar by ${toTitleCase(
-            pmName,
+            pmName
           )}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(property.address)}\n\n${
             !!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``
           }${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${
@@ -115,7 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             assignedTo: technicianEmail,
             assignedBy: pmEmail,
           },
-          { user_id: pmEmail },
+          { user_id: pmEmail }
         );
       } catch (err) {
         track(
@@ -125,7 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             assignedTo: technicianEmail,
             assignedBy: pmEmail,
           },
-          { user_id: pmEmail },
+          { user_id: pmEmail }
         );
         console.log({ err });
       }

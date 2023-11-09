@@ -61,7 +61,7 @@ const Technicians = () => {
       }
       setTechsLoading(false);
     },
-    [user, userType, startKey, techs],
+    [user, userType, startKey, techs]
   );
 
   useEffect(() => {
@@ -106,7 +106,7 @@ const Technicians = () => {
       setConfirmDeleteModalIsOpen(false);
       setTechsLoading(false);
     },
-    [user, userType, techs],
+    [user, userType, techs]
   );
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
@@ -247,7 +247,7 @@ const Technicians = () => {
                       return (
                         <tr key={`${tech.pk}-${tech.sk}`} className="h-20">
                           <td className="border-b border-t px-4 py-1">{`${toTitleCase(
-                            tech.name,
+                            tech.name
                           )}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${tech.email}`}</td>
                           <td className="border-b border-t px-4 py-1">

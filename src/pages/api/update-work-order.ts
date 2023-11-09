@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         updatedWorkOrder?.address?.unit ? ` ${toTitleCase(updatedWorkOrder?.address.unit)}` : ''
       }`;
       const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
-        updatedWorkOrder.pk,
+        updatedWorkOrder.pk
       )}`;
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,

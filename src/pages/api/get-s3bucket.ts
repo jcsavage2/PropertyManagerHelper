@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         Bucket: bucket,
         Key: key,
       }),
-      { expiresIn: 3600 },
+      { expiresIn: 3600 }
     );
 
     return res.status(API_STATUS.SUCCESS).json({ response: url });

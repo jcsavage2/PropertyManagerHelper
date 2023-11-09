@@ -91,7 +91,7 @@ export const AddCommentModal = ({
         renderToastError(err, 'Error creating comment');
       }
     },
-    [userType],
+    [userType]
   );
 
   return (

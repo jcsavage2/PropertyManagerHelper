@@ -48,7 +48,7 @@ export class OrganizationEntity {
         sk: uuid,
         name,
       },
-      { returnValues: 'ALL_NEW', strictSchemaCheck: true },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
     return result.Attributes;
   }

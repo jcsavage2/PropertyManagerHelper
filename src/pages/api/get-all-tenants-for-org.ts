@@ -26,11 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       fetchAllTenants,
     });
 
-    return res
-      .status(API_STATUS.SUCCESS)
-      .json({
-        response: JSON.stringify({ tenants: response.tenants, startKey: response.startKey }),
-      });
+    return res.status(API_STATUS.SUCCESS).json({
+      response: JSON.stringify({ tenants: response.tenants, startKey: response.startKey }),
+    });
   } catch (error: any) {
     console.log({ error });
     return res

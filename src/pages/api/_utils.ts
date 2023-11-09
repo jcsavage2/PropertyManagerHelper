@@ -10,7 +10,7 @@ export function initializeSendgrid(sendgrid: MailService, apiKey: string | undef
   if (!apiKey) {
     throw new ApiError(
       API_STATUS.INTERNAL_SERVER_ERROR,
-      MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY'),
+      MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY')
     );
   }
   sendgrid.setApiKey(apiKey);

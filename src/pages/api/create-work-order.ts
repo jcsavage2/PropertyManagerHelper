@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (createdByType !== USER_TYPE.TENANT && (!tenantEmail || !tenantName || !pmName)) {
       throw new ApiError(
         API_STATUS.BAD_REQUEST,
-        "Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.",
+        "Missing tenant email, name, or pmName when creating a WO on a tenant's behalf."
       );
     }
 
@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
-      generateKey(ENTITY_KEY.WORK_ORDER, woId),
+      generateKey(ENTITY_KEY.WORK_ORDER, woId)
     )}`;
 
     /** SEND THE EMAIL TO THE USER */
@@ -207,8 +207,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 ?.map(
                   (m: ChatCompletionRequestMessage) =>
                     `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(
-                      m.role,
-                    )}: </span>${m.content}</p>`,
+                      m.role
+                    )}: </span>${m.content}</p>`
                 )
                 .join(' ') ?? 'No user chat history'
             }

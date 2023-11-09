@@ -115,7 +115,7 @@ export class PropertyEntity {
         sk: this.generateSk({ address, country, city, state, postalCode, unit }),
         GSI1PK: generateKey(
           ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY,
-          propertyManagerEmail.toLowerCase(),
+          propertyManagerEmail.toLowerCase()
         ),
         GSI1SK: this.generateSk({ address, country, city, state, postalCode, unit }),
         ...(tenantEmail && {
@@ -137,7 +137,7 @@ export class PropertyEntity {
         ...(numBeds && { numBeds }),
         ...(numBaths && { numBaths }),
       },
-      { returnValues: 'ALL_NEW', strictSchemaCheck: true },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
     return result.Attributes;
   }
@@ -220,7 +220,7 @@ export class PropertyEntity {
   }) {
     const GSI1PK = generateKey(
       ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY,
-      pmEmail?.toLowerCase(),
+      pmEmail?.toLowerCase()
     );
     let properties = [];
     let remainingPropertiesToFetch = PAGE_SIZE;
@@ -294,7 +294,7 @@ export class PropertyEntity {
         pk: pk,
         sk: this.generateSk({ address, country, city, state, postalCode, unit }),
       },
-      { returnValues: 'ALL_NEW', strictSchemaCheck: true },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
     return result.Attributes;
   }

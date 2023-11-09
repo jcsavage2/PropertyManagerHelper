@@ -46,7 +46,7 @@ export class EventEntity {
         madeByName,
         message,
       },
-      { returnValues: 'ALL_NEW' },
+      { returnValues: 'ALL_NEW' }
     );
     return result.Attributes;
   }
@@ -61,7 +61,7 @@ export class EventEntity {
         startKey,
         reverse: true,
         limit: PAGE_SIZE,
-      },
+      }
     );
     startKey = LastEvaluatedKey as StartKey;
     return { events: Items ?? [], startKey };

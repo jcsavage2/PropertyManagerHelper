@@ -89,7 +89,7 @@ export const AddPropertyManagerModal = ({
         renderToastError(err, 'Error Creating PM');
       }
     },
-    [user, userType],
+    [user, userType]
   );
 
   return (

@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const { organization, startKey, techSearchString }: GetTechsForOrg = GetTechsForOrgSchema.parse(
-      req.body,
+      req.body
     );
 
     const userEntity = new UserEntity();

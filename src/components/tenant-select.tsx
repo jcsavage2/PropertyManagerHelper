@@ -55,7 +55,7 @@ export const TenantSelect = ({
       }
       setTenantOptionsLoading(false);
     },
-    [user, setTenantOptions, userType, setTenantOptions],
+    [user, setTenantOptions, userType, setTenantOptions]
   );
 
   useEffect(() => {

@@ -131,7 +131,7 @@ export const AddTenantModal = ({
       setTenantModalIsOpen,
       createNewProperty,
       tenantInfoForm,
-    ],
+    ]
   );
 
   const renderPreviousButton = () => {

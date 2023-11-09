@@ -35,12 +35,12 @@ const Properties = () => {
           ? setProperties(
               _properties
                 .sort((a, b) => (a.unit > b.unit ? 1 : -1))
-                .sort((a, b) => (a.address > b.address ? -1 : 1)),
+                .sort((a, b) => (a.address > b.address ? -1 : 1))
             )
           : setProperties(
               [...properties, ..._properties]
                 .sort((a, b) => (a.unit > b.unit ? -1 : 1))
-                .sort((a, b) => (a.address > b.address ? -1 : 1)),
+                .sort((a, b) => (a.address > b.address ? -1 : 1))
             );
         setStartKey(response.startKey);
       } catch (e) {
@@ -48,7 +48,7 @@ const Properties = () => {
       }
       setPropertiesLoading(false);
     },
-    [user, properties, startKey],
+    [user, properties, startKey]
   );
 
   useEffect(() => {

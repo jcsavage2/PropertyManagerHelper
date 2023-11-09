@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       to: tenantEmail,
       from: 'pillar@pillarhq.co',
       subject: `${toTitleCase(pmName)} @ ${toTitleCase(
-        organizationName,
+        organizationName
       )} is requesting you to join Pillar`,
       html: emailBody,
     });

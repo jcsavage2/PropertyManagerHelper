@@ -71,7 +71,7 @@ export default function WorkOrderChatbot() {
               address?.unit ? toTitleCase(address?.unit) : ''
             }`.trim(),
             value: address,
-          }) as AddressOption,
+          }) as AddressOption
       ) ?? []
     );
   }, [user?.addresses]);
@@ -92,7 +92,7 @@ export default function WorkOrderChatbot() {
           ? 'Desktop'
           : window.navigator.userAgent.toLowerCase().includes('android')
           ? 'Android'
-          : 'iOS',
+          : 'iOS'
       );
     }
   }, [isBrowser]);
@@ -147,32 +147,32 @@ export default function WorkOrderChatbot() {
     (e) => {
       setUserMessage(e.currentTarget.value);
     },
-    [setUserMessage],
+    [setUserMessage]
   );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
       setIssueDescription(e.currentTarget.value);
     },
-    [setIssueDescription],
+    [setIssueDescription]
   );
   const handleIssueLocationChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
       setIssueLocation(e.currentTarget.value);
     },
-    [setIssueLocation],
+    [setIssueLocation]
   );
   const handleAdditionalDetailsChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
       setAdditionalDetails(e.currentTarget.value);
     },
-    [setAdditionalDetails],
+    [setAdditionalDetails]
   );
   const handlePermissionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
       setPermissionToEnter(e.currentTarget.value as PTE_Type);
     },
-    [setPermissionToEnter],
+    [setPermissionToEnter]
   );
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
@@ -191,7 +191,7 @@ export default function WorkOrderChatbot() {
       });
       if (!user || !user.organization || !user.pmEmail || !user.email) {
         alert(
-          'Your user account is not set up properly, please contact your property manager for assistance.',
+          'Your user account is not set up properly, please contact your property manager for assistance.'
         );
         return;
       }
@@ -237,7 +237,7 @@ export default function WorkOrderChatbot() {
         {
           position: toast.POSITION.TOP_CENTER,
           draggable: false,
-        },
+        }
       );
     } catch (error: any) {
       console.log({ error });
@@ -308,7 +308,7 @@ export default function WorkOrderChatbot() {
         setUploadingFiles(false);
       }
     },
-    [woId],
+    [woId]
   );
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
@@ -324,7 +324,7 @@ export default function WorkOrderChatbot() {
       });
       if (!selectedAddress) {
         alert(
-          'Please make sure to select an address, or contact your property manager for assistance.',
+          'Please make sure to select an address, or contact your property manager for assistance.'
         );
         return;
       }

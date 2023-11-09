@@ -87,7 +87,7 @@ export const AddTechnicianModal = ({
         renderToastError(err, 'Error Creating Technician');
       }
     },
-    [user, userType],
+    [user, userType]
   );
 
   const {

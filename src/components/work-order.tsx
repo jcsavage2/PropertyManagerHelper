@@ -128,7 +128,7 @@ const WorkOrder = ({
         setUploadingFiles(false);
       }
     },
-    [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId],
+    [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId]
   );
 
   //Return a list of technician options based on string search input
@@ -164,7 +164,7 @@ const WorkOrder = ({
       setFetchingTechnicians(false);
       return [];
     },
-    [user],
+    [user]
   );
 
   const getWorkOrder = useCallback(async () => {
@@ -189,7 +189,7 @@ const WorkOrder = ({
           if (str.includes(TECHNICIAN_DELIM)) {
             const keys: string[] = deconstructNameEmailString(str);
             technician = mappedTechnicians.find(
-              (technician: Option) => technician.value === keys[0],
+              (technician: Option) => technician.value === keys[0]
             );
           } else {
             //str is just tech email in this case
@@ -242,7 +242,7 @@ const WorkOrder = ({
       }
       setIsLoadingEvents(false);
     },
-    [workOrderId],
+    [workOrderId]
   );
 
   const handleUpdateStatus = async (e: any, status: string) => {
@@ -340,12 +340,12 @@ const WorkOrder = ({
         renderToastError(err, 'Error deleting work order');
       }
     },
-    [user, router, afterDelete, altName, userType],
+    [user, router, afterDelete, altName, userType]
   );
 
   const handleAssignTechnician = async (
     _assignedTechnicians: MultiValue<Option>,
-    actionMeta: ActionMeta<Option>,
+    actionMeta: ActionMeta<Option>
   ) => {
     setIsUpdatingAssignedTechnicians(true);
     try {

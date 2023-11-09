@@ -130,7 +130,7 @@ export class WorkOrderEntity {
         sk: workOrderIdKey,
         GSI1PK: generateKey(
           ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
-          pmEmail.toLowerCase(),
+          pmEmail.toLowerCase()
         ),
         GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
@@ -158,7 +158,7 @@ export class WorkOrderEntity {
         location,
         additionalDetails,
       },
-      { returnValues: 'ALL_NEW' },
+      { returnValues: 'ALL_NEW' }
     );
     return result.Attributes;
   }
@@ -185,7 +185,7 @@ export class WorkOrderEntity {
         sk: sk,
         status: WO_STATUS.DELETED,
       },
-      { returnValues: 'ALL_NEW', strictSchemaCheck: true },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
     return result;
   }
@@ -213,7 +213,7 @@ export class WorkOrderEntity {
         case ENTITIES.PROPERTY_MANAGER:
           pk = generateKey(
             ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
-            email?.toLowerCase(),
+            email?.toLowerCase()
           );
           index = INDEXES.GSI1;
           break;
@@ -305,7 +305,7 @@ export class WorkOrderEntity {
             ...(assignedTo && { assignedTo }),
             ...(viewedWO && { viewedWO }),
           },
-          { returnValues: 'ALL_NEW', strictSchemaCheck: true },
+          { returnValues: 'ALL_NEW', strictSchemaCheck: true }
         );
       }
       return result?.Attributes;
@@ -341,12 +341,12 @@ export class WorkOrderEntity {
         pk: workOrderIdKey,
         sk: generateKey(
           ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail.toLowerCase(),
+          technicianEmail.toLowerCase()
         ),
         address: this.generateAddress(property),
         GSI3PK: generateKey(
           ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER,
-          technicianEmail.toLowerCase(),
+          technicianEmail.toLowerCase()
         ),
         GSI3SK: ksuID,
         issue: issueDescription.toLowerCase(),
@@ -391,7 +391,7 @@ export class WorkOrderEntity {
         pk: key,
         sk: generateKey(
           ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail.toLowerCase(),
+          technicianEmail.toLowerCase()
         ),
       });
 
@@ -400,20 +400,20 @@ export class WorkOrderEntity {
       const oldAssignedTo = [...assignedTo];
       if (
         oldAssignedTo.includes(
-          constructNameEmailString(technicianEmail.toLowerCase(), technicianName),
+          constructNameEmailString(technicianEmail.toLowerCase(), technicianName)
         )
       ) {
         newAssignedTo = [...oldAssignedTo].filter(
           (assignedTo) =>
-            assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName),
+            assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName)
         );
       } else {
         newAssignedTo = [...oldAssignedTo].filter(
-          (assignedTo) => assignedTo !== technicianEmail.toLowerCase(),
+          (assignedTo) => assignedTo !== technicianEmail.toLowerCase()
         );
       }
       const newViewedWOList = [...viewedWO].filter(
-        (email) => email !== technicianEmail.toLowerCase(),
+        (email) => email !== technicianEmail.toLowerCase()
       );
 
       const result = await this.workOrderEntity.update(
@@ -423,7 +423,7 @@ export class WorkOrderEntity {
           assignedTo: newAssignedTo,
           viewedWO: newViewedWOList,
         },
-        { returnValues: 'ALL_NEW' },
+        { returnValues: 'ALL_NEW' }
       );
       return result;
     } catch (err) {

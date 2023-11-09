@@ -15,13 +15,13 @@ describe('Go to Home Page', () => {
   });
   it('Pro user identifies issue in one response', () => {
     cy.get('[data-testid="userMessageInput"]').type(
-      'Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right.',
+      'Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right.'
     );
     cy.get('[data-testid="send"]').click();
     cy.wait(5000);
     cy.get('[data-testid="response-1"]').should(
       'contain',
-      `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`,
+      `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`
     );
   });
   it('Noob user gets a follow up question', () => {
@@ -30,7 +30,7 @@ describe('Go to Home Page', () => {
     cy.wait(5000);
     cy.get('[data-testid="response-1"]').should(
       'not.contain',
-      `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`,
+      `Please complete the form below. When complete, and you have given permission to enter, click the "submit" button to send your Service Request.`
     );
   });
 });

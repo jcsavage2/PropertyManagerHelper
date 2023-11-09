@@ -39,7 +39,7 @@ const translateConfig = { marshallOptions, unmarshallOptions };
 
 export const DocumentClient = DynamoDBDocument.from(
   new DynamoDB({ ...DynamoDBClientConfig }),
-  translateConfig,
+  translateConfig
 );
 export const BucketClient = new S3Client({ ...DynamoDBClientConfig });
 

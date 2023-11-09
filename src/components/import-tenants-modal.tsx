@@ -238,7 +238,7 @@ export const ImportTenantsModal = ({
         setFileUploadError(err?.message || 'Error uploading file');
       }
     },
-    [setUploadList, user, altName, userType],
+    [setUploadList, user, altName, userType]
   );
 
   const handleImportTenants = async () => {

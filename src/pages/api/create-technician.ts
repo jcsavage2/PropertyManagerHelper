@@ -103,7 +103,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
           <h1>You've Been Invited To Create a Technician Account With Pillar</h1>
           <a href="${authLink}">Login to Pillar to see view work orders for ${toTitleCase(
-            organizationName,
+            organizationName
           )}</a>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
