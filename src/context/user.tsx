@@ -2,7 +2,7 @@ import { USER_TYPE, UserType } from '@/database/entities/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { signOut } from 'next-auth/react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import * as Fullstory from "@fullstory/browser";
+import * as Fullstory from '@fullstory/browser';
 import * as amplitude from '@amplitude/analytics-browser';
 import { userIsPillarOwner } from '@/utils/use-user-is-not-pillar-owner';
 
@@ -17,9 +17,9 @@ export type UserContext = {
 export const UserContext = createContext<UserContext>({
   userType: null,
   altName: null,
-  setAltName: () => { },
-  setUserType: () => { },
-  logOut: () => { },
+  setAltName: () => {},
+  setUserType: () => {},
+  logOut: () => {},
 });
 
 export const UserContextProvider = (props: any) => {
@@ -31,10 +31,15 @@ export const UserContextProvider = (props: any) => {
 
   // Initialize 3P modules
   useEffect(() => {
-    if (user && !userIsPillarOwner(user) && !hasInitialized3P && !process.env.NEXT_PUBLIC_IS_LOCAL) {
+    if (
+      user &&
+      !userIsPillarOwner(user) &&
+      !hasInitialized3P &&
+      !process.env.NEXT_PUBLIC_IS_LOCAL
+    ) {
       amplitude.init('ff368b4943b9a03a49b2c3b925e62021', {
         defaultTracking: true,
-        ...(user?.email && { userId: user?.email })
+        ...(user?.email && { userId: user?.email }),
       });
       Fullstory.init({ orgId: 'o-1PYDZB-na1' }, () => {
         user.email && Fullstory.identify(user.email);
@@ -46,7 +51,9 @@ export const UserContextProvider = (props: any) => {
   // Set userType and altName using session user and local storage
   useEffect(() => {
     if (userType || !user) return;
-    const localUserType = localStorage.getItem('PILLAR:USER_TYPE') as UserContext['userType'] | null;
+    const localUserType = localStorage.getItem('PILLAR:USER_TYPE') as
+      | UserContext['userType']
+      | null;
 
     let role: UserContext['userType'];
 

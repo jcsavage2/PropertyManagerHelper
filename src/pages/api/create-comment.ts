@@ -21,7 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const sessionUser: IUser = session?.user;
 
     //User must be a pm or technician to create a comment
-    if (!session || (!sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) && !sessionUser?.roles?.includes(USER_TYPE.TECHNICIAN))) {
+    if (
+      !session ||
+      (!sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) &&
+        !sessionUser?.roles?.includes(USER_TYPE.TECHNICIAN))
+    ) {
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
@@ -39,6 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newComment) });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

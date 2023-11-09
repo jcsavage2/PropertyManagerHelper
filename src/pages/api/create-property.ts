@@ -24,9 +24,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!session || !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
-    
+
     const body: CreateProperty = CreatePropertySchema.parse(req.body);
-    const { address, country, city, state, postalCode, unit, pmEmail, numBeds, numBaths, tenantEmail, organization } = body;
+    const {
+      address,
+      country,
+      city,
+      state,
+      postalCode,
+      unit,
+      pmEmail,
+      numBeds,
+      numBaths,
+      tenantEmail,
+      organization,
+    } = body;
 
     const propertyEntity = new PropertyEntity();
     const userEntity = new UserEntity();
@@ -67,6 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newProperty) });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

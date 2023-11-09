@@ -25,8 +25,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     //User must be a tenant or pm to update a work order's permission to enter
     if (
       !session ||
-      (status && !sessionUser?.roles?.includes(USER_TYPE.TECHNICIAN) && !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) ||
-      (permissionToEnter && !sessionUser?.roles?.includes(USER_TYPE.TENANT) && !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
+      (status &&
+        !sessionUser?.roles?.includes(USER_TYPE.TECHNICIAN) &&
+        !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) ||
+      (permissionToEnter &&
+        !sessionUser?.roles?.includes(USER_TYPE.TENANT) &&
+        !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
     ) {
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
@@ -42,7 +46,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     //Spawn new event on status/PTE change
     await eventEntity.create({
       workOrderId: deconstructKey(pk),
-      message: status ? `Updated work order status: ${status}` : `Updated permission to enter to "${permissionToEnter}"`,
+      message: status
+        ? `Updated work order status: ${status}`
+        : `Updated permission to enter to "${permissionToEnter}"`,
       madeByEmail: email,
       madeByName: name,
     });
@@ -50,14 +56,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
     // If work order was created by a tenant
-    if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk && updatedWorkOrder.status === WO_STATUS.COMPLETE && !permissionToEnter) {
-      const subject = `Work Order Update for ${toTitleCase(updatedWorkOrder?.address?.address) ?? ''} ${
+    if (
+      updatedWorkOrder?.tenantEmail &&
+      updatedWorkOrder?.pk &&
+      updatedWorkOrder.status === WO_STATUS.COMPLETE &&
+      !permissionToEnter
+    ) {
+      const subject = `Work Order Update for ${
+        toTitleCase(updatedWorkOrder?.address?.address) ?? ''
+      } ${
         updatedWorkOrder?.address?.unit ? ` ${toTitleCase(updatedWorkOrder?.address.unit)}` : ''
       }`;
-      const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(updatedWorkOrder.pk)}`;
+      const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
+        updatedWorkOrder.pk,
+      )}`;
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,
-        cc: updatedWorkOrder.pmEmail !== updatedWorkOrder.tenantEmail ? updatedWorkOrder.pmEmail : '',
+        cc:
+          updatedWorkOrder.pmEmail !== updatedWorkOrder.tenantEmail ? updatedWorkOrder.pmEmail : '',
         from: 'pillar@pillarhq.co',
         subject,
         html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -107,7 +123,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         
         <body>
           <div class="container" style="margin-left: 20px;margin-right: 20px;">
-            <h1>Work Order Status Complete ${updatedWorkOrder?.address?.unit ? `for unit ${toTitleCase(updatedWorkOrder?.address.unit)}` : ''}</h1>
+            <h1>Work Order Status Complete ${
+              updatedWorkOrder?.address?.unit
+                ? `for unit ${toTitleCase(updatedWorkOrder?.address.unit)}`
+                : ''
+            }</h1>
             <a href="${workOrderLink}">View Work Order in PILLAR</a>
             <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
               Regards,<br> Pillar Team
@@ -121,6 +141,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(updatedWorkOrder) });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

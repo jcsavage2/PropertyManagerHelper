@@ -10,7 +10,7 @@ const secretAccessKey = process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY;
 const region = process.env.NEXT_PUBLIC_REGION;
 
 if (!accessKeyId || !secretAccessKey || !region) {
-  throw new Error(MISSING_ENV("AWS Credentials"));
+  throw new Error(MISSING_ENV('AWS Credentials'));
 }
 
 export const DynamoDBClientConfig = {
@@ -37,7 +37,10 @@ const unmarshallOptions = {
 
 const translateConfig = { marshallOptions, unmarshallOptions };
 
-export const DocumentClient = DynamoDBDocument.from(new DynamoDB({ ...DynamoDBClientConfig }), translateConfig);
+export const DocumentClient = DynamoDBDocument.from(
+  new DynamoDB({ ...DynamoDBClientConfig }),
+  translateConfig,
+);
 export const BucketClient = new S3Client({ ...DynamoDBClientConfig });
 
 export const INDEXES = {

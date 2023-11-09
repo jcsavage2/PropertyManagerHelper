@@ -11,12 +11,20 @@ body {
 
 body {
   margin: 0;
-  font-family: Avantgarde, TeX Gyre Adventor, URW Gothic L, sans-serif;
+  font-family:
+    Avantgarde,
+    TeX Gyre Adventor,
+    URW Gothic L,
+    sans-serif;
   min-height: 100vh;
   min-height: -webkit-fill-available;
   overflow-x: hidden;
 }
-button, a, tr, th, td {
+button,
+a,
+tr,
+th,
+td {
   transition: all 0.2s ease-in-out;
 }
 
@@ -54,14 +62,13 @@ a {
   transition: opacity 200ms ease-in-out;
 }
 
-.ReactModal__Overlay--after-open{
+.ReactModal__Overlay--after-open {
   opacity: 1;
 }
 
-.ReactModal__Overlay--before-close{
+.ReactModal__Overlay--before-close {
   opacity: 0;
 }
-
 
 /* Loading Spinner CSS */
 .spinner-container {
@@ -73,7 +80,6 @@ a {
 .full-height {
   height: 100vh;
 }
-
 
 .spinner {
   border: 4px solid #f3f3f3;

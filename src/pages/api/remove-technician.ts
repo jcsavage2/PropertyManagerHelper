@@ -23,7 +23,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const body: RemoveTechnicianBody = RemoveTechnicianSchema.parse(req.body);
-    const { workOrderId, pmEmail, technicianEmail, technicianName, pmName, oldAssignedTo, oldViewedWO } = body;
+    const {
+      workOrderId,
+      pmEmail,
+      technicianEmail,
+      technicianName,
+      pmName,
+      oldAssignedTo,
+      oldViewedWO,
+    } = body;
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
@@ -45,6 +53,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(response) });
   } catch (error: any) {
     console.error(error);
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

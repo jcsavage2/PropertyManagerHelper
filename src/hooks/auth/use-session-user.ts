@@ -1,7 +1,6 @@
-
-import { IUser } from "@/database/entities/user";
-import { useSession } from "next-auth/react";
-import router from "next/router";
+import { IUser } from '@/database/entities/user';
+import { useSession } from 'next-auth/react';
+import router from 'next/router';
 
 export const useSessionUser = () => {
   const session = useSession();
@@ -10,12 +9,17 @@ export const useSessionUser = () => {
   const pathname = typeof window !== 'undefined' && window.location?.pathname;
 
   //Only allow logged out users to see home, t&c, and privacy policy
-  if(sessionStatus === 'unauthenticated' && pathname && pathname !== '/' && pathname !== '/terms-and-conditions') {
-    router.push('/')
+  if (
+    sessionStatus === 'unauthenticated' &&
+    pathname &&
+    pathname !== '/' &&
+    pathname !== '/terms-and-conditions'
+  ) {
+    router.push('/');
   }
 
   return {
     user,
-    sessionStatus
+    sessionStatus,
   };
 };

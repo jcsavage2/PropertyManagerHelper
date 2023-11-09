@@ -17,20 +17,21 @@ export const NavLinks = () => {
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
     logOut();
-    router.push("/");
+    router.push('/');
   }, [logOut, router]);
 
   if (isMobile) {
     return (
       <nav
-        style={{ height: "7dvh", width: "100vw" }}
-        className='flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62'>
-        <div className={"flex text-center"} style={{ width: "100vw" }}>
-          <div className='flex cursor-pointer' onClick={() => router.push("/")}>
-            <p className='pl-4 text-xl my-auto font-sans'>PILLAR</p>
-            <Image src="/2.png" alt='1' width={30} height={0} />
+        style={{ height: '7dvh', width: '100vw' }}
+        className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62"
+      >
+        <div className={'flex text-center'} style={{ width: '100vw' }}>
+          <div className="flex cursor-pointer" onClick={() => router.push('/')}>
+            <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
+            <Image src="/2.png" alt="1" width={30} height={0} />
           </div>
-          <div className='my-auto ml-auto mr-4'>
+          <div className="my-auto ml-auto mr-4">
             <HamburgerMenu />
           </div>
         </div>
@@ -40,12 +41,13 @@ export const NavLinks = () => {
 
   return (
     <nav
-      style={{ height: "7dvh", width: "100vw" }}
-      className='flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62'>
-      <div className={"flex space-x-5 text-center"} style={{ width: "100vw" }}>
-        <div className='flex cursor-pointer' onClick={() => router.push("/")}>
-          <p className='pl-4 text-xl my-auto font-sans'>PILLAR</p>
-          <Image src="/2.png" alt='1' width={30} height={0} />
+      style={{ height: '7dvh', width: '100vw' }}
+      className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62"
+    >
+      <div className={'flex space-x-5 text-center'} style={{ width: '100vw' }}>
+        <div className="flex cursor-pointer" onClick={() => router.push('/')}>
+          <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
+          <Image src="/2.png" alt="1" width={30} height={0} />
         </div>
         <div className="my-auto flex space-x-4">
           {user ? (
@@ -60,7 +62,7 @@ export const NavLinks = () => {
                   New Work Order
                 </Link>
               )}
-              {(userType === USER_TYPE.TENANT) || userType === USER_TYPE.TECHNICIAN ? (
+              {userType === USER_TYPE.TENANT || userType === USER_TYPE.TECHNICIAN ? (
                 <Link className="hover:text-gray-500 text-lg" href={'/work-orders'}>
                   Work Orders
                 </Link>

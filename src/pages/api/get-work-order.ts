@@ -24,6 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(workOrder) });
   } catch (error: any) {
     console.error(error);
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

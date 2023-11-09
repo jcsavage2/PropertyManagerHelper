@@ -32,7 +32,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const body: ChatbotRequest = ChatbotRequestSchema.parse(req.body);
     const { userMessage, messages, unitInfo, streetAddress, ...workOrderData } = body;
 
-    const prompt: ChatCompletionRequestMessage = generatePrompt(workOrderData, unitInfo, streetAddress);
+    const prompt: ChatCompletionRequestMessage = generatePrompt(
+      workOrderData,
+      unitInfo,
+      streetAddress,
+    );
     const response = await openai.createChatCompletion(
       {
         max_tokens: 1000,
@@ -46,20 +50,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           },
           {
             role: 'system',
-            content: `Reformat your response into JSON formatted like this: ${JSON.stringify(findIssueSample)}, with no additional text.`,
+            content: `Reformat your response into JSON formatted like this: ${JSON.stringify(
+              findIssueSample,
+            )}, with no additional text.`,
           },
         ],
         temperature: 0,
       },
-      { headers: { 'Content-Type': 'application/json' } }
+      { headers: { 'Content-Type': 'application/json' } },
     );
 
     const aiResponse = response.data.choices[0].message?.content ?? '';
     console.log(chalk.yellow('\n Initial Response=============\n'));
     console.log(aiResponse);
 
-    let processedResponse: string | null = processAiResponse({ response: aiResponse, workOrderData: workOrderData });
-    console.log(chalk.yellow('\n Processed Response =============\n'), { processedResponse: processedResponse });
+    let processedResponse: string | null = processAiResponse({
+      response: aiResponse,
+      workOrderData: workOrderData,
+    });
+    console.log(chalk.yellow('\n Processed Response =============\n'), {
+      processedResponse: processedResponse,
+    });
 
     if (!processedResponse) {
       console.log(chalk.red('\n Is Refetching...  =============\n'));
@@ -74,17 +85,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             { role: 'assistant', content: aiResponse },
             {
               role: 'system',
-              content: `Reformat your response into JSON formatted like this: ${JSON.stringify(findIssueSample)}, with no additional text.`,
+              content: `Reformat your response into JSON formatted like this: ${JSON.stringify(
+                findIssueSample,
+              )}, with no additional text.`,
             },
           ],
           temperature: 0,
         },
-        { headers: { 'Content-Type': 'application/json' } }
+        { headers: { 'Content-Type': 'application/json' } },
       );
       const newAiResponse = newResponse.data.choices[0].message?.content ?? '';
 
       console.log('\n New Response... =============\n', newAiResponse);
-      processedResponse = processAiResponse({ response: newAiResponse, workOrderData: workOrderData });
+      processedResponse = processAiResponse({
+        response: newAiResponse,
+        workOrderData: workOrderData,
+      });
 
       //If it still doesn't work, return the original aiMessage with other WO data taken from request body
       if (!processedResponse) {
@@ -99,12 +115,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     if (!processedResponse) {
-      return res.status(API_STATUS.BAD_REQUEST).json({ response: 'Error getting message from chatbot' });
+      return res
+        .status(API_STATUS.BAD_REQUEST)
+        .json({ response: 'Error getting message from chatbot' });
     } else {
       return res.status(API_STATUS.SUCCESS).json({ response: processedResponse });
     }
   } catch (err: any) {
     const isOpenAIError = !!err?.response?.status;
-    return res.status(isOpenAIError ? err.response.status : err?.statusCode ?? API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(err));
+    return res
+      .status(
+        isOpenAIError ? err.response.status : err?.statusCode ?? API_STATUS.INTERNAL_SERVER_ERROR,
+      )
+      .json(errorToResponse(err));
   }
 }

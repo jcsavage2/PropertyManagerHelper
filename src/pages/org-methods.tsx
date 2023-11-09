@@ -42,14 +42,18 @@ const OrgMethods = () => {
 
   return (
     <div className="w-full text-center">
-      <form onSubmit={handleSubmit(handleCreateOrganization)} className="w-1/2 mx-auto mt-4" style={{ display: 'grid' }}>
+      <form
+        onSubmit={handleSubmit(handleCreateOrganization)}
+        className="w-1/2 mx-auto mt-4"
+        style={{ display: 'grid' }}
+      >
         <input
           className="rounded px-1 border-solid border-2 border-slate-200"
           id="orgName"
           placeholder="Organization Name"
           type={'text'}
           {...register('orgName', {
-            required: true
+            required: true,
           })}
         />
         {errors.orgName && <p className="text-red-500 text-xs italic">{errors.orgName.message}</p>}

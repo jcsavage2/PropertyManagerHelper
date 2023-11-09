@@ -4,7 +4,15 @@ import { INDEXES, PillarDynamoTable } from '..';
 import { constructNameEmailString, generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
 import { PAGE_SIZE, WO_STATUS } from '@/constants';
-import { AssignTechnicianBody, GetAllWorkOrdersForUser, PTE_Type, Property, PropertyWithId, UpdateImages, WoStatus } from '@/types';
+import {
+  AssignTechnicianBody,
+  GetAllWorkOrdersForUser,
+  PTE_Type,
+  Property,
+  PropertyWithId,
+  UpdateImages,
+  WoStatus,
+} from '@/types';
 
 type CreateWorkOrderProps = {
   uuid: string;
@@ -120,7 +128,10 @@ export class WorkOrderEntity {
       {
         pk: workOrderIdKey,
         sk: workOrderIdKey,
-        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail.toLowerCase()),
+        GSI1PK: generateKey(
+          ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
+          pmEmail.toLowerCase(),
+        ),
         GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
         GSI2SK: ksuID,
@@ -134,18 +145,25 @@ export class WorkOrderEntity {
         tenantName,
         ...(images.length && { images }),
         status,
-        address: this.generateAddress({ address, country, city, state, postalCode, unit } as Property),
+        address: this.generateAddress({
+          address,
+          country,
+          city,
+          state,
+          postalCode,
+          unit,
+        } as Property),
         issue: issue.toLowerCase(),
         organization,
         location,
         additionalDetails,
       },
-      { returnValues: 'ALL_NEW' }
+      { returnValues: 'ALL_NEW' },
     );
     return result.Attributes;
   }
 
-  public async get({ pk, sk }: { pk: string; sk: string; }) {
+  public async get({ pk, sk }: { pk: string; sk: string }) {
     try {
       const params = {
         pk,
@@ -160,14 +178,14 @@ export class WorkOrderEntity {
   }
 
   //Soft delete work order
-  public async delete({ pk, sk }: { pk: string; sk: string; }) {
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
     const result = await this.workOrderEntity.update(
       {
         pk: pk,
         sk: sk,
         status: WO_STATUS.DELETED,
       },
-      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true },
     );
     return result;
   }
@@ -176,7 +194,14 @@ export class WorkOrderEntity {
    *
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
-  public async getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse = true }: GetAllWorkOrdersForUser) {
+  public async getAllForUser({
+    email,
+    userType,
+    orgId,
+    startKey,
+    statusFilter,
+    reverse = true,
+  }: GetAllWorkOrdersForUser) {
     const workOrders: IWorkOrder[] = [];
     let pk: string = '';
     let index: undefined | string;
@@ -186,7 +211,10 @@ export class WorkOrderEntity {
     } else {
       switch (userType) {
         case ENTITIES.PROPERTY_MANAGER:
-          pk = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
+          pk = generateKey(
+            ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
+            email?.toLowerCase(),
+          );
           index = INDEXES.GSI1;
           break;
         case ENTITIES.TECHNICIAN:
@@ -206,26 +234,22 @@ export class WorkOrderEntity {
 
     do {
       const options = {
-        ...(statusFilter.COMPLETE && !statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', eq: WO_STATUS.COMPLETE },
-          ],
-        }),
-        ...(!statusFilter.COMPLETE && statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', eq: WO_STATUS.TO_DO },
-          ],
-        }),
-        ...(statusFilter.COMPLETE && statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', ne: WO_STATUS.DELETED },
-          ],
-        }),
-        ...(!statusFilter.COMPLETE && !statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', eq: WO_STATUS.DELETED },
-          ],
-        }),
+        ...(statusFilter.COMPLETE &&
+          !statusFilter.TO_DO && {
+            filters: [{ attr: 'status', eq: WO_STATUS.COMPLETE }],
+          }),
+        ...(!statusFilter.COMPLETE &&
+          statusFilter.TO_DO && {
+            filters: [{ attr: 'status', eq: WO_STATUS.TO_DO }],
+          }),
+        ...(statusFilter.COMPLETE &&
+          statusFilter.TO_DO && {
+            filters: [{ attr: 'status', ne: WO_STATUS.DELETED }],
+          }),
+        ...(!statusFilter.COMPLETE &&
+          !statusFilter.TO_DO && {
+            filters: [{ attr: 'status', eq: WO_STATUS.DELETED }],
+          }),
         limit: remainingWOToFetch,
         reverse,
         ...(index && { index }),
@@ -245,7 +269,7 @@ export class WorkOrderEntity {
     status,
     permissionToEnter,
     assignedTo,
-    viewedWO
+    viewedWO,
   }: {
     pk: string;
     status?: WoStatus;
@@ -279,9 +303,9 @@ export class WorkOrderEntity {
             ...(status && { status: status }),
             ...(permissionToEnter && { permissionToEnter }),
             ...(assignedTo && { assignedTo }),
-            ...(viewedWO && { viewedWO })
+            ...(viewedWO && { viewedWO }),
           },
-          { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+          { returnValues: 'ALL_NEW', strictSchemaCheck: true },
         );
       }
       return result?.Attributes;
@@ -308,13 +332,22 @@ export class WorkOrderEntity {
   }: AssignTechnicianBody) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
-      let assignedTo: string[] = [...oldAssignedTo, constructNameEmailString(technicianEmail.toLowerCase(), technicianName)];
+      let assignedTo: string[] = [
+        ...oldAssignedTo,
+        constructNameEmailString(technicianEmail.toLowerCase(), technicianName),
+      ];
       // Create companion row for the technician
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
-        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        sk: generateKey(
+          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
+          technicianEmail.toLowerCase(),
+        ),
         address: this.generateAddress(property),
-        GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
+        GSI3PK: generateKey(
+          ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER,
+          technicianEmail.toLowerCase(),
+        ),
         GSI3SK: ksuID,
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
@@ -338,33 +371,59 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ workOrderId, technicianEmail, technicianName, assignedTo, viewedWO }: { workOrderId: string; technicianEmail: string; technicianName: string; assignedTo: string[]; viewedWO: string[]; }) {
+  public async removeTechnician({
+    workOrderId,
+    technicianEmail,
+    technicianName,
+    assignedTo,
+    viewedWO,
+  }: {
+    workOrderId: string;
+    technicianEmail: string;
+    technicianName: string;
+    assignedTo: string[];
+    viewedWO: string[];
+  }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
       await this.workOrderEntity.delete({
         pk: key,
-        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        sk: generateKey(
+          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
+          technicianEmail.toLowerCase(),
+        ),
       });
 
       //Backwards compatibility when removing technicians from WO
       let newAssignedTo: string[];
       const oldAssignedTo = [...assignedTo];
-      if (oldAssignedTo.includes(constructNameEmailString(technicianEmail.toLowerCase(), technicianName))) {
-        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName));
+      if (
+        oldAssignedTo.includes(
+          constructNameEmailString(technicianEmail.toLowerCase(), technicianName),
+        )
+      ) {
+        newAssignedTo = [...oldAssignedTo].filter(
+          (assignedTo) =>
+            assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName),
+        );
       } else {
-        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail.toLowerCase());
+        newAssignedTo = [...oldAssignedTo].filter(
+          (assignedTo) => assignedTo !== technicianEmail.toLowerCase(),
+        );
       }
-      const newViewedWOList = [...viewedWO].filter((email) => email !== technicianEmail.toLowerCase());
+      const newViewedWOList = [...viewedWO].filter(
+        (email) => email !== technicianEmail.toLowerCase(),
+      );
 
       const result = await this.workOrderEntity.update(
         {
           pk: key,
           sk: key,
           assignedTo: newAssignedTo,
-          viewedWO: newViewedWOList
+          viewedWO: newViewedWOList,
         },
-        { returnValues: 'ALL_NEW' }
+        { returnValues: 'ALL_NEW' },
       );
       return result;
     } catch (err) {
@@ -374,7 +433,9 @@ export class WorkOrderEntity {
 
   public async updateImages({ pk, sk, images, addNew }: UpdateImages) {
     try {
-      const updatedWorkOrder = (await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })).Attributes;
+      const updatedWorkOrder = (
+        await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })
+      ).Attributes;
       return updatedWorkOrder;
     } catch (err) {
       console.log({ err });

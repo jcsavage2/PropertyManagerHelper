@@ -15,7 +15,11 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { USER_PERMISSION_ERROR, DEFAULT_PROPERTY_WITH_ID } from '@/constants';
 import { CreateTenant_Address, CreateTenant_TenantInfo } from '@/types';
-import { CreateTenant_AddressSchema, CreateTenantSchema, CreateTenant_TenantInfoSchema } from '@/types/customschemas';
+import {
+  CreateTenant_AddressSchema,
+  CreateTenantSchema,
+  CreateTenant_TenantInfoSchema,
+} from '@/types/customschemas';
 import { v4 as uuidv4 } from 'uuid';
 
 export const AddTenantModal = ({
@@ -87,7 +91,11 @@ export const AddTenantModal = ({
   const handleCreateNewTenant: SubmitHandler<CreateTenant_Address> = useCallback(
     async (params) => {
       try {
-        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
+        if (
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        )
+          throw new Error(USER_PERMISSION_ERROR);
 
         const body = {
           ...params,
@@ -115,7 +123,15 @@ export const AddTenantModal = ({
         renderToastError(err, 'Error Creating Tenant. Please Try Again');
       }
     },
-    [user, userType, setStage, onSuccessfulAdd, setTenantModalIsOpen, createNewProperty, tenantInfoForm]
+    [
+      user,
+      userType,
+      setStage,
+      onSuccessfulAdd,
+      setTenantModalIsOpen,
+      createNewProperty,
+      tenantInfoForm,
+    ],
   );
 
   const renderPreviousButton = () => {
@@ -152,7 +168,10 @@ export const AddTenantModal = ({
       style={customStyles}
     >
       <div className="w-full text-right">
-        <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={() => closeModal()}>
+        <button
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={() => closeModal()}
+        >
           X Close
         </button>
       </div>
@@ -170,7 +189,9 @@ export const AddTenantModal = ({
               })}
             />
             {tenantInfoForm.formState.errors.tenantName && (
-              <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantName.message}</div>
+              <div className="text-red-500 text-xs">
+                {tenantInfoForm.formState.errors.tenantName.message}
+              </div>
             )}
             <input
               className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
@@ -182,12 +203,30 @@ export const AddTenantModal = ({
               })}
             />
             {tenantInfoForm.formState.errors.tenantEmail && (
-              <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantEmail.message}</div>
+              <div className="text-red-500 text-xs">
+                {tenantInfoForm.formState.errors.tenantEmail.message}
+              </div>
             )}
-            <input type="hidden" {...tenantInfoForm.register('pmEmail')} value={user?.email ?? ''} />
-            <input type="hidden" {...tenantInfoForm.register('pmName')} value={altName ?? user?.name ?? ''} />
-            <input type="hidden" {...tenantInfoForm.register('organization')} value={user?.organization ?? ''} />
-            <input type="hidden" {...tenantInfoForm.register('organizationName')} value={user?.organizationName ?? ''} />
+            <input
+              type="hidden"
+              {...tenantInfoForm.register('pmEmail')}
+              value={user?.email ?? ''}
+            />
+            <input
+              type="hidden"
+              {...tenantInfoForm.register('pmName')}
+              value={altName ?? user?.name ?? ''}
+            />
+            <input
+              type="hidden"
+              {...tenantInfoForm.register('organization')}
+              value={user?.organization ?? ''}
+            />
+            <input
+              type="hidden"
+              {...tenantInfoForm.register('organizationName')}
+              value={user?.organizationName ?? ''}
+            />
             <button
               className="bg-blue-200 p-3 mt-7 text-gray-500 hover:bg-blue-300 rounded disabled:opacity-25"
               type="submit"
@@ -198,13 +237,20 @@ export const AddTenantModal = ({
           </div>
         </form>
       </CSSTransition>
-      <CSSTransition in={stage === 1} timeout={500} classNames="slide" unmountOnExit style={{ display: 'grid' }}>
+      <CSSTransition
+        in={stage === 1}
+        timeout={500}
+        classNames="slide"
+        unmountOnExit
+        style={{ display: 'grid' }}
+      >
         <>
           <div className="flex mt-2 flex-row items-center md:w-3/4 w-full mx-auto justify-center">
             <div
-              onClick={() => { setCreateNewProperty(true)
-                propertyForm.setValue('property', DEFAULT_PROPERTY_WITH_ID)
-                propertyForm.setValue('property.propertyUUId', uuidv4())
+              onClick={() => {
+                setCreateNewProperty(true);
+                propertyForm.setValue('property', DEFAULT_PROPERTY_WITH_ID);
+                propertyForm.setValue('property.propertyUUId', uuidv4());
               }}
               className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
                 createNewProperty && 'bg-blue-200 border-blue-200'
@@ -213,9 +259,10 @@ export const AddTenantModal = ({
               {isMobile ? 'New Property' : 'Create New Property'}
             </div>
             <div
-              onClick={() => { setCreateNewProperty(false)
-                propertyForm.setValue('property', null)
-              } }
+              onClick={() => {
+                setCreateNewProperty(false);
+                propertyForm.setValue('property', null);
+              }}
               className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
                 !createNewProperty && 'bg-blue-200 border-blue-200'
               }`}
@@ -239,7 +286,9 @@ export const AddTenantModal = ({
                       })}
                     />
                     {propertyForm.formState.errors.property?.address && (
-                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.address?.message}</div>
+                      <div className="text-red-500 text-xs">
+                        {propertyForm.formState.errors.property?.address?.message}
+                      </div>
                     )}
                     <label htmlFor="unit">Unit </label>
                     <input
@@ -250,13 +299,20 @@ export const AddTenantModal = ({
                       {...propertyForm.register('property.unit')}
                     />
                     {propertyForm.formState.errors.property?.unit && (
-                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.unit?.message}</div>
+                      <div className="text-red-500 text-xs">
+                        {propertyForm.formState.errors.property?.unit?.message}
+                      </div>
                     )}
                     <Controller
                       control={propertyForm.control}
                       name="property.state"
                       render={({ field: { onChange, value } }) => (
-                        <StateSelect state={value} setState={onChange} label={'State*'} placeholder="Select..." />
+                        <StateSelect
+                          state={value}
+                          setState={onChange}
+                          label={'State*'}
+                          placeholder="Select..."
+                        />
                       )}
                     />
                     <label htmlFor="address">City*</label>
@@ -270,7 +326,9 @@ export const AddTenantModal = ({
                       })}
                     />
                     {propertyForm.formState.errors.property?.city && (
-                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.city?.message}</div>
+                      <div className="text-red-500 text-xs">
+                        {propertyForm.formState.errors.property?.city?.message}
+                      </div>
                     )}
                     <label htmlFor="address">Zip* </label>
                     <input
@@ -283,7 +341,9 @@ export const AddTenantModal = ({
                       placeholder="000000"
                     />
                     {propertyForm.formState.errors.property?.postalCode && (
-                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.postalCode?.message}</div>
+                      <div className="text-red-500 text-xs">
+                        {propertyForm.formState.errors.property?.postalCode?.message}
+                      </div>
                     )}
                     <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
                       <label className="text-center mr-4" htmlFor="beds">
@@ -327,7 +387,11 @@ export const AddTenantModal = ({
                     control={propertyForm.control}
                     name="property"
                     render={({ field: { onChange, value } }) => (
-                      <PropertySelector selectedProperty={value} setSelectedProperty={onChange} organization={user?.organization ?? ''} />
+                      <PropertySelector
+                        selectedProperty={value}
+                        setSelectedProperty={onChange}
+                        organization={user?.organization ?? ''}
+                      />
                     )}
                   />
                   {renderPreviousButton()}

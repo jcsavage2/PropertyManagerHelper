@@ -27,12 +27,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         Bucket: bucket,
         Key: key,
       }),
-      { expiresIn: 3600 }
+      { expiresIn: 3600 },
     );
 
     return res.status(API_STATUS.SUCCESS).json({ response: url });
   } catch (error: any) {
     console.error(error);
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

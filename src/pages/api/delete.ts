@@ -28,8 +28,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const body: DeleteEntity = DeleteEntitySchema.parse(req.body);
     const { pk, sk, entity, roleToDelete, currentUserRoles, madeByEmail, madeByName } = body;
 
-    if ((entity === ENTITIES.USER && !roleToDelete) || (entity !== ENTITIES.USER && roleToDelete) || !madeByEmail || !madeByName) {
-      throw new ApiError(API_STATUS.BAD_REQUEST, 'Invalid params to delete, when trying to delete a user, you must specify the role to delete');
+    if (
+      (entity === ENTITIES.USER && !roleToDelete) ||
+      (entity !== ENTITIES.USER && roleToDelete) ||
+      !madeByEmail ||
+      !madeByName
+    ) {
+      throw new ApiError(
+        API_STATUS.BAD_REQUEST,
+        'Invalid params to delete, when trying to delete a user, you must specify the role to delete',
+      );
     }
 
     let dbEntity: WorkOrderEntity | PropertyEntity | EventEntity | OrganizationEntity | UserEntity;
@@ -65,7 +73,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       case ENTITIES.USER:
         dbEntity = new UserEntity();
         if (!currentUserRoles || !currentUserRoles.length) {
-          throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, "User doesn't have any roles to delete");
+          throw new ApiError(
+            API_STATUS.INTERNAL_SERVER_ERROR,
+            "User doesn't have any roles to delete",
+          );
         }
 
         //If user has more than one role, then we only want to delete the role instead of their entire user record
@@ -81,7 +92,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       await dbEntity.delete({ pk, sk });
     } else {
       if (!roleToDelete || entity !== ENTITIES.USER) {
-        throw new ApiError(API_STATUS.BAD_REQUEST, "Can't delete user record unless the entity to delete is a user");
+        throw new ApiError(
+          API_STATUS.BAD_REQUEST,
+          "Can't delete user record unless the entity to delete is a user",
+        );
       }
       //@ts-ignore
       await dbEntity.deleteRole({ pk, sk, roleToDelete, existingRoles: currentUserRoles });
@@ -90,6 +104,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: 'Successfully deleted entity' });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error?.status || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.status || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

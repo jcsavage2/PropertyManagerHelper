@@ -19,7 +19,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { email, userType, orgId, startKey, statusFilter, reverse } = body;
 
     const workOrderEntity = new WorkOrderEntity();
-    const response = await workOrderEntity.getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse });
+    const response = await workOrderEntity.getAllForUser({
+      email,
+      userType,
+      orgId,
+      startKey,
+      statusFilter,
+      reverse,
+    });
     const workOrders = response.workOrders
       ? response.workOrders.sort((a: IWorkOrder, b: IWorkOrder) => {
           //@ts-ignore
@@ -27,9 +34,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         })
       : [];
 
-    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify({ workOrders, startKey: response.startKey }) });
+    return res
+      .status(API_STATUS.SUCCESS)
+      .json({ response: JSON.stringify({ workOrders, startKey: response.startKey }) });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

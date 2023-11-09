@@ -3,12 +3,19 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString, constructNameEmailString, renderToastError } from '@/utils';
+import {
+  toTitleCase,
+  deconstructKey,
+  createdToFormattedDateTime,
+  deconstructNameEmailString,
+  constructNameEmailString,
+  renderToastError,
+} from '@/utils';
 import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { DeleteEntity, Option, PTE_Type} from '@/types';
+import { DeleteEntity, Option, PTE_Type } from '@/types';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { API_STATUS, PTE, WO_STATUS, TECHNICIAN_DELIM, USER_PERMISSION_ERROR } from '@/constants';
@@ -22,7 +29,11 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import Modal from 'react-modal';
 import { USER_TYPE } from '@/database/entities/user';
 import { MdOutlineClear } from 'react-icons/md';
-import { DeleteEntitySchema, UpdateViewedWORequestSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
+import {
+  DeleteEntitySchema,
+  UpdateViewedWORequestSchema,
+  UpdateWorkOrderSchema,
+} from '@/types/customschemas';
 
 const WorkOrder = ({
   workOrderId,
@@ -117,7 +128,7 @@ const WorkOrder = ({
         setUploadingFiles(false);
       }
     },
-    [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId]
+    [workOrder?.images, workOrder?.pk, workOrder?.sk, workOrderId],
   );
 
   //Return a list of technician options based on string search input
@@ -127,14 +138,13 @@ const WorkOrder = ({
       if (!user) return [];
       setFetchingTechnicians(true);
       try {
-
         const { data } = await axios.post('/api/get-techs-for-org', {
           organization: user.organization,
           startKey: undefined,
           techSearchString: _searchString,
         });
         const response = JSON.parse(data.response);
-        
+
         if (!response.techs) {
           setFetchingTechnicians(false);
           return [];
@@ -154,7 +164,7 @@ const WorkOrder = ({
       setFetchingTechnicians(false);
       return [];
     },
-    [user]
+    [user],
   );
 
   const getWorkOrder = useCallback(async () => {
@@ -178,7 +188,9 @@ const WorkOrder = ({
           //Backwards compatible with old assignedTo format
           if (str.includes(TECHNICIAN_DELIM)) {
             const keys: string[] = deconstructNameEmailString(str);
-            technician = mappedTechnicians.find((technician: Option) => technician.value === keys[0]);
+            technician = mappedTechnicians.find(
+              (technician: Option) => technician.value === keys[0],
+            );
           } else {
             //str is just tech email in this case
             technician = mappedTechnicians.find((technician: Option) => technician.value === str);
@@ -186,10 +198,17 @@ const WorkOrder = ({
 
           if (technician) {
             //Only allow PMs to see who has viewed
-            if (userType === USER_TYPE.PROPERTY_MANAGER && _workOrder.viewedWO && _workOrder.viewedWO.includes(technician.value)) {
+            if (
+              userType === USER_TYPE.PROPERTY_MANAGER &&
+              _workOrder.viewedWO &&
+              _workOrder.viewedWO.includes(technician.value)
+            ) {
               technician.label = technician.label + ' (viewed)';
             }
-            setAssignedTechnicians((prev) => [...prev, { value: technician!.value, label: technician!.label }]);
+            setAssignedTechnicians((prev) => [
+              ...prev,
+              { value: technician!.value, label: technician!.label },
+            ]);
           }
         });
       }
@@ -213,22 +232,28 @@ const WorkOrder = ({
           startKey,
         });
         const response = JSON.parse(data.response);
-        
-        initialFetch ? setEvents(response.events) : setEvents((prev) => [...prev, ...response.events]);
+
+        initialFetch
+          ? setEvents(response.events)
+          : setEvents((prev) => [...prev, ...response.events]);
         setEventsStartKey(response.startKey);
       } catch (err) {
         console.error(err);
       }
       setIsLoadingEvents(false);
     },
-    [workOrderId]
+    [workOrderId],
   );
 
   const handleUpdateStatus = async (e: any, status: string) => {
     if (!workOrderId) return;
     setIsUpdatingStatus(true);
     try {
-      if (!user  || !user.roles?.includes(USER_TYPE.TECHNICIAN) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+      if (
+        !user ||
+        (!user.roles?.includes(USER_TYPE.TECHNICIAN) &&
+          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
+      ) {
         throw new Error(USER_PERMISSION_ERROR);
       }
       const params = UpdateWorkOrderSchema.parse({
@@ -237,7 +262,7 @@ const WorkOrder = ({
         status: status,
         email: user.email,
         name: altName ?? user.name,
-      })
+      });
       const { data } = await axios.post('/api/update-work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
@@ -255,7 +280,11 @@ const WorkOrder = ({
     if (!workOrderId) return;
     setIsUpdatingPTE(true);
     try {
-      if (!user || !user.roles?.includes(USER_TYPE.TENANT) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+      if (
+        !user ||
+        (!user.roles?.includes(USER_TYPE.TENANT) &&
+          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
+      ) {
         throw new Error(USER_PERMISSION_ERROR);
       }
       const params = UpdateWorkOrderSchema.parse({
@@ -264,7 +293,7 @@ const WorkOrder = ({
         email: user.email,
         name: altName ?? user.name,
         permissionToEnter: newValue,
-      })
+      });
       const { data } = await axios.post('/api/update-work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
@@ -283,7 +312,11 @@ const WorkOrder = ({
     async (workOrderId: string) => {
       if (!workOrderId) return;
       try {
-        if (!user || userType !== ENTITIES.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        if (
+          !user ||
+          userType !== ENTITIES.PROPERTY_MANAGER ||
+          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         const params: DeleteEntity = DeleteEntitySchema.parse({
@@ -307,10 +340,13 @@ const WorkOrder = ({
         renderToastError(err, 'Error deleting work order');
       }
     },
-    [user, router, afterDelete, altName, userType]
+    [user, router, afterDelete, altName, userType],
   );
 
-  const handleAssignTechnician = async (_assignedTechnicians: MultiValue<Option>, actionMeta: ActionMeta<Option>) => {
+  const handleAssignTechnician = async (
+    _assignedTechnicians: MultiValue<Option>,
+    actionMeta: ActionMeta<Option>,
+  ) => {
     setIsUpdatingAssignedTechnicians(true);
     try {
       if (!user || !workOrder || userType !== USER_TYPE.PROPERTY_MANAGER) {
@@ -333,7 +369,7 @@ const WorkOrder = ({
           tenantName: workOrder?.tenantName,
           tenantEmail: workOrder?.tenantEmail,
           oldAssignedTo: workOrder?.assignedTo ?? [],
-          property: workOrder?.address
+          property: workOrder?.address,
         });
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as Option;
@@ -382,11 +418,20 @@ const WorkOrder = ({
 
   useEffect(() => {
     const updateViewedList = async () => {
-      if (!user || !workOrder || !workOrderId || !userType || userType !== USER_TYPE.TECHNICIAN || !workOrder.assignedTo) return;
+      if (
+        !user ||
+        !workOrder ||
+        !workOrderId ||
+        !userType ||
+        userType !== USER_TYPE.TECHNICIAN ||
+        !workOrder.assignedTo
+      )
+        return;
       const assignedToList = Array.from(workOrder.assignedTo);
       //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
       if (
-        (assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) &&
+        (assignedToList.includes(user.email) ||
+          assignedToList.includes(constructNameEmailString(user.email, user.name))) &&
         !workOrder.viewedWO?.includes(user.email)
       ) {
         //Handle async update viewed list
@@ -397,7 +442,7 @@ const WorkOrder = ({
           email: user.email,
           newViewedWOList,
           pmEmail: workOrder.pmEmail,
-        })
+        });
         await axios.post('/api/update-viewed-wo-list', params);
         await getWorkOrder();
       }
@@ -416,13 +461,18 @@ const WorkOrder = ({
         <div className="w-full sticky top-0 overflow-hidden">
           <div className=" bg-blue-200 text-gray-600 text-center py-2 px-4 text-sm">
             Created on {createdToFormattedDateTime(workOrder.created).join(' @ ')}
-            <MdOutlineClear className="float-right my-auto h-6 text-xl text-gray-600 cursor-pointer" onClick={() => handleCloseWorkOrderModal()} />
+            <MdOutlineClear
+              className="float-right my-auto h-6 text-xl text-gray-600 cursor-pointer"
+              onClick={() => handleCloseWorkOrderModal()}
+            />
           </div>
           <div className="flex flex-col w-full align-middle items-center">
             <div className="text-xl my-auto flex flex-row items-center justify-between text-gray-600 w-full p-4  border-b border-slate-200">
               <div className=" flex flex-col">
                 {toTitleCase(workOrder?.issue)}
-                <div className="text-gray-400 md:text-base text-sm"># {deconstructKey(workOrderId)}</div>
+                <div className="text-gray-400 md:text-base text-sm">
+                  # {deconstructKey(workOrderId)}
+                </div>
               </div>
               <div className="flex flex-row items-center">
                 {!isMobile ? (
@@ -436,16 +486,17 @@ const WorkOrder = ({
                       </a>
                     ) : null}
 
-                    {userType === USER_TYPE.PROPERTY_MANAGER && workOrder.status !== WO_STATUS.DELETED && (
-                      <div
-                        onClick={() => {
-                          if (workOrder.status === WO_STATUS.DELETED) return;
-                          setConfirmDeleteModalIsOpen(true);
-                        }}
-                      >
-                        <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
-                      </div>
-                    )}
+                    {userType === USER_TYPE.PROPERTY_MANAGER &&
+                      workOrder.status !== WO_STATUS.DELETED && (
+                        <div
+                          onClick={() => {
+                            if (workOrder.status === WO_STATUS.DELETED) return;
+                            setConfirmDeleteModalIsOpen(true);
+                          }}
+                        >
+                          <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
+                        </div>
+                      )}
                   </>
                 ) : null}
               </div>
@@ -464,7 +515,11 @@ const WorkOrder = ({
               <>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.TO_DO)}
+                  onClick={(e) =>
+                    !isUpdatingStatus &&
+                    userType !== USER_TYPE.TENANT &&
+                    handleUpdateStatus(e, WO_STATUS.TO_DO)
+                  }
                   className={`${workOrder.status === WO_STATUS.TO_DO && 'bg-blue-200'} ${
                     userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
                   } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
@@ -474,7 +529,11 @@ const WorkOrder = ({
                 </button>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.COMPLETE)}
+                  onClick={(e) =>
+                    !isUpdatingStatus &&
+                    userType !== USER_TYPE.TENANT &&
+                    handleUpdateStatus(e, WO_STATUS.COMPLETE)
+                  }
                   className={`${workOrder.status === WO_STATUS.COMPLETE && 'bg-blue-200'} ${
                     userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
                   } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
@@ -513,7 +572,11 @@ const WorkOrder = ({
             />
           </div>
           <div className="font-bold mt-4">Photos</div>
-          <div className={`w-full mt-0.5 pb-2 ${images && images.length && 'grid grid-cols-3 md:grid-cols-5 md:gap-x-4 gap-x-0'}`}>
+          <div
+            className={`w-full mt-0.5 pb-2 ${
+              images && images.length && 'grid grid-cols-3 md:grid-cols-5 md:gap-x-4 gap-x-0'
+            }`}
+          >
             {imagesLoading ? (
               <LoadingSpinner />
             ) : images && images.length ? (
@@ -536,8 +599,22 @@ const WorkOrder = ({
               'No photos found'
             )}
           </div>
-          <div className={'w-full md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200'}>
-            {uploadingFiles ? <LoadingSpinner /> : <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />}
+          <div
+            className={
+              'w-full md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200'
+            }
+          >
+            {uploadingFiles ? (
+              <LoadingSpinner />
+            ) : (
+              <input
+                type="file"
+                multiple
+                name="image"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            )}
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
           <div className={`${isUpdatingPTE && 'opacity-50'} text-center w-48`}>
@@ -551,18 +628,26 @@ const WorkOrder = ({
                 v?.value && handleUpdatePTE(v.value);
               }}
               defaultValue={undefined}
-              isDisabled={(!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) && !user?.roles?.includes(USER_TYPE.TENANT)) || isUpdatingPTE}
+              isDisabled={
+                (!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) &&
+                  !user?.roles?.includes(USER_TYPE.TENANT)) ||
+                isUpdatingPTE
+              }
               placeholder={workOrder.permissionToEnter as PTE_Type}
             />
           </div>
           <div className="font-bold mt-4">Address</div>
           <div className="mt-0.5">
-            {workOrder.address?.unit ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit) : toTitleCase(workOrder.address.address)}
+            {workOrder.address?.unit
+              ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit)
+              : toTitleCase(workOrder.address.address)}
           </div>
           <div className="font-bold mt-4">Tenant</div>
           <div className="mt-0.5">{toTitleCase(workOrder.tenantName)}</div>
           <div className="font-bold mt-4">Location</div>
-          <div className="mt-0.5">{workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}</div>
+          <div className="mt-0.5">
+            {workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}
+          </div>
           {workOrder.additionalDetails && workOrder.additionalDetails.length > 0 ? (
             <>
               <div className="font-bold mt-4">Additional Info</div>
@@ -675,7 +760,9 @@ const WorkOrder = ({
   }
   return (
     <div>
-      <div className="w-full flex items-center justify-center font-bold mt-8">Work order not found.</div>
+      <div className="w-full flex items-center justify-center font-bold mt-8">
+        Work order not found.
+      </div>
     </div>
   );
 };

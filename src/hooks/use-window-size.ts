@@ -7,7 +7,7 @@ interface WindowSize {
   height: number;
 }
 
-export function useDevice(): { windowSize: WindowSize; isMobile: boolean; } {
+export function useDevice(): { windowSize: WindowSize; isMobile: boolean } {
   const [windowSize, setWindowSize] = useState<WindowSize>({
     width: 0,
     height: 0,

@@ -1,11 +1,11 @@
 import { IProperty } from '@/database/entities/property';
 import React, { useState, useEffect } from 'react';
 
-export type PartialProperty = Pick<IProperty, "address" | "city" | "state" | "postalCode" | "unit">;
+export type PartialProperty = Pick<IProperty, 'address' | 'city' | 'state' | 'postalCode' | 'unit'>;
 
 export interface SortConfig {
   key: keyof PartialProperty;
-  direction: "ascending" | "descending";
+  direction: 'ascending' | 'descending';
 }
 
 export const useSortableData = (items: PartialProperty[], config: SortConfig | null = null) => {
@@ -28,12 +28,8 @@ export const useSortableData = (items: PartialProperty[], config: SortConfig | n
   }, [items, sortConfig]);
 
   const requestSort = (key: keyof PartialProperty) => {
-    let direction: "ascending" | "descending" = 'ascending';
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === 'ascending'
-    ) {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });

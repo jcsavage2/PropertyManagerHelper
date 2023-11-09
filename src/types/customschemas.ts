@@ -72,7 +72,7 @@ export const ChatbotRequestSchema = IssueInformationSchema.merge(
     unitInfo: lowerCaseRequiredString,
     streetAddress: lowerCaseRequiredString,
     messages: z.array(z.any()),
-  })
+  }),
 );
 
 export const UserInfoSchema = z.object({
@@ -86,13 +86,15 @@ export const UserInfoSchema = z.object({
   property: validateProperty,
 });
 
-export const AiJSONResponseSchema = IssueInformationSchema.merge(z.object({ aiMessage: requiredString }));
+export const AiJSONResponseSchema = IssueInformationSchema.merge(
+  z.object({ aiMessage: requiredString }),
+);
 
 export const FinishFormRequestSchema = IssueInformationSchema.merge(
   z.object({
     userMessage: requiredString,
     messages: z.array(z.any()),
-  })
+  }),
 );
 
 export const CreateWorkOrderSchema = z.object({
@@ -115,7 +117,11 @@ export const CreateWorkOrderSchema = z.object({
 });
 
 export const CreatePropertySchema = validateProperty.merge(
-  z.object({ tenantEmail: lowerCaseOptionalEmail, organization: requiredString, pmEmail: lowerCaseRequiredEmail })
+  z.object({
+    tenantEmail: lowerCaseOptionalEmail,
+    organization: requiredString,
+    pmEmail: lowerCaseRequiredEmail,
+  }),
 );
 
 export const DeleteEntitySchema = z.object({
@@ -193,15 +199,15 @@ export const CreateTenant_AddressSchema = z.object({
   property: z.union([validatePropertyWithId, z.null()]),
 });
 
-export const CreateTenantSchema = CreateTenant_AddressSchema.merge(CreateTenant_TenantInfoSchema).merge(
-  z.object({ createNewProperty: z.boolean().default(true) })
-);
+export const CreateTenantSchema = CreateTenant_AddressSchema.merge(
+  CreateTenant_TenantInfoSchema,
+).merge(z.object({ createNewProperty: z.boolean().default(true) }));
 
 export const ImportTenantSchema = CreateTenantSchema.merge(
   z.object({
     key: requiredNumber,
     error: optionalString,
-  })
+  }),
 );
 
 export const UpdateWorkOrderSchema = z
@@ -217,7 +223,7 @@ export const UpdateWorkOrderSchema = z
     (data) => {
       return !!data.status !== !!data.permissionToEnter;
     },
-    { message: 'Must provide either status or permissionToEnter' }
+    { message: 'Must provide either status or permissionToEnter' },
   );
 
 export const UpdateImagesSchema = z.object({
@@ -266,5 +272,5 @@ export const CreateCommentSchema = z.object({
   comment: requiredString,
   email: lowerCaseRequiredEmail,
   name: lowerCaseRequiredString,
-  workOrderId: requiredString
-})
+  workOrderId: requiredString,
+});
