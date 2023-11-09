@@ -24,7 +24,7 @@ export const PortalLeftPanel = () => {
     if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.altNames || !user.name) return;
     let options: Option[] = user.altNames.map((name) => ({ label: name, value: name }));
     options.push({ label: toTitleCase(user.name), value: toTitleCase(user.name) });
-    setAltNameOptions(options)
+    setAltNameOptions(options);
   }, [user, userType]);
 
   return (
@@ -33,22 +33,34 @@ export const PortalLeftPanel = () => {
       <hr style={{ height: '2px', color: '#e5e7eb', backgroundColor: '#e5e7eb' }} />
       {userType === ENTITIES.PROPERTY_MANAGER && (
         <>
-          <p className="mt-2">{'Hey, ' + (altName ? toTitleCase(altName) : toTitleCase(user?.name))}</p>
-          <Select options={altNameOptions} className="mb-4 mt-2" placeholder={"Change acting name"} onChange={(newValue: SingleValue<Option>) => {
-            if (!newValue || !user?.name) return;
-            if(newValue.value === toTitleCase(user?.name)){
-              setAltName(null);
-              return;
-            }
-            setAltName(newValue.value);
-          }}/>
+          <p className="mt-2">
+            {'Hey, ' + (altName ? toTitleCase(altName) : toTitleCase(user?.name))}
+          </p>
+          <Select
+            options={altNameOptions}
+            className="mb-4 mt-2"
+            placeholder={'Change acting name'}
+            onChange={(newValue: SingleValue<Option>) => {
+              if (!newValue || !user?.name) return;
+              if (newValue.value === toTitleCase(user?.name)) {
+                setAltName(null);
+                return;
+              }
+              setAltName(newValue.value);
+            }}
+          />
           <hr style={{ height: '2px', color: '#e5e7eb', backgroundColor: '#e5e7eb' }} />
         </>
       )}
       <div className="mt-4 ml-2 text-lg" style={{ display: 'grid', rowGap: '0.5rem' }}>
         <div className="flex flex-row items-center justify-start">
           <RiFilePaper2Fill className="inline mr-2 my-auto" />
-          <Link className={`${router.pathname === '/work-orders' ? 'text-black' : 'text-gray-500'} hover:text-slate-400`} href={'work-orders'}>
+          <Link
+            className={`${
+              router.pathname === '/work-orders' ? 'text-black' : 'text-gray-500'
+            } hover:text-slate-400`}
+            href={'work-orders'}
+          >
             Work Orders
           </Link>
         </div>
@@ -58,7 +70,9 @@ export const PortalLeftPanel = () => {
             <div className="flex flex-row items-center justify-start">
               <BsPersonLinesFill className={`inline mr-2 my-auto`} />
               <Link
-                className={`${router.pathname === '/property-managers' ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`}
+                className={`${
+                  router.pathname === '/property-managers' ? 'text-black' : 'text-gray-500'
+                }  hover:text-slate-400`}
                 href={'property-managers'}
               >
                 Property Managers
@@ -66,19 +80,34 @@ export const PortalLeftPanel = () => {
             </div>
             <div className="flex flex-row items-center justify-start">
               <BsFillPersonFill className={`inline mr-2 my-auto`} />
-              <Link className={`${router.pathname === '/tenants' ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`} href={'tenants'}>
+              <Link
+                className={`${
+                  router.pathname === '/tenants' ? 'text-black' : 'text-gray-500'
+                }  hover:text-slate-400`}
+                href={'tenants'}
+              >
                 Tenants
               </Link>
             </div>
             <div className="flex flex-row items-center justify-start">
               <MdEngineering className={`inline mr-2 my-auto`} />
-              <Link className={`${router.pathname === '/technicians' ? 'text-black' : 'text-gray-500'}  hover:text-gray-400`} href={'technicians'}>
+              <Link
+                className={`${
+                  router.pathname === '/technicians' ? 'text-black' : 'text-gray-500'
+                }  hover:text-gray-400`}
+                href={'technicians'}
+              >
                 Technicians
               </Link>
             </div>
             <div className="flex flex-row items-center justify-start">
               <CiLocationOn className="inline mr-2 my-auto" />
-              <Link className={`${router.pathname === '/properties' ? 'text-black' : 'text-gray-500'}  hover:text-gray-400`} href={'properties'}>
+              <Link
+                className={`${
+                  router.pathname === '/properties' ? 'text-black' : 'text-gray-500'
+                }  hover:text-gray-400`}
+                href={'properties'}
+              >
                 Properties
               </Link>
             </div>

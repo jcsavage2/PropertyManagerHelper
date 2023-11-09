@@ -27,7 +27,11 @@ export const TenantSelect = ({
     async (_searchString?: string) => {
       setTenantOptionsLoading(true);
       try {
-        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        if (
+          !user ||
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
 

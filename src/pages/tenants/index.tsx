@@ -19,7 +19,7 @@ import { AiOutlineMail } from 'react-icons/ai';
 import { DEFAULT_DELETE_USER, INVITE_STATUS, USER_PERMISSION_ERROR } from '@/constants';
 import { DeleteEntity, DeleteUser, Property } from '@/types';
 import { useUserContext } from '@/context/user';
-import { DeleteEntitySchema  } from '@/types/customschemas';
+import { DeleteEntitySchema } from '@/types/customschemas';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -42,7 +42,9 @@ const Tenants = () => {
   const [resendingInvite, setResendingInvite] = useState<boolean>(false);
   const [tenantSearchString, setTenantSearchString] = useState<string>('');
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState<Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>>({
+  const [statusFilter, setStatusFilter] = useState<
+    Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>
+  >({
     JOINED: true,
     RE_INVITED: true,
     INVITED: true,
@@ -55,7 +57,11 @@ const Tenants = () => {
       if (!user || !userType) return;
       setTenantsLoading(true);
       try {
-        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        if (
+          !user ||
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         //Reset filter options on initial fetch
@@ -68,19 +74,23 @@ const Tenants = () => {
           startKey: isInitial ? undefined : startKey,
           statusFilter: statusFilter,
           tenantSearchString: _searchString,
-          fetchAllTenants
+          fetchAllTenants,
         });
         const response = JSON.parse(data.response);
         const _tenants: IUser[] = response.tenants;
         setStartKey(response.startKey);
-        const unsortedTenants = (isInitial || fetchAllTenants) ? _tenants : [...tenants, ..._tenants];
+        const unsortedTenants = isInitial || fetchAllTenants ? _tenants : [...tenants, ..._tenants];
 
         //Sort tenants alphabetically by primary address, in the future we want to update sort keys to globally sort results
         const sortedTenants = unsortedTenants.sort((a, b) => {
           const primaryAddressA = Object.values(a.addresses ?? []).find((a: any) => !!a.isPrimary);
           const primaryAddressB = Object.values(b.addresses ?? []).find((a: any) => !!a.isPrimary);
-          const addressA = `${primaryAddressA.address} ${primaryAddressA.unit ? ' ' + primaryAddressA.unit : ''}`.toUpperCase();
-          const addressB = `${primaryAddressB.address} ${primaryAddressB.unit ? ' ' + primaryAddressB.unit : ''}`.toUpperCase();
+          const addressA = `${primaryAddressA.address} ${
+            primaryAddressA.unit ? ' ' + primaryAddressA.unit : ''
+          }`.toUpperCase();
+          const addressB = `${primaryAddressB.address} ${
+            primaryAddressB.unit ? ' ' + primaryAddressB.unit : ''
+          }`.toUpperCase();
           return addressA.localeCompare(addressB);
         });
         setTenants(sortedTenants);
@@ -101,7 +111,11 @@ const Tenants = () => {
     async ({ pk, sk, roles }: DeleteUser) => {
       setTenantsLoading(true);
       try {
-        if (!user || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
+        if (
+          !user ||
+          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) ||
+          userType !== USER_TYPE.PROPERTY_MANAGER
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         const params: DeleteEntity = DeleteEntitySchema.parse({
@@ -132,36 +146,42 @@ const Tenants = () => {
   );
 
   const handleReinviteTenants = useCallback(
-    async ({ _tenants }: { _tenants: { name: string; email: string; }[]; }) => {
+    async ({ _tenants }: { _tenants: { name: string; email: string }[] }) => {
       setResendingInvite(true);
       try {
-        if (!user || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
+        if (
+          !user ||
+          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) ||
+          userType !== USER_TYPE.PROPERTY_MANAGER
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         if (!_tenants) {
           throw new Error('Missing required params for reinvite tenants');
         }
 
-        const batchedTenants = _tenants.reduce((batches, tenant, i) => {
-          const batchNumber = Math.floor(i / 5);
-          if (!batches[batchNumber]) {
-            batches[batchNumber] = [];
-          }
-          batches[batchNumber].push(tenant);
-          return batches;
-        }, {} as Record<number, { name: string; email: string; }[]>);
+        const batchedTenants = _tenants.reduce(
+          (batches, tenant, i) => {
+            const batchNumber = Math.floor(i / 5);
+            if (!batches[batchNumber]) {
+              batches[batchNumber] = [];
+            }
+            batches[batchNumber].push(tenant);
+            return batches;
+          },
+          {} as Record<number, { name: string; email: string }[]>
+        );
 
-        const batchedRequests =
-          Object.values(batchedTenants).map((tenants) => {
-            return axios.post('/api/reinvite-tenants', {
-              pmName: altName ?? user.name,
-              tenants,
-              organizationName: user.organizationName,
-            });
+        const batchedRequests = Object.values(batchedTenants).map((tenants) => {
+          return axios.post('/api/reinvite-tenants', {
+            pmName: altName ?? user.name,
+            tenants,
+            organizationName: user.organizationName,
           });
+        });
 
         const allResponses = await Promise.all(batchedRequests);
-        const successfulResponses = allResponses.map(r => r.status === 200);
+        const successfulResponses = allResponses.map((r) => r.status === 200);
 
         if (successfulResponses.length === allResponses.length) {
           toast.success('All Re-invitations successfully sent', {
@@ -176,14 +196,16 @@ const Tenants = () => {
           });
         }
         if (!successfulResponses.length) {
-          toast.error('No re-invitations were successfully sent - please contact Pillar for this bug.', {
-            position: toast.POSITION.TOP_CENTER,
-            draggable: false,
-          });
+          toast.error(
+            'No re-invitations were successfully sent - please contact Pillar for this bug.',
+            {
+              position: toast.POSITION.TOP_CENTER,
+              draggable: false,
+            }
+          );
         }
 
         fetchTenants(false, undefined, true);
-
       } catch (err) {
         console.error(err);
         toast.error('Error sending reinvite email(s)', {
@@ -198,7 +220,11 @@ const Tenants = () => {
   );
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
-    return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
+    return (
+      <p>
+        You are not authorized to use this page. You must be a property manager in an organization.
+      </p>
+    );
   }
   return (
     <div id="tenants" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
@@ -207,7 +233,11 @@ const Tenants = () => {
         confirmationModalIsOpen={confirmDeleteModalIsOpen}
         setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
         onConfirm={() => handleDeleteTenant(toDelete)}
-        childrenComponents={<div className="text-center">Are you sure you want to delete the tenant record for {toTitleCase(toDelete.name)}?</div>}
+        childrenComponents={
+          <div className="text-center">
+            Are you sure you want to delete the tenant record for {toTitleCase(toDelete.name)}?
+          </div>
+        }
         onCancel={() => setToDelete(DEFAULT_DELETE_USER)}
       />
 
@@ -218,7 +248,9 @@ const Tenants = () => {
         onConfirm={() => {
           if (resendingInvite) return;
           if (tenantsToReinvite && tenantsToReinvite.length > 0) {
-            handleReinviteTenants({ _tenants: tenantsToReinvite.map((t) => ({ name: t.name, email: t.email })) });
+            handleReinviteTenants({
+              _tenants: tenantsToReinvite.map((t) => ({ name: t.name, email: t.email })),
+            });
           }
           setConfirmReinviteTenantsModalIsOpen(false);
         }}
@@ -228,8 +260,14 @@ const Tenants = () => {
         buttonsDisabled={resendingInvite}
         childrenComponents={
           <div className="flex flex-col text-center items-center justify-center mt-2">
-            <div>{"Are you sure? This will resend an invitation email to ALL tenants whose status is 'Invited'."}</div>
-            <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
+            <div>
+              {
+                "Are you sure? This will resend an invitation email to ALL tenants whose status is 'Invited'."
+              }
+            </div>
+            <div className="italic mt-2 mb-2">
+              This action will email all {tenantsToReinvite.length} of the tenants in this list.
+            </div>
             <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
               {tenantsToReinvite && tenantsToReinvite.length ? (
                 tenantsToReinvite.map((tenant: IUser, i) => {
@@ -242,11 +280,15 @@ const Tenants = () => {
                         <p>{toTitleCase(tenant.name)}</p> <p>{tenant.email}</p>
                       </div>
                       <MdClear
-                        className={`h-6 w-6 cursor-pointer ${resendingInvite && 'opacity-50 pointer-events-none'}`}
+                        className={`h-6 w-6 cursor-pointer ${
+                          resendingInvite && 'opacity-50 pointer-events-none'
+                        }`}
                         color="red"
                         onClick={() => {
                           if (resendingInvite) return;
-                          setTenantsToReinvite(tenantsToReinvite.filter((t) => t.email !== tenant.email));
+                          setTenantsToReinvite(
+                            tenantsToReinvite.filter((t) => t.email !== tenant.email)
+                          );
                         }}
                       />
                     </div>
@@ -260,7 +302,11 @@ const Tenants = () => {
         }
       />
       <div className="lg:max-w-5xl">
-        <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
+        <div
+          className={
+            isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`
+          }
+        >
           <h1 className="text-4xl">Tenants</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
             <button
@@ -282,7 +328,9 @@ const Tenants = () => {
           </div>
         </div>
         <div
-          className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 mb-2 ${tenantsLoading && 'opacity-50 pointer-events-none'}`}
+          className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 mb-2 ${
+            tenantsLoading && 'opacity-50 pointer-events-none'
+          }`}
         >
           <input
             type="text"
@@ -300,7 +348,9 @@ const Tenants = () => {
           />
           <MdClear
             fontSize={28}
-            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${!tenantSearchString && 'opacity-0 pointer-events-none'}}`}
+            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${
+              !tenantSearchString && 'opacity-0 pointer-events-none'
+            }}`}
             onClick={() => {
               if (tenantsLoading || !tenantSearchString) return;
               setTenantSearchString('');
@@ -317,11 +367,16 @@ const Tenants = () => {
             Search
           </div>
         </div>
-        <div className={`flex flex-row justify-between w-full items-center text-gray-600 ${tenantsLoading && 'pointer-events-none'}`}>
+        <div
+          className={`flex flex-row justify-between w-full items-center text-gray-600 ${
+            tenantsLoading && 'pointer-events-none'
+          }`}
+        >
           <div>
             <button
-              className={`${tenantsLoading && 'opacity-50'} h-full mr-2 px-3 py-2 rounded ${!statusFilter.JOINED || !statusFilter.INVITED ? 'bg-blue-200' : 'bg-gray-200'
-                }`}
+              className={`${tenantsLoading && 'opacity-50'} h-full mr-2 px-3 py-2 rounded ${
+                !statusFilter.JOINED || !statusFilter.INVITED ? 'bg-blue-200' : 'bg-gray-200'
+              }`}
               onClick={() => setShowStatusFilter((s) => !s)}
             >
               Status
@@ -329,7 +384,9 @@ const Tenants = () => {
             {showStatusFilter && (
               <div className="absolute opacity-100 z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
                 <div
-                  className={`flex ${statusFilter.INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                  className={`flex ${
+                    statusFilter.INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                  }`}
                   onClick={() => {
                     if (tenantsLoading) return;
                     setStatusFilter({ ...statusFilter, INVITED: !statusFilter.INVITED });
@@ -339,40 +396,61 @@ const Tenants = () => {
                   {!statusFilter.INVITED ? (
                     <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                   ) : (
-                    <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
+                    <BiCheckboxChecked
+                      className="mr-3 justify-self-end my-auto flex-end"
+                      size={'1.5em'}
+                    />
                   )}
                 </div>
 
                 <div
-                  className={`flex ${statusFilter.JOINED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                  className={`flex ${
+                    statusFilter.JOINED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                  }`}
                   onClick={() => {
                     if (tenantsLoading) return;
                     setStatusFilter({ ...statusFilter, JOINED: !statusFilter.JOINED });
                   }}
                 >
-                  <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.JOINED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
+                  <p
+                    className={`py-1 px-3 cursor-pointer flex w-full rounded ${
+                      statusFilter.JOINED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                    }`}
+                  >
                     Joined
                   </p>
                   {!statusFilter.JOINED ? (
                     <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                   ) : (
-                    <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
+                    <BiCheckboxChecked
+                      className="mr-3 justify-self-end my-auto flex-end"
+                      size={'1.5em'}
+                    />
                   )}
                 </div>
                 <div
-                  className={`flex ${statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                  className={`flex ${
+                    statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                  }`}
                   onClick={() => {
                     if (tenantsLoading) return;
                     setStatusFilter({ ...statusFilter, RE_INVITED: !statusFilter.RE_INVITED });
                   }}
                 >
-                  <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
+                  <p
+                    className={`py-1 px-3 cursor-pointer flex w-full rounded ${
+                      statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                    }`}
+                  >
                     Re-Invited
                   </p>
                   {!statusFilter.RE_INVITED ? (
                     <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                   ) : (
-                    <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
+                    <BiCheckboxChecked
+                      className="mr-3 justify-self-end my-auto flex-end"
+                      size={'1.5em'}
+                    />
                   )}
                 </div>
               </div>
@@ -380,8 +458,9 @@ const Tenants = () => {
           </div>
           {!isMobile && tenants && tenantsToReinvite && tenantsToReinvite.length > 0 ? (
             <button
-              className={`cursor-pointer  rounded px-4 py-2 mr-4 hover:bg-blue-300 bg-blue-200 ${tenantsLoading && 'opacity-50 pointer-events-none'
-                }}`}
+              className={`cursor-pointer  rounded px-4 py-2 mr-4 hover:bg-blue-300 bg-blue-200 ${
+                tenantsLoading && 'opacity-50 pointer-events-none'
+              }}`}
               onClick={() => !tenantsLoading && setConfirmReinviteTenantsModalIsOpen(true)}
             >
               Bulk Re-Invite
@@ -397,13 +476,18 @@ const Tenants = () => {
                 </p>
               ) : null}
               {tenants.map((tenant: IUser, index) => {
-                const primaryAddress = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
-                const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
+                const primaryAddress = Object.values(tenant.addresses ?? []).find(
+                  (a: any) => !!a.isPrimary
+                );
+                const displayAddress = `${primaryAddress.address} ${
+                  primaryAddress.unit ? ' ' + primaryAddress.unit : ''
+                }`;
                 return (
                   <div
                     key={`list-${tenant.pk}-${tenant.sk}-${index}`}
-                    className={`flex flex-row justify-between items-center w-full rounded-lg py-4 px-2 h-36 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${index === 0 && 'mt-1'
-                      } ${index < tenants.length - 1 && 'mb-3'}`}
+                    className={`flex flex-row justify-between items-center w-full rounded-lg py-4 px-2 h-36 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${
+                      index === 0 && 'mt-1'
+                    } ${index < tenants.length - 1 && 'mb-3'}`}
                   >
                     <div className="pl-2 text-gray-800">
                       <p className="text-2xl ">{toTitleCase(tenant.name)} </p>
@@ -411,16 +495,23 @@ const Tenants = () => {
                       <p className="text-sm mt-1">{toTitleCase(displayAddress)} </p>
                       <div className={`text-sm mt-2 flex flex-row`}>
                         <div
-                          className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-green-600' : 'text-yellow-500'} my-auto h-max inline-block`}
+                          className={`${
+                            tenant.status === INVITE_STATUS.JOINED
+                              ? 'text-green-600'
+                              : 'text-yellow-500'
+                          } my-auto h-max inline-block`}
                         >
                           {tenant.status}
                         </div>{' '}
-                        {(tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED) ? (
+                        {tenant.status === INVITE_STATUS.INVITED ||
+                        tenant.status === INVITE_STATUS.RE_INVITED ? (
                           <button
                             className="cursor-pointer w-8 h-8 hover:bg-blue-100 bg-blue-200 rounded px-2 py-2 ml-2 disabled:opacity-50"
                             onClick={() => {
                               if (resendingInvite) return;
-                              handleReinviteTenants({ _tenants: [{ email: tenant.email, name: tenant.name }] });
+                              handleReinviteTenants({
+                                _tenants: [{ email: tenant.email, name: tenant.name }],
+                              });
                             }}
                             disabled={resendingInvite}
                           >
@@ -433,7 +524,12 @@ const Tenants = () => {
                       className="text-3xl text-red-500 cursor-pointer"
                       onClick={() => {
                         if (tenantsLoading) return;
-                        setToDelete({ pk: tenant.pk, sk: tenant.sk, name: tenant.name, roles: tenant.roles });
+                        setToDelete({
+                          pk: tenant.pk,
+                          sk: tenant.sk,
+                          name: tenant.name,
+                          roles: tenant.roles,
+                        });
                         setConfirmDeleteModalIsOpen(true);
                       }}
                     />
@@ -459,26 +555,38 @@ const Tenants = () => {
                   </thead>
                   <tbody className="text-gray-700">
                     {tenants.map((tenant: IUser) => {
-                      const primaryAddress: Property = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
-                      const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''}`;
+                      const primaryAddress: Property = Object.values(tenant.addresses ?? []).find(
+                        (a: any) => !!a.isPrimary
+                      );
+                      const displayAddress = `${primaryAddress.address} ${
+                        primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''
+                      }`;
                       return (
                         <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
-                          <td className="border-b border-t px-2 py-1">{`${toTitleCase(tenant.name)}`}</td>
+                          <td className="border-b border-t px-2 py-1">{`${toTitleCase(
+                            tenant.name
+                          )}`}</td>
                           <td className="border-b border-t px-2 py-1">{`${tenant.email}`}</td>
                           <td className="border-b border-t">
                             <div className="flex flex-row items-center justify-start">
                               <div
-                                className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-green-600' : 'text-yellow-500'
-                                  } my-auto h-max inline-block`}
+                                className={`${
+                                  tenant.status === INVITE_STATUS.JOINED
+                                    ? 'text-green-600'
+                                    : 'text-yellow-500'
+                                } my-auto h-max inline-block`}
                               >
                                 {tenant.status}
                               </div>{' '}
-                              {(tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED) ? (
+                              {tenant.status === INVITE_STATUS.INVITED ||
+                              tenant.status === INVITE_STATUS.RE_INVITED ? (
                                 <button
                                   className="cursor-pointer w-8 h-8 hover:bg-blue-100 bg-blue-200 rounded px-2 py-2 ml-2 disabled:opacity-50"
                                   onClick={() => {
                                     if (resendingInvite) return;
-                                    handleReinviteTenants({ _tenants: [{ email: tenant.email, name: tenant.name }] });
+                                    handleReinviteTenants({
+                                      _tenants: [{ email: tenant.email, name: tenant.name }],
+                                    });
                                   }}
                                   disabled={resendingInvite}
                                 >
@@ -487,14 +595,23 @@ const Tenants = () => {
                               ) : null}
                             </div>
                           </td>
-                          <td className="border-b border-t px-2 py-1">{toTitleCase(displayAddress)}</td>
-                          <td className="border-b border-t px-1 py-1">{createdToFormattedDateTime(tenant.created)[0]}</td>
+                          <td className="border-b border-t px-2 py-1">
+                            {toTitleCase(displayAddress)}
+                          </td>
+                          <td className="border-b border-t px-1 py-1">
+                            {createdToFormattedDateTime(tenant.created)[0]}
+                          </td>
                           <td className="pl-6 py-1">
                             <CiCircleRemove
                               className="text-3xl text-red-500 cursor-pointer"
                               onClick={() => {
                                 if (tenantsLoading) return;
-                                setToDelete({ pk: tenant.pk, sk: tenant.sk, name: tenant.name, roles: tenant.roles });
+                                setToDelete({
+                                  pk: tenant.pk,
+                                  sk: tenant.sk,
+                                  name: tenant.name,
+                                  roles: tenant.roles,
+                                });
                                 setConfirmDeleteModalIsOpen(true);
                               }}
                             />
@@ -508,7 +625,9 @@ const Tenants = () => {
             </div>
           </div>
         )}
-        {!tenantsLoading && tenants.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no tenants found.</div>}
+        {!tenantsLoading && tenants.length === 0 && (
+          <div className="font-bold text-center md:mt-6">Sorry, no tenants found.</div>
+        )}
         {tenantsLoading && (
           <div className="mt-4">
             <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
@@ -517,7 +636,12 @@ const Tenants = () => {
         {tenants.length && startKey && !tenantsLoading ? (
           <div className="w-full flex items-center justify-center mb-32">
             <button
-              onClick={() => fetchTenants(false, tenantSearchString.length !== 0 ? tenantSearchString : undefined)}
+              onClick={() =>
+                fetchTenants(
+                  false,
+                  tenantSearchString.length !== 0 ? tenantSearchString : undefined
+                )
+              }
               className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
             >
               Load more

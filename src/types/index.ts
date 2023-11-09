@@ -124,8 +124,8 @@ export type UpdateUser = z.infer<typeof UpdateUserSchema>;
 
 export type UpdateViewedWORequest = z.infer<typeof UpdateViewedWORequestSchema>;
 
-export type CreatePMSchemaType = z.infer<typeof CreatePMSchema>
+export type CreatePMSchemaType = z.infer<typeof CreatePMSchema>;
 
 export type AddWorkOrder = z.infer<typeof AddWorkOrderModalSchema>;
 
-export type CreateComment = z.infer<typeof CreateCommentSchema>
+export type CreateComment = z.infer<typeof CreateCommentSchema>;

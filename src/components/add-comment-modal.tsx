@@ -7,8 +7,8 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useUserContext } from '@/context/user';
-import { SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { USER_TYPE } from '@/database/entities/user';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { CreateComment } from '@/types';
@@ -21,7 +21,12 @@ export type AddCommentModalProps = {
   onSuccessfulAdd: () => void;
 };
 
-export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddCommentModalIsOpen, onSuccessfulAdd }: AddCommentModalProps) => {
+export const AddCommentModal = ({
+  addCommentModalIsOpen,
+  workOrderId,
+  setAddCommentModalIsOpen,
+  onSuccessfulAdd,
+}: AddCommentModalProps) => {
   const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
@@ -53,26 +58,34 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
   };
 
   function closeModal() {
-    reset()
+    reset();
     setAddCommentModalIsOpen(false);
   }
 
-  const { register, handleSubmit, formState: { isSubmitting, isValid, errors }, reset } = useForm<CreateComment>({ resolver: zodResolver(CreateCommentSchema), mode: 'all' });
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting, isValid, errors },
+    reset,
+  } = useForm<CreateComment>({ resolver: zodResolver(CreateCommentSchema), mode: 'all' });
 
   const handleCreateNewComment: SubmitHandler<CreateComment> = useCallback(
     async (params) => {
       try {
-        if(userType === USER_TYPE.TENANT){
+        if (userType === USER_TYPE.TENANT) {
           throw new Error(USER_PERMISSION_ERROR);
         }
-        const res = await axios.post('/api/create-comment', params)
-        
+        const res = await axios.post('/api/create-comment', params);
+
         const parsedResponse = JSON.parse(res.data.response);
         if (parsedResponse.modified) {
-          toast.success('Comment Successfully Added', { position: toast.POSITION.TOP_CENTER, draggable: false });
+          toast.success('Comment Successfully Added', {
+            position: toast.POSITION.TOP_CENTER,
+            draggable: false,
+          });
           onSuccessfulAdd();
         }
-        closeModal()
+        closeModal();
       } catch (err) {
         console.log({ err });
         renderToastError(err, 'Error creating comment');
@@ -91,28 +104,39 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
       style={customStyles}
     >
       <div className="w-full text-right mb-2">
-        <button className="bg-blue-200 h-6 w-6 text-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button
+          className="bg-blue-200 h-6 w-6 text-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}
+        >
           X
         </button>
       </div>
 
       <form onSubmit={handleSubmit(handleCreateNewComment)} style={{ display: 'grid' }}>
-        <label htmlFor="comment" className="mb-1">What would you like to say?* </label>
+        <label htmlFor="comment" className="mb-1">
+          What would you like to say?*{' '}
+        </label>
         <input
           className="rounded px-1 border-solid border-2 border-slate-200"
           id="comment"
           placeholder={"Ex. 'Toilet was leaking from tank, not bowl'"}
           type={'text'}
           {...register('comment', {
-            required: true
+            required: true,
           })}
         />
-        {errors.comment && <p className="text-red-500 text-xs mt-1 italic">{errors.comment.message}</p>}
+        {errors.comment && (
+          <p className="text-red-500 text-xs mt-1 italic">{errors.comment.message}</p>
+        )}
         <input type="hidden" {...register('workOrderId')} value={workOrderId} />
         <input type="hidden" {...register('email')} value={user?.email ?? ''} />
         <input type="hidden" {...register('name')} value={altName ?? user?.name ?? ''} />
-        <button className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
-          {isSubmitting ? <LoadingSpinner /> : "Add Comment"}
+        <button
+          className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          type="submit"
+          disabled={isSubmitting || !isValid}
+        >
+          {isSubmitting ? <LoadingSpinner /> : 'Add Comment'}
         </button>
       </form>
     </Modal>

@@ -63,7 +63,10 @@ export const AddPropertyModal = ({
   const handleCreateNewProperty: SubmitHandler<CreateProperty> = useCallback(
     async (params) => {
       try {
-        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        if (
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         const res = await axios.post('/api/create-property', params);
@@ -88,7 +91,11 @@ export const AddPropertyModal = ({
     formState: { isSubmitting, isValid, errors },
     control,
     reset,
-  } = useForm<CreateProperty>({ resolver: zodResolver(CreatePropertySchema), defaultValues: DEFAULT_PROPERTY, mode: 'all' });
+  } = useForm<CreateProperty>({
+    resolver: zodResolver(CreatePropertySchema),
+    defaultValues: DEFAULT_PROPERTY,
+    mode: 'all',
+  });
 
   return (
     <div>
@@ -102,7 +109,10 @@ export const AddPropertyModal = ({
         onAfterOpen={() => toggleBodyScroll(true)}
       >
         <div className="w-full text-right">
-          <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+          <button
+            className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+            onClick={closeModal}
+          >
             X Close
           </button>
         </div>
@@ -118,15 +128,32 @@ export const AddPropertyModal = ({
               required: true,
             })}
           />
-          {errors.address && <p className="text-red-500 text-xs mt-1 italic">{errors.address.message}</p>}
+          {errors.address && (
+            <p className="text-red-500 text-xs mt-1 italic">{errors.address.message}</p>
+          )}
           <label htmlFor="unit">Unit </label>
-          <input className="rounded px-1 border-solid border-2 border-slate-200" id="unit" placeholder="1704" type={'text'} {...register('unit')} />
+          <input
+            className="rounded px-1 border-solid border-2 border-slate-200"
+            id="unit"
+            placeholder="1704"
+            type={'text'}
+            {...register('unit')}
+          />
           <Controller
             control={control}
             name="state"
-            render={({ field: { onChange, value } }) => <StateSelect state={value} setState={onChange} label={'State*'} placeholder="Select..." />}
+            render={({ field: { onChange, value } }) => (
+              <StateSelect
+                state={value}
+                setState={onChange}
+                label={'State*'}
+                placeholder="Select..."
+              />
+            )}
           />
-          {errors.state && <p className="text-red-500 text-xs mt-1 italic">{errors.state.message}</p>}
+          {errors.state && (
+            <p className="text-red-500 text-xs mt-1 italic">{errors.state.message}</p>
+          )}
           <label htmlFor="address">City*</label>
           <input
             className="rounded px-1 border-solid border-2 border-slate-200"
@@ -148,7 +175,9 @@ export const AddPropertyModal = ({
             })}
             placeholder="000000"
           />
-          {errors.postalCode && <p className="text-red-500 text-xs mt-1 italic">{errors.postalCode.message}</p>}
+          {errors.postalCode && (
+            <p className="text-red-500 text-xs mt-1 italic">{errors.postalCode.message}</p>
+          )}
           <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
             <label className="text-center mr-4" htmlFor="beds">
               Beds*:{' '}

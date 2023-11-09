@@ -58,10 +58,12 @@ export default async function handler(req: any, res: any) {
       success: true,
       files: uploadResults.map((result) => result.Location),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     //@ts-ignore
-    return res.status(API_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
+    return res
+      .status(API_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: error.message });
   }
 }
 

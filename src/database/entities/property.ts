@@ -113,10 +113,17 @@ export class PropertyEntity {
       {
         pk: propertyId,
         sk: this.generateSk({ address, country, city, state, postalCode, unit }),
-        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, propertyManagerEmail.toLowerCase()),
+        GSI1PK: generateKey(
+          ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY,
+          propertyManagerEmail.toLowerCase()
+        ),
         GSI1SK: this.generateSk({ address, country, city, state, postalCode, unit }),
-        ...(tenantEmail && { GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail.toLowerCase()) }),
-        ...(tenantEmail && { GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit }) }),
+        ...(tenantEmail && {
+          GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail.toLowerCase()),
+        }),
+        ...(tenantEmail && {
+          GSI2SK: this.generateSk({ address, country, city, state, postalCode, unit }),
+        }),
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization),
         GSI4SK: this.generateSk({ address, country, city, state, postalCode, unit }),
         tenantEmail: tenantEmail?.toLowerCase(),
@@ -162,7 +169,13 @@ export class PropertyEntity {
   }
 
   /* Get by property id */
-  public async getByOrganization({ organization, startKey }: { organization: string; startKey: StartKey }) {
+  public async getByOrganization({
+    organization,
+    startKey,
+  }: {
+    organization: string;
+    startKey: StartKey;
+  }) {
     let properties: any[] = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization);
 
@@ -198,8 +211,17 @@ export class PropertyEntity {
   /**
    * @returns all properties that a given property manager is assigned to.
    */
-  public async getAllForPropertyManager({ pmEmail, startKey }: { pmEmail: string; startKey: StartKey }) {
-    const GSI1PK = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY, pmEmail?.toLowerCase());
+  public async getAllForPropertyManager({
+    pmEmail,
+    startKey,
+  }: {
+    pmEmail: string;
+    startKey: StartKey;
+  }) {
+    const GSI1PK = generateKey(
+      ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY,
+      pmEmail?.toLowerCase()
+    );
     let properties = [];
     let remainingPropertiesToFetch = PAGE_SIZE;
     do {

@@ -19,11 +19,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { workOrderId } = body;
 
     const eventEntity = new EventEntity();
-    const { events, startKey } = await eventEntity.getEvents({ workOrderId, startKey: body.startKey });
+    const { events, startKey } = await eventEntity.getEvents({
+      workOrderId,
+      startKey: body.startKey,
+    });
 
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify({ events, startKey }) });
   } catch (error: any) {
     console.error(error);
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

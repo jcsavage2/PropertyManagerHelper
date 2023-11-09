@@ -20,7 +20,11 @@ export type AddTechnicianModalProps = {
   onSuccessfulAdd: () => void;
 };
 
-export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIsOpen, onSuccessfulAdd }: AddTechnicianModalProps) => {
+export const AddTechnicianModal = ({
+  technicianModalIsOpen,
+  setTechnicianModalIsOpen,
+  onSuccessfulAdd,
+}: AddTechnicianModalProps) => {
   const { user } = useSessionUser();
   const { isMobile } = useDevice();
   const { userType, altName } = useUserContext();
@@ -53,24 +57,30 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
   }, []);
 
   function closeModal() {
-    reset()
+    reset();
     setTechnicianModalIsOpen(false);
   }
 
   const handleCreateNewTechnician: SubmitHandler<CreateTechnician> = useCallback(
     async (params) => {
       try {
-        if (!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
+        if (
+          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) ||
+          userType !== USER_TYPE.PROPERTY_MANAGER
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
 
-        const res = await axios.post('/api/create-technician', params)
-        
+        const res = await axios.post('/api/create-technician', params);
+
         const parsedUser = JSON.parse(res.data.response);
         if (parsedUser.modified) {
-          toast.success('Technician Created!', { position: toast.POSITION.TOP_CENTER, draggable: false });
+          toast.success('Technician Created!', {
+            position: toast.POSITION.TOP_CENTER,
+            draggable: false,
+          });
           onSuccessfulAdd();
-          closeModal()
+          closeModal();
         }
       } catch (err) {
         console.log({ err });
@@ -85,7 +95,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
     reset,
-  } = useForm<CreateTechnician>({ resolver: zodResolver(CreateTechnicianSchema), mode: 'all'});
+  } = useForm<CreateTechnician>({ resolver: zodResolver(CreateTechnicianSchema), mode: 'all' });
 
   return (
     <Modal
@@ -97,7 +107,10 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       style={customStyles}
     >
       <div className="w-full text-right">
-        <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button
+          className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}
+        >
           X Close
         </button>
       </div>
@@ -109,25 +122,37 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
           placeholder="Technician Full Name*"
           type={'text'}
           {...register('technicianName', {
-            required: true
+            required: true,
           })}
         />
-        {errors.technicianName && <p className="text-red-500 text-xs">{errors.technicianName.message}</p>}
+        {errors.technicianName && (
+          <p className="text-red-500 text-xs">{errors.technicianName.message}</p>
+        )}
         <input
           className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
           id="email"
           placeholder="Technician Email*"
           type="email"
           {...register('technicianEmail', {
-            required: true
+            required: true,
           })}
         />
-        {errors.technicianEmail && <p className="text-red-500 text-xs">{errors.technicianEmail.message}</p>}
+        {errors.technicianEmail && (
+          <p className="text-red-500 text-xs">{errors.technicianEmail.message}</p>
+        )}
         <input type="hidden" {...register('pmEmail')} value={user?.email ?? ''} />
         <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
-        <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
-        <button className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
+        <input
+          type="hidden"
+          {...register('organizationName')}
+          value={user?.organizationName ?? ''}
+        />
+        <button
+          className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          type="submit"
+          disabled={isSubmitting || !isValid}
+        >
           {isSubmitting ? <LoadingSpinner /> : 'Create Technician'}
         </button>
       </form>

@@ -17,7 +17,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { v4 as uuidv4 } from 'uuid';
 import { AddWorkOrderModalSchema, CreateWorkOrderSchema } from '@/types/customschemas';
-import * as amplitude from "@amplitude/analytics-browser";
+import * as amplitude from '@amplitude/analytics-browser';
 
 export const AddWorkOrderModal = ({
   addWorkOrderModalIsOpen,
@@ -90,7 +90,10 @@ export const AddWorkOrderModal = ({
       setUserLoading(true);
       try {
         //Fetch additional tenant info
-        const getTenantResponse = await axios.post('/api/get-user', { email: formValues.tenantEmail, userType: USER_TYPE.TENANT });
+        const getTenantResponse = await axios.post('/api/get-user', {
+          email: formValues.tenantEmail,
+          userType: USER_TYPE.TENANT,
+        });
 
         const tenant = JSON.parse(getTenantResponse.data.response) as IUser;
         const addressMap: Record<string, any> = tenant.addresses;
@@ -124,17 +127,21 @@ export const AddWorkOrderModal = ({
     async (params) => {
       const woId = uuidv4();
       try {
-        amplitude.track("Submit Work Order", {
-          status: "attempt",
+        amplitude.track('Submit Work Order', {
+          status: 'attempt',
           issueDescription: params.issueDescription,
-          issueLocation: params.issueLocation ?? "None",
-          additionalDetails: params.additionalDetails ?? "None",
+          issueLocation: params.issueLocation ?? 'None',
+          additionalDetails: params.additionalDetails ?? 'None',
           createdByType: USER_TYPE.PROPERTY_MANAGER,
-          organization: user?.organization ?? "None",
+          organization: user?.organization ?? 'None',
           permissionToEnter: params.permissionToEnter,
-          workOrderId: woId
+          workOrderId: woId,
         });
-        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
+        if (
+          !user ||
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        )
           throw new Error(USER_PERMISSION_ERROR);
 
         const validatedBody = CreateWorkOrderSchema.parse({
@@ -151,15 +158,15 @@ export const AddWorkOrderModal = ({
         });
         await axios.post('/api/create-work-order', validatedBody);
 
-        amplitude.track("Submit Work Order", {
-          status: "success",
+        amplitude.track('Submit Work Order', {
+          status: 'success',
           issueDescription: params.issueDescription,
-          issueLocation: params.issueLocation ?? "None",
-          additionalDetails: params.additionalDetails ?? "None",
+          issueLocation: params.issueLocation ?? 'None',
+          additionalDetails: params.additionalDetails ?? 'None',
           createdByType: USER_TYPE.PROPERTY_MANAGER,
-          organization: user?.organization ?? "None",
+          organization: user?.organization ?? 'None',
           permissionToEnter: params.permissionToEnter,
-          workOrderId: woId
+          workOrderId: woId,
         });
         toast.success('Successfully Submitted Work Order!', {
           position: toast.POSITION.TOP_CENTER,
@@ -168,15 +175,15 @@ export const AddWorkOrderModal = ({
         onSuccessfulAdd();
         closeModal();
       } catch (err: any) {
-        amplitude.track("Submit Work Order", {
-          status: "failure",
+        amplitude.track('Submit Work Order', {
+          status: 'failure',
           issueDescription: params.issueDescription,
-          issueLocation: params.issueLocation ?? "None",
-          additionalDetails: params.additionalDetails ?? "None",
+          issueLocation: params.issueLocation ?? 'None',
+          additionalDetails: params.additionalDetails ?? 'None',
           createdByType: USER_TYPE.PROPERTY_MANAGER,
-          organization: user?.organization ?? "None",
+          organization: user?.organization ?? 'None',
           permissionToEnter: params.permissionToEnter,
-          workOrderId: woId
+          workOrderId: woId,
         });
         console.log({ err });
         renderToastError(err, 'Error Creating Work Order');
@@ -196,7 +203,10 @@ export const AddWorkOrderModal = ({
       style={customStyles}
     >
       <div className="w-full text-center mb-2 h-6">
-        <button className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button
+          className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}
+        >
           X Close
         </button>
         <p className="clear-left text-lg md:w-2/5 mx-auto pt-0.5">Create New Work Order</p>
@@ -211,7 +221,9 @@ export const AddWorkOrderModal = ({
             type={'text'}
             {...register('issueDescription', { required: true })}
           />
-          {errors.issueDescription && <p className="text-red-500 text-xs">{errors.issueDescription.message}</p>}
+          {errors.issueDescription && (
+            <p className="text-red-500 text-xs">{errors.issueDescription.message}</p>
+          )}
           <div className="mb-5">
             <Controller
               control={control}
@@ -228,13 +240,27 @@ export const AddWorkOrderModal = ({
                 />
               )}
             />
-            {errors.tenantEmail && <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>}
+            {errors.tenantEmail && (
+              <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>
+            )}
           </div>
           <div className="mb-5">
             <p className="mt-2">Permission To Enter Property* </p>
-            <input className="rounded px-1" id="permission-yes" type={'radio'} value={PTE.YES} {...register('permissionToEnter')} />
+            <input
+              className="rounded px-1"
+              id="permission-yes"
+              type={'radio'}
+              value={PTE.YES}
+              {...register('permissionToEnter')}
+            />
             <label htmlFor="permission-yes">{PTE.YES}</label>
-            <input className="rounded px-1 ml-4" id="permission-no" type={'radio'} value={PTE.NO} {...register('permissionToEnter')} />
+            <input
+              className="rounded px-1 ml-4"
+              id="permission-no"
+              type={'radio'}
+              value={PTE.NO}
+              {...register('permissionToEnter')}
+            />
             <label htmlFor="permission-no">{PTE.NO}</label>
           </div>
 
@@ -278,7 +304,13 @@ export const AddWorkOrderModal = ({
           type="submit"
           disabled={isSubmitting || !isValid || userLoading}
         >
-          {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading user info...' : 'Add Work Order'}
+          {isSubmitting ? (
+            <LoadingSpinner />
+          ) : userLoading ? (
+            'Loading user info...'
+          ) : (
+            'Add Work Order'
+          )}
         </button>
       </form>
     </Modal>

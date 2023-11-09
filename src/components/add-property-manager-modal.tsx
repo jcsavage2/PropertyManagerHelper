@@ -54,16 +54,25 @@ export const AddPropertyManagerModal = ({
   isBrowser && Modal.setAppElement('#property-managers');
 
   function closeModal() {
-    reset()
+    reset();
     setAddPMModalIsOpen(false);
   }
 
-  const { register, handleSubmit, formState: { errors, isSubmitting, isValid }, reset } = useForm<CreatePMSchemaType>({ resolver: zodResolver(CreatePMSchema), mode: "all" });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+  } = useForm<CreatePMSchemaType>({ resolver: zodResolver(CreatePMSchema), mode: 'all' });
 
   const handleCreatePM: SubmitHandler<CreatePMSchemaType> = useCallback(
     async (params) => {
       try {
-        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user?.isAdmin || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
+        if (
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user?.isAdmin ||
+          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
 
@@ -74,10 +83,10 @@ export const AddPropertyManagerModal = ({
           draggable: false,
         });
         onSuccessfulAdd();
-        closeModal()
+        closeModal();
       } catch (err: any) {
         console.log({ err });
-        renderToastError(err, "Error Creating PM");
+        renderToastError(err, 'Error Creating PM');
       }
     },
     [user, userType]
@@ -94,10 +103,15 @@ export const AddPropertyManagerModal = ({
       style={customStyles}
     >
       <div className="w-full text-center mb-2 h-6">
-        <button className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button
+          className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          onClick={closeModal}
+        >
           X
         </button>
-        <p className="clear-left text-lg md:w-2/5 w-3/5 mx-auto pt-0.5">{isMobile ? 'Create PM' : 'Create New Property Manager'}</p>
+        <p className="clear-left text-lg md:w-2/5 w-3/5 mx-auto pt-0.5">
+          {isMobile ? 'Create PM' : 'Create New Property Manager'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(handleCreatePM)} className="flex flex-col">
@@ -107,20 +121,24 @@ export const AddPropertyManagerModal = ({
           placeholder="Full Name*"
           type={'text'}
           {...register('userName', {
-            required: true
+            required: true,
           })}
         />
-        {errors.userName && <p className="text-red-500 text-xs mt-1 italic">{errors.userName.message}</p>}
+        {errors.userName && (
+          <p className="text-red-500 text-xs mt-1 italic">{errors.userName.message}</p>
+        )}
         <input
           className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
           id="email"
           placeholder="Email*"
           type="email"
           {...register('userEmail', {
-            required: true
+            required: true,
           })}
         />
-        {errors.userEmail && <p className="text-red-500 text-xs mt-1 italic">{errors.userEmail.message}</p>}
+        {errors.userEmail && (
+          <p className="text-red-500 text-xs mt-1 italic">{errors.userEmail.message}</p>
+        )}
         <div className="flex flex-row items-center justify-center h-4 mt-5">
           <label htmlFor="isAdmin" className=" mr-2">
             Is admin?
@@ -130,19 +148,23 @@ export const AddPropertyManagerModal = ({
             id="isAdmin"
             type="checkbox"
             {...register('isAdmin', {
-            required: true
-          })}
+              required: true,
+            })}
           />
         </div>
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
-        <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
+        <input
+          type="hidden"
+          {...register('organizationName')}
+          value={user?.organizationName ?? ''}
+        />
 
         <button
           className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
           type="submit"
           disabled={isSubmitting || !isValid}
         >
-          {isSubmitting ? <LoadingSpinner containerClass='h-10' /> : 'Create Property Manager'}
+          {isSubmitting ? <LoadingSpinner containerClass="h-10" /> : 'Create Property Manager'}
         </button>
       </form>
     </Modal>

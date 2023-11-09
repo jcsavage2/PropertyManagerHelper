@@ -53,7 +53,7 @@ export class OrganizationEntity {
     return result.Attributes;
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string; }) {
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
     const params = {
       pk,
       sk,

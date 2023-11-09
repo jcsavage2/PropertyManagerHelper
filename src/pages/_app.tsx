@@ -1,6 +1,6 @@
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
-import { SessionProvider, SessionProviderProps, useSession } from "next-auth/react";
+import { SessionProvider, SessionProviderProps, useSession } from 'next-auth/react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Head from 'next/head';
@@ -8,10 +8,11 @@ import React from 'react';
 import { UserContextProvider } from '@/context/user';
 import { NavLinks } from '@/components/nav-links';
 
-
-
-export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
-
+export default function App({
+  Component,
+  pageProps,
+  session,
+}: AppProps & { session: SessionProviderProps['session'] }) {
   return (
     <SessionProvider
       session={session}
@@ -28,6 +29,6 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
         <ToastContainer />
         <Component {...pageProps} />
       </UserContextProvider>
-    </SessionProvider >
+    </SessionProvider>
   );
 }

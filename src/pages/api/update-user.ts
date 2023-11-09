@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const session = await getServerSession(req, res, options);
     if (!session) {
-      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR)
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
     const body: UpdateUser = UpdateUserSchema.parse(req.body);
@@ -24,6 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(updatedUser) });
   } catch (error: any) {
     console.error(error);
-    return res.status(error.status || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error.status || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

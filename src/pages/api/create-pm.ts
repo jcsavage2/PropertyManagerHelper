@@ -21,7 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const sessionUser: IUser = session?.user;
 
     //User must be an admin pm to create a pm
-    if (!session || !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || !sessionUser?.isAdmin) {
+    if (
+      !session ||
+      !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) ||
+      !sessionUser?.isAdmin
+    ) {
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
@@ -35,7 +39,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       throw new ApiError(API_STATUS.FORBIDDEN, 'User already exists.', true);
     }
 
-    const newPM = await userEntity.createPropertyManager({ organization, organizationName, userEmail, userName, isAdmin });
+    const newPM = await userEntity.createPropertyManager({
+      organization,
+      organizationName,
+      userEmail,
+      userName,
+      isAdmin,
+    });
 
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
@@ -104,6 +114,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newPM) });
   } catch (error: any) {
     console.log({ error });
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

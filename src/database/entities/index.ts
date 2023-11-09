@@ -1,5 +1,5 @@
-import { validateStartKey } from "@/types/basevalidators";
-import { z } from "zod";
+import { validateStartKey } from '@/types/basevalidators';
+import { z } from 'zod';
 
 export type StartKey = z.infer<typeof validateStartKey>;
 

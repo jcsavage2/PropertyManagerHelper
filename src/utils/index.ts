@@ -9,7 +9,13 @@ export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
 };
 
-export const mergeWorkOrderAndAiResponse = ({ workOrder, aiResponse }: { workOrder: IssueInformation; aiResponse: AiJSONResponse }) => {
+export const mergeWorkOrderAndAiResponse = ({
+  workOrder,
+  aiResponse,
+}: {
+  workOrder: IssueInformation;
+  aiResponse: AiJSONResponse;
+}) => {
   const merged: IssueInformation = workOrder;
   for (const workOrderKey of Object.keys(workOrder)) {
     const aiValue = aiResponse?.[workOrderKey as keyof IssueInformation];
@@ -32,12 +38,20 @@ export const hasAllInfo = (workOrder: IssueInformation) => {
  * @returns An initial prompt which is dynamically generated based on the information we already have.
  * Depending on the information that the program has, the prompt will ask user for either issue information or user information.
  */
-export const generatePrompt = (workOrder: IssueInformation, unitInfo: string, streetAddress: string): ChatCompletionRequestMessage => {
+export const generatePrompt = (
+  workOrder: IssueInformation,
+  unitInfo: string,
+  streetAddress: string
+): ChatCompletionRequestMessage => {
   return {
     role: 'system',
     content: `You're a property management chatbot. The user is a tenant. Think like a property manager who needs to get information from the user and diagnose what their issue is. \
-        All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(findIssueSample)}
-        and should contain all of the keys: ${Object.keys(findIssueSample).join(', ')}, even if there are no values. \
+        All of your responses in this chat should be stringified JSON like this: ${JSON.stringify(
+          findIssueSample
+        )}
+        and should contain all of the keys: ${Object.keys(findIssueSample).join(
+          ', '
+        )}, even if there are no values. \
         Here is the current state of the work order: ${JSON.stringify(workOrder)}. \
         Once you have values for "issueDescription" and "issueLocation", ask the user if they would like to provide any additional details. Let the user know that the "additionalDetails" field is optional. \
         ${
@@ -88,7 +102,13 @@ export const generatePrompt = (workOrder: IssueInformation, unitInfo: string, st
  * @param response string response from GPT; no format requirements
  * @returns A stringified JSON object ready to be sent to the frontend; or a null value if response was not in the correct format.
  */
-export const processAiResponse = ({ response, workOrderData }: { response: string; workOrderData: IssueInformation }): string | null => {
+export const processAiResponse = ({
+  response,
+  workOrderData,
+}: {
+  response: string;
+  workOrderData: IssueInformation;
+}): string | null => {
   try {
     let returnValue: string | null = null;
     const jsonStart = response.indexOf('{');
@@ -97,10 +117,17 @@ export const processAiResponse = ({ response, workOrderData }: { response: strin
     if (jsonStart !== -1 && jsonEnd !== -1) {
       const regex = /&quot;/g;
       const substr = response.substring(jsonStart, jsonEnd + 1);
-      const cleanedString = substr.replace(regex, '"').replace('True', 'true').replace('False', 'false').replace('undefined', '""');
+      const cleanedString = substr
+        .replace(regex, '"')
+        .replace('True', 'true')
+        .replace('False', 'false')
+        .replace('undefined', '""');
       let jsonResponse = JSON.parse(cleanedString) as AiJSONResponse;
 
-      const merged = mergeWorkOrderAndAiResponse({ workOrder: workOrderData, aiResponse: jsonResponse });
+      const merged = mergeWorkOrderAndAiResponse({
+        workOrder: workOrderData,
+        aiResponse: jsonResponse,
+      });
 
       if (hasAllInfo(merged)) {
         jsonResponse.aiMessage = `Please select the correct address and provide permission for the technician to enter your apartment. Then, click the "submit" button to send your Service Request and we will handle the rest!`;
@@ -177,7 +204,9 @@ export function generateKSUID() {
 export function setToShortenedString(set: Set<string>): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
-  const firstVal = toTitleCase(arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]);
+  const firstVal = toTitleCase(
+    arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]
+  );
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
 }
 
@@ -240,7 +269,11 @@ export function toggleBodyScroll(open: boolean) {
   }
 }
 
-export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: string, pmName: string): string {
+export function getInviteTenantSendgridEmailBody(
+  tenantName: string,
+  authLink: string,
+  pmName: string
+): string {
   const displayPmName = toTitleCase(pmName);
   const displayTenantName = toTitleCase(tenantName);
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -298,8 +331,8 @@ export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: s
 }
 
 // Handles rendering api error messages to toast when necessary, otherwise uses defaultMesssage
-export function renderToastError(e: any, defaultMessage: string){
-  const errorMessage: string = e.response?.data?.userErrorMessage ?? defaultMessage
+export function renderToastError(e: any, defaultMessage: string) {
+  const errorMessage: string = e.response?.data?.userErrorMessage ?? defaultMessage;
   toast.error(errorMessage, {
     position: toast.POSITION.TOP_CENTER,
     draggable: false,

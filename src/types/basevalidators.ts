@@ -38,14 +38,18 @@ export const lowerCaseOptionalEmail = z
   .nullable()
   .transform((val) => (val?.length ? val : undefined));
 
-  //Empty strings resolve to null
-  export const nullableString = z
+//Empty strings resolve to null
+export const nullableString = z
   .string()
   .nullable()
   .transform((val) => (val?.length ? val : null));
 
 // -- Addresses -- //
-export const zipCode = z.string().min(1, { message: 'Input is required' }).max(10, { message: 'Input must be a zip code' }).trim();
+export const zipCode = z
+  .string()
+  .min(1, { message: 'Input is required' })
+  .max(10, { message: 'Input must be a zip code' })
+  .trim();
 export const country = z.string().min(1).max(2).trim().toUpperCase().default('US'); //Default to the US for now
 export const validateProperty = z.object({
   address: lowerCaseRequiredString,
@@ -57,11 +61,17 @@ export const validateProperty = z.object({
   numBeds: requiredNumber.default(1),
   numBaths: requiredNumber.default(1),
 });
-export const validatePropertyWithId = validateProperty.extend({ propertyUUId: lowerCaseRequiredString });
+export const validatePropertyWithId = validateProperty.extend({
+  propertyUUId: lowerCaseRequiredString,
+});
 
 // -- Other -- //
 export const validatePTE = z.enum([PTE.YES, PTE.NO]);
-export const validateUserType = z.enum([USER_TYPE.TENANT, USER_TYPE.TECHNICIAN, USER_TYPE.PROPERTY_MANAGER]);
+export const validateUserType = z.enum([
+  USER_TYPE.TENANT,
+  USER_TYPE.TECHNICIAN,
+  USER_TYPE.PROPERTY_MANAGER,
+]);
 export const validateStartKey = z.any().optional();
 
 export const validateInviteStatusFilter = z.object({

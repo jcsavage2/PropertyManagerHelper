@@ -14,8 +14,6 @@ import { MISSING_ENV, errorToResponse, initializeSendgrid } from './_utils';
 import { AssignTechnicianBody } from '@/types';
 import { init, track } from '@amplitude/analytics-node';
 
-
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
     const session = await getServerSession(req, res, options);
@@ -71,7 +69,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
-    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(workOrderId)}`;
+    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
+      workOrderId
+    )}`;
 
     /**
      * Send SMS message to the technician if they have a phone number.
@@ -80,11 +80,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (technicianUser?.phone) {
       try {
         await init('ff368b4943b9a03a49b2c3b925e62021').promise;
-        track("SMS Notification", {
-          status: "attempt",
-          assignedTo: technicianEmail,
-          assignedBy: pmEmail
-        },
+        track(
+          'SMS Notification',
+          {
+            status: 'attempt',
+            assignedTo: technicianEmail,
+            assignedBy: pmEmail,
+          },
           { user_id: pmEmail }
         );
         const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
@@ -97,25 +99,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         twilioClient.messages.create({
           to: technicianUser.phone,
           from: '+18449092150',
-          body: `You've been assigned a work order in Pillar by ${toTitleCase(pmName)}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(
-            property.address
-          )}\n\n${!!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``}${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`
-            }View the full work order at ${workOrderLink}\n\n 
+          body: `You've been assigned a work order in Pillar by ${toTitleCase(
+            pmName
+          )}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(property.address)}\n\n${
+            !!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``
+          }${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${
+            permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`
+          }View the full work order at ${workOrderLink}\n\n 
           `,
         });
-        track("SMS Notification", {
-          status: "success",
-          assignedTo: technicianEmail,
-          assignedBy: pmEmail
-        },
+        track(
+          'SMS Notification',
+          {
+            status: 'success',
+            assignedTo: technicianEmail,
+            assignedBy: pmEmail,
+          },
           { user_id: pmEmail }
         );
       } catch (err) {
-        track("SMS Notification", {
-          status: "failed",
-          assignedTo: technicianEmail,
-          assignedBy: pmEmail
-        },
+        track(
+          'SMS Notification',
+          {
+            status: 'failed',
+            assignedTo: technicianEmail,
+            assignedBy: pmEmail,
+          },
           { user_id: pmEmail }
         );
         console.log({ err });
@@ -191,6 +200,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(assignedTechnician) });
   } catch (error: any) {
     console.error(error);
-    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

@@ -10,7 +10,7 @@ export const ConfirmationModal = ({
   childrenComponents,
   onCancel,
   buttonsDisabled,
-  fetchAllTenants
+  fetchAllTenants,
 }: {
   confirmationModalIsOpen: boolean;
   setConfirmationModalIsOpen: Dispatch<SetStateAction<boolean>>;
@@ -52,8 +52,7 @@ export const ConfirmationModal = ({
       onAfterOpen={() => {
         fetchAllTenants && fetchAllTenants();
         toggleBodyScroll(true);
-      }
-      }
+      }}
       onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Example Modal"

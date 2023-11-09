@@ -38,7 +38,9 @@ const Home = () => {
   return (
     <>
       <div className="text-center">
-        <h1 className={` ${isMobile ? 'text-xl' : 'text-2xl'} mt-6`}>Welcome to Pillar {!!user?.organizationName && `@ ${user.organizationName}`}</h1>
+        <h1 className={` ${isMobile ? 'text-xl' : 'text-2xl'} mt-6`}>
+          Welcome to Pillar {!!user?.organizationName && `@ ${user.organizationName}`}
+        </h1>
         <br />
         {user && user.email ? (
           <div className="flex flex-col justify-center w-full items-center">
