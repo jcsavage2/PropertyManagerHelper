@@ -30,8 +30,10 @@ const Properties = () => {
           startKey: isInitial ? undefined : startKey,
         });
         const response = JSON.parse(data.response);
-        const _properties = response.properties as IProperty[];
-        isInitial ? setProperties(_properties) : setProperties([...properties, ..._properties]);
+        const _properties = (response.properties ?? []) as IProperty[];
+        isInitial
+          ? setProperties(_properties.sort((a, b) => a.unit > b.unit ? 1 : -1).sort((a, b) => a.address > b.address ? -1 : 1))
+          : setProperties([...properties, ..._properties].sort((a, b) => a.unit > b.unit ? -1 : 1).sort((a, b) => a.address > b.address ? -1 : 1));
         setStartKey(response.startKey);
       } catch (e) {
         console.log({ e });
@@ -71,9 +73,8 @@ const Properties = () => {
                 return (
                   <div
                     key={`${property.pk}-${property.sk}-${index}`}
-                    className={`flex flex-row justify-between items-center w-full rounded-lg py-2 px-2 h-40 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${
-                      index === 0 && 'mt-1'
-                    } ${index < properties.length - 1 && 'mb-3'}`}
+                    className={`flex flex-row justify-between items-center w-full rounded-lg py-2 px-2 h-40 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${index === 0 && 'mt-1'
+                      } ${index < properties.length - 1 && 'mb-3'}`}
                   >
                     <div className="pl-2 text-gray-800">
                       <p className="text-xl ">{toTitleCase(property.address)} </p>
