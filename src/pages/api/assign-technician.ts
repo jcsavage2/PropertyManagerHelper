@@ -1,44 +1,43 @@
-import { Data } from '@/database';
 import { EventEntity } from '@/database/entities/event';
-import { PropertyAddress, WorkOrderEntity } from '@/database/entities/work-order';
+import { WorkOrderEntity } from '@/database/entities/work-order';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
-import { PTE_Type, StatusType } from '@/types';
-import { deconstructKey } from '@/utils';
-import twilio from "twilio";
+import { deconstructKey, toTitleCase } from '@/utils';
+import twilio from 'twilio';
 import { UserEntity } from '@/database/entities/user';
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { ApiError, ApiResponse } from './_types';
+import { AssignTechnicianSchema } from '@/types/customschemas';
+import { MISSING_ENV, errorToResponse, initializeSendgrid } from './_utils';
+import { AssignTechnicianBody } from '@/types';
+import { init, track } from '@amplitude/analytics-node';
 
-export type AssignTechnicianBody = {
-  organization: string;
-  ksuID: string; //need to pass ksuID from original WO record
-  technicianEmail: string;
-  technicianName: string;
-  workOrderId: string;
-  address: PropertyAddress;
-  status: StatusType;
-  issueDescription: string;
-  permissionToEnter: PTE_Type;
-  pmEmail: string;
-  pmName: string;
-  tenantEmail: string;
-  tenantName: string;
-  oldAssignedTo: Set<string>;
-};
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = req.body as AssignTechnicianBody;
-    const { ksuID, workOrderId, pmEmail, technicianEmail, technicianName, address, status, issueDescription, permissionToEnter, organization, pmName, tenantName, tenantEmail, oldAssignedTo } = body;
-    if (!workOrderId || !pmEmail || !technicianEmail || !technicianName || !organization || !ksuID || !pmName || !tenantEmail || !tenantName || !oldAssignedTo) {
-      throw new Error('Invalid params to assign technician');
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
+
+    const body: AssignTechnicianBody = AssignTechnicianSchema.parse(req.body);
+    const {
+      ksuID,
+      workOrderId,
+      pmEmail,
+      technicianEmail,
+      technicianName,
+      property,
+      status,
+      issueDescription,
+      permissionToEnter,
+      organization,
+      pmName,
+      tenantName,
+      tenantEmail,
+      oldAssignedTo,
+    } = body;
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
@@ -48,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       organization,
       ksuID,
       workOrderId: deconstructKey(workOrderId),
-      address,
+      property,
       technicianEmail,
       technicianName,
       status,
@@ -58,24 +57,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       pmName,
       tenantEmail,
       tenantName,
-      oldAssignedTo
+      oldAssignedTo,
     });
 
     await eventEntity.create({
       workOrderId: deconstructKey(workOrderId),
       madeByEmail: pmEmail,
       madeByName: pmName,
-      message: `Assigned ${technicianName} to the work order`,
+      message: `Assigned ${toTitleCase(technicianName)} to the work order`,
     });
 
-    /** SEND THE EMAIL TO THE TECHNICIAN */
-    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
-    if (!apiKey) {
-      throw new Error('missing SENDGRID_API_KEY env variable.');
-    }
-    sendgrid.setApiKey(apiKey);
+    initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
-    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(workOrderId)}`;
+    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
+      workOrderId
+    )}`;
 
     /**
      * Send SMS message to the technician if they have a phone number.
@@ -83,26 +79,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const technicianUser = await userEntity.get({ email: technicianEmail });
     if (technicianUser?.phone) {
       try {
+        await init('ff368b4943b9a03a49b2c3b925e62021').promise;
+        track(
+          'SMS Notification',
+          {
+            status: 'attempt',
+            assignedTo: technicianEmail,
+            assignedBy: pmEmail,
+          },
+          { user_id: pmEmail }
+        );
         const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
         const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
         if (!smsApiKey || !smsAuthToken) {
-          throw new Error('missing SMS env variable(s).');
+          throw new Error(MISSING_ENV('Twilio sms'));
         }
 
         const twilioClient = twilio(smsApiKey, smsAuthToken);
         twilioClient.messages.create({
           to: technicianUser.phone,
-          from: "+18449092150",
-          body: `You've been assigned a work order in Pillar. View the work order at ${workOrderLink} `
+          from: '+18449092150',
+          body: `You've been assigned a work order in Pillar by ${toTitleCase(
+            pmName
+          )}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(property.address)}\n\n${
+            !!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``
+          }${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${
+            permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`
+          }View the full work order at ${workOrderLink}\n\n 
+          `,
         });
+        track(
+          'SMS Notification',
+          {
+            status: 'success',
+            assignedTo: technicianEmail,
+            assignedBy: pmEmail,
+          },
+          { user_id: pmEmail }
+        );
       } catch (err) {
+        track(
+          'SMS Notification',
+          {
+            status: 'failed',
+            assignedTo: technicianEmail,
+            assignedBy: pmEmail,
+          },
+          { user_id: pmEmail }
+        );
         console.log({ err });
       }
     }
 
+    /** SEND THE EMAIL TO THE TECHNICIAN */
     await sendgrid.send({
       to: technicianEmail,
-      from: "pillar@pillarhq.co",
+      from: 'pillar@pillarhq.co',
       subject: `Work Order ${workOrderId} Assigned To You`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
@@ -151,8 +183,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h1>You've Been Assigned To A Work Order by ${pmName}</h1>
+          <h1>You've Been Assigned To A Work Order by ${toTitleCase(pmName)}</h1>
           <a href="${workOrderLink}">View Work Order in PILLAR</a>
+          <p>Issue: ${issueDescription}</p>
+          <p>Address: ${toTitleCase(property.address)}</p>
+          ${property.unit ? `<p>Unit: ${toTitleCase(property.unit)}</p>` : ``}
+          ${tenantName && `<p>Tenant: ${toTitleCase(tenantName)}</p>`}
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
           </p>
@@ -161,10 +197,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </html>`,
     });
 
-    return res.status(200).json({ response: JSON.stringify(assignedTechnician) });
-  } catch (error) {
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(assignedTechnician) });
+  } catch (error: any) {
     console.error(error);
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }
-
-// As a technician I would want to see: street address, unit, city, state, zip, status, issueDescription. Upon clicking a work Order I could see comments etc...

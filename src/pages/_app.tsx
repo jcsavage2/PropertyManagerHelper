@@ -1,23 +1,18 @@
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
-import { SessionProvider, SessionProviderProps } from "next-auth/react";
+import { SessionProvider, SessionProviderProps, useSession } from 'next-auth/react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Head from 'next/head';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { UserContextProvider } from '@/context/user';
 import { NavLinks } from '@/components/nav-links';
-import * as Fullstory from "@fullstory/browser";
 
-
-export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps["session"]; }) {
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_IS_LOCAL) {
-      return;
-    } else {
-      Fullstory.init({ orgId: 'o-1PYDZB-na1' });
-    }
-  }, []);
+export default function App({
+  Component,
+  pageProps,
+  session,
+}: AppProps & { session: SessionProviderProps['session'] }) {
   return (
     <SessionProvider
       session={session}
@@ -34,6 +29,6 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
         <ToastContainer />
         <Component {...pageProps} />
       </UserContextProvider>
-    </SessionProvider >
+    </SessionProvider>
   );
 }

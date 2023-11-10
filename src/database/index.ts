@@ -2,13 +2,15 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { Table } from 'dynamodb-toolbox';
 import { S3Client } from '@aws-sdk/client-s3';
+import { ApiError as _ApiError } from 'next/dist/server/api-utils';
+import { MISSING_ENV } from '@/pages/api/_utils';
 
 const accessKeyId = process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY;
 const region = process.env.NEXT_PUBLIC_REGION;
 
 if (!accessKeyId || !secretAccessKey || !region) {
-  throw new Error('missing aws credentials');
+  throw new Error(MISSING_ENV('AWS Credentials'));
 }
 
 export const DynamoDBClientConfig = {
@@ -35,7 +37,10 @@ const unmarshallOptions = {
 
 const translateConfig = { marshallOptions, unmarshallOptions };
 
-export const DocumentClient = DynamoDBDocument.from(new DynamoDB({ ...DynamoDBClientConfig }), translateConfig);
+export const DocumentClient = DynamoDBDocument.from(
+  new DynamoDB({ ...DynamoDBClientConfig }),
+  translateConfig
+);
 export const BucketClient = new S3Client({ ...DynamoDBClientConfig });
 
 export const INDEXES = {
@@ -58,10 +63,6 @@ export const PillarDynamoTable = new Table({
   removeNullAttributes: true,
   DocumentClient,
 });
-
-export type Data = {
-  response: string;
-};
 
 export class IBaseEntity {
   pk: string;

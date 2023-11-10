@@ -1,30 +1,32 @@
-import { FormEventHandler, useCallback, useState } from 'react';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { CreateOrgSchema } from '@/types/customschemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CreateOrg } from '@/types';
+import { toast } from 'react-toastify';
 
 const OrgMethods = () => {
   const session = useSession();
   const sessionUser = session.data?.user ?? null;
   const sessionStatus = session.status;
-  const [orgName, setOrgName] = useState('');
 
-  const handleCreateOrganization: FormEventHandler<HTMLFormElement> = useCallback(
-    async (event) => {
-      event.preventDefault();
-      await axios.post('/api/create-org', { name: orgName });
+  const handleCreateOrganization: SubmitHandler<CreateOrg> = async (params) => {
+    await axios.post('/api/create-org', params);
+    reset();
+    toast.success('Org Created!', {
+      position: toast.POSITION.TOP_CENTER,
+      draggable: false,
+    });
+  };
 
-      setOrgName('');
-    },
-    [orgName]
-  );
-
-  const handleOrgNameChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setOrgName(e.currentTarget.value);
-    },
-    [setOrgName]
-  );
+  const {
+    reset,
+    handleSubmit,
+    register,
+    formState: { isSubmitting, isValid, errors },
+  } = useForm<CreateOrg>({ resolver: zodResolver(CreateOrgSchema), mode: 'all' });
 
   if (sessionStatus === 'loading') {
     return <LoadingSpinner containerClass={'mt-4'} />;
@@ -40,16 +42,26 @@ const OrgMethods = () => {
 
   return (
     <div className="w-full text-center">
-      <form onSubmit={handleCreateOrganization} className="w-1/2 mx-auto mt-4" style={{ display: 'grid' }}>
+      <form
+        onSubmit={handleSubmit(handleCreateOrganization)}
+        className="w-1/2 mx-auto mt-4"
+        style={{ display: 'grid' }}
+      >
         <input
           className="rounded px-1 border-solid border-2 border-slate-200"
           id="orgName"
           placeholder="Organization Name"
           type={'text'}
-          value={orgName}
-          onChange={handleOrgNameChange}
+          {...register('orgName', {
+            required: true,
+          })}
         />
-        <button className="bg-blue-200 p-3 mt-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit">
+        {errors.orgName && <p className="text-red-500 text-xs italic">{errors.orgName.message}</p>}
+        <button
+          className="bg-blue-200 p-3 mt-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+          type="submit"
+          disabled={isSubmitting || !isValid}
+        >
           Create Organization
         </button>
       </form>

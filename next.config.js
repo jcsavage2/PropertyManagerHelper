@@ -1,14 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-}
+};
 
-module.exports = nextConfig
-
+module.exports = nextConfig;
 
 // Injected content via Sentry wizard below
 
-const { withSentryConfig } = require("@sentry/nextjs");
+const { withSentryConfig } = require('@sentry/nextjs');
 
 module.exports = withSentryConfig(
   module.exports,
@@ -18,9 +17,9 @@ module.exports = withSentryConfig(
 
     // Suppresses source map uploading logs during build
     silent: true,
-    org: "pillar-technologies-llc",
-    project: "javascript-nextjs",
-    authToken: process.env.NEXT_PUBLIC_SENTRY_AUTH_TOKEN
+    org: 'pillar-technologies-llc',
+    project: 'javascript-nextjs',
+    authToken: process.env.NEXT_PUBLIC_SENTRY_AUTH_TOKEN,
   },
   {
     // For all available options, see:
@@ -33,7 +32,7 @@ module.exports = withSentryConfig(
     transpileClientSDK: true,
 
     // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
-    tunnelRoute: "/monitoring",
+    tunnelRoute: '/monitoring',
 
     // Hides source maps from generated client bundles
     hideSourceMaps: true,

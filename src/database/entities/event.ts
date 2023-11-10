@@ -2,8 +2,8 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
-import { GetWorkOrderEvents } from '@/pages/api/get-work-order-events';
 import { PAGE_SIZE } from '@/constants';
+import { GetWorkOrderEvents } from '@/types';
 
 type CreateEventProps = {
   workOrderId: string;
@@ -55,13 +55,16 @@ export class EventEntity {
    * @returns All events for a work order
    */
   public async getEvents({ workOrderId, startKey }: GetWorkOrderEvents) {
-    const { Items, LastEvaluatedKey } = await this.eventEntity.query(generateKey(ENTITY_KEY.EVENT, workOrderId), {
-      startKey,
-      reverse: true,
-      limit: PAGE_SIZE,
-    });
+    const { Items, LastEvaluatedKey } = await this.eventEntity.query(
+      generateKey(ENTITY_KEY.EVENT, workOrderId),
+      {
+        startKey,
+        reverse: true,
+        limit: PAGE_SIZE,
+      }
+    );
     startKey = LastEvaluatedKey as StartKey;
-    return {events: Items ?? [], startKey};
+    return { events: Items ?? [], startKey };
   }
 
   public async delete({ pk, sk }: { pk: string; sk: string }) {
@@ -72,5 +75,4 @@ export class EventEntity {
     const result = await this.eventEntity.delete(params);
     return result;
   }
-
 }

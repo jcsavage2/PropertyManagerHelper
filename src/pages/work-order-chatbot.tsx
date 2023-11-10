@@ -1,30 +1,39 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { hasAllIssueInfo } from '@/utils';
-import { AddressOptionType, AiJSONResponse, ApiRequest, PTE_Type, SendEmailApiRequest, WorkOrder } from '@/types';
+import { hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
+import {
+  AddressOption,
+  AiJSONResponse,
+  ChatbotRequest,
+  CreateWorkOrder,
+  IssueInformation,
+  PTE_Type,
+} from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
-import { ENTITIES } from '@/database/entities';
 import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
-import { UpdateUser } from './api/update-user';
+import * as amplitude from '@amplitude/analytics-browser';
+import {
+  ChatbotRequestSchema,
+  CreateWorkOrderSchema,
+  UpdateUserSchema,
+} from '@/types/customschemas';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
-  const [lastUserMessage, setLastUserMessage] = useState('');
   const { user, sessionStatus } = useSessionUser();
   const { isMobile } = useDevice();
 
-  const [platform, setPlatform] = useState<"Desktop" | "iOS" | "Android">();
+  const [platform, setPlatform] = useState<'Desktop' | 'iOS' | 'Android'>();
 
-  const [isUsingAI, _setIsUsingAI] = useState(true);
-  const [selectedAddress, setSelectedAddress] = useState<AddressOptionType | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<AddressOption | null>(null);
 
   const [permissionToEnter, setPermissionToEnter] = useState<PTE_Type>(PTE.YES);
   const [issueDescription, setIssueDescription] = useState('');
@@ -33,73 +42,98 @@ export default function WorkOrderChatbot() {
 
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
-  const [hasConnectionWithGPT, setHasConnectionWithGPT] = useState(true);
-  const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false);
+  const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false); // Allows the user to finish and submit the work order using a form
+  const [errorCount, setErrorCount] = useState(0); // Tracks the number of errors for the openAI endpoint service-request
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
   const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
 
   const [uploadingFiles, setUploadingFiles] = useState(false);
-  const [woId, _setWoId] = useState(uuidv4());
+  const [woId, setWoId] = useState(uuidv4());
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  const [isBrowser, setIsBrowser] = useState(false);
   const [downloadModalIsOpen, setDownloadModalIsOpen] = useState(false);
 
-  const addressesOptions: AddressOptionType[] = useMemo(() => {
+  const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
+
+  const workOrder: IssueInformation = {
+    issueDescription,
+    issueLocation,
+    additionalDetails,
+  };
+
+  const addressesOptions: AddressOption[] = useMemo(() => {
     if (!user?.addresses) return [];
     return (
       Object.values(user?.addresses)?.map(
         (address: any) =>
-        ({
-          label: `${address?.address} ${address?.unit ? address?.unit : ''}`.trim(),
-          value: address,
-        } as AddressOptionType)
+          ({
+            label: `${toTitleCase(address?.address)} ${
+              address?.unit ? toTitleCase(address?.unit) : ''
+            }`.trim(),
+            value: address,
+          }) as AddressOption
       ) ?? []
     );
   }, [user?.addresses]);
 
+  const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
     setIsBrowser(true);
   }, []);
+  if (isBrowser && document.querySelector('#chatbot')) {
+    Modal.setAppElement('#chatbot');
+  }
 
   useEffect(() => {
     if (isBrowser) {
       const isDesktop = window.innerWidth >= 800;
-      setPlatform(isDesktop ? "Desktop" : window.navigator.userAgent.toLowerCase().includes("android") ? "Android" : "iOS");
+      setPlatform(
+        isDesktop
+          ? 'Desktop'
+          : window.navigator.userAgent.toLowerCase().includes('android')
+          ? 'Android'
+          : 'iOS'
+      );
     }
   }, [isBrowser]);
 
   useEffect(() => {
-    const hasSeenDownloadModal = localStorage.getItem("Pillar::HAS_SEEN");
-    if ((platform === "iOS" || platform === "Android") && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
+    const hasSeenDownloadModal = localStorage.getItem('Pillar::HAS_SEEN');
+    if (
+      (platform === 'iOS' || platform === 'Android') &&
+      user &&
+      !user?.hasSeenDownloadPrompt &&
+      !hasSeenDownloadModal
+    ) {
       async function updateUserHasSeenDownloadPrompt() {
-        if (user?.pk && user.sk) {
-          const body: UpdateUser = { pk: user?.pk, sk: user?.sk, hasSeenDownloadPrompt: true };
-          await axios.post("/api/update-user", { ...body });
-          localStorage.setItem("Pillar::HAS_SEEN", "true");
-        }
+        const params = UpdateUserSchema.parse({
+          pk: user?.pk,
+          sk: user?.sk,
+          hasSeenDownloadPrompt: true,
+        });
+        await axios.post('/api/update-user', params);
+        localStorage.setItem('Pillar::HAS_SEEN', 'true');
       }
-      setDownloadModalIsOpen(true);
-      updateUserHasSeenDownloadPrompt();
+      try {
+        setDownloadModalIsOpen(true);
+        updateUserHasSeenDownloadPrompt();
+      } catch (err: any) {
+        console.log({ err });
+      }
     }
   }, [platform, user]);
 
   //If the user has only one address, select it automatically
   useEffect(() => {
-    if (addressesOptions && addressesOptions.length === 1) {
+    if (!addressesOptions) return;
+    if (addressesOptions.length === 1) {
       setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(true);
     } else {
+      setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(false);
     }
   }, [addressesOptions]);
-
-
-
-  if (isBrowser && document.querySelector("#chatbot")) {
-    Modal.setAppElement('#chatbot');
-  }
-
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -107,17 +141,13 @@ export default function WorkOrderChatbot() {
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, permissionToEnter]);
+  }, [messages, permissionToEnter, submitAnywaysSkip, selectedAddress]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
-      if (isUsingAI) {
-        setUserMessage(e.currentTarget.value);
-      } else {
-        setIssueDescription(e.currentTarget.value);
-      }
+      setUserMessage(e.currentTarget.value);
     },
-    [setUserMessage, setIssueDescription, isUsingAI]
+    [setUserMessage]
   );
 
   const handleIssueDescriptionChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -144,129 +174,175 @@ export default function WorkOrderChatbot() {
     },
     [setPermissionToEnter]
   );
-  const handleAddressSelectChange = (value: AddressOptionType) => {
-    setSelectedAddress(value);
-  };
 
   const handleSubmitWorkOrder: React.MouseEventHandler<HTMLButtonElement> = async () => {
     setSubmittingWorkOrderLoading(true);
-    if (!user || !user.organization || !user.pmEmail || !user.email) {
-      alert('Your user account is not set up properly, please contact your property manager for assistance.');
-      return;
-    }
-    if (!selectedAddress) {
-      toast.error('Error Submitting Work Order. Please Try Again', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
+    try {
+      amplitude.track('Submit Work Order', {
+        status: 'attempt',
+        messages: messages.length,
+        issueDescription,
+        issueLocation,
+        additionalDetails,
+        createdByType: USER_TYPE.TENANT,
+        organization: user?.organization ?? 'None',
+        permissionToEnter,
+        workOrderId: woId,
       });
-      setSubmittingWorkOrderLoading(false);
-      return;
+      if (!user || !user.organization || !user.pmEmail || !user.email) {
+        alert(
+          'Your user account is not set up properly, please contact your property manager for assistance.'
+        );
+        return;
+      }
+
+      const parsedAddress = selectedAddress?.value;
+      const params: CreateWorkOrder = CreateWorkOrderSchema.parse({
+        issueDescription,
+        issueLocation,
+        additionalDetails,
+        messages,
+        createdByType: USER_TYPE.TENANT,
+        creatorEmail: user.email,
+        creatorName: user.name,
+        permissionToEnter,
+        pmEmail: user.pmEmail,
+        pmName: user.pmName,
+        organization: user.organization,
+        property: {
+          address: parsedAddress.address,
+          state: parsedAddress.state,
+          city: parsedAddress.city,
+          unit: parsedAddress.unit,
+          postalCode: parsedAddress.postalCode,
+        },
+        images: uploadedFiles,
+        woId,
+      });
+
+      const res = await axios.post('/api/create-work-order', params);
+      amplitude.track('Submit Work Order', {
+        status: 'success',
+        issueDescription,
+        issueLocation,
+        messages: messages.length,
+        additionalDetails,
+        createdByType: USER_TYPE.TENANT,
+        organization: user?.organization ?? 'None',
+        permissionToEnter,
+        workOrderId: woId,
+      });
+      toast.success(
+        'Successfully Submitted Work Order. An email has been sent to you as confirmation',
+        {
+          position: toast.POSITION.TOP_CENTER,
+          draggable: false,
+        }
+      );
+    } catch (error: any) {
+      console.log({ error });
+      amplitude.track('Submit Work Order', {
+        status: 'failure',
+        issueDescription,
+        issueLocation,
+        messages: messages.length,
+        additionalDetails,
+        createdByType: USER_TYPE.TENANT,
+        organization: user?.organization ?? 'None',
+        permissionToEnter,
+        workOrderId: woId,
+      });
+      renderToastError(error, 'Error Submitting Work Order');
     }
 
-    const parsedAddress = selectedAddress.value;
-    const body: SendEmailApiRequest = {
-      issueDescription,
-      issueLocation,
-      additionalDetails,
-      messages,
-      createdByType: ENTITIES.TENANT,
-      creatorEmail: user.email,
-      creatorName: user.name,
-      permissionToEnter,
-      pmEmail: user.pmEmail,
-      organization: user.organization,
-      address: parsedAddress.address,
-      state: parsedAddress.state,
-      city: parsedAddress.city,
-      unit: parsedAddress.unit,
-      postalCode: parsedAddress.postalCode,
-      images: uploadedFiles,
-      woId
-    };
-
-    const res = await axios.post('/api/create-work-order', body);
-    if (res.status === 200) {
-      toast.success("Successfully Submitted Work Order. An email has been sent to you as confirmation", {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
-    } else {
-      toast.error('Error Submitting Work Order. Please Try Again', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
-      setSubmittingWorkOrderLoading(false);
-      return;
-    }
     setMessages([]);
+    setUserMessage('');
     setIssueDescription('');
     setIssueLocation('');
     setAdditionalDetails('');
+    setWoId(uuidv4());
     setSubmitAnywaysSkip(false);
+
     setSubmittingWorkOrderLoading(false);
+    setErrorCount(0);
     return;
   };
 
-  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(async (e) => {
-    e.preventDefault();
-    setUploadingFiles(true);
-    const selectedFs = e.target.files ?? [];
-    const formData = new FormData();
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setUploadingFiles(true);
+      const selectedFs = e.target.files ?? [];
+      const formData = new FormData();
 
-    // Append all selected files to the FormData
-    for (const imageFile of selectedFs) {
-      formData.append('image', imageFile);
-    }
-    formData.append("uuid", woId);
+      // Append all selected files to the FormData
+      for (const imageFile of selectedFs) {
+        formData.append('image', imageFile);
+      }
+      formData.append('uuid', woId);
 
-    try {
-      const response = await axios.post('/api/upload-images', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      try {
+        const response = await axios.post('/api/upload-images', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
 
-      if (response.status === 200) {
-        setUploadedFiles(response?.data?.files ?? []);
-        toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
-        setUploadingFiles(false);
-      } else {
-        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+        if (response.status === 200) {
+          setUploadedFiles(response?.data?.files ?? []);
+          toast.success('Images uploaded successfully!', {
+            position: toast.POSITION.TOP_CENTER,
+            draggable: false,
+          });
+          setUploadingFiles(false);
+        } else {
+          toast.error('Images upload failed', {
+            position: toast.POSITION.TOP_CENTER,
+            draggable: false,
+          });
+          setUploadingFiles(false);
+        }
+      } catch (error) {
+        toast.error('Images upload failed', {
+          position: toast.POSITION.TOP_CENTER,
+          draggable: false,
+        });
         setUploadingFiles(false);
       }
-    } catch (error) {
-      toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
-      setUploadingFiles(false);
-    }
-  }, [woId]);
+    },
+    [woId]
+  );
 
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
+    setIsResponding(true);
+    const lastUserMessage = userMessage;
     try {
-      if (!isUsingAI) {
-        setMessages([
-          ...messages,
-          { role: 'user', content: issueDescription },
-          {
-            role: 'assistant',
-            content:
-              "Please complete the form below. When complete, and you have given permission to enter, click the 'submit' button to send your Service Request.",
-          },
-        ]);
+      amplitude.track('Form Action', {
+        name: 'Submit Text',
+        message: userMessage,
+        issueDescription,
+        issueLocation,
+      });
+      if (!selectedAddress) {
+        alert(
+          'Please make sure to select an address, or contact your property manager for assistance.'
+        );
+        return;
       }
 
-      if (userMessage === '' || !selectedAddress) return;
       setMessages([...messages, { role: 'user', content: userMessage }]);
-      setIsResponding(true);
-      setLastUserMessage(userMessage);
       setUserMessage('');
 
       const parsedAddress = selectedAddress.value;
-      const body: ApiRequest = {
+      const body: ChatbotRequest = ChatbotRequestSchema.parse({
         userMessage,
         messages,
         ...workOrder,
-        unitInfo: parsedAddress.numBeds && parsedAddress.numBaths ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms` : '',
+        unitInfo:
+          parsedAddress.numBeds && parsedAddress.numBaths
+            ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms`
+            : '',
         streetAddress: parsedAddress.address.toLowerCase(),
-      };
+      });
       const res = await axios.post('/api/service-request', body);
       const jsonResponse = res?.data.response;
       const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
@@ -276,7 +352,6 @@ export default function WorkOrderChatbot() {
       parsed.additionalDetails && setAdditionalDetails(parsed.additionalDetails);
 
       const newMessage = parsed.aiMessage;
-      setIsResponding(false);
       setMessages([
         ...messages,
         { role: 'user', content: userMessage },
@@ -284,13 +359,15 @@ export default function WorkOrderChatbot() {
       ]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
+      console.log({ err });
 
-      if (err.response.status === 500) {
-        setHasConnectionWithGPT(false);
-        assistantMessage = 'Sorry - I am having trouble connecting to my server. Please complete this form manually or try again later.';
+      if (errorCount >= 1) {
+        assistantMessage =
+          'Sorry - Looks like I am having some connection issues right now. Feel free to try again later, or use the button below to submit your work order.';
       }
+      setErrorCount((prev) => prev + 1);
 
-      setIsResponding(false);
+      //Manually set assistant message and reset user message to their last input
       setMessages([
         ...messages,
         { role: 'user', content: userMessage },
@@ -298,14 +375,7 @@ export default function WorkOrderChatbot() {
       ]);
       setUserMessage(lastUserMessage);
     }
-  };
-
-  const lastSystemMessageIndex = messages.length - (isResponding ? 2 : 1);
-
-  const workOrder: WorkOrder = {
-    issueDescription,
-    issueLocation,
-    additionalDetails,
+    setIsResponding(false);
   };
 
   const renderChatHeader = () => {
@@ -325,11 +395,14 @@ export default function WorkOrderChatbot() {
           <br />
           <br />
           <Select
-            onChange={(v: SingleValue<{ label: string; value: any; }>) => {
-              //@ts-ignore
-              handleAddressSelectChange(v);
+            onChange={(v: SingleValue<AddressOption>) => {
+              if (!v) return;
+              setSelectedAddress(v);
             }}
-            value={{ label: addressesOptions?.[0]?.label, value: addressesOptions?.[0]?.value }}
+            value={{
+              label: selectedAddress?.label ?? 'No addresses available',
+              value: selectedAddress,
+            }}
             options={addressesOptions}
           />
           <div className="w-full flex flex-row items-center mt-4 mb-2">
@@ -349,8 +422,12 @@ export default function WorkOrderChatbot() {
     return <LoadingSpinner containerClass={'mt-4'} />;
   }
 
-  if (!user?.roles?.includes(userRoles.TENANT)) {
-    return <p className="p-4">User must have the tenant Role assigned to them by a property manager or Owner.</p>;
+  if (!user?.roles?.includes(USER_TYPE.TENANT)) {
+    return (
+      <p className="p-4">
+        User must have the tenant Role assigned to them by a property manager or Owner.
+      </p>
+    );
   }
   const customStyles = {
     content: {
@@ -392,19 +469,24 @@ export default function WorkOrderChatbot() {
           </h2>
 
           <div className="space-y-2">
-            {platform === "iOS" ? (
+            {platform === 'iOS' ? (
               <>
-                <p>1. Tap the share icon (square with an arrow pointing out of it) at the bottom of the screen.</p>
+                <p>
+                  1. Tap the share icon (square with an arrow pointing out of it) at the bottom of
+                  the screen.
+                </p>
                 <p>{'2. Scroll down and tap "Add to Home Screen".'}</p>
                 <p>{'3. Name it as you wish and then tap "Add" on the top-right.'}</p>
               </>
-            ) : platform === "Android" ? (
+            ) : platform === 'Android' ? (
               <>
                 <p>{'1. Tap the menu button (three dots) on the top-right of the screen.'}</p>
                 <p>{'2. Tap "Add to Home screen".'}</p>
               </>
             ) : (
-              <p>Your device is not recognized. Please refer to its documentation for instructions.</p>
+              <p>
+                Your device is not recognized. Please refer to its documentation for instructions.
+              </p>
             )}
           </div>
 
@@ -419,9 +501,17 @@ export default function WorkOrderChatbot() {
       <main style={{ height: '92dvh' }} className="text-center">
         <div>
           <div>
-            <div id="container" style={{ margin: '1dvh auto 0 auto ' }} className="w-11/12 lg:w-6/12 md:w-7/12 sm:w-9/12 mx-auto">
+            <div
+              id="container"
+              style={{ margin: '1dvh auto 0 auto ' }}
+              className="w-11/12 lg:w-6/12 md:w-7/12 sm:w-9/12 mx-auto"
+            >
               <div className="shadow-xl rounded-lg">
-                <div id="chatbox-header" style={{ padding: '0.5dvh 0' }} className="text-left bg-blue-200 rounded-t-lg">
+                <div
+                  id="chatbox-header"
+                  style={{ padding: '0.5dvh 0' }}
+                  className="text-left bg-blue-200 rounded-t-lg"
+                >
                   <h3 className="text-xl my-auto text-gray-600 text-center">PILLAR Chat</h3>
                 </div>
                 <div
@@ -435,57 +525,80 @@ export default function WorkOrderChatbot() {
                   {renderChatHeader()}
                   {!!messages?.length &&
                     messages.map((message, index) => (
-                      <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
+                      <div
+                        key={`${message.content?.[0] ?? index}-${index}`}
+                        className="mb-3 break-all"
+                      >
                         <div
-                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
-                            }`}
+                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
+                            !!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
+                          }`}
                         >
-                          {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
-                            <div className="text-left mb-1 text-gray-700">
-                              <h3 className="text-left font-semibold">
-                                Issue: <span className="font-normal">{`${workOrder.issueDescription}`}</span>
-                              </h3>
-                            </div>
-                          )}
-                          {workOrder.issueLocation && index === lastSystemMessageIndex && !submitAnywaysSkip && (
-                            <div className="text-left mb-1 text-gray-700">
-                              <h3 className="text-left font-semibold">
-                                Issue Location: <span className="font-normal">{workOrder.issueLocation}</span>
-                              </h3>
-                            </div>
-                          )}
-                          <p data-testid={`response-${index}`} className="whitespace-pre-line break-keep">
+                          {workOrder.issueDescription &&
+                            index === lastSystemMessageIndex &&
+                            !submitAnywaysSkip && (
+                              <div className="text-left mb-1 text-gray-700">
+                                <h3 className="text-left font-semibold">
+                                  Issue:{' '}
+                                  <span className="font-normal">{`${workOrder.issueDescription}`}</span>
+                                </h3>
+                              </div>
+                            )}
+                          {workOrder.issueLocation &&
+                            index === lastSystemMessageIndex &&
+                            !submitAnywaysSkip && (
+                              <div className="text-left mb-1 text-gray-700">
+                                <h3 className="text-left font-semibold">
+                                  Issue Location:{' '}
+                                  <span className="font-normal">{workOrder.issueLocation}</span>
+                                </h3>
+                              </div>
+                            )}
+                          <p
+                            data-testid={`response-${index}`}
+                            className="whitespace-pre-line break-keep"
+                          >
                             {message.content}
                           </p>
                           {index === lastSystemMessageIndex &&
-                            (hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip || !hasConnectionWithGPT) && (
+                            (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
                               <>
                                 <div
                                   data-testid="final-response"
-                                  style={{ display: 'grid', gridTemplateColumns: '1fr', rowGap: '0rem', marginTop: '1rem' }}
+                                  style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr',
+                                    rowGap: '0rem',
+                                    marginTop: '1rem',
+                                  }}
                                 >
-                                  {!hasConnectionWithGPT ||
-                                    (submitAnywaysSkip && (
-                                      <>
-                                        <label htmlFor="issueDescription">{isMobile ? 'Issue*' : 'Issue Details*'}</label>
-                                        <input
-                                          className="rounded px-1"
-                                          id="issueDescription"
-                                          type={'text'}
-                                          value={issueDescription}
-                                          onChange={handleIssueDescriptionChange}
-                                        />
-                                        <label htmlFor="issueLocation">{isMobile ? 'Location*' : 'Issue Location*'}</label>
-                                        <input
-                                          className="rounded px-1"
-                                          id="issueLocation"
-                                          type={'text'}
-                                          value={issueLocation}
-                                          onChange={handleIssueLocationChange}
-                                        />
-                                      </>
-                                    ))}
-                                  <label htmlFor="additionalDetails">{isMobile ? 'Details' : 'Additional Details'}</label>
+                                  {submitAnywaysSkip && (
+                                    <>
+                                      <label htmlFor="issueDescription">
+                                        {isMobile ? 'Issue*' : 'Issue Details*'}
+                                      </label>
+                                      <input
+                                        className="rounded px-1"
+                                        id="issueDescription"
+                                        type={'text'}
+                                        value={issueDescription}
+                                        onChange={handleIssueDescriptionChange}
+                                      />
+                                      <label htmlFor="issueLocation">
+                                        {isMobile ? 'Location*' : 'Issue Location*'}
+                                      </label>
+                                      <input
+                                        className="rounded px-1"
+                                        id="issueLocation"
+                                        type={'text'}
+                                        value={issueLocation}
+                                        onChange={handleIssueLocationChange}
+                                      />
+                                    </>
+                                  )}
+                                  <label htmlFor="additionalDetails">
+                                    {isMobile ? 'Details' : 'Additional Details'}
+                                  </label>
                                   <input
                                     className="rounded px-1"
                                     id="additionalDetails"
@@ -494,15 +607,22 @@ export default function WorkOrderChatbot() {
                                     onChange={handleAdditionalDetailsChange}
                                   />
                                 </div>
-                                <form className='mt-2' onSubmit={() => { }}>
+                                <form className="mt-2" onSubmit={() => {}}>
                                   <input
                                     type="file"
-                                    multiple name="image"
+                                    multiple
+                                    name="image"
                                     accept="image/*"
                                     onChange={handleFileChange}
                                   />
                                 </form>
-                                <p className="mt-2">Permission To Enter {selectedAddress ? selectedAddress.label : 'Property'}* </p>
+                                <p className="mt-2">
+                                  Permission To Enter{' '}
+                                  {selectedAddress
+                                    ? toTitleCase(selectedAddress.label)
+                                    : 'Property'}
+                                  *{' '}
+                                </p>
                                 <div>
                                   <input
                                     className="rounded px-1"
@@ -537,23 +657,53 @@ export default function WorkOrderChatbot() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {!isResponding && issueDescription.length > 0 && !submitAnywaysSkip && !hasAllIssueInfo(workOrder, isUsingAI) && (
-                    <button
-                      onClick={() => setSubmitAnywaysSkip(true)}
-                      className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
-                    >
-                      {'Submit Anyways?'}
-                    </button>
-                  )}
+                  {!isResponding &&
+                    !submitAnywaysSkip &&
+                    !hasAllIssueInfo(workOrder) &&
+                    (issueDescription.length > 0 || errorCount > 0) && (
+                      <button
+                        onClick={() => {
+                          setSubmitAnywaysSkip(true);
+                          setMessages((prev) => {
+                            prev[prev.length - 1] = {
+                              role: 'assistant',
+                              content:
+                                'Please complete the form below. When complete, press submit to send your work order!',
+                            };
+                            return prev;
+                          });
+                          if (issueDescription.length === 0) {
+                            setIssueDescription(userMessage);
+                          }
+                        }}
+                        className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
+                      >
+                        {'Submit Anyways?'}
+                      </button>
+                    )}
                 </div>
-                <div id="chatbox-footer" className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center" style={{ height: '12dvh' }}>
-                  {((hasAllIssueInfo(workOrder, isUsingAI) || submitAnywaysSkip) && messages.length > 1) || !hasConnectionWithGPT ? (
+                <div
+                  id="chatbox-footer"
+                  className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
+                  style={{ height: '12dvh' }}
+                >
+                  {(hasAllIssueInfo(workOrder) || submitAnywaysSkip) && messages.length > 1 ? (
                     <button
                       onClick={handleSubmitWorkOrder}
-                      disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles}
+                      disabled={
+                        issueDescription.length === 0 ||
+                        submittingWorkOrderLoading ||
+                        uploadingFiles
+                      }
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? "Files Uploading..." : 'Submit Work Order'}
+                      {submittingWorkOrderLoading ? (
+                        <LoadingSpinner />
+                      ) : uploadingFiles ? (
+                        'Files Uploading...'
+                      ) : (
+                        'Submit Work Order'
+                      )}
                     </button>
                   ) : (
                     <form
@@ -561,24 +711,40 @@ export default function WorkOrderChatbot() {
                       style={{ display: 'grid', gridTemplateColumns: '9fr 1fr' }}
                       onKeyDown={(e) => {
                         //Users can press enter to submit the form, enter + shift to add a new line
-                        if (e.key === 'Enter' && !e.shiftKey && !isResponding && addressHasBeenSelected) {
+                        if (
+                          e.key === 'Enter' &&
+                          !e.shiftKey &&
+                          !isResponding &&
+                          addressHasBeenSelected
+                        ) {
                           e.preventDefault();
                           handleSubmitText(e);
                         }
                       }}
                     >
                       <textarea
-                        value={isUsingAI ? userMessage : issueDescription}
+                        value={userMessage}
                         data-testid="userMessageInput"
                         className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
-                        placeholder={messages.length ? (hasAllIssueInfo(workOrder, isUsingAI) ? '' : '') : 'Tell us about your issue.'}
+                        placeholder={
+                          messages.length
+                            ? hasAllIssueInfo(workOrder)
+                              ? ''
+                              : ''
+                            : 'Tell us about your issue.'
+                        }
                         onChange={handleChange}
                       />
                       <button
                         data-testid="send"
                         type="submit"
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                        disabled={isResponding || (isUsingAI ? !userMessage : !issueDescription) || !addressHasBeenSelected}
+                        disabled={
+                          isResponding ||
+                          !userMessage ||
+                          userMessage.length === 0 ||
+                          !addressHasBeenSelected
+                        }
                       >
                         Send
                       </button>

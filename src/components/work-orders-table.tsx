@@ -5,27 +5,39 @@ import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import Link from 'next/link';
-import { STATUS } from '@/constants';
+import { WO_STATUS } from '@/constants';
 import { GoTasklist } from 'react-icons/go';
-import { StatusType, StatusOptionType } from '@/types';
+import { WoStatus, StatusOption } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 
-export const StatusOptions: StatusOptionType[] = [
-  { value: STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
-  { value: STATUS.COMPLETE, label: 'Complete', icon: <AiOutlineCheck className="text-green-500" /> },
+export const StatusOptions: StatusOption[] = [
+  { value: WO_STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
+  {
+    value: WO_STATUS.COMPLETE,
+    label: 'Complete',
+    icon: <AiOutlineCheck className="text-green-500" />,
+  },
 ];
 
 interface IWorkOrdersTableProps {
   workOrders: IWorkOrder[];
   isFetching: boolean;
-  statusFilter: Record<StatusType, boolean>;
-  setStatusFilter: (statusFilter: Record<StatusType, boolean>) => void;
+  statusFilter: Record<WoStatus, boolean>;
+  setStatusFilter: (statusFilter: Record<WoStatus, boolean>) => void;
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
-  formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
+  formattedStatusOptions: ({
+    value,
+    label,
+    icon,
+  }: {
+    value: string;
+    label: string;
+    icon: any;
+  }) => JSX.Element;
 }
 
 export const WorkOrdersTable = ({
@@ -40,7 +52,7 @@ export const WorkOrdersTable = ({
   const { userType } = useUserContext();
   const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
     { label: 'Issue', accessor: 'issue', width: 'w-72' },
-    { label: 'Status', accessor: 'status', width: '' },
+    { label: 'Status', accessor: 'status', width: 'w-44' },
     { label: 'Address', accessor: 'address', width: 'w-44' },
     { label: 'Assigned To', accessor: 'assignedTo', width: 'w-32' },
     { label: 'Created', accessor: 'created', width: '' },
@@ -48,22 +60,30 @@ export const WorkOrdersTable = ({
   ];
 
   const renderWoCardStatus = (workOrder: IWorkOrder) => {
-    if (workOrder.status === STATUS.DELETED) {
-      return <p className="text-red-600 ml-1">{STATUS.DELETED}</p>;
+    if (workOrder.status === WO_STATUS.DELETED) {
+      return <p className="text-red-600 ml-1">{WO_STATUS.DELETED}</p>;
     }
-    if (userType === userRoles.TENANT) {
-      const index = workOrder.status === STATUS.TO_DO ? 0 : 1;
+    if (userType === USER_TYPE.TENANT) {
+      const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
       return (
-        <div className={`${workOrder.status === STATUS.TO_DO ? 'bg-yellow-200 ' : 'bg-green-200'} px-2 py-1 rounded-lg`}>
-          {formattedStatusOptions({ value: StatusOptions[index].value, label: StatusOptions[index].label, icon: StatusOptions[index].icon })}
+        <div
+          className={`${
+            workOrder.status === WO_STATUS.TO_DO ? 'bg-yellow-200 ' : 'bg-green-200'
+          } px-2 py-1 rounded-lg`}
+        >
+          {formattedStatusOptions({
+            value: StatusOptions[index].value,
+            label: StatusOptions[index].label,
+            icon: StatusOptions[index].icon,
+          })}
         </div>
       );
     }
     return (
       <Select
-        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === STATUS.TO_DO && 'bg-yellow-200'} ${
-          workOrder.status === STATUS.COMPLETE && 'bg-green-200'
-        }`}
+        className={`cursor-pointer rounded p-1 min-w-max ${
+          workOrder.status === WO_STATUS.TO_DO && 'bg-yellow-200'
+        } ${workOrder.status === WO_STATUS.COMPLETE && 'bg-green-200'}`}
         value={StatusOptions.find((o) => o.value === workOrder.status)!}
         onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
         formatOptionLabel={formattedStatusOptions}
@@ -79,7 +99,10 @@ export const WorkOrdersTable = ({
           const { address, tenantEmail, created, tenantName, permissionToEnter, assignedTo } = wo;
           const date = new Date(created);
           const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-          const addressString = generateAddressKey({ address: address?.address, unit: wo?.address?.unit ?? '' });
+          const addressString = generateAddressKey({
+            address: address?.address,
+            unit: wo?.address?.unit ?? '',
+          });
           const assignedToString = setToShortenedString(assignedTo);
           return {
             pk: wo.pk,
@@ -114,7 +137,12 @@ export const WorkOrdersTable = ({
                   );
                 }
                 return (
-                  <td className={`border-t border-b px-4 py-1 ${accessor === 'assignedTo' && 'whitespace-nowrap w-max'}`} key={accessor}>
+                  <td
+                    className={`border-t border-b px-4 py-1 ${
+                      accessor === 'assignedTo' && 'whitespace-nowrap w-max'
+                    }`}
+                    key={accessor}
+                  >
                     <Link
                       key={workOrder.pk + index}
                       href={`/work-orders/?workOrderId=${encodeURIComponent(workOrderId)}`}
@@ -155,24 +183,36 @@ export const WorkOrdersTable = ({
                 {!statusFilter.TO_DO ? (
                   <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                 ) : (
-                  <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
+                  <BiCheckboxChecked
+                    className="mr-3 justify-self-end my-auto flex-end"
+                    size={'1.5em'}
+                  />
                 )}
               </div>
 
               <div
-                className={`flex ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                className={`flex ${
+                  statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                }`}
                 onClick={() => {
                   if (isFetching) return;
                   setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
                 }}
               >
-                <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>
+                <p
+                  className={`py-1 px-3 cursor-pointer flex w-full rounded ${
+                    statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+                  }`}
+                >
                   Complete
                 </p>
                 {!statusFilter.COMPLETE ? (
                   <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                 ) : (
-                  <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
+                  <BiCheckboxChecked
+                    className="mr-3 justify-self-end my-auto flex-end"
+                    size={'1.5em'}
+                  />
                 )}
               </div>
             </div>
@@ -182,7 +222,11 @@ export const WorkOrdersTable = ({
 
       <div className="border-collapse mt-2">
         {remappedWorkOrders.length > 0 ? (
-          <table className={`w-full border-spacing-x-10 table-auto ${isFetching && 'opacity-25 pointer-events-none'}`}>
+          <table
+            className={`w-full border-spacing-x-10 table-auto ${
+              isFetching && 'opacity-25 pointer-events-none'
+            }`}
+          >
             <thead className="">
               <tr className="text-left text-gray-400">
                 {columns.map(({ label, accessor, width }) => {

@@ -7,10 +7,12 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { createdToFormattedDateTime, getPageLayout, toTitleCase } from '@/utils';
-import { IUser, userRoles } from '@/database/entities/user';
+import { IUser, USER_TYPE } from '@/database/entities/user';
 import { ENTITIES, StartKey } from '@/database/entities';
-import { GetPMsForOrgRequest } from '../api/get-all-pms-for-org';
 import { AddPropertyManagerModal } from '@/components/add-property-manager-modal';
+import { USER_PERMISSION_ERROR } from '@/constants';
+import { GetPM } from '@/types';
+import { GetPMSchema } from '@/types/customschemas';
 
 const Technicians = () => {
   const { user } = useSessionUser();
@@ -27,20 +29,23 @@ const Technicians = () => {
       if (!user || !userType) return;
       setPMsLoading(true);
       try {
-        if (!user.email || userType !== ENTITIES.PROPERTY_MANAGER || !user.roles?.includes(userRoles.PROPERTY_MANAGER) || !user.organization) {
-          throw new Error('user must be a property manager in an organization');
+        if (
+          !user ||
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        ) {
+          throw new Error(USER_PERMISSION_ERROR);
         }
-        const body: GetPMsForOrgRequest = {
+        const { data } = await axios.post('/api/get-all-pms-for-org', {
           organization: user.organization,
           startKey: isInitial ? undefined : startKey,
-        };
-        const { data } = await axios.post('/api/get-all-pms-for-org', body);
+        });
         const response = JSON.parse(data.response);
         const _pms: IUser[] = response.pms;
         setStartKey(response.startKey);
         isInitial ? setPMs(_pms) : setPMs((prev) => [...prev, ..._pms]);
       } catch (err) {
-        ({ err });
+        console.log({ err });
       }
       setPMsLoading(false);
     },
@@ -51,15 +56,23 @@ const Technicians = () => {
     fetchPMs(true);
   }, [user, userType]);
 
-  if (user && !user.organization && userType !== ENTITIES.PROPERTY_MANAGER) {
-    return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
+  if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
+    return (
+      <p>
+        You are not authorized to use this page. You must be a property manager in an organization.
+      </p>
+    );
   }
 
   return (
     <div id="property-managers" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
       <div className="lg:max-w-5xl mb-44 md:mb-10">
-        <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
+        <div
+          className={
+            isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`
+          }
+        >
           <h1 className="text-4xl">Property Managers</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
             {user?.isAdmin ? (
@@ -80,7 +93,8 @@ const Technicians = () => {
             <div className="flex flex-col items-center">
               {pms.length ? (
                 <p className="text-sm place-self-start font-light italic mb-1 ml-2 text-gray-500">
-                  {'Showing ' + pms.length} {pms.length === 1 ? ' property manager...' : ' property managers...'}
+                  {'Showing ' + pms.length}{' '}
+                  {pms.length === 1 ? ' property manager...' : ' property managers...'}
                 </p>
               ) : null}
               {pms.map((pm: IUser, index) => {
@@ -94,7 +108,9 @@ const Technicians = () => {
                     <div className="pl-2 text-gray-800">
                       <p className="text-2xl ">{toTitleCase(pm.name)} </p>
                       <p className="text-sm mt-2">{`${pm.email}`} </p>
-                      <div className="text-sm mt-2 flex flex-row items-center">Is Admin? <p className="ml-2">{pm.isAdmin ? "Yes" : "No"}</p> </div>
+                      <div className="text-sm mt-2 flex flex-row items-center">
+                        Is Admin? <p className="ml-2">{pm.isAdmin ? 'Yes' : 'No'}</p>{' '}
+                      </div>
                       <p className="text-sm mt-2">{`${pm.status}`} </p>
                     </div>
                   </div>
@@ -120,11 +136,17 @@ const Technicians = () => {
                     {pms.map((pm: IUser) => {
                       return (
                         <tr key={`${pm.pk}-${pm.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(pm.name)}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(
+                            pm.name
+                          )}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.email}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.status}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${pm.isAdmin ? 'Yes' : 'No'}`}</td>
-                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(pm.created)[0]}</td>
+                          <td className="border-b border-t px-4 py-1">{`${
+                            pm.isAdmin ? 'Yes' : 'No'
+                          }`}</td>
+                          <td className="border-b border-t px-4 py-1">
+                            {createdToFormattedDateTime(pm.created)[0]}
+                          </td>
                         </tr>
                       );
                     })}
@@ -134,7 +156,9 @@ const Technicians = () => {
             </div>
           </div>
         )}
-        {!pmsLoading && pms.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no property managers found.</div>}
+        {!pmsLoading && pms.length === 0 && (
+          <div className="font-bold text-center md:mt-6">Sorry, no property managers found.</div>
+        )}
         {pmsLoading && (
           <div className="md:mt-8">
             <LoadingSpinner spinnerClass="spinner-large" />
@@ -151,7 +175,11 @@ const Technicians = () => {
           </div>
         ) : null}
       </div>
-      <AddPropertyManagerModal addPMModalIsOpen={addPMModalIsOpen} setAddPMModalIsOpen={setAddPMModalIsOpen} onSuccessfulAdd={() => fetchPMs(true)} />
+      <AddPropertyManagerModal
+        addPMModalIsOpen={addPMModalIsOpen}
+        setAddPMModalIsOpen={setAddPMModalIsOpen}
+        onSuccessfulAdd={() => fetchPMs(true)}
+      />
       {isMobile && <BottomNavigationPanel />}
     </div>
   );

@@ -3,18 +3,16 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { constructNameEmailString, generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
-import { PAGE_SIZE, STATUS } from '@/constants';
-import { AssignTechnicianBody } from '@/pages/api/assign-technician';
-import { PTE_Type, StatusType } from '@/types';
-
-export interface IGetAllWorkOrdersForUserProps {
-  email: string;
-  userType: UserType;
-  orgId?: string;
-  startKey: StartKey;
-  statusFilter: Record<StatusType, boolean>;
-  reverse?: boolean;
-}
+import { PAGE_SIZE, WO_STATUS } from '@/constants';
+import {
+  AssignTechnicianBody,
+  GetAllWorkOrdersForUser,
+  PTE_Type,
+  Property,
+  PropertyWithId,
+  UpdateImages,
+  WoStatus,
+} from '@/types';
 
 type CreateWorkOrderProps = {
   uuid: string;
@@ -32,21 +30,10 @@ type CreateWorkOrderProps = {
   country: string;
   postalCode: string;
   pmEmail: string;
-  status: StatusType;
+  status: WoStatus;
   issue: string;
   location: string;
   additionalDetails: string;
-};
-
-export type UpdateImagesProps = { pk: string; sk: string; images: string[]; addNew?: boolean; };
-
-export type PropertyAddress = {
-  address: string;
-  unit?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
 };
 
 export interface IWorkOrder {
@@ -69,11 +56,12 @@ export interface IWorkOrder {
   permissionToEnter: PTE_Type;
   tenantEmail: string;
   createdBy: string;
-  createdByType: 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
+  createdByType: UserType;
   tenantName: string;
-  address: PropertyAddress;
-  status: StatusType;
+  address: Property;
+  status: WoStatus;
   assignedTo: Set<string>;
+  viewedWO: string[];
 }
 
 export class WorkOrderEntity {
@@ -104,6 +92,7 @@ export class WorkOrderEntity {
       createdBy: { type: 'string' },
       createdByType: { type: 'string' },
       assignedTo: { type: 'set' }, //List of concatenated strings like: technicianEmail##NAME##technicianName
+      viewedWO: { type: 'set' }, //List of assigned tech emails who have opened the WO
     },
     table: PillarDynamoTable,
   } as const);
@@ -139,7 +128,10 @@ export class WorkOrderEntity {
       {
         pk: workOrderIdKey,
         sk: workOrderIdKey,
-        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail.toLowerCase()),
+        GSI1PK: generateKey(
+          ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
+          pmEmail.toLowerCase()
+        ),
         GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
         GSI2SK: ksuID,
@@ -153,7 +145,14 @@ export class WorkOrderEntity {
         tenantName,
         ...(images.length && { images }),
         status,
-        address: this.generateAddress({ address, country, city, state, postalCode, unit }),
+        address: this.generateAddress({
+          address,
+          country,
+          city,
+          state,
+          postalCode,
+          unit,
+        } as Property),
         issue: issue.toLowerCase(),
         organization,
         location,
@@ -164,22 +163,27 @@ export class WorkOrderEntity {
     return result.Attributes;
   }
 
-  public async get({ pk, sk }: { pk: string; sk: string; }) {
-    const params = {
-      pk,
-      sk,
-    };
-    const result = await this.workOrderEntity.get(params, { consistent: false });
-    return result;
+  public async get({ pk, sk }: { pk: string; sk: string }) {
+    try {
+      const params = {
+        pk,
+        sk,
+      };
+      const result = await this.workOrderEntity.get(params, { consistent: false });
+      return result.Item;
+    } catch (err) {
+      console.log({ err });
+      return null;
+    }
   }
 
   //Soft delete work order
-  public async delete({ pk, sk }: { pk: string; sk: string; }) {
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
     const result = await this.workOrderEntity.update(
       {
         pk: pk,
         sk: sk,
-        status: STATUS.DELETED,
+        status: WO_STATUS.DELETED,
       },
       { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
@@ -190,18 +194,27 @@ export class WorkOrderEntity {
    *
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
-  public async getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse = true }: IGetAllWorkOrdersForUserProps) {
+  public async getAllForUser({
+    email,
+    userType,
+    orgId,
+    startKey,
+    statusFilter,
+    reverse = true,
+  }: GetAllWorkOrdersForUser) {
     const workOrders: IWorkOrder[] = [];
     let pk: string = '';
     let index: undefined | string;
-
     if (orgId) {
       pk = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, orgId);
       index = INDEXES.GSI4;
     } else {
       switch (userType) {
         case ENTITIES.PROPERTY_MANAGER:
-          pk = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
+          pk = generateKey(
+            ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
+            email?.toLowerCase()
+          );
           index = INDEXES.GSI1;
           break;
         case ENTITIES.TECHNICIAN:
@@ -221,26 +234,22 @@ export class WorkOrderEntity {
 
     do {
       const options = {
-        ...(statusFilter.COMPLETE && !statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', eq: STATUS.COMPLETE },
-          ],
-        }),
-        ...(!statusFilter.COMPLETE && statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', eq: STATUS.TO_DO },
-          ],
-        }),
-        ...(statusFilter.COMPLETE && statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', ne: STATUS.DELETED },
-          ],
-        }),
-        ...(!statusFilter.COMPLETE && !statusFilter.TO_DO && {
-          filters: [
-            { attr: 'status', eq: STATUS.DELETED },
-          ],
-        }),
+        ...(statusFilter.COMPLETE &&
+          !statusFilter.TO_DO && {
+            filters: [{ attr: 'status', eq: WO_STATUS.COMPLETE }],
+          }),
+        ...(!statusFilter.COMPLETE &&
+          statusFilter.TO_DO && {
+            filters: [{ attr: 'status', eq: WO_STATUS.TO_DO }],
+          }),
+        ...(statusFilter.COMPLETE &&
+          statusFilter.TO_DO && {
+            filters: [{ attr: 'status', ne: WO_STATUS.DELETED }],
+          }),
+        ...(!statusFilter.COMPLETE &&
+          !statusFilter.TO_DO && {
+            filters: [{ attr: 'status', eq: WO_STATUS.DELETED }],
+          }),
         limit: remainingWOToFetch,
         reverse,
         ...(index && { index }),
@@ -260,11 +269,13 @@ export class WorkOrderEntity {
     status,
     permissionToEnter,
     assignedTo,
+    viewedWO,
   }: {
     pk: string;
-    status?: StatusType;
+    status?: WoStatus;
     permissionToEnter?: PTE_Type;
     assignedTo?: string[];
+    viewedWO?: string[];
   }) {
     let startKey: StartKey;
     const workOrders = [];
@@ -292,6 +303,7 @@ export class WorkOrderEntity {
             ...(status && { status: status }),
             ...(permissionToEnter && { permissionToEnter }),
             ...(assignedTo && { assignedTo }),
+            ...(viewedWO && { viewedWO }),
           },
           { returnValues: 'ALL_NEW', strictSchemaCheck: true }
         );
@@ -308,7 +320,7 @@ export class WorkOrderEntity {
     workOrderId,
     technicianEmail,
     technicianName,
-    address,
+    property,
     status,
     issueDescription,
     permissionToEnter,
@@ -320,13 +332,22 @@ export class WorkOrderEntity {
   }: AssignTechnicianBody) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
-      let assignedTo: string[] = [...oldAssignedTo, constructNameEmailString(technicianEmail.toLowerCase(), technicianName)];
+      let assignedTo: string[] = [
+        ...oldAssignedTo,
+        constructNameEmailString(technicianEmail.toLowerCase(), technicianName),
+      ];
       // Create companion row for the technician
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
-        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
-        address: this.generateAddress(address),
-        GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail.toLowerCase()),
+        sk: generateKey(
+          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
+          technicianEmail.toLowerCase()
+        ),
+        address: this.generateAddress(property),
+        GSI3PK: generateKey(
+          ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER,
+          technicianEmail.toLowerCase()
+        ),
         GSI3SK: ksuID,
         issue: issueDescription.toLowerCase(),
         permissionToEnter,
@@ -350,29 +371,57 @@ export class WorkOrderEntity {
     }
   }
 
-  public async removeTechnician({ workOrderId, technicianEmail, technicianName, assignedTo }: { workOrderId: string; technicianEmail: string; technicianName: string; assignedTo: Set<string>; }) {
+  public async removeTechnician({
+    workOrderId,
+    technicianEmail,
+    technicianName,
+    assignedTo,
+    viewedWO,
+  }: {
+    workOrderId: string;
+    technicianEmail: string;
+    technicianName: string;
+    assignedTo: string[];
+    viewedWO: string[];
+  }) {
     const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
       //Delete relationship between WO and technician
       await this.workOrderEntity.delete({
         pk: key,
-        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail.toLowerCase()),
+        sk: generateKey(
+          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
+          technicianEmail.toLowerCase()
+        ),
       });
 
       //Backwards compatibility when removing technicians from WO
       let newAssignedTo: string[];
       const oldAssignedTo = [...assignedTo];
-      if (oldAssignedTo.includes(constructNameEmailString(technicianEmail.toLowerCase(), technicianName))) {
-        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName));
+      if (
+        oldAssignedTo.includes(
+          constructNameEmailString(technicianEmail.toLowerCase(), technicianName)
+        )
+      ) {
+        newAssignedTo = [...oldAssignedTo].filter(
+          (assignedTo) =>
+            assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName)
+        );
       } else {
-        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail.toLowerCase());
+        newAssignedTo = [...oldAssignedTo].filter(
+          (assignedTo) => assignedTo !== technicianEmail.toLowerCase()
+        );
       }
+      const newViewedWOList = [...viewedWO].filter(
+        (email) => email !== technicianEmail.toLowerCase()
+      );
 
       const result = await this.workOrderEntity.update(
         {
           pk: key,
           sk: key,
-          assignedTo: newAssignedTo
+          assignedTo: newAssignedTo,
+          viewedWO: newViewedWOList,
         },
         { returnValues: 'ALL_NEW' }
       );
@@ -382,9 +431,11 @@ export class WorkOrderEntity {
     }
   }
 
-  public async updateImages({ pk, sk, images, addNew }: UpdateImagesProps) {
+  public async updateImages({ pk, sk, images, addNew }: UpdateImages) {
     try {
-      const updatedWorkOrder = (await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })).Attributes;
+      const updatedWorkOrder = (
+        await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })
+      ).Attributes;
       return updatedWorkOrder;
     } catch (err) {
       console.log({ err });
@@ -398,14 +449,7 @@ export class WorkOrderEntity {
     state,
     postalCode,
     unit,
-  }: {
-    address: string;
-    country: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    unit?: string;
-  }) {
+  }: Property | PropertyWithId) {
     return {
       address,
       unit,

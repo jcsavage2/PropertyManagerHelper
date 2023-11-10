@@ -2,8 +2,8 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateAddress, generateKey } from '@/utils';
-import { PAGE_SIZE } from '@/constants';
-import { INVITE_STATUS, InviteStatusType } from '@/utils/user-types';
+import { INVITE_STATUS, PAGE_SIZE } from '@/constants';
+import { CreatePMSchemaType, InviteStatus } from '@/types';
 
 interface IBaseUser {
   pk: string;
@@ -16,19 +16,11 @@ interface IBaseUser {
 export interface ICreateTechnician {
   technicianName: string;
   technicianEmail: string;
-  status?: InviteStatusType;
+  status?: InviteStatus;
   pmEmail: string;
   pmName: string;
   organization: string;
   organizationName: string;
-}
-
-export interface ICreatePMUser {
-  userEmail: string;
-  userName: string;
-  organization: string;
-  organizationName: string;
-  isAdmin: boolean;
 }
 
 interface ICreateUser {
@@ -44,7 +36,7 @@ interface ICreateTenant {
   organization: string;
   organizationName: string;
   phone?: string;
-  country: 'US' | 'CA';
+  country: string;
   city: string;
   state: string;
   postalCode: string;
@@ -54,7 +46,13 @@ interface ICreateTenant {
   numBaths: number;
 }
 
-export type UserType = 'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN';
+export const USER_TYPE = {
+  TECHNICIAN: 'TECHNICIAN',
+  PROPERTY_MANAGER: 'PROPERTY_MANAGER',
+  TENANT: 'TENANT',
+} as const;
+
+export type UserType = (typeof USER_TYPE)[keyof typeof USER_TYPE];
 
 export interface IUser extends IBaseUser {
   pk: string;
@@ -74,17 +72,11 @@ export interface IUser extends IBaseUser {
   pmName?: string;
   hasSeenDownloadPrompt?: boolean;
   phone?: string;
-  roles: Array<'TENANT' | 'PROPERTY_MANAGER' | 'TECHNICIAN'>;
-  status: InviteStatusType;
+  roles: Array<UserType>;
+  status: InviteStatus;
   isAdmin: boolean;
+  altNames: string[];
 }
-
-export const userRoles = {
-  TECHNICIAN: 'TECHNICIAN', // Ability to update Work Orders
-  PROPERTY_MANAGER: 'PROPERTY_MANAGER', // Ability to Add New Tenants,
-  TENANT: 'TENANT', // Ability to Create and Modify Work Orders
-  ORG_OWNER: 'ORG_OWNER', // Ability to add PMs, See Org-View of outstanding Work Orders, Technicians, etc.
-} as const;
 
 export class UserEntity {
   /**
@@ -137,10 +129,13 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           pmEmail: lowerCasePMEmail,
           pmName,
-          roles: { $add: [userRoles.TENANT] },
+          roles: { $add: [USER_TYPE.TENANT] },
           GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, lowerCasePMEmail),
           GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization.toLowerCase()),
+          GSI4PK: generateKey(
+            ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT,
+            organization.toLowerCase()
+          ),
           GSI4SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
           email: lowerCaseTenantEmail,
           name: tenantName,
@@ -170,24 +165,49 @@ export class UserEntity {
     }
   }
 
-  public async updateInviteStatus({ pk, sk, status }: { pk: string; sk: string; status: InviteStatusType; }) {
-    return (await this.userEntity.update({ pk, sk, status }, { returnValues: "ALL_NEW" })).Attributes;
+  public async updateUser({
+    pk,
+    sk,
+    hasSeenDownloadPrompt,
+    status,
+  }: {
+    pk: string;
+    sk: string;
+    hasSeenDownloadPrompt?: boolean;
+    status?: InviteStatus;
+  }) {
+    const updatedUser = await this.userEntity.update(
+      {
+        pk,
+        sk,
+        ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
+        ...(status && { status }),
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+
+    return updatedUser.Attributes ?? null;
   }
 
-  public async updateUserAttribute({ pk, sk, hasSeenDownloadPrompt }: { pk: string; sk: string; hasSeenDownloadPrompt: boolean; }) {
-    return (await this.userEntity.update({ pk, sk, hasSeenDownloadPrompt }, { returnValues: "ALL_NEW" })).Attributes;
-  }
-
-  public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: ICreatePMUser) {
+  public async createPropertyManager({
+    userName,
+    userEmail,
+    organization,
+    organizationName,
+    isAdmin,
+  }: CreatePMSchemaType) {
     try {
       const lowerCaseUserEmail = userEmail.toLowerCase();
       const result = await this.userEntity.update(
         {
           pk: generateKey(ENTITY_KEY.USER, lowerCaseUserEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization.toLowerCase()),
+          GSI4PK: generateKey(
+            ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER,
+            organization.toLowerCase()
+          ),
           GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
-          roles: { $add: [userRoles.PROPERTY_MANAGER] },
+          roles: { $add: [USER_TYPE.PROPERTY_MANAGER] },
           email: lowerCaseUserEmail,
           name: userName,
           isAdmin,
@@ -203,7 +223,14 @@ export class UserEntity {
     }
   }
 
-  public async createTechnician({ technicianName, technicianEmail, pmEmail, pmName, organization, organizationName }: ICreateTechnician) {
+  public async createTechnician({
+    technicianName,
+    technicianEmail,
+    pmEmail,
+    pmName,
+    organization,
+    organizationName,
+  }: ICreateTechnician) {
     try {
       const lowerCasePMEmail = pmEmail.toLowerCase();
       const lowerCaseTechnicianEmail = technicianEmail.toLowerCase();
@@ -213,10 +240,16 @@ export class UserEntity {
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           pmEmail: lowerCasePMEmail,
           pmName,
-          roles: { $add: [userRoles.TECHNICIAN] },
-          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, lowerCasePMEmail),
+          roles: { $add: [USER_TYPE.TECHNICIAN] },
+          GSI1PK: generateKey(
+            ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN,
+            lowerCasePMEmail
+          ),
           GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization.toLowerCase()),
+          GSI4PK: generateKey(
+            ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN,
+            organization.toLowerCase()
+          ),
           GSI4SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
           email: lowerCaseTechnicianEmail,
           name: technicianName,
@@ -236,7 +269,7 @@ export class UserEntity {
   /**
    * @returns User entity
    */
-  public async get({ email }: { email: string; }) {
+  public async get({ email }: { email: string }) {
     try {
       const params = {
         pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
@@ -250,7 +283,7 @@ export class UserEntity {
     }
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string; }) {
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
     const params = {
       pk,
       sk,
@@ -260,11 +293,23 @@ export class UserEntity {
   }
 
   //Delete a role from roles; also fix GSI1 if needed
-  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[]; }) {
+  public async deleteRole({
+    pk,
+    sk,
+    roleToDelete,
+    existingRoles,
+  }: {
+    pk: string;
+    sk: string;
+    roleToDelete: string;
+    existingRoles: string[];
+  }) {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
     const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
-    const shouldDeleteIndexing: boolean = (roleToDelete === userRoles.TENANT && !isTech) || (roleToDelete === userRoles.TECHNICIAN && !isTenant);
+    const shouldDeleteIndexing: boolean =
+      (roleToDelete === USER_TYPE.TENANT && !isTech) ||
+      (roleToDelete === USER_TYPE.TECHNICIAN && !isTenant);
 
     const params = {
       pk,
@@ -288,13 +333,15 @@ export class UserEntity {
     tenantSearchString,
     statusFilter,
     startKey,
+    fetchAllTenants,
   }: {
     organization: string;
     tenantSearchString: string | undefined;
-    statusFilter?: Record<'JOINED' | 'INVITED', boolean>;
+    statusFilter?: Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>;
     startKey: StartKey;
+    fetchAllTenants?: boolean;
   }) {
-    const tenants = [];
+    const tenants: any[] = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization);
     let remainingTenantsToFetch = PAGE_SIZE;
     do {
@@ -302,7 +349,10 @@ export class UserEntity {
         const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
           limit: remainingTenantsToFetch,
           reverse: true,
-          ...(statusFilter && { filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }) }),
+          ...(statusFilter &&
+            !fetchAllTenants && {
+              filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
+            }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TENANT}`,
           index: INDEXES.GSI4,
@@ -313,7 +363,8 @@ export class UserEntity {
       } catch (err) {
         console.log({ err });
       }
-    } while (!!startKey && remainingTenantsToFetch > 0);
+    } while ((!!startKey && remainingTenantsToFetch > 0) || (!!startKey && fetchAllTenants));
+
     return { tenants, startKey };
   }
 
@@ -321,19 +372,17 @@ export class UserEntity {
     statusFilter,
     tenantSearchString,
   }: {
-    statusFilter: Record<'JOINED' | 'INVITED', boolean>;
+    statusFilter: Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>;
     tenantSearchString: string | undefined;
   }): any[] {
     const filters = [];
-    //Status filter logic
-    //When both are true add no filter
-    if (!statusFilter.JOINED && !statusFilter.INVITED) {
-      filters.push({ attr: 'status', eq: INVITE_STATUS.CREATED });
-    } else if (!statusFilter.INVITED && statusFilter.JOINED) {
-      filters.push({ attr: 'status', eq: INVITE_STATUS.JOINED });
-    } else if (!statusFilter.JOINED && statusFilter.INVITED) {
-      filters.push({ attr: 'status', eq: INVITE_STATUS.INVITED });
-    }
+    const statusFilters = (
+      Object.keys(statusFilter) as ('JOINED' | 'INVITED' | 'RE_INVITED')[]
+    ).filter((k) => statusFilter[k]);
+
+    // Status filter logic
+    statusFilters.length < 3 && filters.push({ attr: 'status', in: statusFilters });
+
     //Search string logic
     if (tenantSearchString) {
       filters.push([
@@ -446,7 +495,17 @@ export class UserEntity {
       let newAddresses: Record<string, any> = userAccount.addresses;
 
       //Add new address into the map
-      newAddresses[propertyUUId] = { address, unit, city, state, postalCode, country, isPrimary: false, numBeds, numBaths };
+      newAddresses[propertyUUId] = {
+        address,
+        unit,
+        city,
+        state,
+        postalCode,
+        country,
+        isPrimary: false,
+        numBeds,
+        numBaths,
+      };
 
       //Add the map with the new address back into the tenant record
       const result = await this.userEntity.update(
@@ -477,7 +536,7 @@ export class UserEntity {
       GSI3SK: { type: 'string' },
       GSI4PK: { type: 'string' }, //Org
       GSI4SK: { type: 'string' },
-      hasSeenDownloadPrompt: { type: "boolean" },
+      hasSeenDownloadPrompt: { type: 'boolean' },
       organization: { type: 'string', required: true },
       organizationName: { type: 'string', required: true },
       pmEmail: { type: 'string' },
@@ -485,6 +544,7 @@ export class UserEntity {
       phone: { type: 'string' },
       email: { type: 'string', required: true },
       name: { type: 'string', required: true },
+      altNames: { type: 'list' },
       isAdmin: { type: 'boolean' },
       roles: { type: 'set', required: true },
       status: { type: 'string', required: true },

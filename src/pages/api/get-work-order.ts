@@ -1,34 +1,31 @@
-import { Data } from "@/database";
-import { WorkOrderEntity } from "@/database/entities/work-order";
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
-import { options } from "./auth/[...nextauth]";
+import { WorkOrderEntity } from '@/database/entities/work-order';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { options } from './auth/[...nextauth]';
+import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { GetSchema } from '@/types/customschemas';
+import { ApiError, ApiResponse } from './_types';
+import { errorToResponse } from './_utils';
+import { GetBody } from '@/types';
 
-
-export type GetWorkOrder = {
-  pk: string;
-  sk: string;
-};
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-  const session = await getServerSession(req, res, options);
-  if (!session) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const body = req.body as GetWorkOrder;
-    const { pk, sk } = body;
-    if (!pk || !sk) {
-      return res.status(400).json({ response: "Missing PK or SK" });
+    const session = await getServerSession(req, res, options);
+    if (!session) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
+
+    const body: GetBody = GetSchema.parse(req.body);
+    const { pk, sk } = body;
+
     const workOrderEntity = new WorkOrderEntity();
     const workOrder = await workOrderEntity.get({ pk, sk });
-    return res.status(200).json({ response: JSON.stringify(workOrder.Item) });
-  } catch (error) {
+
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(workOrder) });
+  } catch (error: any) {
     console.error(error);
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }

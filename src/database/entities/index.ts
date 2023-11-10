@@ -1,4 +1,7 @@
-export type StartKey = { pk: string; sk: string } | undefined;
+import { validateStartKey } from '@/types/basevalidators';
+import { z } from 'zod';
+
+export type StartKey = z.infer<typeof validateStartKey>;
 
 export const ENTITIES = {
   EVENT: 'EVENT',

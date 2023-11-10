@@ -4,7 +4,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useCallback, useState } from 'react';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 
 const HamburgerMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,44 +28,44 @@ const HamburgerMenu = () => {
         <span className="block w-8 h-1 bg-gray-600"></span>
       </div>
       {isOpen && (
-        <div className="absolute left-0 bg-blue-400 mt-0 w-full grid z-10" style={{ top: '7dvh', height: '93dvh' }} onClick={() => setIsOpen(false)}>
+        <div
+          className="absolute left-0 bg-blue-400 mt-0 w-full grid z-10"
+          style={{ top: '7dvh', height: '93dvh' }}
+          onClick={() => setIsOpen(false)}
+        >
           <div className="flex flex-col h-12">
-            {user && (user?.roles?.includes(userRoles.PROPERTY_MANAGER) || user?.roles?.length > 1) ? (
-              <Link className={linkStyle} href={'/'}>
-                Home
-              </Link>
+            {user ? (
+              <>
+                {userType === USER_TYPE.TENANT && (
+                  <Link className={linkStyle} href={'/work-order-chatbot'}>
+                    New Work Order
+                  </Link>
+                )}
+                {userType === USER_TYPE.TENANT || userType === USER_TYPE.TECHNICIAN ? (
+                  <Link className={linkStyle} href={'/work-orders'}>
+                    Work Orders
+                  </Link>
+                ) : null}
+                {userType === USER_TYPE.PROPERTY_MANAGER && (
+                  <Link className={linkStyle} href={'/work-orders'}>
+                    Admin Portal
+                  </Link>
+                )}
+                {user?.email && (
+                  <Link onClick={handleClick} className={linkStyle} href={'/'}>
+                    {'Sign Out'}
+                  </Link>
+                )}
+                {!user?.email && (
+                  <Link onClick={() => signIn()} className={linkStyle} href={'/'}>
+                    {'Sign In'}
+                  </Link>
+                )}
+              </>
             ) : null}
 
-            {user && userType === userRoles.TENANT && (
-              <Link className={linkStyle} href={'/work-order-chatbot'}>
-                New Work Order
-              </Link>
-            )}
-            {(user && userType === userRoles.TENANT) || userType === userRoles.TECHNICIAN ? (
-              <Link className={linkStyle} href={'/work-orders'}>
-                Work Orders
-              </Link>
-            ) : null}
-            {user && userType === userRoles.PROPERTY_MANAGER && (
-              <Link className={linkStyle} href={'/work-orders'}>
-                Admin Portal
-              </Link>
-            )}
-            {user?.email && (
-              <Link onClick={handleClick} className={linkStyle} href={'/'}>
-                {'Sign Out'}
-              </Link>
-            )}
-            {!user?.email && (
-              <Link onClick={() => signIn()} className={linkStyle} href={'/'}>
-                {'Sign In'}
-              </Link>
-            )}
             <Link className={linkStyle} href={'/terms-and-conditions'}>
               {'Terms And Conditions'}
-            </Link>
-            <Link className={linkStyle} href={'/privacy-policy'}>
-              {'Privacy Policy'}
             </Link>
           </div>
         </div>

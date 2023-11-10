@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { useUserContext } from '@/context/user';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
 import { useDevice } from '@/hooks/use-window-size';
 
 const Home = () => {
@@ -26,11 +26,11 @@ const Home = () => {
     return <LoadingSpinner containerClass={'mt-4'} />;
   }
 
-  //If user is logged in and is not a PM, then route them to their respective page
-  if (user && userType && !user?.roles?.includes(userRoles.PROPERTY_MANAGER)) {
-    if (user?.roles.includes(userRoles.TENANT)) {
+  //If user is only a tenant, then redirect to chatbot, otherwise redirect to work orders
+  if (user && userType) {
+    if (userType === USER_TYPE.TENANT) {
       router.push('/work-order-chatbot');
-    } else if (user?.roles.includes(userRoles.TECHNICIAN)) {
+    } else {
       router.push('/work-orders');
     }
   }
@@ -38,22 +38,18 @@ const Home = () => {
   return (
     <>
       <div className="text-center">
-        <h1 className={` ${isMobile ? 'text-xl' : 'text-2xl'} mt-6`}>Welcome to Pillar {!!user?.organizationName && `@ ${user.organizationName}`}</h1>
+        <h1 className={` ${isMobile ? 'text-xl' : 'text-2xl'} mt-6`}>
+          Welcome to Pillar {!!user?.organizationName && `@ ${user.organizationName}`}
+        </h1>
         <br />
         {user && user.email ? (
           <div className="flex flex-col justify-center w-full items-center">
-            {user?.roles.includes(userRoles.PROPERTY_MANAGER) ? (
-              <div className="w-3/4 mx-auto mb-4 ">
-                Hey {user?.name}, you are currently viewing Pillar as a {userType}
-              </div>
-            ) : (
-              <button
-                onClick={() => router.push('/work-orders')}
-                className="bg-blue-200 px-3 py-2 mb-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44"
-              >
-                View work orders
-              </button>
-            )}
+            <button
+              onClick={() => router.push('/work-orders')}
+              className="bg-blue-200 px-3 py-2 mb-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44"
+            >
+              View work orders
+            </button>
             <button
               onClick={() => {
                 logOut();
@@ -73,47 +69,6 @@ const Home = () => {
             Sign In/Sign Up
           </button>
         )}
-
-        {user?.roles.includes(userRoles.PROPERTY_MANAGER) ? (
-          <>
-            <div className="mt-8" style={{ display: 'grid', gridTemplateColumns: '1fr', rowGap: '2em' }}>
-              <button
-                className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
-                onClick={() => {
-                  if (!user?.roles?.includes(userRoles.TENANT) || userType === userRoles.TENANT) return;
-                  setUserType(userRoles.TENANT);
-                  router.push('/work-order-chatbot');
-                }}
-                disabled={!user?.roles?.includes(userRoles.TENANT) || userType === userRoles.TENANT}
-              >
-                Switch to Tenant view
-              </button>
-
-              <button
-                className={`justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12`}
-                onClick={async () => {
-                  if (!user?.roles.includes(userRoles.PROPERTY_MANAGER) || userType === userRoles.PROPERTY_MANAGER) return;
-                  setUserType(userRoles.PROPERTY_MANAGER);
-                  router.push('/work-orders');
-                }}
-                disabled={!user?.roles?.includes(userRoles.PROPERTY_MANAGER) || userType === userRoles.PROPERTY_MANAGER}
-              >
-                Switch to Property Manager view
-              </button>
-              <button
-                className="justify-self-center bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-9/12 md:w-6/12"
-                onClick={async () => {
-                  if (!user?.roles?.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN) return;
-                  setUserType(userRoles.TECHNICIAN);
-                  router.push('/work-orders');
-                }}
-                disabled={!user?.roles?.includes(userRoles.TECHNICIAN) || userType === userRoles.TECHNICIAN}
-              >
-                Switch to Technician view
-              </button>
-            </div>
-          </>
-        ) : null}
       </div>
     </>
   );

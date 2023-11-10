@@ -1,70 +1,79 @@
-import { STATUS } from '@/constants';
-import { Data } from '@/database';
+import { API_STATUS, USER_PERMISSION_ERROR, WO_STATUS } from '@/constants';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
-import { PTE_Type, StatusType } from '@/types';
-import { deconstructKey } from '@/utils';
+import { UpdateWorkOrder } from '@/types';
+import { deconstructKey, toTitleCase } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
-import { userRoles } from '@/database/entities/user';
+import { USER_TYPE } from '@/database/entities/user';
+import { errorToResponse, initializeSendgrid } from './_utils';
+import { ApiError, ApiResponse } from './_types';
+import { UpdateWorkOrderSchema } from '@/types/customschemas';
 
-
-type StatusOr = { status: string, permissionToEnter?: never; };
-type PermissionOr = { status?: never, permissionToEnter: PTE_Type; };
-type StatusOrPermission = StatusOr | PermissionOr;
-
-type UpdateWorkOrderApiRequest = StatusOrPermission & {
-  pk: string;
-  sk: string;
-  email: string; //email of the current user who made the update
-  name: string; //name of the current user who made the update
-};
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const session = await getServerSession(req, res, options);
-  // @ts-ignore
-  const sessionUser: IUser = session?.user;
-
-  //User must be a pm or technician to update the status or PTE on a WO
-  if (!session || (!sessionUser?.roles?.includes(userRoles.PROPERTY_MANAGER) && !sessionUser?.roles?.includes(userRoles.TECHNICIAN))) {
-    res.status(401);
-    return;
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_SENDGRID_API_KEY;
-    if (!apiKey) {
-      throw new Error('missing SENDGRID_API_KEY env variable.');
-    }
-    sendgrid.setApiKey(apiKey);
+    const session = await getServerSession(req, res, options);
+    // @ts-ignore
+    const sessionUser: IUser = session?.user;
 
-    const body = req.body as UpdateWorkOrderApiRequest;
+    const body: UpdateWorkOrder = UpdateWorkOrderSchema.parse(req.body);
+    const { pk, sk, status, email, permissionToEnter, name } = body;
+
+    //User must be a pm or technician to update a work order's status
+    //User must be a tenant or pm to update a work order's permission to enter
+    if (
+      !session ||
+      (status &&
+        !sessionUser?.roles?.includes(USER_TYPE.TECHNICIAN) &&
+        !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) ||
+      (permissionToEnter &&
+        !sessionUser?.roles?.includes(USER_TYPE.TENANT) &&
+        !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
+    ) {
+      throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
+    }
+
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
-    const { pk, sk, status, email, permissionToEnter, name } = body;
     const updatedWorkOrder = await workOrderEntity.update({
       pk,
       status,
       ...(permissionToEnter && { permissionToEnter }),
     });
 
-    //Spawn new event on status change
+    //Spawn new event on status/PTE change
     await eventEntity.create({
       workOrderId: deconstructKey(pk),
-      message: status ? `Updated work order status: ${status}` : `Updated permission to enter to "${permissionToEnter}"`,
+      message: status
+        ? `Updated work order status: ${status}`
+        : `Updated permission to enter to "${permissionToEnter}"`,
       madeByEmail: email,
       madeByName: name,
     });
 
+    initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
     // If work order was created by a tenant
-    if (updatedWorkOrder?.tenantEmail && updatedWorkOrder?.pk && updatedWorkOrder.status === STATUS.COMPLETE && !permissionToEnter) {
-      const subject = `Work Order Update for ${updatedWorkOrder?.address?.address ?? ""} ${updatedWorkOrder?.address?.unit ? ` ${updatedWorkOrder?.address.unit}` : ''}`;
-      const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(updatedWorkOrder.pk)}`;
+    if (
+      updatedWorkOrder?.tenantEmail &&
+      updatedWorkOrder?.pk &&
+      updatedWorkOrder.status === WO_STATUS.COMPLETE &&
+      !permissionToEnter
+    ) {
+      const subject = `Work Order Update for ${
+        toTitleCase(updatedWorkOrder?.address?.address) ?? ''
+      } ${
+        updatedWorkOrder?.address?.unit ? ` ${toTitleCase(updatedWorkOrder?.address.unit)}` : ''
+      }`;
+      const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
+        updatedWorkOrder.pk
+      )}`;
       await sendgrid.send({
         to: updatedWorkOrder.tenantEmail,
-        cc: updatedWorkOrder.pmEmail,
+        cc:
+          updatedWorkOrder.pmEmail !== updatedWorkOrder.tenantEmail ? updatedWorkOrder.pmEmail : '',
         from: 'pillar@pillarhq.co',
         subject,
         html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -114,7 +123,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         
         <body>
           <div class="container" style="margin-left: 20px;margin-right: 20px;">
-            <h1>Work Order Status Complete ${updatedWorkOrder?.address?.unit ? `for unit ${updatedWorkOrder?.address.unit}` : ''}</h1>
+            <h1>Work Order Status Complete ${
+              updatedWorkOrder?.address?.unit
+                ? `for unit ${toTitleCase(updatedWorkOrder?.address.unit)}`
+                : ''
+            }</h1>
             <a href="${workOrderLink}">View Work Order in PILLAR</a>
             <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
               Regards,<br> Pillar Team
@@ -125,8 +138,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    return res.status(200).json({ response: JSON.stringify(updatedWorkOrder) });
-  } catch (error) {
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(updatedWorkOrder) });
+  } catch (error: any) {
     console.log({ error });
+    return res
+      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorToResponse(error));
   }
 }
