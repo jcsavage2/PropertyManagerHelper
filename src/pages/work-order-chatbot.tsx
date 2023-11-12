@@ -347,12 +347,12 @@ export default function WorkOrderChatbot() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${encodeURIComponent(accessToken)}`
+          Authorization: `Bearer ${encodeURIComponent(accessToken)}`,
         },
         body: JSON.stringify(body),
       });
-      if(res.status !== API_STATUS.SUCCESS){
-        throw new Error('Error fetching chatbot response')
+      if (res.status !== API_STATUS.SUCCESS) {
+        throw new Error('Error fetching chatbot response');
       }
 
       const reader = res.body?.getReader();
@@ -360,16 +360,16 @@ export default function WorkOrderChatbot() {
       while (reader) {
         const { done, value } = await reader.read();
         if (done) {
-          if(buffer.includes('}')){
+          if (buffer.includes('}')) {
             const parsed: AiJSONResponse = JSON.parse(buffer);
-            if(parsed.issueLocation){
-              setIssueLocation(parsed.issueLocation)
+            if (parsed.issueLocation) {
+              setIssueLocation(parsed.issueLocation);
             }
-            if(parsed.issueDescription){
-              setIssueDescription(parsed.issueDescription)
+            if (parsed.issueDescription) {
+              setIssueDescription(parsed.issueDescription);
             }
-            if(parsed.additionalDetails){
-              setAdditionalDetails(parsed.additionalDetails)
+            if (parsed.additionalDetails) {
+              setAdditionalDetails(parsed.additionalDetails);
             }
           }
           break;
@@ -381,12 +381,11 @@ export default function WorkOrderChatbot() {
         if (buffer.length > 0) {
           //Type out the aiResponse without showing the user other json data
           if (buffer.includes(AI_MESSAGE_START) && !aiMessageEnded) {
-
             //Once we have data, switch from waiting for a response to typing the result
-            setIsTyping(true)
+            setIsTyping(true);
             setIsResponding(false);
 
-            buffer = buffer.replace(/\n/g, "\\\n")
+            buffer = buffer.replace(/\n/g, '\\\n');
             const aiMessageStart = buffer.lastIndexOf(AI_MESSAGE_START) + AI_MESSAGE_START.length;
             let aiMessageEnd: number;
 
@@ -399,12 +398,15 @@ export default function WorkOrderChatbot() {
             }
 
             const aiMessage = buffer.substring(aiMessageStart, aiMessageEnd);
-            if(aiMessage.length > 0){
-              setMessages([...messages, { role: 'user', content: userMessage }, { role: 'assistant', content: aiMessage }]);
+            if (aiMessage.length > 0) {
+              setMessages([
+                ...messages,
+                { role: 'user', content: userMessage },
+                { role: 'assistant', content: aiMessage },
+              ]);
             }
           }
         }
-
       }
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
@@ -605,8 +607,20 @@ export default function WorkOrderChatbot() {
                                 </h3>
                               </div>
                             )}
-                          <div data-testid={`response-${index}`} className="whitespace-pre-line break-keep">
-                            <p>{message.content}</p> {message.role === 'assistant' && index === lastSystemMessageIndex && isTyping && aiMessageEnded && <LoadingSpinner containerClass='mt-2' spinnerClass='spinner-small'/>}
+                          <div
+                            data-testid={`response-${index}`}
+                            className="whitespace-pre-line break-keep"
+                          >
+                            <p>{message.content}</p>{' '}
+                            {message.role === 'assistant' &&
+                              index === lastSystemMessageIndex &&
+                              isTyping &&
+                              aiMessageEnded && (
+                                <LoadingSpinner
+                                  containerClass="mt-2"
+                                  spinnerClass="spinner-small"
+                                />
+                              )}
                           </div>
                           {index === lastSystemMessageIndex &&
                             (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
@@ -705,26 +719,31 @@ export default function WorkOrderChatbot() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {!isResponding && !isTyping && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
-                    <button
-                      onClick={() => {
-                        setSubmitAnywaysSkip(true);
-                        setMessages((prev) => {
-                          prev[prev.length - 1] = {
-                            role: 'assistant',
-                            content: 'Please complete the form below. When complete, press submit to send your work order!',
-                          };
-                          return prev;
-                        });
-                        if (issueDescription.length === 0) {
-                          setIssueDescription(userMessage);
-                        }
-                      }}
-                      className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
-                    >
-                      {'Submit Anyways?'}
-                    </button>
-                  )}
+                  {!isResponding &&
+                    !isTyping &&
+                    !submitAnywaysSkip &&
+                    !hasAllIssueInfo(workOrder) &&
+                    (issueDescription.length > 0 || errorCount > 0) && (
+                      <button
+                        onClick={() => {
+                          setSubmitAnywaysSkip(true);
+                          setMessages((prev) => {
+                            prev[prev.length - 1] = {
+                              role: 'assistant',
+                              content:
+                                'Please complete the form below. When complete, press submit to send your work order!',
+                            };
+                            return prev;
+                          });
+                          if (issueDescription.length === 0) {
+                            setIssueDescription(userMessage);
+                          }
+                        }}
+                        className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
+                      >
+                        {'Submit Anyways?'}
+                      </button>
+                    )}
                 </div>
                 <div
                   id="chatbox-footer"
@@ -783,7 +802,13 @@ export default function WorkOrderChatbot() {
                         data-testid="send"
                         type="submit"
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                        disabled={isResponding || isTyping || !userMessage || userMessage.length === 0 || !addressHasBeenSelected}
+                        disabled={
+                          isResponding ||
+                          isTyping ||
+                          !userMessage ||
+                          userMessage.length === 0 ||
+                          !addressHasBeenSelected
+                        }
                       >
                         Send
                       </button>
