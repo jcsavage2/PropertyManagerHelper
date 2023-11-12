@@ -5,6 +5,7 @@ import router from 'next/router';
 export const useSessionUser = () => {
   const session = useSession();
   const user = (session.data?.user ?? null) as IUser | null;
+  const accessToken = session.data?.access_token ?? null;
   const sessionStatus = session.status;
   const pathname = typeof window !== 'undefined' && window.location?.pathname;
 
@@ -20,6 +21,7 @@ export const useSessionUser = () => {
 
   return {
     user,
+    accessToken,
     sessionStatus,
   };
 };

@@ -1,8 +1,10 @@
 import { STATE_OPTIONS } from '@/components/state-select';
 import { AiJSONResponse, DeleteUser, Property } from '@/types';
 
+export const AI_MESSAGE_START = '##AI_MESSAGE_START##';
+
 export const findIssueSample: AiJSONResponse = {
-  aiMessage: '<your AI generated conversational response>',
+  aiMessage: AI_MESSAGE_START + '<your conversational response>\n',
   issueDescription: '<value of the issueDescription>',
   issueLocation: '<value of issueLocation>',
   additionalDetails: '<value of additionalDetails>',
