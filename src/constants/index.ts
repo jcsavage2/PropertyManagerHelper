@@ -1,14 +1,8 @@
 import { STATE_OPTIONS } from '@/components/state-select';
-import { AiJSONResponse, DeleteUser, Property } from '@/types';
+import { DeleteUser, Property } from '@/types';
 
+//NOTE: Needs to maintain parity with pillar-edge constant of the same name!
 export const AI_MESSAGE_START = '##AI_MESSAGE_START##';
-
-export const findIssueSample: AiJSONResponse = {
-  aiMessage: AI_MESSAGE_START + '<your conversational response>\n',
-  issueDescription: '<value of the issueDescription>',
-  issueLocation: '<value of issueLocation>',
-  additionalDetails: '<value of additionalDetails>',
-};
 
 export const WO_STATUS = {
   TO_DO: 'TO_DO',
