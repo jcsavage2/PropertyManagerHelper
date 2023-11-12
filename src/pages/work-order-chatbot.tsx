@@ -343,6 +343,7 @@ export default function WorkOrderChatbot() {
             : '',
         streetAddress: parsedAddress.address.toLowerCase(),
       });
+      
       const res = await fetch(process.env.NEXT_PUBLIC_CHAT_URL, {
         method: 'POST',
         headers: {
