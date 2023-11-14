@@ -18,7 +18,7 @@ module.exports = withSentryConfig(
     // Suppresses source map uploading logs during build
     silent: true,
     org: 'pillar-technologies-llc',
-    project: 'javascript-nextjs',
+    project: 'pillar',
     authToken: process.env.NEXT_PUBLIC_SENTRY_AUTH_TOKEN,
   },
   {
