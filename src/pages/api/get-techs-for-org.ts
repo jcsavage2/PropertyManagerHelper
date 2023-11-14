@@ -7,6 +7,7 @@ import { GetTechsForOrgSchema } from '@/types/customschemas';
 import { ApiError, ApiResponse } from './_types';
 import { errorToResponse } from './_utils';
 import { GetTechsForOrg } from '@/types';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -31,6 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       .json({ response: JSON.stringify({ techs: response.techs, startKey: response.startKey }) });
   } catch (error: any) {
     console.log({ error });
+    Sentry.captureException(error);
     return res
       .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));

@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
 import { ApiError } from './_types';
+import * as Sentry from '@sentry/nextjs';
 
 const s3 = new S3({
   region: process.env.NEXT_PUBLIC_REGION,
@@ -60,6 +61,7 @@ export default async function handler(req: any, res: any) {
     });
   } catch (error: any) {
     console.error(error);
+    Sentry.captureException(error);
     //@ts-ignore
     return res
       .status(API_STATUS.INTERNAL_SERVER_ERROR)
