@@ -24,6 +24,7 @@ import { StatusOption, WoStatus } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
 import { GetAllWorkOrdersForUserSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
+import { toast } from 'react-toastify';
 
 export type HandleUpdateStatusProps = {
   val: SingleValue<StatusOption>;
@@ -122,8 +123,11 @@ const WorkOrders = () => {
         if (orders.length) {
           sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
         }
-      } catch (e: any) {
-        console.log(e);
+      } catch (error) {
+        toast.error(
+          (error as any)?.response?.data?.response ?? 'Failed to get work orders for user',
+          { position: toast.POSITION.TOP_CENTER }
+        );
       }
       setIsFetching(false);
     },

@@ -29,9 +29,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
     const workOrders = response.workOrders
       ? response.workOrders.sort((a: IWorkOrder, b: IWorkOrder) => {
-          //@ts-ignore
-          return new Date(b.created) - new Date(a.created);
-        })
+        //@ts-ignore
+        return new Date(b.created) - new Date(a.created);
+      })
       : [];
 
     return res
