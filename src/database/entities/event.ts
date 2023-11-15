@@ -10,6 +10,7 @@ type CreateEventProps = {
   madeByEmail: string;
   madeByName: string;
   message?: string;
+  ksuId?: string;
 };
 
 export interface IEvent {
@@ -37,11 +38,11 @@ export class EventEntity {
   /**
    * Creates a new event attached to a work order
    */
-  public async create({ workOrderId, madeByEmail, madeByName, message }: CreateEventProps) {
+  public async create({ workOrderId, madeByEmail, madeByName, message, ksuId }: CreateEventProps) {
     const result = await this.eventEntity.update(
       {
         pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
-        sk: generateKSUID(), //allows us to sort by date
+        sk: ksuId ?? generateKSUID(), //allows us to sort by date
         madeByEmail,
         madeByName,
         message,

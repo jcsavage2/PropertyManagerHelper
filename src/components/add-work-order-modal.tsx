@@ -234,7 +234,6 @@ export const AddWorkOrderModal = ({
                   user={user}
                   userType={userType}
                   onChange={async (option: SingleValue<Option>) => {
-                    console.log({ option });
                     onChange(option?.value.trim() ?? undefined);
                   }}
                   shouldFetch={addWorkOrderModalIsOpen}

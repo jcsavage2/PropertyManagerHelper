@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { API_STATUS, USER_PERMISSION_ERROR, findIssueSample } from '@/constants';
-import { generatePrompt, processAiResponse } from '@/utils';
+import { convertChatMessagesToOpenAI, generatePrompt, processAiResponse } from '@/utils';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
 import { AiJSONResponse, ChatbotRequest } from '@/types';
@@ -37,13 +37,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       unitInfo,
       streetAddress
     );
+    const openAIMessages: ChatCompletionRequestMessage[] = convertChatMessagesToOpenAI(messages);
     const response = await openai.createChatCompletion(
       {
         max_tokens: 1000,
         model: gpt_model,
         messages: [
           prompt,
-          ...messages,
+          ...openAIMessages,
           {
             role: 'user',
             content: userMessage,
@@ -80,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           model: gpt_model,
           messages: [
             prompt,
-            ...messages,
+            ...openAIMessages,
             { role: 'user', content: userMessage },
             { role: 'assistant', content: aiResponse },
             {
