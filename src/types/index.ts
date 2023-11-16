@@ -36,6 +36,7 @@ import {
   AddWorkOrderModalSchema,
   CreateCommentSchema,
 } from './customschemas';
+import { ChatCompletionRequestMessage } from 'openai';
 
 export type PTE_Type = (typeof PTE)[keyof typeof PTE];
 
@@ -55,6 +56,10 @@ export type AddressOption = {
   label: string;
   value: any;
 };
+
+export type ChatMessage = ChatCompletionRequestMessage & {
+  ksuId?: string;
+}
 
 export type WoStatus = (typeof WO_STATUS)[keyof typeof WO_STATUS];
 

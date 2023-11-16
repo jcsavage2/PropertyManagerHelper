@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
+import { generateKSUID, hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
 import {
   AddressOption,
   AiJSONResponse,
+  ChatMessage,
   ChatbotRequest,
   CreateWorkOrder,
   IssueInformation,
@@ -40,7 +41,7 @@ export default function WorkOrderChatbot() {
   const [issueLocation, setIssueLocation] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
 
-  const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false); // Allows the user to finish and submit the work order using a form
   const [errorCount, setErrorCount] = useState(0); // Tracks the number of errors for the openAI endpoint service-request
@@ -315,6 +316,7 @@ export default function WorkOrderChatbot() {
     e.preventDefault();
     setIsResponding(true);
     const lastUserMessage = userMessage;
+    const sentTimestamp = generateKSUID();
     try {
       amplitude.track('Form Action', {
         name: 'Submit Text',
@@ -329,7 +331,7 @@ export default function WorkOrderChatbot() {
         return;
       }
 
-      setMessages([...messages, { role: 'user', content: userMessage }]);
+      setMessages([...messages, { role: 'user', content: userMessage, ksuId: sentTimestamp }]);
       setUserMessage('');
 
       const parsedAddress = selectedAddress.value;
@@ -354,8 +356,8 @@ export default function WorkOrderChatbot() {
       const newMessage = parsed.aiMessage;
       setMessages([
         ...messages,
-        { role: 'user', content: userMessage },
-        { role: 'assistant', content: newMessage },
+        { role: 'user', content: userMessage, ksuId: sentTimestamp },
+        { role: 'assistant', content: newMessage, ksuId: generateKSUID() },
       ]);
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
@@ -370,8 +372,8 @@ export default function WorkOrderChatbot() {
       //Manually set assistant message and reset user message to their last input
       setMessages([
         ...messages,
-        { role: 'user', content: userMessage },
-        { role: 'assistant', content: assistantMessage },
+        { role: 'user', content: userMessage, ksuId: sentTimestamp },
+        { role: 'assistant', content: assistantMessage, ksuId: generateKSUID() },
       ]);
       setUserMessage(lastUserMessage);
     }
@@ -669,6 +671,7 @@ export default function WorkOrderChatbot() {
                               role: 'assistant',
                               content:
                                 'Please complete the form below. When complete, press submit to send your work order!',
+                              ksuId: generateKSUID(),
                             };
                             return prev;
                           });
