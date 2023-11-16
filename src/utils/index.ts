@@ -1,8 +1,9 @@
 import { TECHNICIAN_DELIM } from '@/constants';
-import { IssueInformation } from '@/types';
+import { ChatMessage, IssueInformation } from '@/types';
 import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
 import { toast } from 'react-toastify';
+import { ChatCompletionRequestMessage } from 'openai';
 
 export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
@@ -206,5 +207,13 @@ export function renderToastError(e: any, defaultMessage: string) {
   toast.error(errorMessage, {
     position: toast.POSITION.TOP_CENTER,
     draggable: false,
+  });
+}
+
+// Removes the ksuId field from each entry in an array of ChatMessages
+export function convertChatMessagesToOpenAI(messages: ChatMessage[]): ChatCompletionRequestMessage[] {
+  return messages.map((message) => {
+    const { ksuId, ...rest } = message;
+    return rest;
   });
 }

@@ -14,7 +14,8 @@ export const useSessionUser = () => {
     sessionStatus === 'unauthenticated' &&
     pathname &&
     pathname !== '/' &&
-    pathname !== '/terms-and-conditions'
+    pathname !== '/terms-and-conditions' &&
+    pathname !== '/privacy-policy'
   ) {
     router.push('/');
   }

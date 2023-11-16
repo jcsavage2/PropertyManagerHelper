@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
+import { convertChatMessagesToOpenAI, generateKSUID, hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
 import {
   AddressOption,
   AiJSONResponse,
+  ChatMessage,
   ChatbotRequest,
   CreateWorkOrder,
   IssueInformation,
@@ -40,7 +41,7 @@ export default function WorkOrderChatbot() {
   const [issueLocation, setIssueLocation] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
 
-  const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [aiMessageEnded, setAiMessageEnded] = useState(false); // Tracks if the ai message portion of the streaming has finished
@@ -318,6 +319,7 @@ export default function WorkOrderChatbot() {
     setIsResponding(true);
     setAiMessageEnded(false);
     const lastUserMessage = userMessage;
+    const sentTimestamp = generateKSUID();
     try {
       amplitude.track('Form Action', {
         name: 'Submit Text',
@@ -329,13 +331,13 @@ export default function WorkOrderChatbot() {
         throw new Error('Missing required parameters');
       }
 
-      setMessages([...messages, { role: 'user', content: userMessage }]);
+      setMessages([...messages, { role: 'user', content: userMessage, ksuId: sentTimestamp }]);
       setUserMessage('');
 
       const parsedAddress = selectedAddress.value;
       const body: ChatbotRequest = ChatbotRequestSchema.parse({
         userMessage,
-        messages,
+        messages: convertChatMessagesToOpenAI(messages),
         ...workOrder,
         unitInfo:
           parsedAddress.numBeds && parsedAddress.numBaths
@@ -402,13 +404,18 @@ export default function WorkOrderChatbot() {
             if (aiMessage.length > 0) {
               setMessages([
                 ...messages,
-                { role: 'user', content: userMessage },
+                { role: 'user', content: userMessage, ksuId: sentTimestamp },
                 { role: 'assistant', content: aiMessage },
               ]);
             }
           }
         }
       }
+      // Set assistant timestamp after the response has been received
+      setMessages((prev) => {
+        prev[prev.length - 1].ksuId = generateKSUID();
+        return prev;
+      });
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
       console.log({ err });
@@ -422,8 +429,8 @@ export default function WorkOrderChatbot() {
       //Manually set assistant message and reset user message to their last input
       setMessages([
         ...messages,
-        { role: 'user', content: userMessage },
-        { role: 'assistant', content: assistantMessage },
+        { role: 'user', content: userMessage, ksuId: sentTimestamp },
+        { role: 'assistant', content: assistantMessage, ksuId: generateKSUID() },
       ]);
       setUserMessage(lastUserMessage);
     }
@@ -733,6 +740,7 @@ export default function WorkOrderChatbot() {
                               role: 'assistant',
                               content:
                                 'Please complete the form below. When complete, press submit to send your work order!',
+                              ksuId: generateKSUID(),
                             };
                             return prev;
                           });

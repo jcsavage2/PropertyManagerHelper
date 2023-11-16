@@ -98,7 +98,6 @@ export const AddCommentModal = ({
     <Modal
       isOpen={addCommentModalIsOpen}
       onAfterOpen={() => toggleBodyScroll(true)}
-      onAfterClose={() => toggleBodyScroll(false)}
       onRequestClose={closeModal}
       contentLabel="Add Comment Modal"
       style={customStyles}

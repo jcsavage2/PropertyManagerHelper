@@ -95,6 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         await eventEntity.create({
           workOrderId: woId,
           message: message.content ?? '',
+          ksuId: message.ksuId,
           madeByEmail: message.role === 'user' ? derivedTenantEmail : 'pillar assistant',
           madeByName: message.role === 'user' ? derivedTenantName : 'pillar assistant',
         });
