@@ -8,6 +8,7 @@ import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
 import { GetS3BucketSchema } from '@/types/customschemas';
 import { ApiError, ApiResponse } from './_types';
 import { errorToResponse } from './_utils';
+import * as Sentry from '@sentry/nextjs';
 
 /*
  * Retrieves the value for the given key from the given s3 bucket.
@@ -33,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: url });
   } catch (error: any) {
     console.error(error);
+    Sentry.captureException(error);
     return res
       .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));

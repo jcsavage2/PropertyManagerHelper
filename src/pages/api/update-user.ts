@@ -7,6 +7,7 @@ import { errorToResponse } from './_utils';
 import { UpdateUserSchema } from '@/types/customschemas';
 import { UpdateUser } from '@/types';
 import { ApiError, ApiResponse } from './_types';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -24,6 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(updatedUser) });
   } catch (error: any) {
     console.error(error);
+    Sentry.captureException(error);
     return res
       .status(error.status || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));

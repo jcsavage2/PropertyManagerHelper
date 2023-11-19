@@ -7,6 +7,7 @@ import { GetAllWorkOrdersForUserSchema } from '@/types/customschemas';
 import { GetAllWorkOrdersForUser } from '@/types';
 import { errorToResponse } from './_utils';
 import { ApiError, ApiResponse } from './_types';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -29,9 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
     const workOrders = response.workOrders
       ? response.workOrders.sort((a: IWorkOrder, b: IWorkOrder) => {
-          //@ts-ignore
-          return new Date(b.created) - new Date(a.created);
-        })
+        //@ts-ignore
+        return new Date(b.created) - new Date(a.created);
+      })
       : [];
 
     return res
@@ -39,6 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       .json({ response: JSON.stringify({ workOrders, startKey: response.startKey }) });
   } catch (error: any) {
     console.log({ error });
+    Sentry.captureException(error);
     return res
       .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));

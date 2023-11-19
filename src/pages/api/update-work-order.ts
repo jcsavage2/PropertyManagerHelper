@@ -11,6 +11,7 @@ import { USER_TYPE } from '@/database/entities/user';
 import { errorToResponse, initializeSendgrid } from './_utils';
 import { ApiError, ApiResponse } from './_types';
 import { UpdateWorkOrderSchema } from '@/types/customschemas';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -141,6 +142,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(updatedWorkOrder) });
   } catch (error: any) {
     console.log({ error });
+    Sentry.captureException(error);
     return res
       .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));

@@ -13,6 +13,7 @@ import { CreateWorkOrderSchema } from '@/types/customschemas';
 import { ApiError, ApiResponse } from './_types';
 import { errorToResponse, initializeSendgrid } from './_utils';
 import { CreateWorkOrder } from '@/types';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -304,6 +305,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: 'Successfully sent email' });
   } catch (error: any) {
     console.log({ error });
+    Sentry.captureException(error);
     return res
       .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));

@@ -13,6 +13,7 @@ import { AssignTechnicianSchema } from '@/types/customschemas';
 import { MISSING_ENV, errorToResponse, initializeSendgrid } from './_utils';
 import { AssignTechnicianBody } from '@/types';
 import { init, track } from '@amplitude/analytics-node';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -200,6 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(assignedTechnician) });
   } catch (error: any) {
     console.error(error);
+    Sentry.captureException(error);
     return res
       .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));
