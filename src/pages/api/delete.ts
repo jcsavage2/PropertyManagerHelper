@@ -13,6 +13,7 @@ import { DeleteEntitySchema } from '@/types/customschemas';
 import { DeleteEntity } from '@/types';
 import { ApiError, ApiResponse } from './_types';
 import { errorToResponse } from './_utils';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -104,6 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(API_STATUS.SUCCESS).json({ response: 'Successfully deleted entity' });
   } catch (error: any) {
     console.log({ error });
+    Sentry.captureException(error);
     return res
       .status(error?.status || API_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorToResponse(error));

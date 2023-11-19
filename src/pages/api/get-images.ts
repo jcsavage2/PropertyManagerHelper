@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { options } from './auth/[...nextauth]';
 import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
 import { ApiError } from './_types';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -44,7 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     );
     res.status(API_STATUS.SUCCESS).json({ images });
-  } catch (error) {
+  } catch (error: any) {
+    Sentry.captureException(error);
     // @ts-ignore
     res.status(API_STATUS.INTERNAL_SERVER_ERROR).send('Failed to Upload Image');
   }

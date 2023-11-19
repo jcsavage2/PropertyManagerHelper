@@ -10,6 +10,7 @@ import { options } from './auth/[...nextauth]';
 import { ApiError, ApiResponse } from './_types';
 import { ChatbotRequestSchema } from '@/types/customschemas';
 import { errorToResponse } from './_utils';
+import * as Sentry from '@sentry/nextjs';
 
 const config = new Configuration({
   apiKey: process.env.NEXT_PUBLIC_OPEN_AI_API_KEY,
@@ -124,6 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
   } catch (err: any) {
     const isOpenAIError = !!err?.response?.status;
+    Sentry.captureException(err);
     return res
       .status(
         isOpenAIError ? err.response.status : err?.statusCode ?? API_STATUS.INTERNAL_SERVER_ERROR
