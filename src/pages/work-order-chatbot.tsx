@@ -18,7 +18,6 @@ import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { USER_TYPE } from '@/database/entities/user';
 import { AI_MESSAGE_START, API_STATUS, PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
-import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
 import * as amplitude from '@amplitude/analytics-browser';
 import {
@@ -26,6 +25,7 @@ import {
   CreateWorkOrderSchema,
   UpdateUserSchema,
 } from '@/types/customschemas';
+import * as Sentry from '@sentry/react';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
@@ -244,6 +244,7 @@ export default function WorkOrderChatbot() {
       );
     } catch (error: any) {
       console.log({ error });
+      Sentry.captureException(error)
       amplitude.track('Submit Work Order', {
         status: 'failure',
         issueDescription,
@@ -419,6 +420,7 @@ export default function WorkOrderChatbot() {
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
       console.log({ err });
+      Sentry.captureException(err)
 
       if (errorCount >= 1) {
         assistantMessage =
