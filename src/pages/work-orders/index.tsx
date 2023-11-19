@@ -23,7 +23,7 @@ import { SingleValue } from 'react-select';
 import { StatusOption, WoStatus } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
-import { GetAllWorkOrdersForUserSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
+import { UpdateWorkOrderSchema } from '@/types/customschemas';
 import { toast } from 'react-toastify';
 
 export type HandleUpdateStatusProps = {

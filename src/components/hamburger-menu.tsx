@@ -29,7 +29,7 @@ const HamburgerMenu = () => {
       </div>
       {isOpen && (
         <div
-          className="absolute left-0 bg-blue-400 mt-0 w-full grid z-10"
+          className="absolute left-0 bg-blue-300 mt-0 w-full grid z-10"
           style={{ top: '7dvh', height: '93dvh' }}
           onClick={() => setIsOpen(false)}
         >
