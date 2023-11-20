@@ -46,6 +46,7 @@ export const nullableString = z
 
 // -- Addresses -- //
 export const zipCode = z
+  .coerce
   .string()
   .min(1, { message: 'Input is required' })
   .max(10, { message: 'Input must be a zip code' })
@@ -60,8 +61,17 @@ export const validateProperty = z.object({
   unit: lowerCaseOptionalString,
   numBeds: requiredNumber.default(1),
   numBaths: requiredNumber.default(1),
+  propertyUUId: optionalString,
 });
-export const validatePropertyWithId = validateProperty.extend({
+export const validatePropertyWithId = z.object({
+  address: lowerCaseRequiredString,
+  city: lowerCaseRequiredString,
+  state: lowerCaseRequiredString,
+  country: country,
+  postalCode: zipCode,
+  unit: lowerCaseOptionalString,
+  numBeds: requiredNumber.default(1),
+  numBaths: requiredNumber.default(1),
   propertyUUId: lowerCaseRequiredString,
 });
 

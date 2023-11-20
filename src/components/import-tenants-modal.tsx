@@ -7,7 +7,7 @@ import { BiError } from 'react-icons/bi';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { v4 as uuid } from 'uuid';
-import { toTitleCase } from '@/utils';
+import { deconstructKey, toTitleCase } from '@/utils';
 import { toast } from 'react-toastify';
 import Papa from 'papaparse';
 import { useUserContext } from '@/context/user';
@@ -17,8 +17,9 @@ import { ENTITIES } from '@/database/entities';
 import { validatePropertyWithId } from '@/types/basevalidators';
 import { USER_TYPE } from '@/database/entities/user';
 import { USER_PERMISSION_ERROR } from '@/constants';
-import { GetS3BucketSchema, ImportTenantSchema } from '@/types/customschemas';
+import { ImportTenantSchema } from '@/types/customschemas';
 import { CreateTenant, ImportTenant } from '@/types';
+import { CiWarning } from 'react-icons/ci';
 
 export const ImportTenantsModal = ({
   modalIsOpen,
@@ -63,6 +64,7 @@ export const ImportTenantsModal = ({
   const [formattingError, setFormattingError] = useState<boolean>(false);
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
   const [importTenantsLoading, setImportTenantsLoading] = useState<boolean>(false);
+  const [preImportTenantsLoading, setPreImportTenantsLoading] = useState<boolean>(false);
   const [importTenantProgress, setImportTenantProgress] = useState<number>(0);
 
   const onClose = () => {
@@ -108,6 +110,12 @@ export const ImportTenantsModal = ({
             <div className="text-red-500 flex flex-row items-center">
               <BiError fontSize={30} className="mr-2" />
               {tenant.error}
+            </div>
+          )}
+          {tenant.warning && (
+            <div className="text-yellow-500 flex flex-row items-center">
+              <CiWarning fontSize={30} className="mr-2" />
+              {tenant.warning}
             </div>
           )}
         </div>
@@ -167,6 +175,7 @@ export const ImportTenantsModal = ({
 
   const processTenantFile = useCallback(
     async (parsed: any[]) => {
+      setPreImportTenantsLoading(true);
       try {
         if (
           !user ||
@@ -179,7 +188,8 @@ export const ImportTenantsModal = ({
           alert('User must be a property manager part of an organization to import tenants');
           return;
         }
-        parsed.forEach((row: any, index: number) => {
+        let index = 0;
+        for (const row of parsed) {
           const {
             Name: tenantName,
             Email: tenantEmail,
@@ -204,39 +214,90 @@ export const ImportTenantsModal = ({
           if (!numBaths) missingFields += 'Baths, ';
           if (missingFields.length) missingFields = missingFields.slice(0, -2);
 
-          const property = validatePropertyWithId.parse({
-            propertyUUId: uuid(),
-            address,
-            unit,
-            city,
-            state,
-            postalCode,
-            country: 'US',
-            numBeds,
-            numBaths,
-          });
+          //Try to find this property, if it doesn't exist then set createNewProperty to true
+          let properties = [];
+          if (!missingFields.length) {
+            const { data } = await axios.post('/api/get-properties-by-address', {
+              organization: user?.organization,
+              property: {
+                address,
+                unit,
+                city,
+                state,
+                postalCode: postalCode?.toString().toUpperCase(),
+                country: 'US',
+                numBeds,
+                numBaths,
+              },
+            });
 
-          const tenant: ImportTenant = ImportTenantSchema.parse({
-            key: index,
-            tenantEmail: tenantEmail?.toLowerCase(),
-            tenantName: tenantName && toTitleCase(tenantName),
-            property,
-            pmEmail: user.email,
-            pmName: altName ?? user.name,
-            createNewProperty: true,
-            organization: user!.organization!,
-            organizationName: user!.organizationName!,
-            error:
-              missingFields.length > 0
-                ? `Missing required field(s): {${missingFields}}`
-                : undefined,
-          });
+            properties = JSON.parse(data.response).properties;
+          }
+
+          let tenant: ImportTenant;
+          if (properties.length > 0) {
+            const duplicateProperty = properties[0];
+            tenant = ImportTenantSchema.parse({
+              key: index,
+              tenantEmail: tenantEmail?.toLowerCase(),
+              tenantName: tenantName && toTitleCase(tenantName),
+              property: {
+                address: duplicateProperty!.address,
+                unit: duplicateProperty!.unit,
+                propertyUUId: deconstructKey(duplicateProperty!.pk),
+                city: duplicateProperty!.city,
+                state: duplicateProperty!.state,
+                postalCode: duplicateProperty!.postalCode,
+                numBeds: duplicateProperty!.numBeds,
+                numBaths: duplicateProperty!.numBaths,
+                country: duplicateProperty!.country,
+              },
+              pmEmail: user.email,
+              pmName: altName ?? user.name,
+              createNewProperty: false,
+              organization: user!.organization!,
+              organizationName: user!.organizationName!,
+              error: undefined,
+              warning:
+                'Property already exists, this tenant will be added to the existing property at this address',
+            });
+          } else {
+            const property = validatePropertyWithId.parse({
+              propertyUUId: uuid(),
+              address,
+              unit,
+              city,
+              state,
+              postalCode,
+              country: 'US',
+              numBeds,
+              numBaths,
+            });
+
+            tenant = ImportTenantSchema.parse({
+              key: index,
+              tenantEmail: tenantEmail?.toLowerCase(),
+              tenantName: tenantName && toTitleCase(tenantName),
+              property,
+              pmEmail: user.email,
+              pmName: altName ?? user.name,
+              createNewProperty: true,
+              organization: user!.organization!,
+              organizationName: user!.organizationName!,
+              error:
+                missingFields.length > 0
+                  ? `Missing required field(s): {${missingFields}}`
+                  : undefined,
+            });
+          }
 
           setUploadList((prev) => [...prev, tenant]);
-        });
+          index++;
+        }
       } catch (err: any) {
         setFileUploadError(err?.message || 'Error uploading file');
       }
+      setPreImportTenantsLoading(false);
     },
     [setUploadList, user, altName, userType]
   );
@@ -424,7 +485,7 @@ export const ImportTenantsModal = ({
             handleImportTenants();
           }}
         >
-          {importTenantsLoading ? (
+          {importTenantsLoading || preImportTenantsLoading ? (
             <LoadingSpinner />
           ) : uploadList.length ? (
             'Create ' +

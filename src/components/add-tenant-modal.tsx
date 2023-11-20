@@ -9,12 +9,12 @@ import { useDevice } from '@/hooks/use-window-size';
 import PropertySelector from './property-selector';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
-import { renderToastError, toggleBodyScroll } from '@/utils';
+import { deconstructKey, renderToastError, toggleBodyScroll } from '@/utils';
 import { USER_TYPE } from '@/database/entities/user';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { USER_PERMISSION_ERROR, DEFAULT_PROPERTY_WITH_ID } from '@/constants';
-import { CreateTenant_Address, CreateTenant_TenantInfo } from '@/types';
+import { CreateTenant_Address, CreateTenant_TenantInfo, Property } from '@/types';
 import {
   CreateTenant_AddressSchema,
   CreateTenantSchema,
@@ -97,10 +97,37 @@ export const AddTenantModal = ({
         )
           throw new Error(USER_PERMISSION_ERROR);
 
+        let property: Property | null = params.property
+        let duplicateExists = false
+
+        if (createNewProperty) {
+          const { data } = await axios.post('/api/get-properties-by-address', {
+            organization: user?.organization,
+            property: params.property,
+          });
+
+          const properties = JSON.parse(data.response).properties;
+          if (properties.length > 0) {
+            const { address, unit, city, state, postalCode, country, pk, numBeds, numBaths } = properties[0]
+            property = {
+              address,
+              unit,
+              city,
+              state,
+              postalCode,
+              country,
+              propertyUUId: deconstructKey(pk),
+              numBeds,
+              numBaths
+            }
+            duplicateExists = true
+          }
+        }
+
         const body = {
-          ...params,
+          property,
           ...tenantInfoForm.getValues(),
-          createNewProperty,
+          createNewProperty: duplicateExists ? false : createNewProperty,
         };
         const validatedBody = CreateTenantSchema.parse(body);
 
@@ -138,7 +165,7 @@ export const AddTenantModal = ({
     return (
       <button
         onClick={() => setStage(0)}
-        className="bg-blue-200 p-3 mt-7 text-gray-600 w-full hover:bg-blue-300 rounded disabled:opacity-25"
+        className="bg-blue-200 p-3 mt-5 text-gray-600 w-full hover:bg-blue-300 rounded disabled:opacity-25"
         type="button"
       >
         Previous
@@ -248,6 +275,7 @@ export const AddTenantModal = ({
           <div className="flex mt-2 flex-row items-center md:w-3/4 w-full mx-auto justify-center">
             <div
               onClick={() => {
+                if (createNewProperty) return;
                 setCreateNewProperty(true);
                 propertyForm.setValue('property', DEFAULT_PROPERTY_WITH_ID);
                 propertyForm.setValue('property.propertyUUId', uuidv4());
@@ -260,6 +288,7 @@ export const AddTenantModal = ({
             </div>
             <div
               onClick={() => {
+                if (!createNewProperty) return;
                 setCreateNewProperty(false);
                 propertyForm.setValue('property', null);
               }}

@@ -332,7 +332,7 @@ export function getInviteTenantSendgridEmailBody(
 
 // Handles rendering api error messages to toast when necessary, otherwise uses defaultMesssage
 export function renderToastError(e: any, defaultMessage: string) {
-  const errorMessage: string = e.response?.data?.userErrorMessage ?? defaultMessage;
+  const errorMessage: string = e?.response?.data?.userErrorMessage ?? defaultMessage;
   toast.error(errorMessage, {
     position: toast.POSITION.TOP_CENTER,
     draggable: false,
