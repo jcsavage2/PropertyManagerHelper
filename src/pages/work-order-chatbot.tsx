@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { generateKSUID, hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
+import { convertChatMessagesToOpenAI, generateKSUID, hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
 import {
   AddressOption,
   AiJSONResponse,
@@ -16,9 +16,8 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { USER_TYPE } from '@/database/entities/user';
-import { PTE } from '@/constants';
+import { AI_MESSAGE_START, API_STATUS, PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
-import { ChatCompletionRequestMessage } from 'openai';
 import Modal from 'react-modal';
 import * as amplitude from '@amplitude/analytics-browser';
 import {
@@ -26,10 +25,11 @@ import {
   CreateWorkOrderSchema,
   UpdateUserSchema,
 } from '@/types/customschemas';
+import * as Sentry from '@sentry/react';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
-  const { user, sessionStatus } = useSessionUser();
+  const { user, sessionStatus, accessToken } = useSessionUser();
   const { isMobile } = useDevice();
 
   const [platform, setPlatform] = useState<'Desktop' | 'iOS' | 'Android'>();
@@ -43,8 +43,10 @@ export default function WorkOrderChatbot() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [aiMessageEnded, setAiMessageEnded] = useState(false); // Tracks if the ai message portion of the streaming has finished
   const [submitAnywaysSkip, setSubmitAnywaysSkip] = useState(false); // Allows the user to finish and submit the work order using a form
-  const [errorCount, setErrorCount] = useState(0); // Tracks the number of errors for the openAI endpoint service-request
+  const [errorCount, setErrorCount] = useState(0); // Tracks the number of errors for the openAI endpoint
   const [submittingWorkOrderLoading, setSubmittingWorkOrderLoading] = useState(false);
   const [addressHasBeenSelected, setAddressHasBeenSelected] = useState(true);
 
@@ -126,7 +128,7 @@ export default function WorkOrderChatbot() {
 
   //If the user has only one address, select it automatically
   useEffect(() => {
-    if (!addressesOptions) return;
+    if (!addressesOptions || selectedAddress) return;
     if (addressesOptions.length === 1) {
       setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(true);
@@ -134,7 +136,7 @@ export default function WorkOrderChatbot() {
       setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(false);
     }
-  }, [addressesOptions]);
+  }, [addressesOptions, selectedAddress]);
 
   // Scroll to bottom when new message added
   useEffect(() => {
@@ -142,7 +144,7 @@ export default function WorkOrderChatbot() {
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, permissionToEnter, submitAnywaysSkip, selectedAddress]);
+  }, [messages, permissionToEnter, submitAnywaysSkip, selectedAddress, isTyping]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
@@ -242,6 +244,7 @@ export default function WorkOrderChatbot() {
       );
     } catch (error: any) {
       console.log({ error });
+      Sentry.captureException(error)
       amplitude.track('Submit Work Order', {
         status: 'failure',
         issueDescription,
@@ -315,6 +318,7 @@ export default function WorkOrderChatbot() {
   const handleSubmitText: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setIsResponding(true);
+    setAiMessageEnded(false);
     const lastUserMessage = userMessage;
     const sentTimestamp = generateKSUID();
     try {
@@ -324,11 +328,8 @@ export default function WorkOrderChatbot() {
         issueDescription,
         issueLocation,
       });
-      if (!selectedAddress) {
-        alert(
-          'Please make sure to select an address, or contact your property manager for assistance.'
-        );
-        return;
+      if (!selectedAddress || !process.env.NEXT_PUBLIC_CHAT_URL) {
+        throw new Error('Missing required parameters');
       }
 
       setMessages([...messages, { role: 'user', content: userMessage, ksuId: sentTimestamp }]);
@@ -337,7 +338,7 @@ export default function WorkOrderChatbot() {
       const parsedAddress = selectedAddress.value;
       const body: ChatbotRequest = ChatbotRequestSchema.parse({
         userMessage,
-        messages,
+        messages: convertChatMessagesToOpenAI(messages),
         ...workOrder,
         unitInfo:
           parsedAddress.numBeds && parsedAddress.numBaths
@@ -345,23 +346,81 @@ export default function WorkOrderChatbot() {
             : '',
         streetAddress: parsedAddress.address.toLowerCase(),
       });
-      const res = await axios.post('/api/service-request', body);
-      const jsonResponse = res?.data.response;
-      const parsed = JSON.parse(jsonResponse) as AiJSONResponse;
+      
+      const res = await fetch(process.env.NEXT_PUBLIC_CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${encodeURIComponent(accessToken)}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (res.status !== API_STATUS.SUCCESS) {
+        throw new Error('Error fetching chatbot response');
+      }
 
-      parsed.issueDescription && setIssueDescription(parsed.issueDescription);
-      parsed.issueLocation && setIssueLocation(parsed.issueLocation);
-      parsed.additionalDetails && setAdditionalDetails(parsed.additionalDetails);
+      const reader = res.body?.getReader();
+      let buffer = '';
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) {
+          if (buffer.includes('}')) {
+            const parsed: AiJSONResponse = JSON.parse(buffer);
+            if (parsed.issueLocation) {
+              setIssueLocation(parsed.issueLocation);
+            }
+            if (parsed.issueDescription) {
+              setIssueDescription(parsed.issueDescription);
+            }
+            if (parsed.additionalDetails) {
+              setAdditionalDetails(parsed.additionalDetails);
+            }
+          }
+          break;
+        }
 
-      const newMessage = parsed.aiMessage;
-      setMessages([
-        ...messages,
-        { role: 'user', content: userMessage, ksuId: sentTimestamp },
-        { role: 'assistant', content: newMessage, ksuId: generateKSUID() },
-      ]);
+        //Turn chunk into complete content
+        buffer += Buffer.from(value).toString('utf-8');
+
+        if (buffer.length > 0) {
+          //Type out the aiResponse without showing the user other json data
+          if (buffer.includes(AI_MESSAGE_START) && !aiMessageEnded) {
+            //Once we have data, switch from waiting for a response to typing the result
+            setIsTyping(true);
+            setIsResponding(false);
+
+            buffer = buffer.replace(/\n/g, '\\\n');
+            const aiMessageStart = buffer.lastIndexOf(AI_MESSAGE_START) + AI_MESSAGE_START.length;
+            let aiMessageEnd: number;
+
+            //Reached the end of aiMessageResponse
+            if (buffer.includes('\\n')) {
+              aiMessageEnd = buffer.indexOf('\\n');
+              setAiMessageEnded(true);
+            } else {
+              aiMessageEnd = buffer.length;
+            }
+
+            const aiMessage = buffer.substring(aiMessageStart, aiMessageEnd);
+            if (aiMessage.length > 0) {
+              setMessages([
+                ...messages,
+                { role: 'user', content: userMessage, ksuId: sentTimestamp },
+                { role: 'assistant', content: aiMessage },
+              ]);
+            }
+          }
+        }
+      }
+      // Set assistant timestamp after the response has been received
+      setMessages((prev) => {
+        prev[prev.length - 1].ksuId = generateKSUID();
+        return prev;
+      });
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
       console.log({ err });
+      Sentry.captureException(err)
 
       if (errorCount >= 1) {
         assistantMessage =
@@ -378,6 +437,8 @@ export default function WorkOrderChatbot() {
       setUserMessage(lastUserMessage);
     }
     setIsResponding(false);
+    setAiMessageEnded(false);
+    setIsTyping(false);
   };
 
   const renderChatHeader = () => {
@@ -556,12 +617,21 @@ export default function WorkOrderChatbot() {
                                 </h3>
                               </div>
                             )}
-                          <p
+                          <div
                             data-testid={`response-${index}`}
                             className="whitespace-pre-line break-keep"
                           >
-                            {message.content}
-                          </p>
+                            <p>{message.content}</p>{' '}
+                            {message.role === 'assistant' &&
+                              index === lastSystemMessageIndex &&
+                              isTyping &&
+                              aiMessageEnded && (
+                                <LoadingSpinner
+                                  containerClass="mt-2"
+                                  spinnerClass="spinner-small"
+                                />
+                              )}
+                          </div>
                           {index === lastSystemMessageIndex &&
                             (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
                               <>
@@ -660,6 +730,7 @@ export default function WorkOrderChatbot() {
                     </div>
                   )}
                   {!isResponding &&
+                    !isTyping &&
                     !submitAnywaysSkip &&
                     !hasAllIssueInfo(workOrder) &&
                     (issueDescription.length > 0 || errorCount > 0) && (
@@ -744,6 +815,7 @@ export default function WorkOrderChatbot() {
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
                         disabled={
                           isResponding ||
+                          isTyping ||
                           !userMessage ||
                           userMessage.length === 0 ||
                           !addressHasBeenSelected
