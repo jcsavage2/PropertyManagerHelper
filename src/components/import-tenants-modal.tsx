@@ -197,11 +197,12 @@ export const ImportTenantsModal = ({
             Address: address,
             City: city,
             State: state,
-            'Postal Code': postalCode,
+            'Postal Code': _postalCode,
             Beds: numBeds,
             Baths: numBaths,
           } = row;
           const unit = _unit?.toString();
+          const postalCode = _postalCode?.toString();
 
           //Construct error message for any missing fields
           let missingFields = '';
@@ -225,7 +226,7 @@ export const ImportTenantsModal = ({
                 unit,
                 city,
                 state,
-                postalCode: postalCode?.toString().toUpperCase(),
+                postalCode,
                 country: 'US',
                 numBeds,
                 numBaths,
@@ -240,8 +241,8 @@ export const ImportTenantsModal = ({
             const duplicateProperty = properties[0];
             tenant = ImportTenantSchema.parse({
               key: index,
-              tenantEmail: tenantEmail?.toLowerCase(),
-              tenantName: tenantName && toTitleCase(tenantName),
+              tenantEmail,
+              tenantName,
               property: {
                 address: duplicateProperty!.address,
                 unit: duplicateProperty!.unit,
