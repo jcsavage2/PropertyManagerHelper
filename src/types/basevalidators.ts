@@ -45,11 +45,11 @@ export const nullableString = z
   .transform((val) => (val?.length ? val : null));
 
 // -- Addresses -- //
-export const zipCode = z
-  .coerce
+export const zipCode = z.coerce
   .string()
   .min(1, { message: 'Input is required' })
   .max(10, { message: 'Input must be a zip code' })
+  .toLowerCase()
   .trim();
 export const country = z.string().min(1).max(2).trim().toUpperCase().default('US'); //Default to the US for now
 export const validateProperty = z.object({
@@ -72,7 +72,7 @@ export const validatePropertyWithId = z.object({
   unit: lowerCaseOptionalString,
   numBeds: requiredNumber.default(1),
   numBaths: requiredNumber.default(1),
-  propertyUUId: lowerCaseRequiredString,
+  propertyUUId: requiredString,
 });
 
 // -- Other -- //

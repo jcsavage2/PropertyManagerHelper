@@ -26,6 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         state: body.property.state.toUpperCase(),
         country: body.property.country,
         postalCode: body.property.postalCode.toUpperCase(),
+        unit: body.property.unit?.toUpperCase(),
       },
       organization: body.organization,
     });

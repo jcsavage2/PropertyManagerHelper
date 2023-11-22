@@ -97,18 +97,19 @@ export const AddTenantModal = ({
         )
           throw new Error(USER_PERMISSION_ERROR);
 
-        let property: Property | null = params.property
-        let duplicateExists = false
+        let property: Property | null = params.property;
+        let duplicateExists = false;
 
         if (createNewProperty) {
           const { data } = await axios.post('/api/get-properties-by-address', {
             organization: user?.organization,
-            property: params.property,
+            property,
           });
 
           const properties = JSON.parse(data.response).properties;
           if (properties.length > 0) {
-            const { address, unit, city, state, postalCode, country, pk, numBeds, numBaths } = properties[0]
+            const { address, unit, city, state, postalCode, country, pk, numBeds, numBaths } =
+              properties[0];
             property = {
               address,
               unit,
@@ -118,20 +119,19 @@ export const AddTenantModal = ({
               country,
               propertyUUId: deconstructKey(pk),
               numBeds,
-              numBaths
-            }
-            duplicateExists = true
+              numBaths,
+            };
+            duplicateExists = true;
           }
         }
 
-        const body = {
+        const body = CreateTenantSchema.parse({
           property,
           ...tenantInfoForm.getValues(),
           createNewProperty: duplicateExists ? false : createNewProperty,
-        };
-        const validatedBody = CreateTenantSchema.parse(body);
+        });
 
-        const { data } = await axios.post('/api/create-tenant', validatedBody);
+        const { data } = await axios.post('/api/create-tenant', body);
 
         const parsedUser = JSON.parse(data.response);
         if (parsedUser) {

@@ -102,7 +102,7 @@ export const ImportTenantsModal = ({
             </p>
             <p>
               {tenant.property?.city && toTitleCase(tenant.property?.city)},{' '}
-              {tenant.property?.state && toTitleCase(tenant.property?.state)}{' '}
+              {tenant.property?.state && tenant.property?.state.toUpperCase()}{' '}
               {tenant.property?.postalCode}
             </p>
           </div>
@@ -193,7 +193,7 @@ export const ImportTenantsModal = ({
           const {
             Name: tenantName,
             Email: tenantEmail,
-            Unit: unit,
+            Unit: _unit,
             Address: address,
             City: city,
             State: state,
@@ -201,6 +201,7 @@ export const ImportTenantsModal = ({
             Beds: numBeds,
             Baths: numBaths,
           } = row;
+          const unit = _unit?.toString();
 
           //Construct error message for any missing fields
           let missingFields = '';
@@ -330,7 +331,10 @@ export const ImportTenantsModal = ({
         .catch((err) => {
           console.log(err);
           setImportTenantProgress((prev) => prev + 1);
-          errorList.push({ ...tenant, error: 'Error uploading tenant' });
+          errorList.push({
+            ...tenant,
+            error: err?.response?.data?.userErrorMessage ?? 'Error uploading tenant',
+          });
         });
     }
 
