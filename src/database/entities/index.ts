@@ -27,3 +27,64 @@ export const ENTITY_KEY = {
 
 export type EntityTypeKeys = keyof typeof ENTITIES;
 export type EntityTypeValues = (typeof ENTITY_KEY)[EntityTypeKeys];
+
+export function generateAddressSk({
+  address,
+  country = 'US',
+  city,
+  state,
+  postalCode,
+  unit,
+}: {
+  address: string;
+  country: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  unit?: string;
+}) {
+  return [
+    ENTITY_KEY.PROPERTY,
+    'ADDRESS',
+    address.toUpperCase(),
+    'COUNTRY',
+    country.toUpperCase(),
+    'CITY',
+    city.toUpperCase(),
+    'STATE',
+    state.toUpperCase(),
+    'POSTAL',
+    postalCode.toUpperCase(),
+    'UNIT',
+    unit ? unit?.toUpperCase() : '',
+  ].join('#');
+}
+
+//Creates a new substring that contains an address in plain text
+export function createAddressString({
+  address,
+  country = 'US',
+  city,
+  state,
+  postalCode,
+  unit,
+}: {
+  address: string;
+  country: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  unit?: string;
+}) {
+  return (
+    '###' +
+    [
+      address.toUpperCase(),
+      country.toUpperCase(),
+      city.toUpperCase(),
+      state.toUpperCase(),
+      postalCode.toUpperCase(),
+      unit ? unit.toUpperCase() : '',
+    ].join()
+  );
+}

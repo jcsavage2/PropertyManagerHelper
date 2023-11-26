@@ -82,6 +82,7 @@ const Tenants = () => {
         const unsortedTenants = isInitial || fetchAllTenants ? _tenants : [...tenants, ..._tenants];
 
         //Sort tenants alphabetically by primary address, in the future we want to update sort keys to globally sort results
+        //TODO: remove local sorting here
         const sortedTenants = unsortedTenants.sort((a, b) => {
           const primaryAddressA = Object.values(a.addresses ?? []).find((a: any) => !!a.isPrimary);
           const primaryAddressB = Object.values(b.addresses ?? []).find((a: any) => !!a.isPrimary);

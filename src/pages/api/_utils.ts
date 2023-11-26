@@ -1,6 +1,6 @@
 import { API_STATUS } from '@/constants';
 import { MailService } from '@sendgrid/mail';
-import { ApiError, ApiResponse } from './_types';
+import { ApiError } from './_types';
 
 export const MISSING_ENV = (envName: string) => `Missing ${envName} environment variable.`;
 export const INVALID_PARAM_ERROR = (paramName: string) => `Invalid ${paramName} parameter`;

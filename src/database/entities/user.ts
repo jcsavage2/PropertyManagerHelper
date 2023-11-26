@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, ENTITY_KEY, StartKey } from '.';
+import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
-import { generateAddress, generateKey } from '@/utils';
+import { generateKey } from '@/utils';
 import { INVITE_STATUS, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
 
@@ -66,6 +66,7 @@ export interface IUser extends IBaseUser {
   GSI4PK?: string; //Org tenant
   GSI4SK?: string;
   addresses: Record<string, any>;
+  addressString: string;
   organization: string;
   organizationName?: string;
   pmEmail?: string;
@@ -86,7 +87,7 @@ export class UserEntity {
     try {
       const result = await this.userEntity.update(
         {
-          pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
+          pk: generateKey(ENTITY_KEY.USER, email),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           status: INVITE_STATUS.CREATED,
         },
@@ -121,29 +122,27 @@ export class UserEntity {
     numBaths,
   }: ICreateTenant) {
     try {
-      const lowerCasePMEmail = pmEmail.toLowerCase();
-      const lowerCaseTenantEmail = tenantEmail.toLowerCase();
       const tenant = await this.userEntity.update(
         {
-          pk: generateKey(ENTITY_KEY.USER, lowerCaseTenantEmail),
+          pk: generateKey(ENTITY_KEY.USER, tenantEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          pmEmail: lowerCasePMEmail,
+          pmEmail,
           pmName,
           roles: { $add: [USER_TYPE.TENANT] },
-          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, lowerCasePMEmail),
+          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
           GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
           GSI4PK: generateKey(
             ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT,
-            organization.toLowerCase()
+            organization
           ),
-          GSI4SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          email: lowerCaseTenantEmail,
+          GSI4SK: generateAddressSk({ address, city, country, state, postalCode, unit }) + "#" + tenantEmail, 
+          email: tenantEmail,
           name: tenantName,
           organization,
           phone,
           organizationName,
           status: INVITE_STATUS.INVITED,
-          addresses: generateAddress({
+          addresses: this.generateAddress({
             propertyUUId,
             address,
             country,
@@ -155,6 +154,7 @@ export class UserEntity {
             numBaths,
             numBeds,
           }),
+          addressString: createAddressString({address, country, city, state, postalCode, unit})
         },
         { returnValues: 'ALL_NEW' }
       );
@@ -197,18 +197,17 @@ export class UserEntity {
     isAdmin,
   }: CreatePMSchemaType) {
     try {
-      const lowerCaseUserEmail = userEmail.toLowerCase();
       const result = await this.userEntity.update(
         {
-          pk: generateKey(ENTITY_KEY.USER, lowerCaseUserEmail),
+          pk: generateKey(ENTITY_KEY.USER, userEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           GSI4PK: generateKey(
             ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER,
-            organization.toLowerCase()
+            organization
           ),
           GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
           roles: { $add: [USER_TYPE.PROPERTY_MANAGER] },
-          email: lowerCaseUserEmail,
+          email: userEmail,
           name: userName,
           isAdmin,
           organization,
@@ -232,26 +231,24 @@ export class UserEntity {
     organizationName,
   }: ICreateTechnician) {
     try {
-      const lowerCasePMEmail = pmEmail.toLowerCase();
-      const lowerCaseTechnicianEmail = technicianEmail.toLowerCase();
       const tenant = await this.userEntity.update(
         {
-          pk: generateKey(ENTITY_KEY.USER, lowerCaseTechnicianEmail),
+          pk: generateKey(ENTITY_KEY.USER, technicianEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          pmEmail: lowerCasePMEmail,
+          pmEmail,
           pmName,
           roles: { $add: [USER_TYPE.TECHNICIAN] },
           GSI1PK: generateKey(
             ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN,
-            lowerCasePMEmail
+            pmEmail
           ),
           GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
           GSI4PK: generateKey(
             ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN,
-            organization.toLowerCase()
+            organization
           ),
           GSI4SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
-          email: lowerCaseTechnicianEmail,
+          email: technicianEmail,
           name: technicianName,
           organization,
           organizationName,
@@ -272,7 +269,7 @@ export class UserEntity {
   public async get({ email }: { email: string }) {
     try {
       const params = {
-        pk: generateKey(ENTITY_KEY.USER, email.toLowerCase()),
+        pk: generateKey(ENTITY_KEY.USER, email),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
       };
       const result = (await this.userEntity.get(params, { consistent: true })).Item ?? null;
@@ -491,6 +488,9 @@ export class UserEntity {
       if (!userAccount) {
         throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
       }
+      //TODO: update handling of .addresses here for schema change, need to update more fields
+      //Add concatenated address string
+
       //@ts-ignore
       let newAddresses: Record<string, any> = userAccount.addresses;
 
@@ -510,7 +510,7 @@ export class UserEntity {
       //Add the map with the new address back into the tenant record
       const result = await this.userEntity.update(
         {
-          pk: generateKey(ENTITY_KEY.USER, tenantEmail.toLowerCase()),
+          pk: generateKey(ENTITY_KEY.USER, tenantEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           addresses: newAddresses,
         },
@@ -522,12 +522,43 @@ export class UserEntity {
     }
   }
 
+  private generateAddress({
+    propertyUUId,
+    address,
+    country,
+    city,
+    state,
+    postalCode,
+    unit,
+    isPrimary,
+    numBeds,
+    numBaths,
+  }: {
+    propertyUUId: string;
+    address: string;
+    country: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    isPrimary: boolean;
+    unit?: string;
+    numBeds?: number;
+    numBaths?: number;
+  }) {
+    const key = `${propertyUUId}`;
+    return {
+      [key]: { address, unit, city, state, postalCode, country, isPrimary, numBeds, numBaths },
+    };
+  }
+
+  //TODO: add concat address string
   private userEntity = new Entity({
     name: ENTITIES.USER,
     attributes: {
       pk: { partitionKey: true },
       sk: { sortKey: true },
       addresses: { type: 'map' },
+      addressString: { type: 'string' },
       GSI1PK: { type: 'string' }, //PM
       GSI1SK: { type: 'string' },
       GSI2PK: { type: 'string' }, //Tenant
@@ -548,9 +579,6 @@ export class UserEntity {
       isAdmin: { type: 'boolean' },
       roles: { type: 'set', required: true },
       status: { type: 'string', required: true },
-      technicians: { type: 'map' },
-      tenants: { type: 'map' },
-      propertyManagers: { type: 'map' },
     },
     table: PillarDynamoTable,
   } as const);

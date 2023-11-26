@@ -15,8 +15,8 @@ export const hasAllInfo = (workOrder: IssueInformation) => {
 };
 
 export function generateAddressKey({ unit, address }: { unit?: string; address: string }) {
-  const unitString = unit ? `- ${unit?.toLowerCase()}` : '';
-  return `${address?.toLowerCase()} ${unitString}`;
+  const unitString = unit ? `- ${unit}` : '';
+  return `${address} ${unitString}`;
 }
 
 export function toTitleCase(str: string | undefined) {
@@ -95,35 +95,6 @@ export function createdToFormattedDateTime(created: string) {
   const formattedTime = hours + ':' + minutes + ' ' + AM_PM;
 
   return [formattedDate, formattedTime];
-}
-
-export function generateAddress({
-  propertyUUId,
-  address,
-  country,
-  city,
-  state,
-  postalCode,
-  unit,
-  isPrimary,
-  numBeds,
-  numBaths,
-}: {
-  propertyUUId: string;
-  address: string;
-  country: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  isPrimary: boolean;
-  unit?: string;
-  numBeds?: number;
-  numBaths?: number;
-}) {
-  const key = `${propertyUUId}`;
-  return {
-    [key]: { address, unit, city, state, postalCode, country, isPrimary, numBeds, numBaths },
-  };
 }
 
 export function getPageLayout(isMobile: boolean) {
