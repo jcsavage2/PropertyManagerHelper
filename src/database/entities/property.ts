@@ -10,6 +10,7 @@ export interface IProperty {
   postalCode: string;
   city: string;
   state: string;
+  country: string;
   organization: string;
   created: string;
   address: string;
@@ -166,6 +167,38 @@ export class PropertyEntity {
     };
     const result = await this.propertyEntity.get(params, { consistent: false });
     return result;
+  }
+
+  /* Attempts to find any properties with the same address, searches within the users organization */
+  public async getPropertiesByAddress({
+    organization,
+    address,
+  }: {
+    organization: string;
+    address: {
+      address: string;
+      country: string;
+      city: string;
+      state: string;
+      postalCode: string;
+      unit?: string;
+    };
+  }) {
+    let properties: any[] = [];
+    let startKey: StartKey = undefined;
+    const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization);
+    
+    do {
+      const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI4PK, {
+        ...(startKey && { startKey }),
+        reverse: true,
+        index: INDEXES.GSI4,
+        eq: this.generateSk(address),
+      });
+      startKey = LastEvaluatedKey as StartKey;
+      Items?.length && properties.push(...Items);
+    } while (!!startKey && properties.length === 0);
+    return properties
   }
 
   /* Get by property id */
