@@ -105,7 +105,7 @@ const Tenants = () => {
   );
 
   useEffect(() => {
-    fetchTenants(true, tenantSearchString.length !== 0 ? tenantSearchString : undefined);
+    fetchTenants(true, tenantSearchString);
   }, [user, statusFilter, userType]);
 
   const handleDeleteTenant = useCallback(
@@ -207,6 +207,7 @@ const Tenants = () => {
         }
 
         fetchTenants(false, undefined, true);
+        setTenantSearchString('');
       } catch (err) {
         console.error(err);
         toast.error('Error sending reinvite email(s)', {
@@ -361,7 +362,7 @@ const Tenants = () => {
           <div
             className="relative -left-3 cursor-pointer rounded px-3 py-1 hover:bg-blue-300 bg-blue-200"
             onClick={() => {
-              if (tenantsLoading || tenantSearchString.length === 0) return;
+              if (tenantsLoading || !tenantSearchString) return;
               fetchTenants(true, tenantSearchString);
             }}
           >
@@ -655,12 +656,12 @@ const Tenants = () => {
       <AddTenantModal
         tenantModalIsOpen={addTenantModalIsOpen}
         setTenantModalIsOpen={setAddTenantModalIsOpen}
-        onSuccessfulAdd={() => fetchTenants(true)}
+        onSuccessfulAdd={() => fetchTenants(true, tenantSearchString)}
       />
       <ImportTenantsModal
         modalIsOpen={importTenantModalIsOpen}
         setModalIsOpen={setImportTenantModalIsOpen}
-        onSuccessfulAdd={() => fetchTenants(true)}
+        onSuccessfulAdd={() => fetchTenants(true, tenantSearchString)}
       />
       {isMobile && <BottomNavigationPanel />}
     </div>

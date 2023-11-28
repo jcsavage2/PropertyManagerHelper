@@ -69,7 +69,25 @@ export const AddPropertyModal = ({
         ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
-        const res = await axios.post('/api/create-property', params);
+
+        const { data } = await axios.post('/api/get-properties-by-address', {
+          organization: user?.organization,
+          property: {
+            address: params.address,
+            unit: params.unit,
+            city: params.city,
+            state: params.state,
+            postalCode: params.postalCode,
+          },
+        });
+
+        const properties = JSON.parse(data.response).properties;
+        if (properties.length > 0) {
+          renderToastError(null, 'Property already exists');
+          return
+        }
+
+        await axios.post('/api/create-property', params);
 
         toast.success('Property Created!', {
           position: toast.POSITION.TOP_CENTER,

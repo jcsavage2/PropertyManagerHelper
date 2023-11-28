@@ -35,6 +35,7 @@ import {
   UserInfoSchema,
   AddWorkOrderModalSchema,
   CreateCommentSchema,
+  GetPropertiesByAddressSchema,
 } from './customschemas';
 import { ChatCompletionRequestMessage } from 'openai';
 
@@ -92,6 +93,8 @@ export type DeleteEntity = z.infer<typeof DeleteEntitySchema>;
 export type GetPM = z.infer<typeof GetPMSchema>;
 
 export type GetProperties = z.infer<typeof GetPropertiesSchema>;
+
+export type GetPropertiesByAddress = z.infer<typeof GetPropertiesByAddressSchema>;
 
 export type GetTenantsForOrg = z.infer<typeof GetTenantsForOrgSchema>;
 

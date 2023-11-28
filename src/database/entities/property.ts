@@ -10,6 +10,7 @@ export interface IProperty {
   postalCode: string;
   city: string;
   state: string;
+  country: string;
   organization: string;
   created: string;
   address: string;

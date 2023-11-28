@@ -153,6 +153,11 @@ export const GetPropertiesSchema = z.object({
   organization: optionalString,
 });
 
+export const GetPropertiesByAddressSchema = z.object({
+  property: validateProperty,
+  organization: requiredString,
+});
+
 export const GetTenantsForOrgSchema = z.object({
   organization: requiredString,
   startKey: validateStartKey,
@@ -207,6 +212,7 @@ export const ImportTenantSchema = CreateTenantSchema.merge(
   z.object({
     key: requiredNumber,
     error: optionalString,
+    warning: optionalString,
   })
 );
 
