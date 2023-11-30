@@ -50,6 +50,7 @@ export class PropertyEntity {
       country: { type: 'string' },
       address: { type: 'string' },
       organization: { type: 'string' },
+      tenantEmail: { type: 'string' },
       tenantEmails: { type: 'list' },
       unit: { type: 'string' },
       city: { type: 'string' },
