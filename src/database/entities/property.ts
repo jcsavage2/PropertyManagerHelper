@@ -61,8 +61,6 @@ export class PropertyEntity {
     table: PillarDynamoTable,
   } as const);
 
-
-  //TODO: update tenant email, should be a list tenantEmails
   public async create({
     address,
     country = 'US',
@@ -78,24 +76,20 @@ export class PropertyEntity {
     numBaths,
   }: CreatePropertyProps) {
     const propertyId = generateKey(ENTITY_KEY.PROPERTY, uuid);
-    const tenantEmails = tenantEmail ? [tenantEmail] : []
+    const tenantEmails = tenantEmail ? [tenantEmail] : [];
+    const addressSk = generateAddressSk({ address, country, city, state, postalCode, unit });
+
     const result = await this.propertyEntity.update(
       {
         pk: propertyId,
-        sk: generateAddressSk({ address, country, city, state, postalCode, unit }),
+        sk: addressSk,
         GSI1PK: generateKey(
           ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.PROPERTY,
           propertyManagerEmail
         ),
-        GSI1SK: generateAddressSk({ address, country, city, state, postalCode, unit }),
-        ...(tenantEmail && {
-          GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail),
-        }),
-        ...(tenantEmail && {
-          GSI2SK: generateAddressSk({ address, country, city, state, postalCode, unit }),
-        }),
+        GSI1SK: addressSk,
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization),
-        GSI4SK: generateAddressSk({ address, country, city, state, postalCode, unit }),
+        GSI4SK: addressSk,
         tenantEmails,
         country,
         address,
@@ -156,7 +150,7 @@ export class PropertyEntity {
     let properties: any[] = [];
     let startKey: StartKey = undefined;
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization);
-    
+
     do {
       const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI4PK, {
         ...(startKey && { startKey }),
@@ -167,7 +161,7 @@ export class PropertyEntity {
       startKey = LastEvaluatedKey as StartKey;
       Items?.length && properties.push(...Items);
     } while (!!startKey && properties.length === 0);
-    return properties
+    return properties;
   }
 
   /* Get by property id */
@@ -210,7 +204,6 @@ export class PropertyEntity {
     return result;
   }
 
-  //TODO: is this being used anywhere
   /**
    * @returns all properties that a given property manager is assigned to.
    */
@@ -246,62 +239,24 @@ export class PropertyEntity {
     return { properties, startKey };
   }
 
-  // It may make more sense to store properties on the tenant record, and then update the tenant + property row when tenants move away.
-  // We could also save "historical properties" and "historical tenants" on the user and property entities, respectively.
-  public async getAllForTenant({ tenantEmail }: { tenantEmail: string }) {
-    let startKey: StartKey;
-    const properties: IProperty[] = [];
-    const GSI2PK = generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.PROPERTY, tenantEmail?.toLowerCase());
-    do {
-      try {
-        const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(GSI2PK, {
-          limit: PAGE_SIZE,
-          startKey,
-          reverse: true,
-          beginsWith: `${ENTITY_KEY.PROPERTY}#`,
-          index: INDEXES.GSI2,
-        });
-        startKey = LastEvaluatedKey as StartKey;
-        properties.push(...((Items ?? []) as IProperty[]));
-      } catch (err) {
-        console.log({ err });
-      }
-    } while (!!startKey);
-    return properties;
+  // Updates the tenantEmails field using pk and sk
+  public async updateTenantEmails({
+    pk,
+    sk,
+    newTenantEmails,
+  }: {
+    pk: string;
+    sk: string;
+    newTenantEmails: string[];
+  }) {
+    const result = await this.propertyEntity.update(
+      {
+        pk,
+        sk,
+        tenantEmails: newTenantEmails,
+      },
+      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
+    );
+    return result.Attributes;
   }
-
-  //TODO: set up adding additional tenants to the property record
-
-  //TODO: this is not set up yet, remove or add 
-//   /**
-//    *
-//    * @param tenantEmails an array of tenant emails.
-//    * Updates the property entitiy by moving the tenants map to the historical tenants map.
-//    */
-//   public async removeTenantsFromProperty({
-//     pk,
-//     address,
-//     country,
-//     city,
-//     state,
-//     postalCode,
-//     unit,
-//   }: {
-//     pk: string;
-//     address: string;
-//     country: string;
-//     city: string;
-//     state: string;
-//     postalCode: string;
-//     unit: string;
-//   }) {
-//     const result = await this.propertyEntity.update(
-//       {
-//         pk: pk,
-//         sk: generateAddressSk({ address, country, city, state, postalCode, unit }),
-//       },
-//       { returnValues: 'ALL_NEW', strictSchemaCheck: true }
-//     );
-//     return result.Attributes;
-//   }
- }
+}

@@ -457,7 +457,7 @@ export class UserEntity {
   }
 
   /**
-   * Adds a new address to the user's address map.
+   * Adds a new address to the user's address map. Adds new address string to user's address string.
    */
   public async addAddress({
     tenantEmail,
@@ -488,11 +488,12 @@ export class UserEntity {
       if (!userAccount) {
         throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
       }
-      //TODO: update handling of .addresses here for schema change, need to update more fields
-      //Add concatenated address string
 
       //@ts-ignore
       let newAddresses: Record<string, any> = userAccount.addresses;
+
+      let newAddressString: string = userAccount.addressString ?? '';
+      newAddressString += createAddressString({ address, country, city, state, postalCode, unit})
 
       //Add new address into the map
       newAddresses[propertyUUId] = {
@@ -513,6 +514,7 @@ export class UserEntity {
           pk: generateKey(ENTITY_KEY.USER, tenantEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           addresses: newAddresses,
+          addressString: newAddressString,
         },
         { returnValues: 'ALL_NEW' }
       );
@@ -551,7 +553,6 @@ export class UserEntity {
     };
   }
 
-  //TODO: add concat address string
   private userEntity = new Entity({
     name: ENTITIES.USER,
     attributes: {

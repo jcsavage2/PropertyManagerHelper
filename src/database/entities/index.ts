@@ -77,7 +77,6 @@ export function createAddressString({
   unit?: string;
 }) {
   return (
-    '###' +
     [
       address.toUpperCase(),
       country.toUpperCase(),
@@ -85,6 +84,6 @@ export function createAddressString({
       state.toUpperCase(),
       postalCode.toUpperCase(),
       unit ? unit.toUpperCase() : '',
-    ].join()
+    ].join(' ') + '###'
   );
 }
