@@ -78,23 +78,10 @@ const Tenants = () => {
         });
         const response = JSON.parse(data.response);
         const _tenants: IUser[] = response.tenants;
+        
         setStartKey(response.startKey);
-        const unsortedTenants = isInitial || fetchAllTenants ? _tenants : [...tenants, ..._tenants];
-
-        //Sort tenants alphabetically by primary address, in the future we want to update sort keys to globally sort results
-        const sortedTenants = unsortedTenants.sort((a, b) => {
-          const primaryAddressA = Object.values(a.addresses ?? []).find((a: any) => !!a.isPrimary);
-          const primaryAddressB = Object.values(b.addresses ?? []).find((a: any) => !!a.isPrimary);
-          const addressA = `${primaryAddressA.address} ${
-            primaryAddressA.unit ? ' ' + primaryAddressA.unit : ''
-          }`.toUpperCase();
-          const addressB = `${primaryAddressB.address} ${
-            primaryAddressB.unit ? ' ' + primaryAddressB.unit : ''
-          }`.toUpperCase();
-          return addressA.localeCompare(addressB);
-        });
-        setTenants(sortedTenants);
-        setTenantsToReinvite(sortedTenants.filter((t) => t.status === INVITE_STATUS.INVITED));
+        isInitial || fetchAllTenants ? setTenants(_tenants) : setTenants([...tenants, ..._tenants]);
+        setTenantsToReinvite(_tenants.filter((t) => t.status === INVITE_STATUS.INVITED));
       } catch (err) {
         console.log({ err });
       }

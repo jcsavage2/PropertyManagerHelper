@@ -4,8 +4,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import Select from 'react-select';
 import { LoadingSpinner } from './loading-spinner/loading-spinner';
 import { deconstructKey } from '@/utils';
-import { GetProperties, PropertyWithId } from '@/types';
-import { GetPropertiesSchema } from '@/types/customschemas';
+import { PropertyWithId } from '@/types';
 
 const PropertySelector = ({
   selectedProperty,

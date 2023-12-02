@@ -21,12 +21,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const propertyEntity = new PropertyEntity();
     const response = await propertyEntity.getPropertiesByAddress({
       address: {
-        address: body.property.address.toUpperCase(),
-        city: body.property.city.toUpperCase(),
-        state: body.property.state.toUpperCase(),
+        address: body.property.address,
+        city: body.property.city,
+        state: body.property.state,
         country: body.property.country,
-        postalCode: body.property.postalCode.toUpperCase(),
-        unit: body.property.unit?.toUpperCase(),
+        postalCode: body.property.postalCode,
+        unit: body.property.unit,
       },
       organization: body.organization,
     });

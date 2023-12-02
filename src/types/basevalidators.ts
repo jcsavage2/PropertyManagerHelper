@@ -6,6 +6,7 @@ export const requiredNumber = z.coerce.number();
 
 // -- Strings -- //
 export const requiredString = z.string().min(1, { message: 'Input is required' }).trim();
+export const upperCaseRequiredString = requiredString.toUpperCase();
 export const lowerCaseRequiredString = requiredString.toLowerCase();
 export const lowerCaseRequiredEmail = z
   .string()
@@ -24,6 +25,13 @@ export const optionalString = z
 export const lowerCaseOptionalString = z
   .string()
   .toLowerCase()
+  .trim()
+  .optional()
+  .nullable()
+  .transform((val) => (val?.length ? val : undefined));
+export const upperCaseOptionalString = z
+  .string()
+  .toUpperCase()
   .trim()
   .optional()
   .nullable()
@@ -49,27 +57,28 @@ export const zipCode = z.coerce
   .string()
   .min(1, { message: 'Input is required' })
   .max(10, { message: 'Input must be a zip code' })
-  .toLowerCase()
+  .toUpperCase()
   .trim();
-export const country = z.string().min(1).max(2).trim().toUpperCase().default('US'); //Default to the US for now
+ //Default to the US for now
+export const country = z.string().min(1).max(2).trim().toUpperCase().default('US');
 export const validateProperty = z.object({
-  address: lowerCaseRequiredString,
-  city: lowerCaseRequiredString,
-  state: lowerCaseRequiredString,
+  address: upperCaseRequiredString,
+  city: upperCaseRequiredString,
+  state: upperCaseRequiredString,
   country: country,
   postalCode: zipCode,
-  unit: lowerCaseOptionalString,
+  unit: upperCaseOptionalString,
   numBeds: requiredNumber.default(1),
   numBaths: requiredNumber.default(1),
   propertyUUId: optionalString,
 });
 export const validatePropertyWithId = z.object({
-  address: lowerCaseRequiredString,
-  city: lowerCaseRequiredString,
-  state: lowerCaseRequiredString,
+  address: upperCaseRequiredString,
+  city: upperCaseRequiredString,
+  state: upperCaseRequiredString,
   country: country,
   postalCode: zipCode,
-  unit: lowerCaseOptionalString,
+  unit: upperCaseOptionalString,
   numBeds: requiredNumber.default(1),
   numBaths: requiredNumber.default(1),
   propertyUUId: requiredString,

@@ -130,16 +130,16 @@ export class WorkOrderEntity {
         sk: workOrderIdKey,
         GSI1PK: generateKey(
           ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
-          pmEmail.toLowerCase()
+          pmEmail
         ),
         GSI1SK: ksuID,
-        GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail.toLowerCase()),
+        GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail),
         GSI2SK: ksuID,
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, organization),
         GSI4SK: ksuID,
         permissionToEnter,
-        pmEmail: pmEmail.toLowerCase(),
-        createdBy: createdBy.toLowerCase(),
+        pmEmail,
+        createdBy,
         createdByType,
         tenantEmail,
         tenantName,
@@ -153,7 +153,7 @@ export class WorkOrderEntity {
           postalCode,
           unit,
         } as Property),
-        issue: issue.toLowerCase(),
+        issue,
         organization,
         location,
         additionalDetails,
@@ -334,22 +334,22 @@ export class WorkOrderEntity {
     try {
       let assignedTo: string[] = [
         ...oldAssignedTo,
-        constructNameEmailString(technicianEmail.toLowerCase(), technicianName),
+        constructNameEmailString(technicianEmail, technicianName),
       ];
       // Create companion row for the technician
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
         sk: generateKey(
           ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail.toLowerCase()
+          technicianEmail
         ),
         address: this.generateAddress(property),
         GSI3PK: generateKey(
           ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER,
-          technicianEmail.toLowerCase()
+          technicianEmail
         ),
         GSI3SK: ksuID,
-        issue: issueDescription.toLowerCase(),
+        issue: issueDescription,
         permissionToEnter,
         assignedTo,
         pmEmail,
@@ -391,7 +391,7 @@ export class WorkOrderEntity {
         pk: key,
         sk: generateKey(
           ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail.toLowerCase()
+          technicianEmail
         ),
       });
 
@@ -400,20 +400,20 @@ export class WorkOrderEntity {
       const oldAssignedTo = [...assignedTo];
       if (
         oldAssignedTo.includes(
-          constructNameEmailString(technicianEmail.toLowerCase(), technicianName)
+          constructNameEmailString(technicianEmail, technicianName)
         )
       ) {
         newAssignedTo = [...oldAssignedTo].filter(
           (assignedTo) =>
-            assignedTo !== constructNameEmailString(technicianEmail.toLowerCase(), technicianName)
+            assignedTo !== constructNameEmailString(technicianEmail, technicianName)
         );
       } else {
         newAssignedTo = [...oldAssignedTo].filter(
-          (assignedTo) => assignedTo !== technicianEmail.toLowerCase()
+          (assignedTo) => assignedTo !== technicianEmail
         );
       }
       const newViewedWOList = [...viewedWO].filter(
-        (email) => email !== technicianEmail.toLowerCase()
+        (email) => email !== technicianEmail
       );
 
       const result = await this.workOrderEntity.update(
