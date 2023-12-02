@@ -134,7 +134,7 @@ export class UserEntity {
           GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
           GSI4SK:
             generateAddressSk({
-              entityKey: ENTITY_KEY.USER,
+              entityKey: ENTITY_KEY.TENANT,
               address,
               city,
               country,
@@ -162,7 +162,7 @@ export class UserEntity {
             numBaths,
             numBeds,
           }),
-          addressString: createAddressString({ address, country, city, state, postalCode, unit }),
+          addressString: createAddressString({ address, city, state, postalCode, unit }),
         },
         { returnValues: 'ALL_NEW' }
       );
@@ -493,7 +493,7 @@ export class UserEntity {
       let newAddresses: Record<string, any> = userAccount.addresses;
 
       let newAddressString: string = userAccount.addressString ?? '';
-      newAddressString += createAddressString({ address, country, city, state, postalCode, unit });
+      newAddressString += createAddressString({ address, city, state, postalCode, unit });
 
       //Add new address into the map
       newAddresses[propertyUUId] = {

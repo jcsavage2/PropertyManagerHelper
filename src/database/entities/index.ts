@@ -65,27 +65,35 @@ export function generateAddressSk({
 //Creates a new substring that contains an address in plain text
 export function createAddressString({
   address,
-  country = 'US',
   city,
   state,
   postalCode,
   unit,
 }: {
   address: string;
-  country: string;
   city: string;
   state: string;
   postalCode: string;
   unit?: string;
 }) {
+  if(!unit) {
+    return (
+      [
+        address.toUpperCase(),
+        city.toUpperCase(),
+        state.toUpperCase(),
+        postalCode.toUpperCase(),
+      ].join(' ') + '###'
+    );
+  }
   return (
     [
       address.toUpperCase(),
-      country.toUpperCase(),
+      unit.toUpperCase(),
       city.toUpperCase(),
       state.toUpperCase(),
       postalCode.toUpperCase(),
-      unit ? unit.toUpperCase() : '',
+      
     ].join(' ') + '###'
   );
 }
