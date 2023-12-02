@@ -36,6 +36,7 @@ import {
   AddWorkOrderModalSchema,
   CreateCommentSchema,
   GetPropertiesByAddressSchema,
+  GetPropertyEventsSchema,
 } from './customschemas';
 import { ChatCompletionRequestMessage } from 'openai';
 
@@ -103,6 +104,8 @@ export type GetAllWorkOrdersForUser = z.infer<typeof GetAllWorkOrdersForUserSche
 export type GetTechsForOrg = z.infer<typeof GetTechsForOrgSchema>;
 
 export type GetWorkOrderEvents = z.infer<typeof GetWorkOrderEventsSchema>;
+
+export type GetPropertyEvents = z.infer<typeof GetPropertyEventsSchema>;
 
 export type GetS3BucketBody = z.infer<typeof GetS3BucketSchema>;
 

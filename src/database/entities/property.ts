@@ -14,7 +14,7 @@ export interface IProperty {
   organization: string;
   created: string;
   address: string;
-  tenantEmail?: string;
+  tenantEmail?: string; //Deprecated, moving to tenantEmails
   tenantEmails: string[];
   unit: string;
   numBeds: number;

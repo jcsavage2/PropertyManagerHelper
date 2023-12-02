@@ -186,6 +186,11 @@ export const GetWorkOrderEventsSchema = z.object({
   startKey: validateStartKey.optional(),
 });
 
+export const GetPropertyEventsSchema = z.object({
+  propertyId: requiredString,
+  startKey: validateStartKey.optional(),
+});
+
 export const GetS3BucketSchema = z.object({
   bucket: requiredString,
   key: requiredString,

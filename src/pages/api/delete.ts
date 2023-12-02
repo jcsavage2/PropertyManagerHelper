@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         //When work orders are deleted spawn an event
         const eventEntity = new EventEntity();
-        await eventEntity.create({
+        await eventEntity.createWOEvent({
           workOrderId: deconstructKey(pk),
           message: `Work Order Deleted`,
           madeByEmail,

@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       body.messages.pop();
       for (const message of body.messages) {
         // Create a comment for each existing message so the Work Order has context.
-        await eventEntity.create({
+        await eventEntity.createWOEvent({
           workOrderId: woId,
           message: message.content ?? '',
           ksuId: message.ksuId,
@@ -295,7 +295,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     //Work order created event
-    await eventEntity.create({
+    await eventEntity.createWOEvent({
       workOrderId: woId,
       madeByEmail: creatorEmail, //If the user is a pm then they created it, otherwise this is a system message
       madeByName: creatorName,

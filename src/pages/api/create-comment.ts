@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { comment, email, name } = body;
 
     const eventEntity = new EventEntity();
-    const newComment = await eventEntity.create({
+    const newComment = await eventEntity.createWOEvent({
       workOrderId: deconstructKey(body.workOrderId),
       madeByEmail: email,
       madeByName: name,

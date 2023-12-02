@@ -3,10 +3,18 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { PillarDynamoTable } from '..';
 import { generateKSUID, generateKey } from '@/utils';
 import { PAGE_SIZE } from '@/constants';
-import { GetWorkOrderEvents } from '@/types';
+import { GetPropertyEvents, GetWorkOrderEvents } from '@/types';
 
-type CreateEventProps = {
+type CreateWOEventProps = {
   workOrderId: string;
+  madeByEmail: string;
+  madeByName: string;
+  message?: string;
+  ksuId?: string;
+};
+
+type CreatePropertyEventProps = {
+  propertyId: string;
   madeByEmail: string;
   madeByName: string;
   message?: string;
@@ -26,7 +34,7 @@ export class EventEntity {
   private eventEntity = new Entity({
     name: ENTITIES.EVENT,
     attributes: {
-      pk: { partitionKey: true }, //EV#workOrderId:type
+      pk: { partitionKey: true },
       sk: { sortKey: true }, //ksuid
       madeByEmail: { type: 'string' },
       madeByName: { type: 'string' },
@@ -38,7 +46,7 @@ export class EventEntity {
   /**
    * Creates a new event attached to a work order
    */
-  public async create({ workOrderId, madeByEmail, madeByName, message, ksuId }: CreateEventProps) {
+  public async createWOEvent({ workOrderId, madeByEmail, madeByName, message, ksuId }: CreateWOEventProps) {
     const result = await this.eventEntity.update(
       {
         pk: generateKey(ENTITY_KEY.EVENT, workOrderId),
@@ -53,9 +61,42 @@ export class EventEntity {
   }
 
   /**
+   * Creates a new event attached to a work order
+   */
+  public async createPropertyEvent({ propertyId, madeByEmail, madeByName, message, ksuId }: CreatePropertyEventProps) {
+    const result = await this.eventEntity.update(
+      {
+        pk: this.createPropertyEventKey(propertyId),
+        sk: ksuId ?? generateKSUID(), //allows us to sort by date
+        madeByEmail,
+        madeByName,
+        message,
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return result.Attributes;
+  }
+
+  /**
+   * @returns All events for a property
+   */
+  public async getPropertyEvents({ propertyId, startKey }: GetPropertyEvents) {
+    const { Items, LastEvaluatedKey } = await this.eventEntity.query(
+      this.createPropertyEventKey(propertyId),
+      {
+        startKey,
+        reverse: true,
+        limit: PAGE_SIZE,
+      }
+    );
+    startKey = LastEvaluatedKey as StartKey;
+    return { events: Items ?? [], startKey };
+  }
+
+  /**
    * @returns All events for a work order
    */
-  public async getEvents({ workOrderId, startKey }: GetWorkOrderEvents) {
+  public async getWOEvents({ workOrderId, startKey }: GetWorkOrderEvents) {
     const { Items, LastEvaluatedKey } = await this.eventEntity.query(
       generateKey(ENTITY_KEY.EVENT, workOrderId),
       {
@@ -75,5 +116,10 @@ export class EventEntity {
     };
     const result = await this.eventEntity.delete(params);
     return result;
+  }
+
+  private createPropertyEventKey(propertyId: string) {
+    const prefixKey = generateKey(ENTITY_KEY.EVENT, ENTITY_KEY.PROPERTY);
+    return generateKey(prefixKey, propertyId);
   }
 }

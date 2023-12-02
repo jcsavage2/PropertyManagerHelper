@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { workOrderId } = body;
 
     const eventEntity = new EventEntity();
-    const { events, startKey } = await eventEntity.getEvents({
+    const { events, startKey } = await eventEntity.getWOEvents({
       workOrderId,
       startKey: body.startKey,
     });
