@@ -14,28 +14,29 @@ export default function App({
   session,
 }: AppProps & { session: SessionProviderProps['session'] }) {
   return (
-    <SessionProvider
-      session={session}
-      refetchInterval={60 * 60} // refresh session every hour
-    >
-      <UserContextProvider>
-        <Head>
-          <title>Pillar</title>
-          <link rel="icon" href="/3.png" />
-          <meta name="description" content="App to help property managers deal with Work Orders" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <div>Sorry, Pillar is under temporary, scheduled maintenance until 1:30am est. Please contact your property manager for urgent requests. We apologize for any inconvenience!</div>
+    // <SessionProvider
+    //   session={session}
+    //   refetchInterval={60 * 60} // refresh session every hour
+    // >
+    //   <UserContextProvider>
+    //     <Head>
+    //       <title>Pillar</title>
+    //       <link rel="icon" href="/3.png" />
+    //       <meta name="description" content="App to help property managers deal with Work Orders" />
+    //       <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-          <meta name="apple-mobile-web-app-capable" content="yes"></meta>
-          <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
-          <link rel="manifest" href="/manifest.json"/>
-          <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"/>
-          <meta name="msapplication-TileColor" content="#da532c"/>
-          <meta name="theme-color" content="#ffffff"/>
-        </Head>
-        <NavLinks />
-        <ToastContainer />
-        <Component {...pageProps} />
-      </UserContextProvider>
-    </SessionProvider>
+    //       <meta name="apple-mobile-web-app-capable" content="yes"></meta>
+    //       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
+    //       <link rel="manifest" href="/manifest.json"/>
+    //       <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"/>
+    //       <meta name="msapplication-TileColor" content="#da532c"/>
+    //       <meta name="theme-color" content="#ffffff"/>
+    //     </Head>
+    //     <NavLinks />
+    //     <ToastContainer />
+    //     <Component {...pageProps} />
+    //   </UserContextProvider>
+    // </SessionProvider>
   );
 }
