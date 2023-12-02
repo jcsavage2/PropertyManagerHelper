@@ -344,7 +344,7 @@ export class UserEntity {
       try {
         const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
           limit: remainingTenantsToFetch,
-          reverse: true,
+          reverse: false,
           ...(statusFilter &&
             !fetchAllTenants && {
               filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
