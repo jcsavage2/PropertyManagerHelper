@@ -131,11 +131,19 @@ export class UserEntity {
           roles: { $add: [USER_TYPE.TENANT] },
           GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
           GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          GSI4PK: generateKey(
-            ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT,
-            organization
-          ),
-          GSI4SK: generateAddressSk({ address, city, country, state, postalCode, unit }) + "#" + tenantEmail, 
+          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
+          GSI4SK:
+            generateAddressSk({
+              entityKey: ENTITY_KEY.USER,
+              address,
+              city,
+              country,
+              state,
+              postalCode,
+              unit,
+            }) +
+            '#' +
+            tenantEmail,
           email: tenantEmail,
           name: tenantName,
           organization,
@@ -154,7 +162,7 @@ export class UserEntity {
             numBaths,
             numBeds,
           }),
-          addressString: createAddressString({address, country, city, state, postalCode, unit})
+          addressString: createAddressString({ address, country, city, state, postalCode, unit }),
         },
         { returnValues: 'ALL_NEW' }
       );
@@ -201,10 +209,7 @@ export class UserEntity {
         {
           pk: generateKey(ENTITY_KEY.USER, userEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          GSI4PK: generateKey(
-            ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER,
-            organization
-          ),
+          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization),
           GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
           roles: { $add: [USER_TYPE.PROPERTY_MANAGER] },
           email: userEmail,
@@ -238,15 +243,9 @@ export class UserEntity {
           pmEmail,
           pmName,
           roles: { $add: [USER_TYPE.TECHNICIAN] },
-          GSI1PK: generateKey(
-            ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN,
-            pmEmail
-          ),
+          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail),
           GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
-          GSI4PK: generateKey(
-            ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN,
-            organization
-          ),
+          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization),
           GSI4SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
           email: technicianEmail,
           name: technicianName,
@@ -483,7 +482,7 @@ export class UserEntity {
     unit?: string;
   }) {
     try {
-      //get current address map
+      //get current address map and address string
       const userAccount = await this.get({ email: tenantEmail });
       if (!userAccount) {
         throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
@@ -493,7 +492,7 @@ export class UserEntity {
       let newAddresses: Record<string, any> = userAccount.addresses;
 
       let newAddressString: string = userAccount.addressString ?? '';
-      newAddressString += createAddressString({ address, country, city, state, postalCode, unit})
+      newAddressString += createAddressString({ address, country, city, state, postalCode, unit });
 
       //Add new address into the map
       newAddresses[propertyUUId] = {

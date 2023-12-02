@@ -79,7 +79,15 @@ export class PropertyEntity {
   }: CreatePropertyProps) {
     const propertyId = generateKey(ENTITY_KEY.PROPERTY, uuid);
     const tenantEmails = tenantEmail ? [tenantEmail] : [];
-    const addressSk = generateAddressSk({ address, country, city, state, postalCode, unit });
+    const addressSk = generateAddressSk({
+      entityKey: ENTITY_KEY.PROPERTY,
+      address,
+      country,
+      city,
+      state,
+      postalCode,
+      unit,
+    });
 
     const result = await this.propertyEntity.update(
       {
@@ -109,29 +117,15 @@ export class PropertyEntity {
   }
 
   /* Get by property id */
-  public async getById({
-    uuid,
-    address,
-    country,
-    city,
-    state,
-    postalCode,
-    unit,
-  }: {
-    uuid: string;
-    address: string;
-    country: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    unit?: string;
-  }) {
-    const params = {
-      pk: generateKey(ENTITY_KEY.PROPERTY, uuid),
-      sk: generateAddressSk({ address, country, city, state, postalCode, unit }),
-    };
-    const result = await this.propertyEntity.get(params, { consistent: false });
-    return result;
+  public async getById({ uuid }: { uuid: string }) {
+    const { Items, LastEvaluatedKey } = await this.propertyEntity.query(
+      generateKey(ENTITY_KEY.PROPERTY, uuid),
+      {
+        reverse: true,
+        beginsWith: `${ENTITY_KEY.PROPERTY}#`,
+      }
+    );
+    return Items;
   }
 
   /* Attempts to find any properties with the same address, searches within the users organization */
@@ -158,7 +152,7 @@ export class PropertyEntity {
         ...(startKey && { startKey }),
         reverse: true,
         index: INDEXES.GSI4,
-        eq: generateAddressSk(address),
+        eq: generateAddressSk({ entityKey: ENTITY_KEY.PROPERTY, ...address }),
       });
       startKey = LastEvaluatedKey as StartKey;
       Items?.length && properties.push(...Items);

@@ -29,6 +29,7 @@ export type EntityTypeKeys = keyof typeof ENTITIES;
 export type EntityTypeValues = (typeof ENTITY_KEY)[EntityTypeKeys];
 
 export function generateAddressSk({
+  entityKey,
   address,
   country = 'US',
   city,
@@ -36,6 +37,7 @@ export function generateAddressSk({
   postalCode,
   unit,
 }: {
+  entityKey: string
   address: string;
   country: string;
   city: string;
@@ -44,7 +46,7 @@ export function generateAddressSk({
   unit?: string;
 }) {
   return [
-    ENTITY_KEY.PROPERTY,
+    entityKey,
     'ADDRESS',
     address.toUpperCase(),
     'COUNTRY',
