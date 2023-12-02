@@ -384,6 +384,7 @@ export class UserEntity {
       filters.push([
         { attr: 'name', contains: tenantSearchString },
         { or: true, attr: 'email', contains: tenantSearchString },
+        { or: true, attr: 'addressString', contains: tenantSearchString.toUpperCase() },
       ]);
     }
     return filters;
