@@ -1,5 +1,5 @@
 import { Entity } from 'dynamodb-toolbox';
-import { ENTITIES, ENTITY_KEY, StartKey, generateAddressSk } from '.';
+import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 import { PAGE_SIZE } from '@/constants';
@@ -14,7 +14,8 @@ export interface IProperty {
   organization: string;
   created: string;
   address: string;
-  tenantEmail?: string; //Deprecated, moving to tenantEmails
+  addressString: string;
+  tenantEmail?: string;
   tenantEmails: string[];
   unit: string;
   numBeds: number;
@@ -49,6 +50,7 @@ export class PropertyEntity {
       GSI4SK: { type: 'string' },
       country: { type: 'string' },
       address: { type: 'string' },
+      addressString: { type: 'string' },
       organization: { type: 'string' },
       tenantEmail: { type: 'string' },
       tenantEmails: { type: 'list' },
@@ -88,6 +90,13 @@ export class PropertyEntity {
       postalCode,
       unit,
     });
+    const addressString = createAddressString({
+      address,
+      city,
+      state,
+      postalCode,
+      unit,
+    });
 
     const result = await this.propertyEntity.update(
       {
@@ -110,6 +119,7 @@ export class PropertyEntity {
         unit: unit ?? '',
         numBeds,
         numBaths,
+        addressString,
       },
       { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
