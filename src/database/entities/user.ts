@@ -4,6 +4,7 @@ import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 import { INVITE_STATUS, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 interface IBaseUser {
   pk: string;
@@ -30,7 +31,7 @@ interface ICreateUser {
 interface ICreateTenant {
   pmName: string;
   pmEmail: string;
-  tenantEmail: string;
+  tenantEmail?: string;
   tenantName: string;
   address: string;
   organization: string;
@@ -122,9 +123,10 @@ export class UserEntity {
     numBaths,
   }: ICreateTenant) {
     try {
+      const guaranteedEmail = tenantEmail ?? `testsimco+${uuidv4()}@gmail.com`;
       const tenant = await this.userEntity.update(
         {
-          pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+          pk: generateKey(ENTITY_KEY.USER, guaranteedEmail),
           sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
           pmEmail,
           pmName,
@@ -143,8 +145,8 @@ export class UserEntity {
               unit,
             }) +
             '#' +
-            tenantEmail,
-          email: tenantEmail,
+            guaranteedEmail,
+          email: guaranteedEmail,
           name: tenantName,
           organization,
           phone,
@@ -265,7 +267,7 @@ export class UserEntity {
   /**
    * @returns User entity
    */
-  public async get({ email }: { email: string }) {
+  public async get({ email }: { email: string; }) {
     try {
       const params = {
         pk: generateKey(ENTITY_KEY.USER, email),
@@ -279,7 +281,7 @@ export class UserEntity {
     }
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string }) {
+  public async delete({ pk, sk }: { pk: string; sk: string; }) {
     const params = {
       pk,
       sk,
@@ -347,8 +349,8 @@ export class UserEntity {
           reverse: false,
           ...(statusFilter &&
             !fetchAllTenants && {
-              filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
-            }),
+            filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
+          }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TENANT}`,
           index: INDEXES.GSI4,

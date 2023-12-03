@@ -47,9 +47,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const propertyEntity = new PropertyEntity();
 
     //Don't overwrite existing tenant
-    const existingTenant = await userEntity.get({ email: tenantEmail });
-    if (existingTenant && existingTenant.status !== INVITE_STATUS.CREATED) {
-      throw new ApiError(API_STATUS.FORBIDDEN, 'User already exists.', true);
+    if (tenantEmail) {
+      const existingTenant = await userEntity.get({ email: tenantEmail });
+      if (existingTenant && existingTenant.status !== INVITE_STATUS.CREATED) {
+        throw new ApiError(API_STATUS.FORBIDDEN, 'User already exists.', true);
+      }
     }
 
     // Create Tenant
@@ -89,19 +91,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    /** SEND THE EMAIL TO THE USER */
-    initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
-    const authLink = `https://pillarhq.co/?authredirect=true`;
-    const emailBody = getInviteTenantSendgridEmailBody(tenantName, authLink, pmName);
-    await sendgrid.send({
-      to: tenantEmail,
-      from: 'pillar@pillarhq.co',
-      subject: `${toTitleCase(pmName)} @ ${toTitleCase(
-        organizationName
-      )} is requesting you to join Pillar`,
-      html: emailBody,
-    });
+    if (tenantEmail) {
+      /** SEND THE EMAIL TO THE USER */
+      initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
+
+      const authLink = `https://pillarhq.co/?authredirect=true`;
+      const emailBody = getInviteTenantSendgridEmailBody(tenantName, authLink, pmName);
+      await sendgrid.send({
+        to: tenantEmail,
+        from: 'pillar@pillarhq.co',
+        subject: `${toTitleCase(pmName)} @ ${toTitleCase(
+          organizationName
+        )} is requesting you to join Pillar`,
+        html: emailBody,
+      });
+    }
 
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newTenant) });
   } catch (error: any) {
