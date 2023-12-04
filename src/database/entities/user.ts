@@ -122,57 +122,55 @@ export class UserEntity {
     numBeds,
     numBaths,
   }: ICreateTenant) {
-    try {
-      const guaranteedEmail = tenantEmail ?? `testsimco+${uuidv4()}@gmail.com`;
-      const tenant = await this.userEntity.update(
-        {
-          pk: generateKey(ENTITY_KEY.USER, guaranteedEmail),
-          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          pmEmail,
-          pmName,
-          roles: { $add: [USER_TYPE.TENANT] },
-          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
-          GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
-          GSI4SK:
-            generateAddressSk({
-              entityKey: ENTITY_KEY.TENANT,
-              address,
-              city,
-              country,
-              state,
-              postalCode,
-              unit,
-            }) +
-            '#' +
-            guaranteedEmail,
-          email: guaranteedEmail,
-          name: tenantName,
-          organization,
-          phone,
-          organizationName,
-          status: INVITE_STATUS.INVITED,
-          addresses: this.generateAddress({
-            propertyUUId,
+    if (tenantEmail?.startsWith(`testsimco+`)) {
+      throw new Error("Cannot create a user with this account");
+    }
+    const guaranteedEmail = tenantEmail ?? `testsimco+${uuidv4()}@gmail.com`;
+    const tenant = await this.userEntity.update(
+      {
+        pk: generateKey(ENTITY_KEY.USER, guaranteedEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        pmEmail,
+        pmName,
+        roles: { $add: [USER_TYPE.TENANT] },
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
+        GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
+        GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
+        GSI4SK:
+          generateAddressSk({
+            entityKey: ENTITY_KEY.TENANT,
             address,
-            country,
             city,
+            country,
             state,
             postalCode,
             unit,
-            isPrimary: true,
-            numBaths,
-            numBeds,
-          }),
-          addressString: createAddressString({ address, city, state, postalCode, unit }),
-        },
-        { returnValues: 'ALL_NEW' }
-      );
-      return tenant.Attributes ?? null;
-    } catch (err) {
-      console.log({ err });
-      return null;
-    }
+          }) +
+          '#' +
+          guaranteedEmail,
+        email: guaranteedEmail,
+        name: tenantName,
+        organization,
+        phone,
+        organizationName,
+        status: INVITE_STATUS.INVITED,
+        addresses: this.generateAddress({
+          propertyUUId,
+          address,
+          country,
+          city,
+          state,
+          postalCode,
+          unit,
+          isPrimary: true,
+          numBaths,
+          numBeds,
+        }),
+        addressString: createAddressString({ address, city, state, postalCode, unit }),
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return tenant.Attributes ?? null;
   }
 
   public async updateUser({

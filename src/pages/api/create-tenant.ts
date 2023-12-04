@@ -110,7 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newTenant) });
   } catch (error: any) {
-    console.log({ error });
+    console.log(error);
     Sentry.captureException(error);
     return res
       .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
