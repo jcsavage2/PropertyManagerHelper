@@ -42,7 +42,12 @@ export const TenantSelect = ({
         });
         const response = JSON.parse(data.response);
         const processedTenants = response.tenants.map((tenant: IUser) => {
-          return { value: tenant.email, label: `${toTitleCase(tenant.name)} (${tenant.email})` };
+          // For users that we set the default email for, we should just show "None" to the user
+          const correctedEmail = tenant.email?.startsWith('testsimco') ? 'None' : tenant.email;
+          return {
+            value: tenant.email,
+            label: `${toTitleCase(tenant.name)} (${correctedEmail})`,
+          };
         });
         if (!_searchString) {
           setTenantOptions(processedTenants);
