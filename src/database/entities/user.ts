@@ -2,8 +2,9 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
-import { INVITE_STATUS, PAGE_SIZE } from '@/constants';
+import { INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 interface IBaseUser {
   pk: string;
@@ -30,7 +31,7 @@ interface ICreateUser {
 interface ICreateTenant {
   pmName: string;
   pmEmail: string;
-  tenantEmail: string;
+  tenantEmail?: string;
   tenantName: string;
   address: string;
   organization: string;
@@ -121,56 +122,55 @@ export class UserEntity {
     numBeds,
     numBaths,
   }: ICreateTenant) {
-    try {
-      const tenant = await this.userEntity.update(
-        {
-          pk: generateKey(ENTITY_KEY.USER, tenantEmail),
-          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          pmEmail,
-          pmName,
-          roles: { $add: [USER_TYPE.TENANT] },
-          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
-          GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
-          GSI4SK:
-            generateAddressSk({
-              entityKey: ENTITY_KEY.TENANT,
-              address,
-              city,
-              country,
-              state,
-              postalCode,
-              unit,
-            }) +
-            '#' +
-            tenantEmail,
-          email: tenantEmail,
-          name: tenantName,
-          organization,
-          phone,
-          organizationName,
-          status: INVITE_STATUS.INVITED,
-          addresses: this.generateAddress({
-            propertyUUId,
+    if (tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
+      throw new Error("Cannot create a user with this account");
+    }
+    const guaranteedEmail = tenantEmail ?? `${NO_EMAIL_PREFIX}${uuidv4()}@gmail.com`;
+    const tenant = await this.userEntity.update(
+      {
+        pk: generateKey(ENTITY_KEY.USER, guaranteedEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        pmEmail,
+        pmName,
+        roles: { $add: [USER_TYPE.TENANT] },
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
+        GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
+        GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
+        GSI4SK:
+          generateAddressSk({
+            entityKey: ENTITY_KEY.TENANT,
             address,
-            country,
             city,
+            country,
             state,
             postalCode,
             unit,
-            isPrimary: true,
-            numBaths,
-            numBeds,
-          }),
-          addressString: createAddressString({ address, city, state, postalCode, unit }),
-        },
-        { returnValues: 'ALL_NEW' }
-      );
-      return tenant.Attributes ?? null;
-    } catch (err) {
-      console.log({ err });
-      return null;
-    }
+          }) +
+          '#' +
+          guaranteedEmail,
+        email: guaranteedEmail,
+        name: tenantName,
+        organization,
+        phone,
+        organizationName,
+        status: INVITE_STATUS.INVITED,
+        addresses: this.generateAddress({
+          propertyUUId,
+          address,
+          country,
+          city,
+          state,
+          postalCode,
+          unit,
+          isPrimary: true,
+          numBaths,
+          numBeds,
+        }),
+        addressString: createAddressString({ address, city, state, postalCode, unit }),
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return tenant.Attributes ?? null;
   }
 
   public async updateUser({
@@ -265,7 +265,7 @@ export class UserEntity {
   /**
    * @returns User entity
    */
-  public async get({ email }: { email: string }) {
+  public async get({ email }: { email: string; }) {
     try {
       const params = {
         pk: generateKey(ENTITY_KEY.USER, email),
@@ -279,7 +279,7 @@ export class UserEntity {
     }
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string }) {
+  public async delete({ pk, sk }: { pk: string; sk: string; }) {
     const params = {
       pk,
       sk,
@@ -347,8 +347,8 @@ export class UserEntity {
           reverse: false,
           ...(statusFilter &&
             !fetchAllTenants && {
-              filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
-            }),
+            filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
+          }),
           ...(startKey && { startKey }),
           beginsWith: `${ENTITY_KEY.TENANT}`,
           index: INDEXES.GSI4,

@@ -36,14 +36,14 @@ export const upperCaseOptionalString = z
   .optional()
   .nullable()
   .transform((val) => (val?.length ? val : undefined));
+
 export const lowerCaseOptionalEmail = z
   .string()
   .email({ message: 'Please use a valid email' })
-  .min(1, { message: 'Input is required' })
   .toLowerCase()
   .trim()
   .optional()
-  .nullable()
+  .or(z.literal(''))
   .transform((val) => (val?.length ? val : undefined));
 
 //Empty strings resolve to null
@@ -59,7 +59,7 @@ export const zipCode = z.coerce
   .max(10, { message: 'Input must be a zip code' })
   .toUpperCase()
   .trim();
- //Default to the US for now
+//Default to the US for now
 export const country = z.string().min(1).max(2).trim().toUpperCase().default('US');
 export const validateProperty = z.object({
   address: upperCaseRequiredString,

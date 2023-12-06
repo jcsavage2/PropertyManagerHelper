@@ -54,3 +54,5 @@ export const API_STATUS = {
   BAD_REQUEST: 400,
 };
 export const USER_PERMISSION_ERROR = 'User does not have permission to perform this action.';
+
+export const NO_EMAIL_PREFIX = "testsimco+";
