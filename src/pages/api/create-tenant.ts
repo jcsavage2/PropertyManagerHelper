@@ -5,7 +5,7 @@ import { IUser, UserEntity, USER_TYPE } from '@/database/entities/user';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { getInviteTenantSendgridEmailBody, toTitleCase } from '@/utils';
-import { API_STATUS, INVITE_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { API_STATUS, INVITE_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
 import { CreateTenantSchema } from '@/types/customschemas';
 import { ApiError, ApiResponse } from './_types';
 import { INVALID_PARAM_ERROR, errorToResponse, initializeSendgrid } from './_utils';
@@ -94,18 +94,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     if (tenantEmail) {
       /** SEND THE EMAIL TO THE USER */
-      initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
-
-      const authLink = `https://pillarhq.co/?authredirect=true`;
-      const emailBody = getInviteTenantSendgridEmailBody(tenantName, authLink, pmName);
-      await sendgrid.send({
-        to: tenantEmail,
-        from: 'pillar@pillarhq.co',
-        subject: `${toTitleCase(pmName)} @ ${toTitleCase(
-          organizationName
-        )} is requesting you to join Pillar`,
-        html: emailBody,
-      });
+      if (!tenantEmail.startsWith(NO_EMAIL_PREFIX)) {
+        initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
+        const authLink = `https://pillarhq.co/?authredirect=true`;
+        const emailBody = getInviteTenantSendgridEmailBody(tenantName, authLink, pmName);
+        await sendgrid.send({
+          to: tenantEmail,
+          from: 'pillar@pillarhq.co',
+          subject: `${toTitleCase(pmName)} @ ${toTitleCase(
+            organizationName
+          )} is requesting you to join Pillar`,
+          html: emailBody,
+        });
+      }
     }
 
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(newTenant) });
