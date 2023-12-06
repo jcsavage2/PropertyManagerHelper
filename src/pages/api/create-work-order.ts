@@ -1,4 +1,4 @@
-import { API_STATUS, USER_PERMISSION_ERROR, WO_STATUS } from '@/constants';
+import { API_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR, WO_STATUS } from '@/constants';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
@@ -224,7 +224,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // If the tenant didn't create the work order, make sure they are notified.
     // Also, don't send them an email if they don't have one on their account.
-    if (body.createdByType !== USER_TYPE.TENANT && !tenantEmail?.startsWith(`testsimco+`)) {
+    if (body.createdByType !== USER_TYPE.TENANT && !tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
       await sendgrid.send({
         to: derivedTenantEmail,
         from: 'pillar@pillarhq.co',

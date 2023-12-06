@@ -16,7 +16,12 @@ import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { MdClear } from 'react-icons/md';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { AiOutlineMail } from 'react-icons/ai';
-import { DEFAULT_DELETE_USER, INVITE_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import {
+  DEFAULT_DELETE_USER,
+  INVITE_STATUS,
+  NO_EMAIL_PREFIX,
+  USER_PERMISSION_ERROR,
+} from '@/constants';
 import { DeleteEntity, DeleteUser, Property } from '@/types';
 import { useUserContext } from '@/context/user';
 import { DeleteEntitySchema } from '@/types/customschemas';
@@ -78,7 +83,7 @@ const Tenants = () => {
         });
         const response = JSON.parse(data.response);
         const _tenants: IUser[] = response.tenants;
-        
+
         setStartKey(response.startKey);
         isInitial || fetchAllTenants ? setTenants(_tenants) : setTenants([...tenants, ..._tenants]);
         setTenantsToReinvite(_tenants.filter((t) => t.status === INVITE_STATUS.INVITED));
@@ -259,13 +264,16 @@ const Tenants = () => {
             <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
               {tenantsToReinvite && tenantsToReinvite.length ? (
                 tenantsToReinvite.map((tenant: IUser, i) => {
+                  const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX)
+                    ? 'None'
+                    : tenant.email;
                   return (
                     <div
                       key={'reinvitelist' + tenant.name + tenant.email + i}
                       className="bg-blue-100 text-gray-600 rounded px-4 py-1 w-full flex flex-row items-center justify-center last:mb-0 mb-3"
                     >
                       <div className="flex flex-col overflow-hidden w-11/12">
-                        <p>{toTitleCase(tenant.name)}</p> <p>{tenant.email}</p>
+                        <p>{toTitleCase(tenant.name)}</p> <p>{correctedEmail}</p>
                       </div>
                       <MdClear
                         className={`h-6 w-6 cursor-pointer ${
@@ -470,6 +478,10 @@ const Tenants = () => {
                 const displayAddress = `${primaryAddress.address} ${
                   primaryAddress.unit ? ' ' + primaryAddress.unit : ''
                 }`;
+
+                const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX)
+                  ? 'None'
+                  : tenant.email;
                 return (
                   <div
                     key={`list-${tenant.pk}-${tenant.sk}-${index}`}
@@ -479,7 +491,7 @@ const Tenants = () => {
                   >
                     <div className="pl-2 text-gray-800">
                       <p className="text-2xl ">{toTitleCase(tenant.name)} </p>
-                      <p className="text-sm mt-2">{tenant.email} </p>
+                      <p className="text-sm mt-2">{correctedEmail} </p>
                       <p className="text-sm mt-1">{toTitleCase(displayAddress)} </p>
                       <div className={`text-sm mt-2 flex flex-row`}>
                         <div
@@ -549,12 +561,16 @@ const Tenants = () => {
                       const displayAddress = `${primaryAddress.address} ${
                         primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''
                       }`;
+
+                      const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX)
+                        ? 'None'
+                        : tenant.email;
                       return (
                         <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
                           <td className="border-b border-t px-2 py-1">{`${toTitleCase(
                             tenant.name
                           )}`}</td>
-                          <td className="border-b border-t px-2 py-1">{`${tenant.email}`}</td>
+                          <td className="border-b border-t px-2 py-1">{`${correctedEmail}`}</td>
                           <td className="border-b border-t">
                             <div className="flex flex-row items-center justify-start">
                               <div

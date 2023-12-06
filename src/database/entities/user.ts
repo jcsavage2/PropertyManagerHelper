@@ -2,7 +2,7 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
-import { INVITE_STATUS, PAGE_SIZE } from '@/constants';
+import { INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -122,10 +122,10 @@ export class UserEntity {
     numBeds,
     numBaths,
   }: ICreateTenant) {
-    if (tenantEmail?.startsWith(`testsimco+`)) {
+    if (tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
       throw new Error("Cannot create a user with this account");
     }
-    const guaranteedEmail = tenantEmail ?? `testsimco+${uuidv4()}@gmail.com`;
+    const guaranteedEmail = tenantEmail ?? `${NO_EMAIL_PREFIX}${uuidv4()}@gmail.com`;
     const tenant = await this.userEntity.update(
       {
         pk: generateKey(ENTITY_KEY.USER, guaranteedEmail),

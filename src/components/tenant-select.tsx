@@ -4,7 +4,7 @@ import AsyncSelect from 'react-select/async';
 import axios from 'axios';
 import { Option } from '@/types';
 import { IUser, USER_TYPE, UserType } from '@/database/entities/user';
-import { ALL_TENANTS_FILTER, USER_PERMISSION_ERROR } from '@/constants';
+import { ALL_TENANTS_FILTER, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
 import { toTitleCase } from '@/utils';
 
 export const TenantSelect = ({
@@ -43,7 +43,7 @@ export const TenantSelect = ({
         const response = JSON.parse(data.response);
         const processedTenants = response.tenants.map((tenant: IUser) => {
           // For users that we set the default email for, we should just show "None" to the user
-          const correctedEmail = tenant.email?.startsWith('testsimco') ? 'None' : tenant.email;
+          const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX) ? 'None' : tenant.email;
           return {
             value: tenant.email,
             label: `${toTitleCase(tenant.name)} (${correctedEmail})`,
