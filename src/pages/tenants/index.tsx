@@ -480,7 +480,7 @@ const Tenants = () => {
                 }`;
 
                 const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX)
-                  ? 'None'
+                  ? 'No Email'
                   : tenant.email;
                 return (
                   <div
