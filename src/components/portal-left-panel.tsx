@@ -59,7 +59,7 @@ export const PortalLeftPanel = () => {
             className={`${
               router.pathname === '/work-orders' ? 'text-black' : 'text-gray-500'
             } hover:text-slate-400`}
-            href={'work-orders'}
+            href={'/work-orders'}
           >
             Work Orders
           </Link>
@@ -71,9 +71,9 @@ export const PortalLeftPanel = () => {
               <BsPersonLinesFill className={`inline mr-2 my-auto`} />
               <Link
                 className={`${
-                  router.pathname === '/property-managers' ? 'text-black' : 'text-gray-500'
+                  router.pathname.includes('/property-managers') ? 'text-black' : 'text-gray-500'
                 }  hover:text-slate-400`}
-                href={'property-managers'}
+                href={'/property-managers'}
               >
                 Property Managers
               </Link>
@@ -82,9 +82,9 @@ export const PortalLeftPanel = () => {
               <BsFillPersonFill className={`inline mr-2 my-auto`} />
               <Link
                 className={`${
-                  router.pathname === '/tenants' ? 'text-black' : 'text-gray-500'
+                  router.pathname.includes('/tenants') ? 'text-black' : 'text-gray-500'
                 }  hover:text-slate-400`}
-                href={'tenants'}
+                href={'/tenants'}
               >
                 Tenants
               </Link>
@@ -93,9 +93,9 @@ export const PortalLeftPanel = () => {
               <MdEngineering className={`inline mr-2 my-auto`} />
               <Link
                 className={`${
-                  router.pathname === '/technicians' ? 'text-black' : 'text-gray-500'
+                  router.pathname.includes('/technicians') ? 'text-black' : 'text-gray-500'
                 }  hover:text-gray-400`}
-                href={'technicians'}
+                href={'/technicians'}
               >
                 Technicians
               </Link>
@@ -104,9 +104,9 @@ export const PortalLeftPanel = () => {
               <CiLocationOn className="inline mr-2 my-auto" />
               <Link
                 className={`${
-                  router.pathname === '/properties' ? 'text-black' : 'text-gray-500'
+                  router.pathname.includes('/properties') ? 'text-black' : 'text-gray-500'
                 }  hover:text-gray-400`}
-                href={'properties'}
+                href={'/properties'}
               >
                 Properties
               </Link>

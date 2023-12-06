@@ -7,41 +7,51 @@ import { AddPropertyModal } from '@/components/add-property-modal';
 import React from 'react';
 import { IProperty } from '@/database/entities/property';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { getPageLayout, toTitleCase } from '@/utils';
+import { deconstructKey, getPageLayout, toTitleCase } from '@/utils';
 import { StartKey } from '@/database/entities';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { GetProperties } from '@/types';
-import { GetPropertiesSchema } from '@/types/customschemas';
+import { FaEdit } from 'react-icons/fa';
+import Link from 'next/link';
+import { MdClear } from 'react-icons/md';
+import { useUserContext } from '@/context/user';
+import { USER_TYPE } from '@/database/entities/user';
+import { USER_PERMISSION_ERROR } from '@/constants';
 
 const Properties = () => {
   const { user } = useSessionUser();
   const [addPropertyModalIsOpen, setAddPropertyModalIsOpen] = useState(false);
   const [properties, setProperties] = useState<IProperty[]>([]);
   const { isMobile } = useDevice();
+  const { userType } = useUserContext();
   const [propertiesLoading, setPropertiesLoading] = useState(true);
   const [startKey, setStartKey] = useState<StartKey>(undefined);
+  const [propertySearchString, setPropertySearchString] = useState('');
 
   const fetchProperties = useCallback(
-    async (isInitial: boolean) => {
+    async (isInitial: boolean, _searchString?: string) => {
       setPropertiesLoading(true);
       try {
+        if (
+          !user ||
+          userType !== USER_TYPE.PROPERTY_MANAGER ||
+          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
+        ) {
+          throw new Error(USER_PERMISSION_ERROR);
+        }
+
+        //Reset filter options on initial fetch
+        if (isInitial && !_searchString) {
+          setPropertySearchString('');
+        }
+
         const { data } = await axios.post('/api/get-all-properties', {
           organization: user?.organization,
           startKey: isInitial ? undefined : startKey,
+          propertySearchString: _searchString,
         });
         const response = JSON.parse(data.response);
         const _properties = (response.properties ?? []) as IProperty[];
-        isInitial
-          ? setProperties(
-              _properties
-                .sort((a, b) => (a.unit > b.unit ? 1 : -1))
-                .sort((a, b) => (a.address > b.address ? -1 : 1))
-            )
-          : setProperties(
-              [...properties, ..._properties]
-                .sort((a, b) => (a.unit > b.unit ? -1 : 1))
-                .sort((a, b) => (a.address > b.address ? -1 : 1))
-            );
+        isInitial ? setProperties(_properties) : setProperties([...properties, ..._properties]);
         setStartKey(response.startKey);
       } catch (e) {
         console.log({ e });
@@ -68,6 +78,47 @@ const Properties = () => {
           >
             + New Property
           </button>
+        </div>
+        {/* TODO: move to reusable component */}
+        <div
+          className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 mb-2 ${
+            propertiesLoading && 'opacity-50 pointer-events-none'
+          }`}
+        >
+          <input
+            type="text"
+            placeholder="Search properties..."
+            className="text-black pl-3 h-full rounded pr-9 w-80 border border-blue-200"
+            value={propertySearchString}
+            onChange={(e) => {
+              setPropertySearchString(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && propertySearchString.length !== 0 && !propertiesLoading) {
+                fetchProperties(true, propertySearchString);
+              }
+            }}
+          />
+          <MdClear
+            fontSize={28}
+            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${
+              !propertySearchString && 'opacity-0 pointer-events-none'
+            }}`}
+            onClick={() => {
+              if (propertiesLoading || !propertySearchString) return;
+              setPropertySearchString('');
+              fetchProperties(true);
+            }}
+          />
+          <div
+            className="relative -left-3 cursor-pointer rounded px-3 py-1 hover:bg-blue-300 bg-blue-200"
+            onClick={() => {
+              if (propertiesLoading || !propertySearchString) return;
+              fetchProperties(true, propertySearchString);
+            }}
+          >
+            Search
+          </div>
         </div>
         {isMobile ? (
           <div className={`mt-4 pb-4`}>
@@ -106,10 +157,10 @@ const Properties = () => {
                   <thead className="">
                     <tr className="text-left text-gray-400">
                       <th className="font-normal w-72">Address</th>
-                      <th className="font-normal w-44">City</th>
-                      <th className="font-normal w-16">State</th>
-                      <th className="font-normal w-24">Zip</th>
-                      <th className="font-normal w-44">Unit</th>
+                      <th className="font-normal w-40">City</th>
+                      <th className="font-normal w-12">State</th>
+                      <th className="font-normal w-24 pl-4">Zip</th>
+                      <th className="font-normal w-36">Unit</th>
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">
@@ -130,6 +181,14 @@ const Properties = () => {
                           </td>
                           <td className="border-b border-t px-4 py-1">
                             {toTitleCase(property.unit)}
+                          </td>
+                          <td className="border-b border-t px-1 py-1">
+                            <Link href={`/properties/${deconstructKey(property.pk)}/edit`}>
+                              <FaEdit
+                                className="text-blue-300 hover:text-blue-500 cursor-pointer"
+                                fontSize={25}
+                              />
+                            </Link>
                           </td>
                         </tr>
                       );

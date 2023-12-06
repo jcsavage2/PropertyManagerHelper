@@ -16,6 +16,7 @@ import {
   validateWoStatusFilter,
   requiredNumber,
   validatePropertyWithId,
+  upperCaseOptionalString,
 } from './basevalidators';
 
 export const GetSchema = z.object({
@@ -26,6 +27,10 @@ export const GetSchema = z.object({
 export const GetUserSchema = z.object({
   email: lowerCaseRequiredEmail,
 });
+
+export const GetUsersSchema = z.object({
+  emails: z.array(lowerCaseRequiredEmail),
+})
 
 export const UpdateUserSchema = z.object({
   pk: requiredString,
@@ -121,6 +126,18 @@ export const CreatePropertySchema = validateProperty.merge(
     tenantEmail: lowerCaseOptionalEmail,
     organization: requiredString,
     pmEmail: lowerCaseRequiredEmail,
+    pmName: lowerCaseRequiredString,
+  })
+);
+
+export const EditPropertySchema = validateProperty.merge(
+  z.object({
+    organization: requiredString,
+    pmEmail: lowerCaseRequiredEmail,
+    pmName: lowerCaseRequiredString,
+    oldSk: requiredString,
+    oldPropertyString: requiredString,
+    tenantEmails: z.array(lowerCaseRequiredEmail).default([]),
   })
 );
 
@@ -149,13 +166,17 @@ export const GetPMSchema = z.object({
 
 export const GetPropertiesSchema = z.object({
   startKey: validateStartKey,
-  pmEmail: lowerCaseOptionalEmail,
-  organization: optionalString,
+  organization: requiredString,
+  propertySearchString: upperCaseOptionalString,
 });
 
 export const GetPropertiesByAddressSchema = z.object({
   property: validateProperty,
   organization: requiredString,
+});
+
+export const GetPropertyByIdSchema = z.object({
+  propertyId: requiredString,
 });
 
 export const GetTenantsForOrgSchema = z.object({

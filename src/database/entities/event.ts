@@ -66,7 +66,7 @@ export class EventEntity {
   public async createPropertyEvent({ propertyId, madeByEmail, madeByName, message, ksuId }: CreatePropertyEventProps) {
     const result = await this.eventEntity.update(
       {
-        pk: this.createPropertyEventKey(propertyId),
+        pk: generateKey(ENTITY_KEY.EVENT + ENTITY_KEY.PROPERTY, propertyId),
         sk: ksuId ?? generateKSUID(), //allows us to sort by date
         madeByEmail,
         madeByName,
@@ -82,7 +82,7 @@ export class EventEntity {
    */
   public async getPropertyEvents({ propertyId, startKey }: GetPropertyEvents) {
     const { Items, LastEvaluatedKey } = await this.eventEntity.query(
-      this.createPropertyEventKey(propertyId),
+      generateKey(ENTITY_KEY.EVENT + ENTITY_KEY.PROPERTY, propertyId),
       {
         startKey,
         reverse: true,
@@ -116,10 +116,5 @@ export class EventEntity {
     };
     const result = await this.eventEntity.delete(params);
     return result;
-  }
-
-  private createPropertyEventKey(propertyId: string) {
-    const prefixKey = generateKey(ENTITY_KEY.EVENT, ENTITY_KEY.PROPERTY);
-    return generateKey(prefixKey, propertyId);
   }
 }

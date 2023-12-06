@@ -1,9 +1,10 @@
 import { TECHNICIAN_DELIM } from '@/constants';
-import { ChatMessage, IssueInformation } from '@/types';
+import { ChatMessage, IssueInformation, Property } from '@/types';
 import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
 import { toast } from 'react-toastify';
 import { ChatCompletionRequestMessage } from 'openai';
+import { IProperty } from '@/database/entities/property';
 
 export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
@@ -79,6 +80,13 @@ export function setToShortenedString(set: Set<string>): string {
     arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]
   );
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
+}
+
+//Turn a property object into a displayable string with that property information
+export function createPropertyDisplayString(property: Property, includeBedBath: boolean = true) {
+  if (!property) return '';
+  const baseString = `${toTitleCase(property.address)} ${property.unit ? ' ' + toTitleCase(property.unit) : ''}, ${toTitleCase(property.city)}, ${property.state.toUpperCase()} ${property.postalCode}`;
+  return includeBedBath ? baseString + ` ${property.numBeds} Bed ${property.numBaths} Bath` : baseString;
 }
 
 /**

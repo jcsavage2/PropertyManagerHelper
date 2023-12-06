@@ -58,11 +58,13 @@ export const StateSelect = ({
   setState,
   label,
   placeholder,
+  isDirty,
 }: {
   state: string;
-  setState: React.Dispatch<SetStateAction<string>>;
+  setState: React.Dispatch<SetStateAction<string>> | React.Dispatch<SetStateAction<string | null>>;
   label: string | null;
-  placeholder: string;
+  placeholder?: string;
+  isDirty?: boolean;
 }) => {
   const handleSelectChange: ChangeEventHandler<HTMLSelectElement> = (event) => {
     setState(event.target.value);
@@ -71,21 +73,22 @@ export const StateSelect = ({
   return (
     <div className="flex flex-col align-center">
       {label && (
-        <label htmlFor="state" className="mr-2">
-          {label}
-        </label>
+        <div className="label">
+          <span className="label-text">{label}</span>
+        </div>
       )}
       <select
-        className={`rounded border-solid border-2 border-slate-200 py-1 ${
-          !state || (state.length === 0 && 'text-gray-400')
-        }`}
+        className={`select h-8 ${!state || (state.length === 0 && 'text-gray-400')} ${isDirty ? 'select-warning' : 'select-bordered'}`}
         value={state}
         name="state"
         onChange={handleSelectChange}
       >
-        <option value="" disabled>
-          {placeholder}
-        </option>
+        {placeholder ? (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        ) : null}
+
         {STATE_OPTIONS.map((option, index) => (
           <option key={index} value={option.value}>
             {option.label}

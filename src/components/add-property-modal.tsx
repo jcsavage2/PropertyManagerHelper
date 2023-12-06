@@ -29,7 +29,7 @@ export const AddPropertyModal = ({
   const [isBrowser, setIsBrowser] = useState(false);
   const { user } = useSessionUser();
   const { isMobile } = useDevice();
-  const { userType } = useUserContext();
+  const { userType, altName } = useUserContext();
 
   useEffect(() => {
     setIsBrowser(true);
@@ -238,6 +238,7 @@ export const AddPropertyModal = ({
           />
           <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
           <input type="hidden" {...register('pmEmail')} value={user?.email ?? ''} />
+          <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
           <button
             className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4"
             type="submit"

@@ -178,18 +178,27 @@ export class UserEntity {
     sk,
     hasSeenDownloadPrompt,
     status,
+    addresses,
+    addressString,
+    GSI4SK,
   }: {
     pk: string;
     sk: string;
     hasSeenDownloadPrompt?: boolean;
     status?: InviteStatus;
+    addresses?: Record<string, any>;
+    addressString?: string;
+    GSI4SK?: string;
   }) {
     const updatedUser = await this.userEntity.update(
       {
         pk,
         sk,
+        ...(GSI4SK && { GSI4SK }),
         ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
         ...(status && { status }),
+        ...(addresses && { addresses }),
+        ...(addressString && { addressString }),
       },
       { returnValues: 'ALL_NEW' }
     );
@@ -197,13 +206,7 @@ export class UserEntity {
     return updatedUser.Attributes ?? null;
   }
 
-  public async createPropertyManager({
-    userName,
-    userEmail,
-    organization,
-    organizationName,
-    isAdmin,
-  }: CreatePMSchemaType) {
+  public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: CreatePMSchemaType) {
     try {
       const result = await this.userEntity.update(
         {
@@ -227,14 +230,7 @@ export class UserEntity {
     }
   }
 
-  public async createTechnician({
-    technicianName,
-    technicianEmail,
-    pmEmail,
-    pmName,
-    organization,
-    organizationName,
-  }: ICreateTechnician) {
+  public async createTechnician({ technicianName, technicianEmail, pmEmail, pmName, organization, organizationName }: ICreateTechnician) {
     try {
       const tenant = await this.userEntity.update(
         {
@@ -266,17 +262,29 @@ export class UserEntity {
    * @returns User entity
    */
   public async get({ email }: { email: string }) {
-    try {
+    const params = {
+      pk: generateKey(ENTITY_KEY.USER, email),
+      sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+    };
+    const result = (await this.userEntity.get(params, { consistent: true })).Item ?? null;
+    return result;
+  }
+
+  /**
+   * @returns User entities
+   */
+  public async getMany({ emails }: { emails: string[] }) {
+    let userList = [];
+    for (const email of emails) {
       const params = {
         pk: generateKey(ENTITY_KEY.USER, email),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
       };
-      const result = (await this.userEntity.get(params, { consistent: true })).Item ?? null;
-      return result;
-    } catch (err) {
-      console.log({ err });
-      return null;
+      const result = (await this.userEntity.get(params, { consistent: true })).Item;
+      if (!result) throw new Error('User not found: ' + email);
+      userList.push(result);
     }
+    return userList;
   }
 
   public async delete({ pk, sk }: { pk: string; sk: string }) {
@@ -289,23 +297,11 @@ export class UserEntity {
   }
 
   //Delete a role from roles; also fix GSI1 if needed
-  public async deleteRole({
-    pk,
-    sk,
-    roleToDelete,
-    existingRoles,
-  }: {
-    pk: string;
-    sk: string;
-    roleToDelete: string;
-    existingRoles: string[];
-  }) {
+  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
     const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
-    const shouldDeleteIndexing: boolean =
-      (roleToDelete === USER_TYPE.TENANT && !isTech) ||
-      (roleToDelete === USER_TYPE.TECHNICIAN && !isTenant);
+    const shouldDeleteIndexing: boolean = (roleToDelete === USER_TYPE.TENANT && !isTech) || (roleToDelete === USER_TYPE.TECHNICIAN && !isTenant);
 
     const params = {
       pk,
@@ -372,9 +368,7 @@ export class UserEntity {
     tenantSearchString: string | undefined;
   }): any[] {
     const filters = [];
-    const statusFilters = (
-      Object.keys(statusFilter) as ('JOINED' | 'INVITED' | 'RE_INVITED')[]
-    ).filter((k) => statusFilter[k]);
+    const statusFilters = (Object.keys(statusFilter) as ('JOINED' | 'INVITED' | 'RE_INVITED')[]).filter((k) => statusFilter[k]);
 
     // Status filter logic
     statusFilters.length < 3 && filters.push({ attr: 'status', in: statusFilters });
@@ -390,15 +384,7 @@ export class UserEntity {
     return filters;
   }
 
-  public async getAllTechniciansForOrg({
-    organization,
-    techSearchString,
-    startKey,
-  }: {
-    organization: string;
-    techSearchString: string | undefined;
-    startKey: StartKey;
-  }) {
+  public async getAllTechniciansForOrg({ organization, techSearchString, startKey }: { organization: string; techSearchString: string | undefined; startKey: StartKey }) {
     let techs = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization);
     let remainingTechsToFetch = PAGE_SIZE;
@@ -427,13 +413,7 @@ export class UserEntity {
     return { techs, startKey };
   }
 
-  public async getAllPMsForOrg({
-    organization,
-    startKey,
-  }: {
-    organization: string;
-    startKey: StartKey;
-  }) {
+  public async getAllPMsForOrg({ organization, startKey }: { organization: string; startKey: StartKey }) {
     let pms = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization);
     let remainingTechsToFetch = PAGE_SIZE;
@@ -470,6 +450,7 @@ export class UserEntity {
     unit,
     numBeds,
     numBaths,
+    isPrimary = false,
   }: {
     tenantEmail: string;
     propertyUUId: string;
@@ -481,6 +462,7 @@ export class UserEntity {
     numBeds: number;
     numBaths: number;
     unit?: string;
+    isPrimary?: boolean;
   }) {
     try {
       //get current address map and address string
@@ -503,7 +485,7 @@ export class UserEntity {
         state,
         postalCode,
         country,
-        isPrimary: false,
+        isPrimary,
         numBeds,
         numBaths,
       };
@@ -523,6 +505,8 @@ export class UserEntity {
       console.log({ err });
     }
   }
+
+
 
   private generateAddress({
     propertyUUId,
