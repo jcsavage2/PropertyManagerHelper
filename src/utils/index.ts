@@ -41,8 +41,8 @@ export function generateKey(entityIdentifier: EntityTypeValues | string, secondI
 /**
  * @returns The second identifier for a key; the part after the #
  */
-export function deconstructKey(key: string): string {
-  if (!key || key.length === 0) return key;
+export function deconstructKey(key: string | undefined): string {
+  if (!key || key.length === 0) return '';
   return key.split('#')[1];
 }
 

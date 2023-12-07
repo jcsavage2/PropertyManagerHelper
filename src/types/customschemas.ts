@@ -38,6 +38,14 @@ export const UpdateUserSchema = z.object({
   hasSeenDownloadPrompt: z.boolean().optional(),
 });
 
+export const AddRemoveTenantToPropertySchema = z.object({
+  propertyUUId: requiredString,
+  tenantEmail: lowerCaseRequiredEmail,
+  pmEmail: lowerCaseRequiredEmail,
+  pmName: lowerCaseRequiredString,
+  remove: z.boolean()
+});
+
 export const AssignTechnicianSchema = z.object({
   organization: requiredString,
   ksuID: requiredString,

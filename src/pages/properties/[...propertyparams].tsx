@@ -1,15 +1,17 @@
+import ConfirmationModal from '@/components/confirmation-modal';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { StateSelect } from '@/components/state-select';
+import { TenantSelect } from '@/components/tenant-select';
 import { DEFAULT_PROPERTY, USER_PERMISSION_ERROR } from '@/constants';
 import { useUserContext } from '@/context/user';
-import { ENTITIES, StartKey, createAddressString } from '@/database/entities';
+import { ENTITIES, StartKey } from '@/database/entities';
 import { IEvent } from '@/database/entities/event';
 import { IProperty } from '@/database/entities/property';
 import { IUser } from '@/database/entities/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
-import { EditProperty } from '@/types';
+import { EditProperty, Option } from '@/types';
 import { EditPropertySchema } from '@/types/customschemas';
 import { createPropertyDisplayString, createdToFormattedDateTime, deconstructKey, getPageLayout, renderToastError, toTitleCase } from '@/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,8 +21,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { FaHome } from 'react-icons/fa';
-import { GoPlus } from 'react-icons/go';
-import { MdClear } from 'react-icons/md';
+import { SingleValue } from 'react-select';
 import { toast } from 'react-toastify';
 
 const PropertyPageTabs = ['edit', 'tenants', 'history'];
@@ -40,21 +41,20 @@ export default function PropertyPage() {
 
   const [tenants, setTenants] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
+  const [tenantToAdd, setTenantToAdd] = useState<string>('');
+  const [tenantToDelete, setTenantToDelete] = useState<string>('');
+  const [tenantRemoveConfirmOpen, setTenantRemoveConfirmOpen] = useState<boolean>(false);
 
   const [selectedTab, setSelectedTab] = useState<string>(PropertyPageTabs[0]);
 
   useEffect(() => {
-    console.log(propertyparams);
     if (!router.isReady) return;
-    console.log;
     if (!propertyparams || (propertyparams && propertyparams.length === 0)) {
       setPropertyLoading(false);
       return;
     }
 
     const propertyId = propertyparams[0];
-    console.log(propertyparams);
-    console.log(propertyId);
     if (propertyparams.length > 1) {
       if (PropertyPageTabs.includes(propertyparams[1])) {
         setSelectedTab(propertyparams[1]);
@@ -71,7 +71,6 @@ export default function PropertyPage() {
           propertyId: propertyId,
         });
         const { property } = JSON.parse(data.response);
-        console.log(property);
         setProperty(property);
       } catch (e) {
         console.log({ e });
@@ -107,14 +106,13 @@ export default function PropertyPage() {
       });
       const tenants = JSON.parse(data.response);
       setTenants(tenants);
-      console.log(tenants);
     } catch (e) {
       console.log({ e });
     }
     setTenantsLoading(false);
   }
 
-  //When property changes, refetch property events
+  //Fetch correct data for selected tab
   useEffect(() => {
     if (!property) return;
     if (selectedTab === PropertyPageTabs[1]) {
@@ -129,15 +127,43 @@ export default function PropertyPage() {
       if (!user || userType !== ENTITIES.PROPERTY_MANAGER) {
         throw new Error(USER_PERMISSION_ERROR);
       }
-
       const { data } = await axios.post('/api/edit-property', params);
       const { property } = JSON.parse(data.response);
       setProperty(property);
-      toast.success('Property updated successfully');
+      toast.success('Property updated successfully!', {
+        position: toast.POSITION.TOP_CENTER,
+        draggable: false,
+      });
     } catch (e) {
       console.log({ e });
       renderToastError(e, 'Error updating property');
     }
+  };
+
+  const handleAddRemoveTenantToProperty = async (_tenantEmail: string, remove: boolean) => {
+    setTenantsLoading(true);
+    try {
+      if (!user || userType !== ENTITIES.PROPERTY_MANAGER) {
+        throw new Error(USER_PERMISSION_ERROR);
+      }
+      const { data } = await axios.post('/api/add-remove-tenant-to-property', {
+        propertyUUId: deconstructKey(property?.pk),
+        tenantEmail: _tenantEmail,
+        pmEmail: deconstructKey(property?.GSI1PK),
+        pmName: altName ?? user.name,
+        remove: false,
+      });
+      const { newProperty } = JSON.parse(data.response);
+      setProperty(newProperty);
+      toast.success('Tenant added successfully!', {
+        position: toast.POSITION.TOP_CENTER,
+        draggable: false,
+      });
+    } catch (e) {
+      console.log({ e });
+      renderToastError(e, 'Error adding tenant');
+    }
+    setTenantsLoading(false);
   };
 
   const {
@@ -177,7 +203,6 @@ export default function PropertyPage() {
         },
     mode: 'all',
   });
-  console.log('Teantns', tenants);
 
   return (
     <div id="property-info-page" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
@@ -336,10 +361,29 @@ export default function PropertyPage() {
               </div>
             ) : selectedTab === PropertyPageTabs[1] ? (
               <div className="w-5/6 mx-auto">
-                <div className="mb-2 flex flex-row items-center">
-                  <p className="text-xl">Tenants at property:</p>
-                  <button className="btn btn-sm btn-circle ml-2 bg-blue-200 hover:bg-blue-300">
-                    <GoPlus />
+                <ConfirmationModal
+                  confirmationModalIsOpen={tenantRemoveConfirmOpen}
+                  setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
+                  onConfirm={() => handleAddRemoveTenantToProperty(tenantToDelete, true)}
+                  childrenComponents={<div className="text-center">Are you sure you want to remove {tenantToDelete} from this property?</div>}
+                  onCancel={() => setTenantToDelete('')}
+                />
+                <div className="mb-2 w-4/5 h-20 flex flex-row items-center mx-auto">
+                  <TenantSelect
+                    label={''}
+                    user={user}
+                    userType={userType}
+                    onChange={(e: SingleValue<Option>) => {
+                      if (e) setTenantToAdd(e?.value);
+                    }}
+                    shouldFetch={true}
+                  />
+                  <button
+                    className="btn ml-2 py-0 bg-blue-200 hover:bg-blue-300"
+                    onClick={() => !tenantsLoading && handleAddRemoveTenantToProperty(tenantToAdd, false)}
+                    disabled={tenantsLoading}
+                  >
+                    Add to property
                   </button>
                 </div>
 

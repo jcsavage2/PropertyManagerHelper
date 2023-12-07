@@ -40,6 +40,7 @@ import {
   GetPropertyByIdSchema,
   EditPropertySchema,
   GetUsersSchema,
+  AddRemoveTenantToPropertySchema,
 } from './customschemas';
 import { ChatCompletionRequestMessage } from 'openai';
 
@@ -75,6 +76,8 @@ export type DeleteUser = { pk: string; sk: string; name: string; roles: string[]
 export type GetUserBody = z.infer<typeof GetUserSchema>;
 
 export type GetUsersBody = z.infer<typeof GetUsersSchema>;
+
+export type AddRemoveTenantToProperty = z.infer<typeof AddRemoveTenantToPropertySchema>;
 
 export type AssignTechnicianBody = z.infer<typeof AssignTechnicianSchema>;
 

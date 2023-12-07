@@ -9,11 +9,10 @@ import { errorToResponse } from './_utils';
 import * as Sentry from '@sentry/nextjs';
 import { EditPropertySchema } from '@/types/customschemas';
 import { UserEntity } from '@/database/entities/user';
-import { ENTITIES, ENTITY_KEY, createAddressString, generateAddressSk } from '@/database/entities';
+import { ENTITY_KEY } from '@/database/entities';
 import { createPropertyDisplayString, generateKey } from '@/utils';
 import { EventEntity } from '@/database/entities/event';
 
-//TODO: what to do about work order addresses
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
     const session = await getServerSession(req, res, options);
@@ -54,77 +53,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       propertyId: body.propertyUUId,
       madeByEmail: body.pmEmail,
       madeByName: body.pmName,
-      message: `Address updated to: 
-        ${createPropertyDisplayString({
-          address: body.address,
-          city: body.city,
-          state: body.state,
-          postalCode: body.postalCode,
-          unit: body.unit,
-          numBaths: body.numBaths,
-          numBeds: body.numBeds,
-          country: body.country,
-        })}`,
-    });
-
-    //Update each tenants record with new address changes
-    const userEntity = new UserEntity();
-    for (const email of body.tenantEmails) {
-      const tenant = await userEntity.get({ email });
-      console.log('Updating address for tenant: ' + tenant);
-
-      if (!tenant) {
-        throw new ApiError(API_STATUS.BAD_REQUEST, 'Error updating address for tenant: ' + email);
-      }
-
-      let addressesMap = tenant?.addresses;
-      addressesMap[body.propertyUUId!] = {
+      message: `Address changed to: ${createPropertyDisplayString({
         address: body.address,
         city: body.city,
         state: body.state,
         postalCode: body.postalCode,
         unit: body.unit,
+        numBaths: body.numBaths,
+        numBeds: body.numBeds,
         country: body.country,
-        isPrimary: addressesMap[body.propertyUUId!]?.isPrimary ?? false,
+      })}}`,
+    });
+
+    //Update each tenants record with new address changes
+    const userEntity = new UserEntity();
+    for (const email of body.tenantEmails) {
+      await userEntity.editAddress({
+        propertyUUId: body.propertyUUId,
+        tenantEmail: email,
+        address: body.address,
+        city: body.city,
+        country: body.country,
+        postalCode: body.postalCode,
+        state: body.state,
+        unit: body.unit,
         numBeds: body.numBeds,
         numBaths: body.numBaths,
-      };
-
-      //Have to recreate address string from scratch
-      let newAddressString: string = '';
-      let GSI4SK: string = '';
-      Object.keys(addressesMap).forEach((key: string) => {
-        const property = addressesMap[key];
-        newAddressString += createAddressString({
-          address: property.address,
-          city: property.city,
-          state: property.state,
-          postalCode: property.postalCode,
-          unit: property.unit,
-        });
-
-        if (property.isPrimary) {
-          GSI4SK =
-            generateAddressSk({
-              entityKey: ENTITY_KEY.TENANT,
-              address: property.address,
-              city: property.city,
-              country: property.country,
-              state: property.state,
-              postalCode: property.postalCode,
-              unit: property.unit,
-            }) +
-            '#' +
-            email;
-        }
-      });
-
-      await userEntity.updateUser({
-        pk: generateKey(ENTITY_KEY.USER, email),
-        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-        addresses: addressesMap,
-        addressString: newAddressString,
-        GSI4SK,
       });
     }
 

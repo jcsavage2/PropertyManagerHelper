@@ -84,24 +84,19 @@ export class UserEntity {
    * Creates as new base user entity with no permissions.
    */
   public async createBaseUser({ email }: ICreateUser) {
-    try {
-      const result = await this.userEntity.update(
-        {
-          pk: generateKey(ENTITY_KEY.USER, email),
-          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          status: INVITE_STATUS.CREATED,
-        },
-        { returnValues: 'ALL_NEW' }
-      );
-      return result.Attributes;
-    } catch (err) {
-      console.log({ err });
-    }
+    const result = await this.userEntity.update(
+      {
+        pk: generateKey(ENTITY_KEY.USER, email),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        status: INVITE_STATUS.CREATED,
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return result.Attributes;
   }
 
   /**
-   * If user does not already exist, create a new user and give them tenant permissions.
-   * If the user does already exist, update them with the appropriate roles + metadata.
+   * Create a new user and give them tenant permissions.
    */
   public async createTenant({
     pmEmail,
@@ -121,56 +116,40 @@ export class UserEntity {
     numBeds,
     numBaths,
   }: ICreateTenant) {
-    try {
-      const tenant = await this.userEntity.update(
-        {
-          pk: generateKey(ENTITY_KEY.USER, tenantEmail),
-          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          pmEmail,
-          pmName,
-          roles: { $add: [USER_TYPE.TENANT] },
-          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
-          GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
-          GSI4SK:
-            generateAddressSk({
-              entityKey: ENTITY_KEY.TENANT,
-              address,
-              city,
-              country,
-              state,
-              postalCode,
-              unit,
-            }) +
-            '#' +
-            tenantEmail,
+    const tenant = await this.userEntity.update(
+      {
+        pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        pmEmail,
+        pmName,
+        roles: { $add: [USER_TYPE.TENANT] },
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
+        GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
+        GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
+        GSI4SK: this.createGSI4SK({
           email: tenantEmail,
-          name: tenantName,
-          organization,
-          phone,
-          organizationName,
-          status: INVITE_STATUS.INVITED,
-          addresses: this.generateAddress({
-            propertyUUId,
-            address,
-            country,
-            city,
-            state,
-            postalCode,
-            unit,
-            isPrimary: true,
-            numBaths,
-            numBeds,
-          }),
-          addressString: createAddressString({ address, city, state, postalCode, unit }),
+          entityKey: ENTITY_KEY.TENANT,
+          address,
+          city,
+          country,
+          state,
+          postalCode,
+          unit,
+        }),
+        email: tenantEmail,
+        name: tenantName,
+        organization,
+        phone,
+        organizationName,
+        status: INVITE_STATUS.INVITED,
+        addresses: {
+          [propertyUUId]: { address, unit, city, state, postalCode, country, isPrimary: true, numBeds, numBaths },
         },
-        { returnValues: 'ALL_NEW' }
-      );
-      return tenant.Attributes ?? null;
-    } catch (err) {
-      console.log({ err });
-      return null;
-    }
+        addressString: createAddressString({ address, city, state, postalCode, unit }),
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return tenant.Attributes ?? null;
   }
 
   public async updateUser({
@@ -207,55 +186,46 @@ export class UserEntity {
   }
 
   public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: CreatePMSchemaType) {
-    try {
-      const result = await this.userEntity.update(
-        {
-          pk: generateKey(ENTITY_KEY.USER, userEmail),
-          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization),
-          GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
-          roles: { $add: [USER_TYPE.PROPERTY_MANAGER] },
-          email: userEmail,
-          name: userName,
-          isAdmin,
-          organization,
-          organizationName,
-          status: INVITE_STATUS.INVITED,
-        },
-        { returnValues: 'ALL_NEW' }
-      );
-      return result.Attributes;
-    } catch (err) {
-      console.log({ err });
-    }
+    const result = await this.userEntity.update(
+      {
+        pk: generateKey(ENTITY_KEY.USER, userEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization),
+        GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
+        roles: { $add: [USER_TYPE.PROPERTY_MANAGER] },
+        email: userEmail,
+        name: userName,
+        isAdmin,
+        organization,
+        organizationName,
+        status: INVITE_STATUS.INVITED,
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return result.Attributes;
   }
 
   public async createTechnician({ technicianName, technicianEmail, pmEmail, pmName, organization, organizationName }: ICreateTechnician) {
-    try {
-      const tenant = await this.userEntity.update(
-        {
-          pk: generateKey(ENTITY_KEY.USER, technicianEmail),
-          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          pmEmail,
-          pmName,
-          roles: { $add: [USER_TYPE.TECHNICIAN] },
-          GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail),
-          GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization),
-          GSI4SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
-          email: technicianEmail,
-          name: technicianName,
-          organization,
-          organizationName,
-          status: INVITE_STATUS.INVITED,
-        },
-        { returnValues: 'ALL_NEW' }
-      );
-      return tenant.Attributes ?? null;
-    } catch (err) {
-      console.log({ err });
-      return null;
-    }
+    const tenant = await this.userEntity.update(
+      {
+        pk: generateKey(ENTITY_KEY.USER, technicianEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        pmEmail,
+        pmName,
+        roles: { $add: [USER_TYPE.TECHNICIAN] },
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TECHNICIAN, pmEmail),
+        GSI1SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
+        GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization),
+        GSI4SK: generateKey(ENTITY_KEY.TECHNICIAN, ENTITIES.TECHNICIAN),
+        email: technicianEmail,
+        name: technicianName,
+        organization,
+        organizationName,
+        status: INVITE_STATUS.INVITED,
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+    return tenant.Attributes ?? null;
   }
 
   /**
@@ -337,24 +307,20 @@ export class UserEntity {
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization);
     let remainingTenantsToFetch = PAGE_SIZE;
     do {
-      try {
-        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
-          limit: remainingTenantsToFetch,
-          reverse: false,
-          ...(statusFilter &&
-            !fetchAllTenants && {
-              filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
-            }),
-          ...(startKey && { startKey }),
-          beginsWith: `${ENTITY_KEY.TENANT}`,
-          index: INDEXES.GSI4,
-        });
-        startKey = LastEvaluatedKey as StartKey;
-        remainingTenantsToFetch -= Items?.length ?? 0;
-        Items?.length && tenants.push(...Items);
-      } catch (err) {
-        console.log({ err });
-      }
+      const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
+        limit: remainingTenantsToFetch,
+        reverse: false,
+        ...(statusFilter &&
+          !fetchAllTenants && {
+            filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
+          }),
+        ...(startKey && { startKey }),
+        beginsWith: `${ENTITY_KEY.TENANT}`,
+        index: INDEXES.GSI4,
+      });
+      startKey = LastEvaluatedKey as StartKey;
+      remainingTenantsToFetch -= Items?.length ?? 0;
+      Items?.length && tenants.push(...Items);
     } while ((!!startKey && remainingTenantsToFetch > 0) || (!!startKey && fetchAllTenants));
 
     return { tenants, startKey };
@@ -389,26 +355,22 @@ export class UserEntity {
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization);
     let remainingTechsToFetch = PAGE_SIZE;
     do {
-      try {
-        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
-          limit: remainingTechsToFetch,
-          reverse: true,
-          ...(techSearchString && {
-            filters: [
-              { attr: 'name', contains: techSearchString },
-              { or: true, attr: 'email', contains: techSearchString },
-            ],
-          }),
-          ...(startKey && { startKey }),
-          beginsWith: `${ENTITY_KEY.TECHNICIAN}`,
-          index: INDEXES.GSI4,
-        });
-        startKey = LastEvaluatedKey as StartKey;
-        remainingTechsToFetch -= Items?.length ?? 0;
-        Items?.length && techs.push(...Items);
-      } catch (err) {
-        console.log({ err });
-      }
+      const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
+        limit: remainingTechsToFetch,
+        reverse: true,
+        ...(techSearchString && {
+          filters: [
+            { attr: 'name', contains: techSearchString },
+            { or: true, attr: 'email', contains: techSearchString },
+          ],
+        }),
+        ...(startKey && { startKey }),
+        beginsWith: `${ENTITY_KEY.TECHNICIAN}`,
+        index: INDEXES.GSI4,
+      });
+      startKey = LastEvaluatedKey as StartKey;
+      remainingTechsToFetch -= Items?.length ?? 0;
+      Items?.length && techs.push(...Items);
     } while (!!startKey && remainingTechsToFetch > 0);
     return { techs, startKey };
   }
@@ -418,20 +380,16 @@ export class UserEntity {
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization);
     let remainingTechsToFetch = PAGE_SIZE;
     do {
-      try {
-        const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
-          limit: remainingTechsToFetch,
-          reverse: true,
-          ...(startKey && { startKey }),
-          beginsWith: `${ENTITY_KEY.PROPERTY_MANAGER}`,
-          index: INDEXES.GSI4,
-        });
-        startKey = LastEvaluatedKey as StartKey;
-        remainingTechsToFetch -= Items?.length ?? 0;
-        Items?.length && pms.push(...Items);
-      } catch (err) {
-        console.log({ err });
-      }
+      const { Items, LastEvaluatedKey } = await this.userEntity.query(GSI4PK, {
+        limit: remainingTechsToFetch,
+        reverse: true,
+        ...(startKey && { startKey }),
+        beginsWith: `${ENTITY_KEY.PROPERTY_MANAGER}`,
+        index: INDEXES.GSI4,
+      });
+      startKey = LastEvaluatedKey as StartKey;
+      remainingTechsToFetch -= Items?.length ?? 0;
+      Items?.length && pms.push(...Items);
     } while (!!startKey && remainingTechsToFetch > 0);
     return { pms, startKey };
   }
@@ -464,51 +422,45 @@ export class UserEntity {
     unit?: string;
     isPrimary?: boolean;
   }) {
-    try {
-      //get current address map and address string
-      const userAccount = await this.get({ email: tenantEmail });
-      if (!userAccount) {
-        throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
-      }
-
-      //@ts-ignore
-      let newAddresses: Record<string, any> = userAccount.addresses;
-
-      let newAddressString: string = userAccount.addressString ?? '';
-      newAddressString += createAddressString({ address, city, state, postalCode, unit });
-
-      //Add new address into the map
-      newAddresses[propertyUUId] = {
-        address,
-        unit,
-        city,
-        state,
-        postalCode,
-        country,
-        isPrimary,
-        numBeds,
-        numBaths,
-      };
-
-      //Add the map with the new address back into the tenant record
-      const result = await this.userEntity.update(
-        {
-          pk: generateKey(ENTITY_KEY.USER, tenantEmail),
-          sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-          addresses: newAddresses,
-          addressString: newAddressString,
-        },
-        { returnValues: 'ALL_NEW' }
-      );
-      return result;
-    } catch (err) {
-      console.log({ err });
+    //get current address map and address string
+    const userAccount = await this.get({ email: tenantEmail });
+    if (!userAccount) {
+      throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
     }
+
+    //@ts-ignore
+    let newAddresses: Record<string, any> = userAccount.addresses;
+
+    let newAddressString: string = userAccount.addressString ?? '';
+    newAddressString += createAddressString({ address, city, state, postalCode, unit });
+
+    //Add new address into the map
+    newAddresses[propertyUUId] = {
+      address,
+      unit,
+      city,
+      state,
+      postalCode,
+      country,
+      isPrimary,
+      numBeds,
+      numBaths,
+    };
+
+    //Add the map with the new address back into the tenant record
+    return await this.updateUser({
+      pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+      sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+      addresses: newAddresses,
+      addressString: newAddressString,
+    });
   }
 
-
-
-  private generateAddress({
+  /**
+   * Edits an existing address in the user's address map. Updates user's address string.
+   */
+  public async editAddress({
+    tenantEmail,
     propertyUUId,
     address,
     country,
@@ -516,26 +468,173 @@ export class UserEntity {
     state,
     postalCode,
     unit,
-    isPrimary,
     numBeds,
     numBaths,
   }: {
+    tenantEmail: string;
     propertyUUId: string;
     address: string;
     country: string;
     city: string;
     state: string;
     postalCode: string;
-    isPrimary: boolean;
+    numBeds: number;
+    numBaths: number;
     unit?: string;
-    numBeds?: number;
-    numBaths?: number;
   }) {
-    const key = `${propertyUUId}`;
-    return {
-      [key]: { address, unit, city, state, postalCode, country, isPrimary, numBeds, numBaths },
+    const tenant = await this.get({ email: tenantEmail });
+    if (!tenant) return null;
+
+    let addressesMap = tenant?.addresses;
+    const oldIsPrimary = addressesMap[propertyUUId]?.isPrimary ?? false;
+    addressesMap[propertyUUId] = {
+      address,
+      city,
+      state,
+      postalCode,
+      unit,
+      country,
+      isPrimary: oldIsPrimary,
+      numBeds,
+      numBaths,
     };
+
+    //Have to recreate address string from scratch
+    let newAddressString: string = '';
+    let GSI4SK: string = '';
+    Object.keys(addressesMap).forEach((key: string) => {
+      const property = addressesMap[key];
+      newAddressString += createAddressString({
+        address: property.address,
+        city: property.city,
+        state: property.state,
+        postalCode: property.postalCode,
+        unit: property.unit,
+      });
+
+      if (property.isPrimary) {
+        GSI4SK = this.createGSI4SK({
+          email: tenantEmail,
+          entityKey: ENTITY_KEY.TENANT,
+          address: property.address,
+          city: property.city,
+          country: property.country,
+          state: property.state,
+          postalCode: property.postalCode,
+          unit: property.unit,
+        });
+      }
+    });
+
+    return await this.updateUser({
+      pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+      sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+      addresses: addressesMap,
+      addressString: newAddressString,
+      GSI4SK,
+    });
   }
+
+  /**
+   * Removes an address from the user's address map. Updates user's address string.
+   */
+  public async removeAddress({ tenantEmail, propertyUUId }: { tenantEmail: string; propertyUUId: string }) {
+    const tenant = await this.get({ email: tenantEmail });
+    if (!tenant) return null;
+
+    let addressesMap = tenant?.addresses;
+    delete addressesMap[propertyUUId];
+
+    //Have to recreate address string from scratch
+    let newAddressString: string = '';
+    let GSI4SK: string = '';
+    const mapLength = Object.keys(addressesMap).length;
+    Object.keys(addressesMap).forEach((key: string, index: number) => {
+      const property = addressesMap[key];
+      newAddressString += createAddressString({
+        address: property.address,
+        city: property.city,
+        state: property.state,
+        postalCode: property.postalCode,
+        unit: property.unit,
+      });
+
+      if (property.isPrimary) {
+        GSI4SK = this.createGSI4SK({
+          email: tenantEmail,
+          entityKey: ENTITY_KEY.TENANT,
+          address: property.address,
+          city: property.city,
+          country: property.country,
+          state: property.state,
+          postalCode: property.postalCode,
+          unit: property.unit,
+        });
+      }
+
+      //If we deleted their primary property, then we need to set a new one bc its used to sort tenants
+      if (index === mapLength - 1 && !GSI4SK) {
+        addressesMap[key].isPrimary = true;
+        GSI4SK = this.createGSI4SK({
+          email: tenantEmail,
+          entityKey: ENTITY_KEY.TENANT,
+          address: property.address,
+          city: property.city,
+          country: property.country,
+          state: property.state,
+          postalCode: property.postalCode,
+          unit: property.unit,
+        });
+      }
+    });
+
+    //If we deleted the last address in their map, then we need to set GSI4SK to just their email
+    if (!GSI4SK) {
+      GSI4SK = '#' + tenantEmail;
+    }
+
+    return await this.updateUser({
+      pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+      sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+      addresses: addressesMap,
+      addressString: newAddressString,
+      GSI4SK,
+    });
+  }
+
+  private createGSI4SK = ({
+    email,
+    entityKey,
+    address,
+    city,
+    country,
+    state,
+    postalCode,
+    unit,
+  }: {
+    email: string;
+    entityKey: string;
+    address: string;
+    city: string;
+    country: string;
+    state: string;
+    postalCode: string;
+    unit?: string;
+  }) => {
+    return (
+      generateAddressSk({
+        entityKey,
+        address,
+        city,
+        country,
+        state,
+        postalCode,
+        unit,
+      }) +
+      '#' +
+      email
+    );
+  };
 
   private userEntity = new Entity({
     name: ENTITIES.USER,
