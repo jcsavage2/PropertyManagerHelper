@@ -171,7 +171,6 @@ export class PropertyEntity {
 
     let remainingPropertiesToFetch = PAGE_SIZE;
     do {
-      try {
         const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI4PK, {
           ...(startKey && { startKey }),
           limit: remainingPropertiesToFetch,
@@ -183,9 +182,6 @@ export class PropertyEntity {
         startKey = LastEvaluatedKey as StartKey;
         remainingPropertiesToFetch -= Items?.length ?? 0;
         Items?.length && properties.push(...Items);
-      } catch (err) {
-        console.log({ err });
-      }
     } while (!!startKey && remainingPropertiesToFetch > 0);
     return { properties, startKey };
   }
@@ -207,7 +203,6 @@ export class PropertyEntity {
     let properties = [];
     let remainingPropertiesToFetch = PAGE_SIZE;
     do {
-      try {
         const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI1PK, {
           ...(startKey && { startKey }),
           limit: remainingPropertiesToFetch,
@@ -218,9 +213,6 @@ export class PropertyEntity {
         startKey = LastEvaluatedKey as StartKey;
         remainingPropertiesToFetch -= Items?.length ?? 0;
         Items?.length && properties.push(...Items);
-      } catch (err) {
-        console.log({ err });
-      }
     } while (!!startKey && remainingPropertiesToFetch > 0);
     return { properties, startKey };
   }
