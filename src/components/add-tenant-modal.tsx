@@ -223,10 +223,10 @@ export const AddTenantModal = ({
             <input
               className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
               id="email"
-              placeholder="Tenant Email*"
+              placeholder="Tenant Email (if none provided, they won't be notified)"
               type={'email'}
               {...tenantInfoForm.register('tenantEmail', {
-                required: true,
+                required: false,
               })}
             />
             {tenantInfoForm.formState.errors.tenantEmail && (

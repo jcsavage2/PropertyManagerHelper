@@ -1,4 +1,4 @@
-import { API_STATUS, USER_PERMISSION_ERROR, WO_STATUS } from '@/constants';
+import { API_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR, WO_STATUS } from '@/constants';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
@@ -112,9 +112,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
       from: 'pillar@pillarhq.co',
-      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${
-        toTitleCase(body.property.address) ?? ''
-      } ${toTitleCase(body.property.unit) ?? ''}`,
+      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${toTitleCase(body.property.address) ?? ''
+        } ${toTitleCase(body.property.unit) ?? ''}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -204,16 +203,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
-            ${
-              body.messages
-                ?.map(
-                  (m: ChatCompletionRequestMessage) =>
-                    `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(
-                      m.role
-                    )}: </span>${m.content}</p>`
-                )
-                .join(' ') ?? 'No user chat history'
-            }
+            ${body.messages
+          ?.map(
+            (m: ChatCompletionRequestMessage) =>
+              `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(
+                m.role
+              )}: </span>${m.content}</p>`
+          )
+          .join(' ') ?? 'No user chat history'
+        }
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -224,8 +222,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </html>`,
     });
 
-    //If the tenant didn't create the work order, make sure they are notified
-    if (body.createdByType !== USER_TYPE.TENANT) {
+    // If the tenant didn't create the work order, make sure they are notified.
+    // Also, don't send them an email if they don't have one on their account.
+    if (body.createdByType !== USER_TYPE.TENANT && !tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
       await sendgrid.send({
         to: derivedTenantEmail,
         from: 'pillar@pillarhq.co',

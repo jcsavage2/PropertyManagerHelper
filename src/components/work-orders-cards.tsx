@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Select from 'react-select';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
-import { PTE, WO_STATUS } from '@/constants';
+import { NO_EMAIL_PREFIX, PTE, WO_STATUS } from '@/constants';
 import { StatusOptions } from './work-orders-table';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { HandleUpdateStatusProps } from '../pages/work-orders';
@@ -160,6 +160,9 @@ export const WorkOrdersCards = ({
           ? workOrders?.map((workOrder, index) => {
               const { assignedTo } = workOrder;
               const assignedToString = setToShortenedString(assignedTo);
+              const correctedEmail = workOrder.tenantEmail?.startsWith(NO_EMAIL_PREFIX)
+                ? toTitleCase(workOrder.tenantName)
+                : workOrder.tenantEmail;
               return (
                 <div
                   className="py-4 px-3 bg-gray-100 rounded w-full shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]"
@@ -174,7 +177,7 @@ export const WorkOrdersCards = ({
                     {workOrder.address.address + ' ' + (workOrder?.address?.unit ?? '')}{' '}
                   </p>
                   <div className="ml-1 text-sm mt-1 flex flex-row">
-                    Tenant: <p className="font-light ml-1">{workOrder.tenantEmail}</p>
+                    Tenant: <p className="font-light ml-1">{correctedEmail}</p>
                   </div>
                   <div className="ml-1 text-sm mt-0.5 flex flex-row">
                     Assigned To:{' '}

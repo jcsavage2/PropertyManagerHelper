@@ -2,8 +2,9 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
-import { INVITE_STATUS, PAGE_SIZE } from '@/constants';
+import { INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 interface IBaseUser {
   pk: string;
@@ -30,7 +31,7 @@ interface ICreateUser {
 interface ICreateTenant {
   pmName: string;
   pmEmail: string;
-  tenantEmail: string;
+  tenantEmail?: string;
   tenantName: string;
   address: string;
   organization: string;
@@ -116,9 +117,13 @@ export class UserEntity {
     numBeds,
     numBaths,
   }: ICreateTenant) {
+    if (tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
+      throw new Error('Cannot create a user with this account');
+    }
+    const guaranteedEmail = tenantEmail ?? `${NO_EMAIL_PREFIX}${uuidv4()}@gmail.com`;
     const tenant = await this.userEntity.update(
       {
-        pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+        pk: generateKey(ENTITY_KEY.USER, guaranteedEmail),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
         pmEmail,
         pmName,
@@ -126,17 +131,19 @@ export class UserEntity {
         GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
         GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
-        GSI4SK: this.createGSI4SK({
-          email: tenantEmail,
-          entityKey: ENTITY_KEY.TENANT,
-          address,
-          city,
-          country,
-          state,
-          postalCode,
-          unit,
-        }),
-        email: tenantEmail,
+        GSI4SK:
+          generateAddressSk({
+            entityKey: ENTITY_KEY.TENANT,
+            address,
+            city,
+            country,
+            state,
+            postalCode,
+            unit,
+          }) +
+          '#' +
+          guaranteedEmail,
+        email: guaranteedEmail,
         name: tenantName,
         organization,
         phone,

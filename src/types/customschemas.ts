@@ -226,7 +226,7 @@ export const GetS3BucketSchema = z.object({
 });
 
 export const CreateTenant_TenantInfoSchema = z.object({
-  tenantEmail: lowerCaseRequiredEmail,
+  tenantEmail: lowerCaseOptionalEmail,
   tenantName: lowerCaseRequiredString,
   organization: requiredString,
   organizationName: lowerCaseRequiredString,
