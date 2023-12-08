@@ -183,7 +183,7 @@ const Properties = () => {
                             {toTitleCase(property.unit)}
                           </td>
                           <td className="border-b border-t px-1 py-1">
-                            <Link href={`/properties/${deconstructKey(property.pk)}/edit`}>
+                            <Link href={`/properties/${encodeURIComponent(deconstructKey(property.pk))}/edit`}>
                               <FaEdit
                                 className="text-blue-300 hover:text-blue-500 cursor-pointer"
                                 fontSize={25}

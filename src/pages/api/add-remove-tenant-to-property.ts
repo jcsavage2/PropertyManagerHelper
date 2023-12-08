@@ -22,7 +22,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const body: AddRemoveTenantToProperty = AddRemoveTenantToPropertySchema.parse(req.body);
 
-    //We have to delete and recreate because sks are different now
     const propertyEntity = new PropertyEntity();
     const eventEntity = new EventEntity();
     const userEntity = new UserEntity();

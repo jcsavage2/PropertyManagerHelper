@@ -80,6 +80,25 @@ export interface IUser extends IBaseUser {
   altNames: string[];
 }
 
+export type Attributes = (
+  | 'addresses'
+  | 'addressString'
+  | 'GSI1PK'
+  | 'GSI1SK'
+  | 'GSI2PK'
+  | 'GSI2SK'
+  | 'GSI3PK'
+  | 'GSI3SK'
+  | 'GSI4PK'
+  | 'GSI4SK'
+  | 'hasSeenDownloadPrompt'
+  | 'pmEmail'
+  | 'pmName'
+  | 'phone'
+  | 'altNames'
+  | 'isAdmin'
+)
+
 export class UserEntity {
   /**
    * Creates as new base user entity with no permissions.
@@ -167,6 +186,7 @@ export class UserEntity {
     addresses,
     addressString,
     GSI4SK,
+    toRemove = [],
   }: {
     pk: string;
     sk: string;
@@ -175,6 +195,7 @@ export class UserEntity {
     addresses?: Record<string, any>;
     addressString?: string;
     GSI4SK?: string;
+    toRemove?: Attributes[]; //Array of attributes to remove as strings
   }) {
     const updatedUser = await this.userEntity.update(
       {
@@ -185,6 +206,7 @@ export class UserEntity {
         ...(status && { status }),
         ...(addresses && { addresses }),
         ...(addressString && { addressString }),
+        $remove: toRemove,
       },
       { returnValues: 'ALL_NEW' }
     );
@@ -415,7 +437,6 @@ export class UserEntity {
     unit,
     numBeds,
     numBaths,
-    isPrimary = false,
   }: {
     tenantEmail: string;
     propertyUUId: string;
@@ -427,7 +448,6 @@ export class UserEntity {
     numBeds: number;
     numBaths: number;
     unit?: string;
-    isPrimary?: boolean;
   }) {
     //get current address map and address string
     const userAccount = await this.get({ email: tenantEmail });
@@ -435,6 +455,7 @@ export class UserEntity {
       throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
     }
 
+    const numAddresses = Object.keys(userAccount.addresses ?? {}).length;
     //@ts-ignore
     let newAddresses: Record<string, any> = userAccount.addresses;
 
@@ -449,10 +470,25 @@ export class UserEntity {
       state,
       postalCode,
       country,
-      isPrimary,
+      isPrimary: numAddresses === 0, //If they have no other addresses, then their only address becomes primary
       numBeds,
       numBaths,
     };
+
+    //If this is their first address, then set GSI4SK
+    let newGSI4SK: string | undefined = undefined;
+    if (numAddresses === 0) {
+      newGSI4SK = this.createGSI4SK({
+        email: tenantEmail,
+        entityKey: ENTITY_KEY.TENANT,
+        address,
+        city,
+        country,
+        state,
+        postalCode,
+        unit,
+      });
+    }
 
     //Add the map with the new address back into the tenant record
     return await this.updateUser({
@@ -460,6 +496,7 @@ export class UserEntity {
       sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
       addresses: newAddresses,
       addressString: newAddressString,
+      GSI4SK: newGSI4SK,
     });
   }
 
@@ -554,7 +591,7 @@ export class UserEntity {
 
     //Have to recreate address string from scratch
     let newAddressString: string = '';
-    let GSI4SK: string = '';
+    let GSI4SK: string | undefined = undefined;
     const mapLength = Object.keys(addressesMap).length;
     Object.keys(addressesMap).forEach((key: string, index: number) => {
       const property = addressesMap[key];
@@ -579,7 +616,8 @@ export class UserEntity {
         });
       }
 
-      //If we deleted their primary property, then we need to set a new one bc its used to sort tenants
+      //If we deleted their primary property, then we need to set a new one
+      //For now just pick the most recent one in the map
       if (index === mapLength - 1 && !GSI4SK) {
         addressesMap[key].isPrimary = true;
         GSI4SK = this.createGSI4SK({
@@ -597,7 +635,7 @@ export class UserEntity {
 
     //If we deleted the last address in their map, then we need to set GSI4SK to just their email
     if (!GSI4SK) {
-      GSI4SK = '#' + tenantEmail;
+      GSI4SK = ENTITY_KEY.TENANT + '#' + tenantEmail;
     }
 
     return await this.updateUser({
@@ -606,6 +644,7 @@ export class UserEntity {
       addresses: addressesMap,
       addressString: newAddressString,
       GSI4SK,
+      toRemove: !newAddressString.length ? ['addressString'] : [],
     });
   }
 

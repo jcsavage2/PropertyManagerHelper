@@ -42,7 +42,7 @@ export default function PropertyPage() {
   const [tenants, setTenants] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
   const [tenantToAdd, setTenantToAdd] = useState<string>('');
-  const [tenantToDelete, setTenantToDelete] = useState<string>('');
+  const [tenantToDelete, setTenantToDelete] = useState<{name: string, email: string}>({name: '', email: ''});
   const [tenantRemoveConfirmOpen, setTenantRemoveConfirmOpen] = useState<boolean>(false);
 
   const [selectedTab, setSelectedTab] = useState<string>(PropertyPageTabs[0]);
@@ -54,15 +54,15 @@ export default function PropertyPage() {
       return;
     }
 
-    const propertyId = propertyparams[0];
+    const propertyId = decodeURIComponent(propertyparams[0]);
     if (propertyparams.length > 1) {
       if (PropertyPageTabs.includes(propertyparams[1])) {
         setSelectedTab(propertyparams[1]);
       } else {
-        router.push(`/properties/${propertyId}/edit`);
+        router.push(`/properties/${encodeURIComponent(propertyId)}/edit`);
       }
     } else {
-      router.push(`/properties/${propertyId}/edit`);
+      router.push(`/properties/${encodeURIComponent(propertyId)}/edit`);
     }
 
     async function getProperty() {
@@ -99,6 +99,11 @@ export default function PropertyPage() {
 
   async function getPropertyTenants() {
     if (!property) return;
+    if(!property.tenantEmails || !property.tenantEmails.length) {
+      setTenants([]);
+      setTenantsLoading(false);
+      return;
+    }
     setTenantsLoading(true);
     try {
       const { data } = await axios.post('/api/get-users', {
@@ -151,11 +156,13 @@ export default function PropertyPage() {
         tenantEmail: _tenantEmail,
         pmEmail: deconstructKey(property?.GSI1PK),
         pmName: altName ?? user.name,
-        remove: false,
+        remove,
       });
-      const { newProperty } = JSON.parse(data.response);
-      setProperty(newProperty);
-      toast.success('Tenant added successfully!', {
+      const { property: _property } = JSON.parse(data.response);
+      setProperty(_property);
+      setTenantToAdd('');
+      setTenantToDelete({name: '', email: ''});
+      toast.success(remove ? 'Tenant removed from property' : 'Tenant added to property', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
       });
@@ -236,21 +243,21 @@ export default function PropertyPage() {
               <div
                 role="tab"
                 className={`tab ${selectedTab === PropertyPageTabs[0] && 'tab-active'}`}
-                onClick={() => router.push(`/properties/${propertyparams[0]}/${PropertyPageTabs[0]}`)}
+                onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[0]}`)}
               >
                 Edit property
               </div>
               <div
                 role="tab"
                 className={`tab ${selectedTab === PropertyPageTabs[1] && 'tab-active'}`}
-                onClick={() => router.push(`/properties/${propertyparams[0]}/${PropertyPageTabs[1]}`)}
+                onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[1]}`)}
               >
                 Add/remove tenants
               </div>
               <div
                 role="tab"
                 className={`tab ${selectedTab === PropertyPageTabs[2] && 'tab-active'}`}
-                onClick={() => router.push(`/properties/${propertyparams[0]}/${PropertyPageTabs[2]}`)}
+                onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[2]}`)}
               >
                 History
               </div>
@@ -364,9 +371,13 @@ export default function PropertyPage() {
                 <ConfirmationModal
                   confirmationModalIsOpen={tenantRemoveConfirmOpen}
                   setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
-                  onConfirm={() => handleAddRemoveTenantToProperty(tenantToDelete, true)}
-                  childrenComponents={<div className="text-center">Are you sure you want to remove {tenantToDelete} from this property?</div>}
-                  onCancel={() => setTenantToDelete('')}
+                  onConfirm={() => {
+                    handleAddRemoveTenantToProperty(tenantToDelete.email, true);
+                    setTenantToDelete({name: '', email: ''});
+                    setTenantRemoveConfirmOpen(false);
+                  }}
+                  childrenComponents={<div className="text-center">Are you sure you want to remove {toTitleCase(tenantToDelete.name)} from this property?</div>}
+                  onCancel={() => setTenantToDelete({name: '', email: ''})}
                 />
                 <div className="mb-2 w-4/5 h-20 flex flex-row items-center mx-auto">
                   <TenantSelect
@@ -408,7 +419,15 @@ export default function PropertyPage() {
                               <td>{toTitleCase(user.name)}</td>
                               <td>{user.email}</td>
                               <td>
-                                <button className="btn bg-red-500 hover:bg-red-600 py-1 px-1">Remove</button>
+                                <button
+                                  className="btn bg-red-500 hover:bg-red-600 py-1 px-1"
+                                  onClick={() => {
+                                    setTenantToDelete({name: user.name, email: user.email});
+                                    setTenantRemoveConfirmOpen(true);
+                                  }}
+                                >
+                                  Remove
+                                </button>
                               </td>
                             </tr>
                           );

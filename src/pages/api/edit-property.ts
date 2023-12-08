@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         numBaths: body.numBaths,
         numBeds: body.numBeds,
         country: body.country,
-      })}}`,
+      })}`,
     });
 
     //Update each tenants record with new address changes

@@ -58,6 +58,7 @@ export const ConfirmationModal = ({
       contentLabel="Example Modal"
       closeTimeoutMS={0}
       style={customStyles}
+      ariaHideApp={false}
     >
       <div className="w-full h-full">{childrenComponents}</div>
       <div className="flex flex-row md:w-1/2 w-3/4 mx-auto justify-between mt-6">
