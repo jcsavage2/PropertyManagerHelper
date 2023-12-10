@@ -3,7 +3,7 @@ import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { StateSelect } from '@/components/state-select';
 import { TenantSelect } from '@/components/tenant-select';
-import { DEFAULT_PROPERTY, USER_PERMISSION_ERROR } from '@/constants';
+import { DEFAULT_PROPERTY, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
 import { useUserContext } from '@/context/user';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { IEvent } from '@/database/entities/event';
@@ -156,6 +156,7 @@ export default function PropertyPage() {
       const { data } = await axios.post('/api/add-remove-tenant-to-property', {
         propertyUUId: deconstructKey(property?.pk),
         tenantEmail: _tenantEmail,
+        tenantName: tenantToAdd?.label,
         pmEmail: deconstructKey(property?.GSI1PK),
         pmName: altName ?? user.name,
         remove,
@@ -236,10 +237,10 @@ export default function PropertyPage() {
             <hr />
           </div>
         ) : (
-          <div className=''>
-            <Link href="/properties" className='mt-2 flex flex-row align-middle items-center'>
+          <div className="">
+            <Link href="/properties" className="mt-2 flex flex-row align-middle items-center">
               <CiLocationOn className="mr-1" fontSize={20} />
-              <p className=''>Return to properties</p>
+              <p className="">Return to properties</p>
             </Link>
           </div>
         )}
@@ -414,11 +415,12 @@ export default function PropertyPage() {
                       <tbody>
                         {tenants.map((user: IUser, i: number) => {
                           const numAddresses = Object.keys(user.addresses).length ?? 0;
+                          const correctedEmail = user.email.startsWith(NO_EMAIL_PREFIX) ? 'No email' : user.email;
                           return (
                             <tr key={`${ENTITIES.USER}-${i}`}>
                               <th>{i + 1}</th>
                               <td>{toTitleCase(user.name)}</td>
-                              {!isMobile && <td>{user.email}</td>}
+                              {!isMobile && <td>{correctedEmail}</td>}
                               <td>
                                 <div
                                   className={`${numAddresses === 1 && 'tooltip'}`}

@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/nextjs';
 import { AddRemoveTenantToPropertySchema } from '@/types/customschemas';
 import { UserEntity } from '@/database/entities/user';
 import { EventEntity } from '@/database/entities/event';
+import { toTitleCase } from '@/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -56,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       propertyId: body.propertyUUId,
       madeByEmail: body.pmEmail,
       madeByName: body.pmName,
-      message: body.remove ? `Tenant removed: ${body.tenantEmail}` : `Tenant added: ${body.tenantEmail}`,
+      message: body.remove ? `Tenant removed: ${toTitleCase(body.tenantName)}` : `Tenant added: ${toTitleCase(body.tenantName)}`,
     });
 
     return res.status(API_STATUS.SUCCESS).json({

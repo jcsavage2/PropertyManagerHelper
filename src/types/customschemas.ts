@@ -41,6 +41,7 @@ export const UpdateUserSchema = z.object({
 export const AddRemoveTenantToPropertySchema = z.object({
   propertyUUId: requiredString,
   tenantEmail: lowerCaseRequiredEmail,
+  tenantName: lowerCaseRequiredString,
   pmEmail: lowerCaseRequiredEmail,
   pmName: lowerCaseRequiredString,
   remove: z.boolean()
