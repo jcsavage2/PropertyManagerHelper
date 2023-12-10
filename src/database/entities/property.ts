@@ -308,7 +308,7 @@ export class PropertyEntity {
         version: oldProperty.version ?? 1,
       });
 
-      if (err) {
+      if (err && err.$metadata?.httpStatusCode === API_STATUS.BAD_REQUEST) {
         attempt++;
         continue;
       }
