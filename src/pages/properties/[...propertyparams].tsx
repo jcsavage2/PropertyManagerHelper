@@ -454,7 +454,7 @@ export default function PropertyPage() {
                     if (event) {
                       const formattedDateTime = createdToFormattedDateTime(event.created!);
                       return (
-                        <div key={`${ENTITIES.EVENT}-${i}`} className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 last-of-type:mb-0 py-2 px-3 text-left">
+                        <div key={`${ENTITIES.EVENT}-${i}`} className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 py-2 px-3 text-left">
                           <div className="mb-0.5 flex flex-row">
                             <p className="font-bold mr-2">{toTitleCase(event.madeByName)} </p>
                             <p className="text-slate-600">
