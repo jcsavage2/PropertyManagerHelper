@@ -30,23 +30,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const propertyEntity = new PropertyEntity();
     const eventEntity = new EventEntity();
 
-    //Delete the old address
-    await propertyEntity.delete({ pk: generateKey(ENTITY_KEY.PROPERTY, body.propertyUUId), sk: body.oldSk });
+    const existingProperties = await propertyEntity.getPropertiesByAddress({
+      address: {
+        address: body.address,
+        city: body.city,
+        state: body.state,
+        country: body.country,
+        postalCode: body.postalCode,
+        unit: body.unit,
+        numBeds: body.numBeds,
+        numBaths: body.numBaths,
+      },
+      organization: body.organization,
+    });
 
-    //Create the new address
-    const newProperty = await propertyEntity.create({
+    if (existingProperties.length > 0) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Property already exists', true);
+    }
+
+    const newProperty = await propertyEntity.editAddress({
+      propertyUUId: body.propertyUUId,
       address: body.address,
       city: body.city,
+      state: body.state,
       country: body.country,
       postalCode: body.postalCode,
-      state: body.state,
-      organization: body.organization,
-      propertyManagerEmail: body.pmEmail,
-      tenantEmails: body.tenantEmails,
       unit: body.unit,
-      uuid: body.propertyUUId,
       numBeds: body.numBeds,
       numBaths: body.numBaths,
+      organization: body.organization,
+      pmEmail: body.pmEmail,
     });
 
     await eventEntity.createPropertyEvent({
@@ -67,7 +80,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     //Update each tenants record with new address changes
     const userEntity = new UserEntity();
-    for (const email of body.tenantEmails) {
+    for (const email of newProperty?.tenantEmails || []) {
+      console.log({ email })
       await userEntity.editAddress({
         propertyUUId: body.propertyUUId,
         tenantEmail: email,
@@ -81,7 +95,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         numBaths: body.numBaths,
       });
     }
-
     return res.status(API_STATUS.SUCCESS).json({
       response: JSON.stringify({ property: newProperty }),
     });

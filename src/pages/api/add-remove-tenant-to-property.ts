@@ -1,16 +1,14 @@
-import { IProperty, PropertyEntity } from '@/database/entities/property';
+import { PropertyEntity } from '@/database/entities/property';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
-import { AddRemoveTenantToProperty, EditProperty } from '@/types';
+import { AddRemoveTenantToProperty } from '@/types';
 import { ApiError, ApiResponse } from './_types';
 import { errorToResponse } from './_utils';
 import * as Sentry from '@sentry/nextjs';
-import { AddRemoveTenantToPropertySchema, EditPropertySchema } from '@/types/customschemas';
+import { AddRemoveTenantToPropertySchema } from '@/types/customschemas';
 import { UserEntity } from '@/database/entities/user';
-import { ENTITY_KEY } from '@/database/entities';
-import { createPropertyDisplayString, generateKey } from '@/utils';
 import { EventEntity } from '@/database/entities/event';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
@@ -26,28 +24,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const eventEntity = new EventEntity();
     const userEntity = new UserEntity();
 
-    const oldProperty = await propertyEntity.getById({ uuid: body.propertyUUId });
-    if (!oldProperty) {
-      throw new ApiError(API_STATUS.BAD_REQUEST, 'Property does not exist');
-    }
-
-    let newTenantEmails: string[] = oldProperty?.tenantEmails ?? [];
-
-    if (body.remove) {
-      newTenantEmails = newTenantEmails.filter((email) => email !== body.tenantEmail);
-    } else {
-      if (newTenantEmails.includes(body.tenantEmail)) {
-        throw new ApiError(API_STATUS.BAD_REQUEST, 'Tenant already added to property', true);
-      }
-
-      newTenantEmails.push(body.tenantEmail);
-    }
-
     //Update tenants at property
-    await propertyEntity.updateTenantEmails({
-      pk: oldProperty.pk,
-      sk: oldProperty.sk,
-      newTenantEmails,
+    const updatedProperty = await propertyEntity.addRemoveTenant({
+      propertyUUId: body.propertyUUId,
+      tenantEmail: body.tenantEmail,
+      remove: body.remove,
     });
 
     //Add/remove property from tenant
@@ -60,14 +41,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       await userEntity.addAddress({
         tenantEmail: body.tenantEmail,
         propertyUUId: body.propertyUUId,
-        address: oldProperty.address!,
-        city: oldProperty.city!,
-        country: oldProperty.country!,
-        postalCode: oldProperty.postalCode!,
-        state: oldProperty.state!,
-        unit: oldProperty.unit,
-        numBeds: oldProperty.numBeds!,
-        numBaths: oldProperty.numBaths!,
+        address: updatedProperty.address!,
+        city: updatedProperty.city!,
+        country: updatedProperty.country!,
+        postalCode: updatedProperty.postalCode!,
+        state: updatedProperty.state!,
+        unit: updatedProperty.unit,
+        numBeds: updatedProperty.numBeds!,
+        numBaths: updatedProperty.numBaths!,
       });
     }
 
@@ -78,7 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       message: body.remove ? `Tenant removed: ${body.tenantEmail}` : `Tenant added: ${body.tenantEmail}`,
     });
 
-    const updatedProperty = { ...oldProperty, tenantEmails: newTenantEmails };
     return res.status(API_STATUS.SUCCESS).json({
       response: JSON.stringify({ property: updatedProperty }),
     });

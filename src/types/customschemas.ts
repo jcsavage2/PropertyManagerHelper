@@ -143,9 +143,6 @@ export const EditPropertySchema = validateProperty.merge(
     organization: requiredString,
     pmEmail: lowerCaseRequiredEmail,
     pmName: lowerCaseRequiredString,
-    oldSk: requiredString,
-    oldPropertyString: requiredString,
-    tenantEmails: z.array(lowerCaseRequiredEmail).default([]),
   })
 );
 

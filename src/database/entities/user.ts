@@ -1,10 +1,11 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
-import { INDEXES, PillarDynamoTable } from '..';
+import { INDEXES, MAX_RETRIES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
-import { INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
+import { API_STATUS, INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { ApiError } from '@/pages/api/_types';
 
 interface IBaseUser {
   pk: string;
@@ -78,9 +79,10 @@ export interface IUser extends IBaseUser {
   status: InviteStatus;
   isAdmin: boolean;
   altNames: string[];
+  version?: number;
 }
 
-export type Attributes = (
+export type Attributes =
   | 'addresses'
   | 'addressString'
   | 'GSI1PK'
@@ -97,7 +99,7 @@ export type Attributes = (
   | 'phone'
   | 'altNames'
   | 'isAdmin'
-)
+  | 'version';
 
 export class UserEntity {
   /**
@@ -150,18 +152,16 @@ export class UserEntity {
         GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.TENANT, pmEmail),
         GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
-        GSI4SK:
-          generateAddressSk({
-            entityKey: ENTITY_KEY.TENANT,
-            address,
-            city,
-            country,
-            state,
-            postalCode,
-            unit,
-          }) +
-          '#' +
-          guaranteedEmail,
+        GSI4SK: this.createGSI4SK({
+          email: guaranteedEmail,
+          entityKey: ENTITY_KEY.TENANT,
+          address,
+          city,
+          country,
+          state,
+          postalCode,
+          unit,
+        }),
         email: guaranteedEmail,
         name: tenantName,
         organization,
@@ -172,12 +172,16 @@ export class UserEntity {
           [propertyUUId]: { address, unit, city, state, postalCode, country, isPrimary: true, numBeds, numBaths },
         },
         addressString: createAddressString({ address, city, state, postalCode, unit }),
+        version: 1,
       },
       { returnValues: 'ALL_NEW' }
     );
     return tenant.Attributes ?? null;
   }
 
+  /**
+   * Updates fields on a user entity with version control
+   */
   public async updateUser({
     pk,
     sk,
@@ -186,6 +190,7 @@ export class UserEntity {
     addresses,
     addressString,
     GSI4SK,
+    version,
     toRemove = [],
   }: {
     pk: string;
@@ -195,23 +200,34 @@ export class UserEntity {
     addresses?: Record<string, any>;
     addressString?: string;
     GSI4SK?: string;
+    version: number;
     toRemove?: Attributes[]; //Array of attributes to remove as strings
-  }) {
-    const updatedUser = await this.userEntity.update(
-      {
-        pk,
-        sk,
-        ...(GSI4SK && { GSI4SK }),
-        ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
-        ...(status && { status }),
-        ...(addresses && { addresses }),
-        ...(addressString && { addressString }),
-        $remove: toRemove,
-      },
-      { returnValues: 'ALL_NEW' }
-    );
-
-    return updatedUser.Attributes ?? null;
+  }): Promise<{ user: any; err: any }> {
+    try {
+      const updatedUser = await this.userEntity.update(
+        {
+          pk,
+          sk,
+          ...(GSI4SK && { GSI4SK }),
+          ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
+          ...(status && { status }),
+          ...(addresses && { addresses }),
+          ...(addressString && { addressString }),
+          version: version + 1,
+          $remove: toRemove,
+        },
+        {
+          conditions: [
+            { attr: 'version', eq: version },
+            { or: true, attr: 'version', exists: false },
+          ],
+          returnValues: 'ALL_NEW',
+        }
+      );
+      return Promise.resolve({ user: updatedUser.Attributes ?? null, err: null });
+    } catch (err) {
+      return Promise.resolve({ user: null, err });
+    }
   }
 
   public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: CreatePMSchemaType) {
@@ -228,6 +244,7 @@ export class UserEntity {
         organization,
         organizationName,
         status: INVITE_STATUS.INVITED,
+        version: 1,
       },
       { returnValues: 'ALL_NEW' }
     );
@@ -251,6 +268,7 @@ export class UserEntity {
         organization,
         organizationName,
         status: INVITE_STATUS.INVITED,
+        version: 1,
       },
       { returnValues: 'ALL_NEW' }
     );
@@ -449,55 +467,64 @@ export class UserEntity {
     numBaths: number;
     unit?: string;
   }) {
-    //get current address map and address string
-    const userAccount = await this.get({ email: tenantEmail });
-    if (!userAccount) {
-      throw new Error('tenant.addAddress error: Tenant not found: {' + tenantEmail + '}');
-    }
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
+      //get current address map and address string
+      const userAccount = await this.get({ email: tenantEmail });
+      if (!userAccount) return null;
 
-    const numAddresses = Object.keys(userAccount.addresses ?? {}).length;
-    //@ts-ignore
-    let newAddresses: Record<string, any> = userAccount.addresses;
+      const numAddresses = Object.keys(userAccount.addresses ?? {}).length;
+      //@ts-ignore
+      let newAddresses: Record<string, any> = userAccount.addresses;
 
-    let newAddressString: string = userAccount.addressString ?? '';
-    newAddressString += createAddressString({ address, city, state, postalCode, unit });
+      let newAddressString: string = userAccount.addressString ?? '';
+      newAddressString += createAddressString({ address, city, state, postalCode, unit });
 
-    //Add new address into the map
-    newAddresses[propertyUUId] = {
-      address,
-      unit,
-      city,
-      state,
-      postalCode,
-      country,
-      isPrimary: numAddresses === 0, //If they have no other addresses, then their only address becomes primary
-      numBeds,
-      numBaths,
-    };
-
-    //If this is their first address, then set GSI4SK
-    let newGSI4SK: string | undefined = undefined;
-    if (numAddresses === 0) {
-      newGSI4SK = this.createGSI4SK({
-        email: tenantEmail,
-        entityKey: ENTITY_KEY.TENANT,
+      //Add new address into the map
+      newAddresses[propertyUUId] = {
         address,
+        unit,
         city,
-        country,
         state,
         postalCode,
-        unit,
-      });
-    }
+        country,
+        isPrimary: numAddresses === 0, //If they have no other addresses, then their only address becomes primary
+        numBeds,
+        numBaths,
+      };
 
-    //Add the map with the new address back into the tenant record
-    return await this.updateUser({
-      pk: generateKey(ENTITY_KEY.USER, tenantEmail),
-      sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-      addresses: newAddresses,
-      addressString: newAddressString,
-      GSI4SK: newGSI4SK,
-    });
+      //If this is their first address, then set GSI4SK
+      let newGSI4SK: string | undefined = undefined;
+      if (numAddresses === 0) {
+        newGSI4SK = this.createGSI4SK({
+          email: tenantEmail,
+          entityKey: ENTITY_KEY.TENANT,
+          address,
+          city,
+          country,
+          state,
+          postalCode,
+          unit,
+        });
+      }
+
+      //Add the map with the new address back into the tenant record
+      const { user, err } = await this.updateUser({
+        pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        addresses: newAddresses,
+        addressString: newAddressString,
+        GSI4SK: newGSI4SK,
+        version: userAccount.version ?? 1,
+      });
+
+      if (err) {
+        attempt++;
+        continue;
+      }
+      return user;
+    }
+    throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Failed to add address after maximum retries');
   }
 
   /**
@@ -526,126 +553,148 @@ export class UserEntity {
     numBaths: number;
     unit?: string;
   }) {
-    const tenant = await this.get({ email: tenantEmail });
-    if (!tenant) return null;
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
+      const tenant = await this.get({ email: tenantEmail });
+      if (!tenant) return null;
 
-    let addressesMap = tenant?.addresses;
-    const oldIsPrimary = addressesMap[propertyUUId]?.isPrimary ?? false;
-    addressesMap[propertyUUId] = {
-      address,
-      city,
-      state,
-      postalCode,
-      unit,
-      country,
-      isPrimary: oldIsPrimary,
-      numBeds,
-      numBaths,
-    };
+      let addressesMap = tenant?.addresses;
+      const oldIsPrimary = addressesMap[propertyUUId]?.isPrimary ?? false;
+      addressesMap[propertyUUId] = {
+        address,
+        city,
+        state,
+        postalCode,
+        unit,
+        country,
+        isPrimary: oldIsPrimary,
+        numBeds,
+        numBaths,
+      };
 
-    //Have to recreate address string from scratch
-    let newAddressString: string = '';
-    let GSI4SK: string = '';
-    Object.keys(addressesMap).forEach((key: string) => {
-      const property = addressesMap[key];
-      newAddressString += createAddressString({
-        address: property.address,
-        city: property.city,
-        state: property.state,
-        postalCode: property.postalCode,
-        unit: property.unit,
-      });
-
-      if (property.isPrimary) {
-        GSI4SK = this.createGSI4SK({
-          email: tenantEmail,
-          entityKey: ENTITY_KEY.TENANT,
+      //Have to recreate address string from scratch
+      let newAddressString: string = '';
+      let GSI4SK: string = '';
+      Object.keys(addressesMap).forEach((key: string) => {
+        const property = addressesMap[key];
+        newAddressString += createAddressString({
           address: property.address,
           city: property.city,
-          country: property.country,
           state: property.state,
           postalCode: property.postalCode,
           unit: property.unit,
         });
-      }
-    });
 
-    return await this.updateUser({
-      pk: generateKey(ENTITY_KEY.USER, tenantEmail),
-      sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-      addresses: addressesMap,
-      addressString: newAddressString,
-      GSI4SK,
-    });
+        if (property.isPrimary) {
+          GSI4SK = this.createGSI4SK({
+            email: tenantEmail,
+            entityKey: ENTITY_KEY.TENANT,
+            address: property.address,
+            city: property.city,
+            country: property.country,
+            state: property.state,
+            postalCode: property.postalCode,
+            unit: property.unit,
+          });
+        }
+      });
+
+      const { user, err } = await this.updateUser({
+        pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        addresses: addressesMap,
+        addressString: newAddressString,
+        GSI4SK,
+        version: tenant.version ?? 1,
+      });
+
+      if (err && err.$metadata?.httpStatusCode === API_STATUS.BAD_REQUEST) {
+        attempt++;
+        continue;
+      }
+      return user;
+    }
+    throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Failed to edit address after maximum retries');
   }
 
   /**
    * Removes an address from the user's address map. Updates user's address string.
    */
   public async removeAddress({ tenantEmail, propertyUUId }: { tenantEmail: string; propertyUUId: string }) {
-    const tenant = await this.get({ email: tenantEmail });
-    if (!tenant) return null;
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
+      const tenant = await this.get({ email: tenantEmail });
+      if (!tenant) return null;
 
-    let addressesMap = tenant?.addresses;
-    delete addressesMap[propertyUUId];
+      let addressesMap = tenant?.addresses;
+      delete addressesMap[propertyUUId];
 
-    //Have to recreate address string from scratch
-    let newAddressString: string = '';
-    let GSI4SK: string | undefined = undefined;
-    const mapLength = Object.keys(addressesMap).length;
-    Object.keys(addressesMap).forEach((key: string, index: number) => {
-      const property = addressesMap[key];
-      newAddressString += createAddressString({
-        address: property.address,
-        city: property.city,
-        state: property.state,
-        postalCode: property.postalCode,
-        unit: property.unit,
+      //Have to recreate address string from scratch
+      let newAddressString: string = '';
+      let GSI4SK: string | undefined = undefined;
+      const mapLength = Object.keys(addressesMap).length;
+      Object.keys(addressesMap).forEach((key: string, index: number) => {
+        const property = addressesMap[key];
+        newAddressString += createAddressString({
+          address: property.address,
+          city: property.city,
+          state: property.state,
+          postalCode: property.postalCode,
+          unit: property.unit,
+        });
+
+        if (property.isPrimary) {
+          GSI4SK = this.createGSI4SK({
+            email: tenantEmail,
+            entityKey: ENTITY_KEY.TENANT,
+            address: property.address,
+            city: property.city,
+            country: property.country,
+            state: property.state,
+            postalCode: property.postalCode,
+            unit: property.unit,
+          });
+        }
+
+        //If we deleted their primary property, then we need to set a new one
+        //For now just pick the most recent one in the map
+        if (index === mapLength - 1 && !GSI4SK) {
+          addressesMap[key].isPrimary = true;
+          GSI4SK = this.createGSI4SK({
+            email: tenantEmail,
+            entityKey: ENTITY_KEY.TENANT,
+            address: property.address,
+            city: property.city,
+            country: property.country,
+            state: property.state,
+            postalCode: property.postalCode,
+            unit: property.unit,
+          });
+        }
       });
 
-      if (property.isPrimary) {
-        GSI4SK = this.createGSI4SK({
-          email: tenantEmail,
-          entityKey: ENTITY_KEY.TENANT,
-          address: property.address,
-          city: property.city,
-          country: property.country,
-          state: property.state,
-          postalCode: property.postalCode,
-          unit: property.unit,
-        });
+      //If we deleted the last address in their map, then we need to set GSI4SK to just their email
+      if (!GSI4SK) {
+        GSI4SK = ENTITY_KEY.TENANT + '#' + tenantEmail;
       }
 
-      //If we deleted their primary property, then we need to set a new one
-      //For now just pick the most recent one in the map
-      if (index === mapLength - 1 && !GSI4SK) {
-        addressesMap[key].isPrimary = true;
-        GSI4SK = this.createGSI4SK({
-          email: tenantEmail,
-          entityKey: ENTITY_KEY.TENANT,
-          address: property.address,
-          city: property.city,
-          country: property.country,
-          state: property.state,
-          postalCode: property.postalCode,
-          unit: property.unit,
-        });
-      }
-    });
+      const { user, err } = await this.updateUser({
+        pk: generateKey(ENTITY_KEY.USER, tenantEmail),
+        sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
+        addresses: addressesMap,
+        addressString: newAddressString,
+        GSI4SK,
+        toRemove: !newAddressString.length ? ['addressString'] : [],
+        version: tenant.version ?? 1,
+      });
 
-    //If we deleted the last address in their map, then we need to set GSI4SK to just their email
-    if (!GSI4SK) {
-      GSI4SK = ENTITY_KEY.TENANT + '#' + tenantEmail;
+      if (err && err.$metadata?.httpStatusCode === API_STATUS.BAD_REQUEST) {
+        attempt++;
+        continue;
+      }
+      return user;
     }
-
-    return await this.updateUser({
-      pk: generateKey(ENTITY_KEY.USER, tenantEmail),
-      sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
-      addresses: addressesMap,
-      addressString: newAddressString,
-      GSI4SK,
-      toRemove: !newAddressString.length ? ['addressString'] : [],
-    });
+    throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Failed to remove address after maximum retries');
   }
 
   private createGSI4SK = ({
@@ -709,6 +758,7 @@ export class UserEntity {
       isAdmin: { type: 'boolean' },
       roles: { type: 'set', required: true },
       status: { type: 'string', required: true },
+      version: { type: 'number' },
     },
     table: PillarDynamoTable,
   } as const);

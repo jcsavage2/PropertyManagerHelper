@@ -27,6 +27,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         country: body.property.country,
         postalCode: body.property.postalCode,
         unit: body.property.unit,
+        numBeds: body.property.numBeds,
+        numBaths: body.property.numBaths,
       },
       organization: body.organization,
     });

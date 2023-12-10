@@ -1,8 +1,9 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
-import { INDEXES, PillarDynamoTable } from '..';
+import { INDEXES, MAX_RETRIES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
-import { PAGE_SIZE } from '@/constants';
+import { API_STATUS, PAGE_SIZE } from '@/constants';
+import { ApiError } from '@/pages/api/_types';
 
 export interface IProperty {
   pk: string;
@@ -59,9 +60,9 @@ export class PropertyEntity {
       city: { type: 'string' },
       state: { type: 'string' },
       postalCode: { type: 'string' },
-      workOrders: { type: 'list' },
       numBeds: { type: 'number' },
       numBaths: { type: 'number' },
+      version: { type: 'number' },
     },
     table: PillarDynamoTable,
   } as const);
@@ -117,6 +118,7 @@ export class PropertyEntity {
         numBeds,
         numBaths,
         addressString,
+        version: 1,
       },
       { returnValues: 'ALL_NEW', strictSchemaCheck: true }
     );
@@ -145,18 +147,23 @@ export class PropertyEntity {
       state: string;
       postalCode: string;
       unit?: string;
+      numBeds: number;
+      numBaths: number;
     };
   }) {
     let properties: any[] = [];
     let startKey: StartKey = undefined;
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY, organization);
-
     do {
       const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI4PK, {
         ...(startKey && { startKey }),
         reverse: true,
         index: INDEXES.GSI4,
         eq: generateAddressSk({ entityKey: ENTITY_KEY.PROPERTY, ...address }),
+        filters: [
+          { attr: 'numBeds', eq: address.numBeds },
+          { attr: 'numBaths', eq: address.numBaths },
+        ],
       });
       startKey = LastEvaluatedKey as StartKey;
       Items?.length && properties.push(...Items);
@@ -171,17 +178,17 @@ export class PropertyEntity {
 
     let remainingPropertiesToFetch = PAGE_SIZE;
     do {
-        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI4PK, {
-          ...(startKey && { startKey }),
-          limit: remainingPropertiesToFetch,
-          reverse: false,
-          ...(searchString && { filters: [{ attr: 'addressString', contains: searchString }] }),
-          beginsWith: `${ENTITY_KEY.PROPERTY}#`,
-          index: INDEXES.GSI4,
-        });
-        startKey = LastEvaluatedKey as StartKey;
-        remainingPropertiesToFetch -= Items?.length ?? 0;
-        Items?.length && properties.push(...Items);
+      const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI4PK, {
+        ...(startKey && { startKey }),
+        limit: remainingPropertiesToFetch,
+        reverse: false,
+        ...(searchString && { filters: [{ attr: 'addressString', contains: searchString }] }),
+        beginsWith: `${ENTITY_KEY.PROPERTY}#`,
+        index: INDEXES.GSI4,
+      });
+      startKey = LastEvaluatedKey as StartKey;
+      remainingPropertiesToFetch -= Items?.length ?? 0;
+      Items?.length && properties.push(...Items);
     } while (!!startKey && remainingPropertiesToFetch > 0);
     return { properties, startKey };
   }
@@ -203,30 +210,145 @@ export class PropertyEntity {
     let properties = [];
     let remainingPropertiesToFetch = PAGE_SIZE;
     do {
-        const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI1PK, {
-          ...(startKey && { startKey }),
-          limit: remainingPropertiesToFetch,
-          reverse: true,
-          beginsWith: `${ENTITY_KEY.PROPERTY}#`,
-          index: INDEXES.GSI1,
-        });
-        startKey = LastEvaluatedKey as StartKey;
-        remainingPropertiesToFetch -= Items?.length ?? 0;
-        Items?.length && properties.push(...Items);
+      const { Items, LastEvaluatedKey } = await this.propertyEntity.query(GSI1PK, {
+        ...(startKey && { startKey }),
+        limit: remainingPropertiesToFetch,
+        reverse: true,
+        beginsWith: `${ENTITY_KEY.PROPERTY}#`,
+        index: INDEXES.GSI1,
+      });
+      startKey = LastEvaluatedKey as StartKey;
+      remainingPropertiesToFetch -= Items?.length ?? 0;
+      Items?.length && properties.push(...Items);
     } while (!!startKey && remainingPropertiesToFetch > 0);
     return { properties, startKey };
   }
 
-  // Updates the tenantEmails field using pk and sk
-  public async updateTenantEmails({ pk, sk, newTenantEmails }: { pk: string; sk: string; newTenantEmails: string[] }) {
-    const result = await this.propertyEntity.update(
-      {
-        pk,
-        sk,
+  // Version safe updating for an existing address
+  public async editAddress({
+    propertyUUId,
+    address,
+    city,
+    state,
+    unit,
+    postalCode,
+    country,
+    numBeds,
+    numBaths,
+    organization, 
+    pmEmail,
+  }: {
+    propertyUUId: string;
+    address: string;
+    city: string;
+    state: string;
+    unit?: string;
+    postalCode: string;
+    country: string;
+    numBeds: number;
+    numBaths: number;
+    organization: string;
+    pmEmail: string;
+  }) {
+      const oldProperty = await this.getById({ uuid: propertyUUId });
+      if (!oldProperty) {
+        throw new ApiError(API_STATUS.BAD_REQUEST, 'Property does not exist', true);
+      }
+
+      await this.delete({ pk: oldProperty.pk, sk: oldProperty.sk });
+
+      //Create the new address
+      const newProperty = await this.create({
+        address,
+        city,
+        state,
+        unit,
+        postalCode,
+        country,
+        organization,
+        propertyManagerEmail: pmEmail,
+        uuid: propertyUUId,
+        tenantEmails: oldProperty.tenantEmails,
+        numBeds,
+        numBaths,
+      });
+
+      return newProperty;
+  }
+
+  // Adds/Removes a tenant email to the list of tenant emails associated with a property
+  public async addRemoveTenant({ propertyUUId, tenantEmail, remove }: { propertyUUId: string; tenantEmail: string; remove: boolean }) {
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
+      const oldProperty = await this.getById({ uuid: propertyUUId });
+      if (!oldProperty) {
+        throw new ApiError(API_STATUS.BAD_REQUEST, 'Property does not exist', true);
+      }
+
+      let newTenantEmails: string[] = oldProperty?.tenantEmails ?? [];
+
+      if (remove) {
+        if (!newTenantEmails.includes(tenantEmail)) {
+          throw new ApiError(API_STATUS.BAD_REQUEST, 'Tenant not in property', true);
+        }
+        newTenantEmails = newTenantEmails.filter((email) => email !== tenantEmail);
+      } else {
+        if (newTenantEmails.includes(tenantEmail)) {
+          throw new ApiError(API_STATUS.BAD_REQUEST, 'Tenant already added to property', true);
+        }
+
+        newTenantEmails.push(tenantEmail);
+      }
+
+      //Add the map with the new address back into the tenant record
+      const { property, err } = await this.updateProperty({
+        pk: oldProperty.pk,
+        sk: oldProperty.sk,
         tenantEmails: newTenantEmails,
-      },
-      { returnValues: 'ALL_NEW', strictSchemaCheck: true }
-    );
-    return result.Attributes;
+        version: oldProperty.version ?? 1,
+      });
+
+      if (err) {
+        attempt++;
+        continue;
+      }
+      return property;
+    }
+    throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Failed to add/remove tenant after maximum retries');
+  }
+
+  // Updates fields of the property with versioning enforced
+  public async updateProperty({
+    pk,
+    sk,
+    version,
+    tenantEmails,
+  }: {
+    pk: string;
+    sk: string;
+    version: number;
+    tenantEmails?: string[];
+  }): Promise<{ property: any; err: any }> {
+    try {
+      const updatedProperty = await this.propertyEntity.update(
+        {
+          pk,
+          sk,
+          ...(tenantEmails && { tenantEmails }),
+          version: version + 1,
+        },
+        {
+          conditions: [
+            { attr: 'version', eq: version },
+            { or: true, attr: 'version', exists: false },
+          ],
+          returnValues: 'ALL_NEW',
+          strictSchemaCheck: true,
+        }
+      );
+      return Promise.resolve({ property: updatedProperty.Attributes ?? null, err: null });
+    } catch (err) {
+      return Promise.resolve({ property: null, err });
+    }
   }
 }

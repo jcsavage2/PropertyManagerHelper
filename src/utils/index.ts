@@ -73,7 +73,7 @@ export function generateKSUID() {
  * @returns string of the first item in the set's name and the remaining appended in shorthand, or "Unassigned" if the set is empty
  * Make sure to handle backwards compatibility with old assignedTo string format
  */
-export function setToShortenedString(set: Set<string>): string {
+export function setToShortenedString(set: Set<string> | string[]): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
   const firstVal = toTitleCase(

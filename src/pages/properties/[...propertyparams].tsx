@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { FaHome } from 'react-icons/fa';
+import { CiLocationOn } from 'react-icons/ci';
 import { SingleValue } from 'react-select';
 import { toast } from 'react-toastify';
 
@@ -41,8 +41,9 @@ export default function PropertyPage() {
 
   const [tenants, setTenants] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
-  const [tenantToAdd, setTenantToAdd] = useState<string>('');
-  const [tenantToDelete, setTenantToDelete] = useState<{name: string, email: string}>({name: '', email: ''});
+  const [tenantsReassigning, setTenantsReassigning] = useState(false);
+  const [tenantToAdd, setTenantToAdd] = useState<Option | null>(null);
+  const [tenantToDelete, setTenantToDelete] = useState<{ name: string; email: string }>({ name: '', email: '' });
   const [tenantRemoveConfirmOpen, setTenantRemoveConfirmOpen] = useState<boolean>(false);
 
   const [selectedTab, setSelectedTab] = useState<string>(PropertyPageTabs[0]);
@@ -99,7 +100,7 @@ export default function PropertyPage() {
 
   async function getPropertyTenants() {
     if (!property) return;
-    if(!property.tenantEmails || !property.tenantEmails.length) {
+    if (!property.tenantEmails || !property.tenantEmails.length) {
       setTenants([]);
       setTenantsLoading(false);
       return;
@@ -145,8 +146,9 @@ export default function PropertyPage() {
     }
   };
 
-  const handleAddRemoveTenantToProperty = async (_tenantEmail: string, remove: boolean) => {
-    setTenantsLoading(true);
+  const handleAddRemoveTenantToProperty = async (_tenantEmail: string | undefined, remove: boolean) => {
+    if (!_tenantEmail) return;
+    setTenantsReassigning(true);
     try {
       if (!user || userType !== ENTITIES.PROPERTY_MANAGER) {
         throw new Error(USER_PERMISSION_ERROR);
@@ -160,8 +162,7 @@ export default function PropertyPage() {
       });
       const { property: _property } = JSON.parse(data.response);
       setProperty(_property);
-      setTenantToAdd('');
-      setTenantToDelete({name: '', email: ''});
+      setTenantToDelete({ name: '', email: '' });
       toast.success(remove ? 'Tenant removed from property' : 'Tenant added to property', {
         position: toast.POSITION.TOP_CENTER,
         draggable: false,
@@ -170,7 +171,7 @@ export default function PropertyPage() {
       console.log({ e });
       renderToastError(e, 'Error adding tenant');
     }
-    setTenantsLoading(false);
+    setTenantsReassigning(false);
   };
 
   const {
@@ -192,47 +193,57 @@ export default function PropertyPage() {
           numBaths: property.numBaths,
           numBeds: property.numBeds,
           country: property.country,
-          tenantEmails: property.tenantEmails,
-          oldSk: property.sk,
           organization: property.organization,
           pmEmail: deconstructKey(property.GSI1PK),
           pmName: altName ?? user?.name ?? '',
-          oldPropertyString: createPropertyDisplayString(property),
         }
       : {
           ...DEFAULT_PROPERTY,
-          tenantEmails: [],
-          oldSk: '',
           organization: '',
           pmEmail: '',
           pmName: '',
-          oldPropertyString: '',
         },
     mode: 'all',
   });
 
   return (
-    <div id="property-info-page" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
+    <div id="property-info-page" className="md:mx-4 mx-1 md:mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
-      <div className="flex flex-col">
-        <div className="text-sm breadcrumbs">
-          <ul className="mb-4 ml-2">
-            <li>
-              <Link href="/properties">
-                <FaHome className="inline mr-2 my-auto" />
-                Properties
-              </Link>
-            </li>
-            {!propertyLoading && property ? (
+      <div className="flex flex-col lg:max-w-5xl">
+        {!isMobile ? (
+          <div className="text-sm breadcrumbs">
+            <ul className="mb-4 ml-2">
               <li>
-                <a> {createPropertyDisplayString(property, false)}</a>
+                <Link href="/properties">
+                  <CiLocationOn className="inline mr-2 my-auto" />
+                  Properties
+                </Link>
               </li>
-            ) : null}
+              {!propertyLoading && property ? (
+                <li>
+                  <a> {createPropertyDisplayString(property, false)}</a>
+                </li>
+              ) : null}
 
-            {selectedTab === PropertyPageTabs[0] ? <li>Edit property</li> : selectedTab === PropertyPageTabs[1] ? <li>Add/remove tenants</li> : <li>View property history</li>}
-          </ul>
-          <hr />
-        </div>
+              {selectedTab === PropertyPageTabs[0] ? (
+                <li>Edit property</li>
+              ) : selectedTab === PropertyPageTabs[1] ? (
+                <li>Add/remove tenants</li>
+              ) : (
+                <li>View property history</li>
+              )}
+            </ul>
+            <hr />
+          </div>
+        ) : (
+          <div className=''>
+            <Link href="/properties" className='mt-2 flex flex-row align-middle items-center'>
+              <CiLocationOn className="mr-1" fontSize={20} />
+              <p className=''>Return to properties</p>
+            </Link>
+          </div>
+        )}
+
         {propertyLoading ? (
           <div className="flex justify-center">
             <LoadingSpinner />
@@ -263,7 +274,7 @@ export default function PropertyPage() {
               </div>
             </div>
             {selectedTab === PropertyPageTabs[0] ? (
-              <div className="w-2/3 mx-auto">
+              <div className="md:w-2/3 w-full mx-auto">
                 <form className="flex flex-col" onSubmit={handleSubmit(handleEditProperty)}>
                   <div className="label">
                     <span className="label-text">Address</span>
@@ -350,7 +361,7 @@ export default function PropertyPage() {
                   </div>
                   <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
 
-                  <div className="mx-auto w-1/2 mt-4 flex flex-row justify-center">
+                  <div className="mx-auto md:w-1/2 w-full mt-4 flex flex-row justify-center">
                     <button className="btn text-black bg-blue-300 mr-3 w-3/4" type="submit" disabled={isSubmitting || !isValid || !isDirty}>
                       {isSubmitting ? <LoadingSpinner /> : 'Save Changes'}
                     </button>
@@ -367,67 +378,64 @@ export default function PropertyPage() {
                 </form>
               </div>
             ) : selectedTab === PropertyPageTabs[1] ? (
-              <div className="w-5/6 mx-auto">
-                <ConfirmationModal
-                  confirmationModalIsOpen={tenantRemoveConfirmOpen}
-                  setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
-                  onConfirm={() => {
-                    handleAddRemoveTenantToProperty(tenantToDelete.email, true);
-                    setTenantToDelete({name: '', email: ''});
-                    setTenantRemoveConfirmOpen(false);
-                  }}
-                  childrenComponents={<div className="text-center">Are you sure you want to remove {toTitleCase(tenantToDelete.name)} from this property?</div>}
-                  onCancel={() => setTenantToDelete({name: '', email: ''})}
-                />
-                <div className="mb-2 w-4/5 h-20 flex flex-row items-center mx-auto">
+              <div className="md:w-5/6 w-full mx-auto">
+                <div className="mb-2 md:w-4/5 w-full h-14 flex flex-row items-center mx-auto">
                   <TenantSelect
                     label={''}
                     user={user}
                     userType={userType}
                     onChange={(e: SingleValue<Option>) => {
-                      if (e) setTenantToAdd(e?.value);
+                      if (e) setTenantToAdd(e);
                     }}
                     shouldFetch={true}
                   />
                   <button
                     className="btn ml-2 py-0 bg-blue-200 hover:bg-blue-300"
-                    onClick={() => !tenantsLoading && handleAddRemoveTenantToProperty(tenantToAdd, false)}
-                    disabled={tenantsLoading}
+                    onClick={() => !tenantsLoading && !tenantsReassigning && handleAddRemoveTenantToProperty(tenantToAdd?.value, false)}
+                    disabled={tenantsLoading || tenantsReassigning}
                   >
-                    Add to property
+                    {tenantsReassigning ? <LoadingSpinner /> : 'Add tenant'}
                   </button>
                 </div>
 
-                <div className="w-full mx-auto" id="property-events">
+                <div className="md:w-full w-5/6 mx-auto" id="property-events">
                   {tenantsLoading ? (
                     <LoadingSpinner containerClass="mt-4" />
                   ) : tenants && tenants.length ? (
-                    <table className="table">
+                    <table className="table mb-0">
                       <thead>
                         <tr>
                           <th></th>
                           <th>Name</th>
-                          <th>Email</th>
+                          {!isMobile && <th>Email</th>}
                           <th></th>
                         </tr>
                       </thead>
                       <tbody>
                         {tenants.map((user: IUser, i: number) => {
+                          const numAddresses = Object.keys(user.addresses).length ?? 0;
                           return (
                             <tr key={`${ENTITIES.USER}-${i}`}>
                               <th>{i + 1}</th>
                               <td>{toTitleCase(user.name)}</td>
-                              <td>{user.email}</td>
+                              {!isMobile && <td>{user.email}</td>}
                               <td>
-                                <button
-                                  className="btn bg-red-500 hover:bg-red-600 py-1 px-1"
-                                  onClick={() => {
-                                    setTenantToDelete({name: user.name, email: user.email});
-                                    setTenantRemoveConfirmOpen(true);
-                                  }}
+                                <div
+                                  className={`${numAddresses === 1 && 'tooltip'}`}
+                                  data-tip={`${numAddresses === 1 ? 'To remove this tenant, please assign them to another address first' : ''}`}
                                 >
-                                  Remove
-                                </button>
+                                  <button
+                                    className="btn bg-red-500 hover:bg-red-600 py-1 px-1"
+                                    onClick={() => {
+                                      if (tenantsReassigning) return;
+                                      setTenantToDelete({ name: user.name, email: user.email });
+                                      setTenantRemoveConfirmOpen(true);
+                                    }}
+                                    disabled={tenantsLoading || tenantsReassigning || numAddresses === 1}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -480,6 +488,17 @@ export default function PropertyPage() {
         ) : (
           <div className="flex justify-center font-bold mt-4">Sorry, property not found</div>
         )}
+        <ConfirmationModal
+          confirmationModalIsOpen={tenantRemoveConfirmOpen}
+          setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
+          onConfirm={() => {
+            handleAddRemoveTenantToProperty(tenantToDelete.email, true);
+            setTenantToDelete({ name: '', email: '' });
+            setTenantRemoveConfirmOpen(false);
+          }}
+          childrenComponents={<div className="text-center">Are you sure you want to remove {toTitleCase(tenantToDelete.name)} from this property?</div>}
+          onCancel={() => setTenantToDelete({ name: '', email: '' })}
+        />
       </div>
     </div>
   );
