@@ -9,8 +9,7 @@ import { errorToResponse } from './_utils';
 import * as Sentry from '@sentry/nextjs';
 import { EditPropertySchema } from '@/types/customschemas';
 import { UserEntity } from '@/database/entities/user';
-import { ENTITY_KEY } from '@/database/entities';
-import { createPropertyDisplayString, generateKey } from '@/utils';
+import { createPropertyDisplayString } from '@/utils';
 import { EventEntity } from '@/database/entities/event';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
@@ -26,7 +25,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       throw new ApiError(API_STATUS.BAD_REQUEST, 'Property UUID is required');
     }
 
-    //We have to delete and recreate because sks are different now
     const propertyEntity = new PropertyEntity();
     const eventEntity = new EventEntity();
 
@@ -81,7 +79,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     //Update each tenants record with new address changes
     const userEntity = new UserEntity();
     for (const email of newProperty?.tenantEmails || []) {
-      console.log({ email })
       await userEntity.editAddress({
         propertyUUId: body.propertyUUId,
         tenantEmail: email,

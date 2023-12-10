@@ -56,6 +56,7 @@ export class PropertyEntity {
       organization: { type: 'string' },
       tenantEmail: { type: 'string' },
       tenantEmails: { type: 'list' },
+      tenantEmailSet: { type: 'set' },
       unit: { type: 'string' },
       city: { type: 'string' },
       state: { type: 'string' },
@@ -224,7 +225,6 @@ export class PropertyEntity {
     return { properties, startKey };
   }
 
-  // Version safe updating for an existing address
   public async editAddress({
     propertyUUId,
     address,
@@ -235,7 +235,7 @@ export class PropertyEntity {
     country,
     numBeds,
     numBaths,
-    organization, 
+    organization,
     pmEmail,
   }: {
     propertyUUId: string;
@@ -250,30 +250,30 @@ export class PropertyEntity {
     organization: string;
     pmEmail: string;
   }) {
-      const oldProperty = await this.getById({ uuid: propertyUUId });
-      if (!oldProperty) {
-        throw new ApiError(API_STATUS.BAD_REQUEST, 'Property does not exist', true);
-      }
+    const oldProperty = await this.getById({ uuid: propertyUUId });
+    if (!oldProperty) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Property does not exist', true);
+    }
+    
+    //Create the new address
+    const newProperty = await this.create({
+      address,
+      city,
+      state,
+      unit,
+      postalCode,
+      country,
+      organization,
+      propertyManagerEmail: pmEmail,
+      uuid: propertyUUId,
+      tenantEmails: oldProperty.tenantEmails,
+      numBeds,
+      numBaths,
+    });
 
-      await this.delete({ pk: oldProperty.pk, sk: oldProperty.sk });
+    await this.delete({ pk: oldProperty.pk, sk: oldProperty.sk });
 
-      //Create the new address
-      const newProperty = await this.create({
-        address,
-        city,
-        state,
-        unit,
-        postalCode,
-        country,
-        organization,
-        propertyManagerEmail: pmEmail,
-        uuid: propertyUUId,
-        tenantEmails: oldProperty.tenantEmails,
-        numBeds,
-        numBaths,
-      });
-
-      return newProperty;
+    return newProperty;
   }
 
   // Adds/Removes a tenant email to the list of tenant emails associated with a property
@@ -318,17 +318,7 @@ export class PropertyEntity {
   }
 
   // Updates fields of the property with versioning enforced
-  public async updateProperty({
-    pk,
-    sk,
-    version,
-    tenantEmails,
-  }: {
-    pk: string;
-    sk: string;
-    version: number;
-    tenantEmails?: string[];
-  }): Promise<{ property: any; err: any }> {
+  public async updateProperty({ pk, sk, version, tenantEmails }: { pk: string; sk: string; version: number; tenantEmails?: string[] }): Promise<{ property: any; err: any }> {
     try {
       const updatedProperty = await this.propertyEntity.update(
         {
