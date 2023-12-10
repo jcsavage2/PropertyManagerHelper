@@ -182,7 +182,7 @@ export class UserEntity {
   /**
    * Updates fields on a user entity with version control
    */
-  public async updateUser({
+  public async updateUserVersion({
     pk,
     sk,
     hasSeenDownloadPrompt,
@@ -228,6 +228,30 @@ export class UserEntity {
     } catch (err) {
       return Promise.resolve({ user: null, err });
     }
+  }
+
+  public async updateUser({
+    pk,
+    sk,
+    hasSeenDownloadPrompt,
+    status,
+  }: {
+    pk: string;
+    sk: string;
+    hasSeenDownloadPrompt?: boolean;
+    status?: InviteStatus;
+  }) {
+    const updatedUser = await this.userEntity.update(
+      {
+        pk,
+        sk,
+        ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
+        ...(status && { status }),
+      },
+      { returnValues: 'ALL_NEW' }
+    );
+
+    return updatedUser.Attributes ?? null;
   }
 
   public async createPropertyManager({ userName, userEmail, organization, organizationName, isAdmin }: CreatePMSchemaType) {
@@ -509,7 +533,7 @@ export class UserEntity {
       }
 
       //Add the map with the new address back into the tenant record
-      const { user, err } = await this.updateUser({
+      const { user, err } = await this.updateUserVersion({
         pk: generateKey(ENTITY_KEY.USER, tenantEmail),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
         addresses: newAddresses,
@@ -599,7 +623,7 @@ export class UserEntity {
         }
       });
 
-      const { user, err } = await this.updateUser({
+      const { user, err } = await this.updateUserVersion({
         pk: generateKey(ENTITY_KEY.USER, tenantEmail),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
         addresses: addressesMap,
@@ -678,7 +702,7 @@ export class UserEntity {
         GSI4SK = ENTITY_KEY.TENANT + '#' + tenantEmail;
       }
 
-      const { user, err } = await this.updateUser({
+      const { user, err } = await this.updateUserVersion({
         pk: generateKey(ENTITY_KEY.USER, tenantEmail),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
         addresses: addressesMap,
