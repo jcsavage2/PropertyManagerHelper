@@ -254,7 +254,7 @@ export class PropertyEntity {
     if (!oldProperty) {
       throw new ApiError(API_STATUS.BAD_REQUEST, 'Property does not exist', true);
     }
-    
+
     //Create the new address
     const newProperty = await this.create({
       address,
@@ -271,7 +271,9 @@ export class PropertyEntity {
       numBaths,
     });
 
-    await this.delete({ pk: oldProperty.pk, sk: oldProperty.sk });
+    if(newProperty && oldProperty.sk !== newProperty.sk) {
+      await this.delete({ pk: oldProperty.pk, sk: oldProperty.sk });
+    }
 
     return newProperty;
   }

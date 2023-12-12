@@ -42,8 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       organization: body.organization,
     });
 
-    if (existingProperties.length > 0) {
-      throw new ApiError(API_STATUS.BAD_REQUEST, 'Property already exists', true);
+    if (existingProperties && existingProperties.length > 0) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'A property with this address and bed/bath layout already exists', true);
     }
 
     const newProperty = await propertyEntity.editAddress({
@@ -78,8 +78,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     //Update each tenants record with new address changes
     const userEntity = new UserEntity();
+    let promises = [];
     for (const email of newProperty?.tenantEmails || []) {
-      await userEntity.editAddress({
+      promises.push(userEntity.editAddress({
         propertyUUId: body.propertyUUId,
         tenantEmail: email,
         address: body.address,
@@ -90,8 +91,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         unit: body.unit,
         numBeds: body.numBeds,
         numBaths: body.numBaths,
-      });
+      }))
     }
+
+    await Promise.all(promises);
+
     return res.status(API_STATUS.SUCCESS).json({
       response: JSON.stringify({ property: newProperty }),
     });
