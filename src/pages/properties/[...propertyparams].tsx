@@ -146,8 +146,8 @@ export default function PropertyPage() {
     }
   };
 
-  const handleAddRemoveTenantToProperty = async (_tenantEmail: string | undefined, remove: boolean) => {
-    if (!_tenantEmail) return;
+  const handleAddRemoveTenantToProperty = async (_tenantEmail: string | undefined, _tenantName: string | undefined, remove: boolean) => {
+    if (!_tenantEmail || !_tenantName) return
     setTenantsReassigning(true);
     try {
       if (!user || userType !== ENTITIES.PROPERTY_MANAGER) {
@@ -156,7 +156,7 @@ export default function PropertyPage() {
       const { data } = await axios.post('/api/add-remove-tenant-to-property', {
         propertyUUId: deconstructKey(property?.pk),
         tenantEmail: _tenantEmail,
-        tenantName: tenantToAdd?.label,
+        tenantName: _tenantName,
         pmEmail: deconstructKey(property?.GSI1PK),
         pmName: altName ?? user.name,
         remove,
@@ -170,7 +170,7 @@ export default function PropertyPage() {
       });
     } catch (e) {
       console.log({ e });
-      renderToastError(e, 'Error adding tenant');
+      renderToastError(e, remove ? 'Error removing tenant' : 'Error adding tenant');
     }
     setTenantsReassigning(false);
   };
@@ -392,7 +392,7 @@ export default function PropertyPage() {
                   />
                   <button
                     className="btn ml-2 py-0 bg-blue-200 hover:bg-blue-300"
-                    onClick={() => !tenantsLoading && !tenantsReassigning && handleAddRemoveTenantToProperty(tenantToAdd?.value, false)}
+                    onClick={() => !tenantsLoading && !tenantsReassigning && handleAddRemoveTenantToProperty(tenantToAdd?.value, tenantToAdd?.label, false)}
                     disabled={tenantsLoading || tenantsReassigning}
                   >
                     {tenantsReassigning ? <LoadingSpinner /> : 'Add tenant'}
@@ -494,7 +494,7 @@ export default function PropertyPage() {
           confirmationModalIsOpen={tenantRemoveConfirmOpen}
           setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
           onConfirm={() => {
-            handleAddRemoveTenantToProperty(tenantToDelete.email, true);
+            handleAddRemoveTenantToProperty(tenantToDelete.email, tenantToDelete.name, true);
             setTenantToDelete({ name: '', email: '' });
             setTenantRemoveConfirmOpen(false);
           }}
