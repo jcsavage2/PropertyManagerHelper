@@ -29,16 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const body: DeleteEntity = DeleteEntitySchema.parse(req.body);
     const { pk, sk, entity, roleToDelete, currentUserRoles, madeByEmail, madeByName } = body;
 
-    if (
-      (entity === ENTITIES.USER && !roleToDelete) ||
-      (entity !== ENTITIES.USER && roleToDelete) ||
-      !madeByEmail ||
-      !madeByName
-    ) {
-      throw new ApiError(
-        API_STATUS.BAD_REQUEST,
-        'Invalid params to delete, when trying to delete a user, you must specify the role to delete'
-      );
+    if ((entity === ENTITIES.USER && !roleToDelete) || (entity !== ENTITIES.USER && roleToDelete) || !madeByEmail || !madeByName) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Invalid params to delete, when trying to delete a user, you must specify the role to delete');
     }
 
     let dbEntity: WorkOrderEntity | PropertyEntity | EventEntity | OrganizationEntity | UserEntity;
@@ -55,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         //When work orders are deleted spawn an event
         const eventEntity = new EventEntity();
-        await eventEntity.create({
+        await eventEntity.createWOEvent({
           workOrderId: deconstructKey(pk),
           message: `Work Order Deleted`,
           madeByEmail,
@@ -74,10 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       case ENTITIES.USER:
         dbEntity = new UserEntity();
         if (!currentUserRoles || !currentUserRoles.length) {
-          throw new ApiError(
-            API_STATUS.INTERNAL_SERVER_ERROR,
-            "User doesn't have any roles to delete"
-          );
+          throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, "User doesn't have any roles to delete");
         }
 
         //If user has more than one role, then we only want to delete the role instead of their entire user record
@@ -89,15 +78,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         throw new ApiError(API_STATUS.BAD_REQUEST, 'Invalid entity type');
     }
 
+    //Remove the tenant from their properties
+    if (entity === ENTITIES.USER && roleToDelete === USER_TYPE.TENANT) {
+      //@ts-ignore
+      const tenant = await dbEntity.get({ email: deconstructKey(pk) });
+
+      if (tenant && tenant.addresses) {
+        for (const propertyUUId of Object.keys(tenant.addresses)) {
+          const propertyEntity = new PropertyEntity();
+
+          //Possible for this to error, if we error just continue
+          try {
+            await propertyEntity.addRemoveTenant({
+              propertyUUId,
+              tenantEmail: tenant.email,
+              remove: true,
+            });
+          } catch (err) {
+            console.log({ err });
+            Sentry.captureException(err);
+          }
+        }
+      }
+    }
+
     if (deleteEntireEntity) {
       await dbEntity.delete({ pk, sk });
     } else {
       if (!roleToDelete || entity !== ENTITIES.USER) {
-        throw new ApiError(
-          API_STATUS.BAD_REQUEST,
-          "Can't delete user record unless the entity to delete is a user"
-        );
+        throw new ApiError(API_STATUS.BAD_REQUEST, "Can't delete user record unless the entity to delete is a user");
       }
+
       //@ts-ignore
       await dbEntity.deleteRole({ pk, sk, roleToDelete, existingRoles: currentUserRoles });
     }
@@ -106,8 +117,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.status || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.status || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

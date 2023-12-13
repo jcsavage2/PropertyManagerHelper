@@ -1,9 +1,10 @@
 import { TECHNICIAN_DELIM } from '@/constants';
-import { ChatMessage, IssueInformation } from '@/types';
+import { ChatMessage, IssueInformation, Property } from '@/types';
 import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
 import { toast } from 'react-toastify';
 import { ChatCompletionRequestMessage } from 'openai';
+import { IProperty } from '@/database/entities/property';
 
 export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
@@ -40,8 +41,8 @@ export function generateKey(entityIdentifier: EntityTypeValues | string, secondI
 /**
  * @returns The second identifier for a key; the part after the #
  */
-export function deconstructKey(key: string): string {
-  if (!key || key.length === 0) return key;
+export function deconstructKey(key: string | undefined): string {
+  if (!key || key.length === 0) return '';
   return key.split('#')[1];
 }
 
@@ -72,13 +73,20 @@ export function generateKSUID() {
  * @returns string of the first item in the set's name and the remaining appended in shorthand, or "Unassigned" if the set is empty
  * Make sure to handle backwards compatibility with old assignedTo string format
  */
-export function setToShortenedString(set: Set<string>): string {
+export function setToShortenedString(set: Set<string> | string[]): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
   const firstVal = toTitleCase(
     arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]
   );
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
+}
+
+//Turn a property object into a displayable string with that property information
+export function createPropertyDisplayString(property: Property, includeBedBath: boolean = true) {
+  if (!property) return '';
+  const baseString = `${toTitleCase(property.address)} ${property.unit ? ' ' + toTitleCase(property.unit) : ''}, ${toTitleCase(property.city)}, ${property.state.toUpperCase()} ${property.postalCode}`;
+  return includeBedBath ? baseString + ` ${property.numBeds} Bed ${property.numBaths} Bath` : baseString;
 }
 
 /**

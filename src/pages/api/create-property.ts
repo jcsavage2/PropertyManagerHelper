@@ -10,6 +10,7 @@ import { CreateProperty } from '@/types';
 import { ApiError, ApiResponse } from './_types';
 import { errorToResponse } from './_utils';
 import * as Sentry from '@sentry/nextjs';
+import { EventEntity } from '@/database/entities/event';
 
 /**
  *
@@ -27,22 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const body: CreateProperty = CreatePropertySchema.parse(req.body);
-    const {
-      address,
-      country,
-      city,
-      state,
-      postalCode,
-      unit,
-      pmEmail,
-      numBeds,
-      numBaths,
-      tenantEmail,
-      organization,
-    } = body;
+    const { address, country, city, state, postalCode, unit, pmEmail, numBeds, numBaths, tenantEmail, organization, pmName } = body;
 
     const propertyEntity = new PropertyEntity();
     const userEntity = new UserEntity();
+    const eventEntity = new EventEntity();
 
     // Create Property
     const id = uuid();
@@ -58,9 +48,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       uuid: id,
       numBeds,
       numBaths,
-      tenantEmail,
+      tenantEmails: tenantEmail ? [tenantEmail] : [],
     });
 
+    await eventEntity.createPropertyEvent({
+      propertyId: id,
+      madeByEmail: pmEmail,
+      madeByName: pmName,
+      message: 'Property created!' + (tenantEmail ? ' Tenant ' + tenantEmail + ' added' : ''),
+    });
     //Update tenant metadata with new property
     if (tenantEmail && tenantEmail.length) {
       await userEntity.addAddress({
@@ -81,8 +77,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     //Spawn new event on status/PTE change
-    await eventEntity.create({
+    await eventEntity.createWOEvent({
       workOrderId: deconstructKey(pk),
       message: status
         ? `Updated work order status: ${status}`

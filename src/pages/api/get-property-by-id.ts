@@ -3,9 +3,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { options } from './auth/[...nextauth]';
 import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
-import { GetPropertiesByAddress } from '@/types';
+import { GetPropertiesByAddress, GetPropertyById } from '@/types';
 import { ApiError, ApiResponse } from './_types';
-import { GetPropertiesByAddressSchema } from '@/types/customschemas';
+import { GetPropertiesByAddressSchema, GetPropertyByIdSchema } from '@/types/customschemas';
 import { errorToResponse } from './_utils';
 import * as Sentry from '@sentry/nextjs';
 
@@ -16,25 +16,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
-    const body: GetPropertiesByAddress = GetPropertiesByAddressSchema.parse(req.body);
+    const body: GetPropertyById = GetPropertyByIdSchema.parse(req.body);
 
     const propertyEntity = new PropertyEntity();
-    const response = await propertyEntity.getPropertiesByAddress({
-      address: {
-        address: body.property.address,
-        city: body.property.city,
-        state: body.property.state,
-        country: body.property.country,
-        postalCode: body.property.postalCode,
-        unit: body.property.unit,
-        numBeds: body.property.numBeds,
-        numBaths: body.property.numBaths,
-      },
-      organization: body.organization,
+    const response = await propertyEntity.getById({
+      uuid: body.propertyId,
     });
 
     return res.status(API_STATUS.SUCCESS).json({
-      response: JSON.stringify({ properties: response }),
+      response: JSON.stringify({ property: response }),
     });
   } catch (error: any) {
     console.log({ error });

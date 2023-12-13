@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       oldAssignedTo,
     });
 
-    await eventEntity.create({
+    await eventEntity.createWOEvent({
       workOrderId: deconstructKey(workOrderId),
       madeByEmail: pmEmail,
       madeByName: pmName,

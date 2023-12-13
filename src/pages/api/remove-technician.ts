@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
-    await eventEntity.create({
+    await eventEntity.createWOEvent({
       workOrderId,
       madeByEmail: pmEmail,
       madeByName: pmName,

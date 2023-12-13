@@ -36,6 +36,11 @@ import {
   AddWorkOrderModalSchema,
   CreateCommentSchema,
   GetPropertiesByAddressSchema,
+  GetPropertyEventsSchema,
+  GetPropertyByIdSchema,
+  EditPropertySchema,
+  GetUsersSchema,
+  AddRemoveTenantToPropertySchema,
 } from './customschemas';
 import { ChatCompletionRequestMessage } from 'openai';
 
@@ -70,6 +75,10 @@ export type DeleteUser = { pk: string; sk: string; name: string; roles: string[]
 
 export type GetUserBody = z.infer<typeof GetUserSchema>;
 
+export type GetUsersBody = z.infer<typeof GetUsersSchema>;
+
+export type AddRemoveTenantToProperty = z.infer<typeof AddRemoveTenantToPropertySchema>;
+
 export type AssignTechnicianBody = z.infer<typeof AssignTechnicianSchema>;
 
 export type RemoveTechnicianBody = z.infer<typeof RemoveTechnicianSchema>;
@@ -88,6 +97,8 @@ export type CreateWorkOrder = z.infer<typeof CreateWorkOrderSchema>;
 
 export type CreateProperty = z.infer<typeof CreatePropertySchema>;
 
+export type EditProperty = z.infer<typeof EditPropertySchema>;
+
 export type DeleteEntity = z.infer<typeof DeleteEntitySchema>;
 
 export type GetPM = z.infer<typeof GetPMSchema>;
@@ -96,6 +107,8 @@ export type GetProperties = z.infer<typeof GetPropertiesSchema>;
 
 export type GetPropertiesByAddress = z.infer<typeof GetPropertiesByAddressSchema>;
 
+export type GetPropertyById = z.infer<typeof GetPropertyByIdSchema>;
+
 export type GetTenantsForOrg = z.infer<typeof GetTenantsForOrgSchema>;
 
 export type GetAllWorkOrdersForUser = z.infer<typeof GetAllWorkOrdersForUserSchema>;
@@ -103,6 +116,8 @@ export type GetAllWorkOrdersForUser = z.infer<typeof GetAllWorkOrdersForUserSche
 export type GetTechsForOrg = z.infer<typeof GetTechsForOrgSchema>;
 
 export type GetWorkOrderEvents = z.infer<typeof GetWorkOrderEventsSchema>;
+
+export type GetPropertyEvents = z.infer<typeof GetPropertyEventsSchema>;
 
 export type GetS3BucketBody = z.infer<typeof GetS3BucketSchema>;
 

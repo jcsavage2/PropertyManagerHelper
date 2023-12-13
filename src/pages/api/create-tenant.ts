@@ -11,6 +11,7 @@ import { ApiError, ApiResponse } from './_types';
 import { INVALID_PARAM_ERROR, errorToResponse, initializeSendgrid } from './_utils';
 import { CreateTenant } from '@/types';
 import * as Sentry from '@sentry/nextjs';
+import { EventEntity } from '@/database/entities/event';
 
 /**
  *
@@ -45,6 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const userEntity = new UserEntity();
     const propertyEntity = new PropertyEntity();
+    const eventEntity = new EventEntity();
 
     //Don't overwrite existing tenant
     if (tenantEmail) {
@@ -76,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // Create Property if necessary
     if (createNewProperty) {
       await propertyEntity.create({
-        tenantEmail,
+        tenantEmails: tenantEmail ? [tenantEmail] : [],
         propertyManagerEmail: pmEmail,
         organization,
         uuid: property.propertyUUId,
@@ -88,6 +90,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         unit: property.unit,
         numBeds: property.numBeds,
         numBaths: property.numBaths,
+      });
+
+      await eventEntity.createPropertyEvent({
+        propertyId: property.propertyUUId,
+        madeByEmail: pmEmail,
+        madeByName: pmName,
+        message: 'Property created!' + (tenantEmail ? ' Tenant ' + tenantEmail + ' added' : ''),
       });
     }
 
