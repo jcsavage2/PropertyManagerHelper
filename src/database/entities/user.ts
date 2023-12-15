@@ -202,7 +202,7 @@ export class UserEntity {
     GSI4SK?: string;
     version: number;
     toRemove?: Attributes[]; //Array of attributes to remove as strings
-  }): Promise<{ user: any; err: any; }> {
+  }): Promise<{ user: any; err: any }> {
     try {
       const updatedUser = await this.userEntity.update(
         {
@@ -230,7 +230,7 @@ export class UserEntity {
     }
   }
 
-  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status, name }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatus; name?: string; }) {
+  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status, name }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatus; name?: string }) {
     const updatedUser = await this.userEntity.update(
       {
         pk,
@@ -293,7 +293,7 @@ export class UserEntity {
   /**
    * @returns User entity
    */
-  public async get({ email }: { email: string; }) {
+  public async get({ email }: { email: string }) {
     const params = {
       pk: generateKey(ENTITY_KEY.USER, email),
       sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
@@ -305,7 +305,7 @@ export class UserEntity {
   /**
    * @returns User entities
    */
-  public async getMany({ emails }: { emails: string[]; }) {
+  public async getMany({ emails }: { emails: string[] }) {
     let userList = [];
     for (const email of emails) {
       const params = {
@@ -319,7 +319,7 @@ export class UserEntity {
     return userList;
   }
 
-  public async delete({ pk, sk }: { pk: string; sk: string; }) {
+  public async delete({ pk, sk }: { pk: string; sk: string }) {
     const params = {
       pk,
       sk,
@@ -329,7 +329,7 @@ export class UserEntity {
   }
 
   //Delete a role from roles; also fix GSI1 if needed
-  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[]; }) {
+  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
     //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
     const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
     const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
@@ -374,8 +374,8 @@ export class UserEntity {
         reverse: false,
         ...(statusFilter &&
           !fetchAllTenants && {
-          filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
-        }),
+            filters: this.constructGetTenantFilters({ statusFilter, tenantSearchString }),
+          }),
         ...(startKey && { startKey }),
         beginsWith: `${ENTITY_KEY.TENANT}`,
         index: INDEXES.GSI4,
@@ -412,7 +412,7 @@ export class UserEntity {
     return filters;
   }
 
-  public async getAllTechniciansForOrg({ organization, techSearchString, startKey }: { organization: string; techSearchString: string | undefined; startKey: StartKey; }) {
+  public async getAllTechniciansForOrg({ organization, techSearchString, startKey }: { organization: string; techSearchString: string | undefined; startKey: StartKey }) {
     let techs = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TECHNICIAN, organization);
     let remainingTechsToFetch = PAGE_SIZE;
@@ -437,7 +437,7 @@ export class UserEntity {
     return { techs, startKey };
   }
 
-  public async getAllPMsForOrg({ organization, startKey }: { organization: string; startKey: StartKey; }) {
+  public async getAllPMsForOrg({ organization, startKey }: { organization: string; startKey: StartKey }) {
     let pms = [];
     const GSI4PK = generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, organization);
     let remainingTechsToFetch = PAGE_SIZE;
@@ -635,7 +635,7 @@ export class UserEntity {
   /**
    * Removes an address from the user's address map. Updates user's address string.
    */
-  public async removeAddress({ tenantEmail, propertyUUId }: { tenantEmail: string; propertyUUId: string; }) {
+  public async removeAddress({ tenantEmail, propertyUUId }: { tenantEmail: string; propertyUUId: string }) {
     let attempt = 0;
     while (attempt < MAX_RETRIES) {
       const tenant = await this.get({ email: tenantEmail });
