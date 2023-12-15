@@ -121,13 +121,13 @@ const Properties = () => {
                 </p>
               ) : null}
               {properties.map((property: IProperty, index) => {
-                const tenantDisplayEmails = property.tenantEmails && property.tenantEmails.length ? setToShortenedString(property.tenantEmails) : '';
+                const tenantDisplayEmails = property.tenantEmails && property.tenantEmails.length ? setToShortenedString(property.tenantEmails): ''
                 return (
                   <div
                     key={`${property.pk}-${property.sk}-${index}`}
-                    className={`flex flex-row items-center w-full rounded-lg py-2 px-2 h-48 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${index === 0 && 'mt-1'} ${
-                      index < properties.length - 1 && 'mb-3'
-                    }`}
+                    className={`flex flex-row items-center w-full rounded-lg py-2 px-2 h-48 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${
+                      index === 0 && 'mt-1'
+                    } ${index < properties.length - 1 && 'mb-3'}`}
                   >
                     <div className="pl-2 w-full text-gray-800 flex flex-col">
                       <div className="flex w-full flex-row justify-between">
@@ -143,9 +143,7 @@ const Properties = () => {
                       <p className="text-sm mt-1">{property.state.toUpperCase()} </p>
                       <p className="text-sm mt-1">{toTitleCase(property.postalCode)} </p>
                       <p className="text-sm mt-1">{toTitleCase(property.unit)} </p>
-                      <div className="text-sm mt-3">
-                        Tenants: <p className={`inline ${!tenantDisplayEmails && 'text-red-500'}`}> {tenantDisplayEmails.length ? tenantDisplayEmails : 'No tenants'} </p>
-                      </div>
+                      <div className='text-sm mt-3'>Tenants: <p className={`inline ${!tenantDisplayEmails && 'text-red-500'}`}> {tenantDisplayEmails.length ? tenantDisplayEmails : 'No tenants' } </p></div>
                     </div>
                   </div>
                 );
