@@ -160,7 +160,7 @@ const Tenants = () => {
         const successfulResponses = allResponses.map((r) => r.status === 200);
 
         if (successfulResponses.length === allResponses.length) {
-          toast.success('All Re-invitations successfully sent', {
+          toast.success(`${allResponses.length === 1 ? 'Re-invitation' : 'All Re-invitations'} successfully sent`, {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
           });
