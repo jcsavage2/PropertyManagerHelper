@@ -55,4 +55,4 @@ export const API_STATUS = {
 };
 export const USER_PERMISSION_ERROR = 'User does not have permission to perform this action.';
 
-export const NO_EMAIL_PREFIX = "testsimco+";
+export const NO_EMAIL_PREFIX = 'testsimco+';

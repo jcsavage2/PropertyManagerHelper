@@ -28,11 +28,7 @@ const HamburgerMenu = () => {
         <span className="block w-8 h-1 bg-gray-600"></span>
       </div>
       {isOpen && (
-        <div
-          className="absolute left-0 bg-blue-300 mt-0 w-full grid z-10"
-          style={{ top: '7dvh', height: '93dvh' }}
-          onClick={() => setIsOpen(false)}
-        >
+        <div className="absolute left-0 bg-blue-300 mt-0 w-full grid z-10" style={{ top: '7dvh', height: '93dvh' }} onClick={() => setIsOpen(false)}>
           <div className="flex flex-col h-12">
             {user ? (
               <>

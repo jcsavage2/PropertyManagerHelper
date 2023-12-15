@@ -230,17 +230,7 @@ export class UserEntity {
     }
   }
 
-  public async updateUser({
-    pk,
-    sk,
-    hasSeenDownloadPrompt,
-    status,
-  }: {
-    pk: string;
-    sk: string;
-    hasSeenDownloadPrompt?: boolean;
-    status?: InviteStatus;
-  }) {
+  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatus }) {
     const updatedUser = await this.userEntity.update(
       {
         pk,

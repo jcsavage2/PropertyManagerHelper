@@ -3,14 +3,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import Image from 'next/image';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  toTitleCase,
-  deconstructKey,
-  createdToFormattedDateTime,
-  deconstructNameEmailString,
-  constructNameEmailString,
-  renderToastError,
-} from '@/utils';
+import { toTitleCase, deconstructKey, createdToFormattedDateTime, deconstructNameEmailString, constructNameEmailString, renderToastError } from '@/utils';
 import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
@@ -29,11 +22,7 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import Modal from 'react-modal';
 import { USER_TYPE } from '@/database/entities/user';
 import { MdOutlineClear } from 'react-icons/md';
-import {
-  DeleteEntitySchema,
-  UpdateViewedWORequestSchema,
-  UpdateWorkOrderSchema,
-} from '@/types/customschemas';
+import { DeleteEntitySchema, UpdateViewedWORequestSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
 
 const WorkOrder = ({
   workOrderId,
@@ -188,9 +177,7 @@ const WorkOrder = ({
           //Backwards compatible with old assignedTo format
           if (str.includes(TECHNICIAN_DELIM)) {
             const keys: string[] = deconstructNameEmailString(str);
-            technician = mappedTechnicians.find(
-              (technician: Option) => technician.value === keys[0]
-            );
+            technician = mappedTechnicians.find((technician: Option) => technician.value === keys[0]);
           } else {
             //str is just tech email in this case
             technician = mappedTechnicians.find((technician: Option) => technician.value === str);
@@ -198,17 +185,10 @@ const WorkOrder = ({
 
           if (technician) {
             //Only allow PMs to see who has viewed
-            if (
-              userType === USER_TYPE.PROPERTY_MANAGER &&
-              _workOrder.viewedWO &&
-              _workOrder.viewedWO.includes(technician.value)
-            ) {
+            if (userType === USER_TYPE.PROPERTY_MANAGER && _workOrder.viewedWO && _workOrder.viewedWO.includes(technician.value)) {
               technician.label = technician.label + ' (viewed)';
             }
-            setAssignedTechnicians((prev) => [
-              ...prev,
-              { value: technician!.value, label: technician!.label },
-            ]);
+            setAssignedTechnicians((prev) => [...prev, { value: technician!.value, label: technician!.label }]);
           }
         });
       }
@@ -233,9 +213,7 @@ const WorkOrder = ({
         });
         const response = JSON.parse(data.response);
 
-        initialFetch
-          ? setEvents(response.events)
-          : setEvents((prev) => [...prev, ...response.events]);
+        initialFetch ? setEvents(response.events) : setEvents((prev) => [...prev, ...response.events]);
         setEventsStartKey(response.startKey);
       } catch (err) {
         console.error(err);
@@ -249,11 +227,7 @@ const WorkOrder = ({
     if (!workOrderId) return;
     setIsUpdatingStatus(true);
     try {
-      if (
-        !user ||
-        (!user.roles?.includes(USER_TYPE.TECHNICIAN) &&
-          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
-      ) {
+      if (!user || (!user.roles?.includes(USER_TYPE.TECHNICIAN) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))) {
         throw new Error(USER_PERMISSION_ERROR);
       }
       const params = UpdateWorkOrderSchema.parse({
@@ -280,11 +254,7 @@ const WorkOrder = ({
     if (!workOrderId) return;
     setIsUpdatingPTE(true);
     try {
-      if (
-        !user ||
-        (!user.roles?.includes(USER_TYPE.TENANT) &&
-          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))
-      ) {
+      if (!user || (!user.roles?.includes(USER_TYPE.TENANT) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))) {
         throw new Error(USER_PERMISSION_ERROR);
       }
       const params = UpdateWorkOrderSchema.parse({
@@ -312,11 +282,7 @@ const WorkOrder = ({
     async (workOrderId: string) => {
       if (!workOrderId) return;
       try {
-        if (
-          !user ||
-          userType !== ENTITIES.PROPERTY_MANAGER ||
-          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
-        ) {
+        if (!user || userType !== ENTITIES.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         const params: DeleteEntity = DeleteEntitySchema.parse({
@@ -343,10 +309,7 @@ const WorkOrder = ({
     [user, router, afterDelete, altName, userType]
   );
 
-  const handleAssignTechnician = async (
-    _assignedTechnicians: MultiValue<Option>,
-    actionMeta: ActionMeta<Option>
-  ) => {
+  const handleAssignTechnician = async (_assignedTechnicians: MultiValue<Option>, actionMeta: ActionMeta<Option>) => {
     setIsUpdatingAssignedTechnicians(true);
     try {
       if (!user || !workOrder || userType !== USER_TYPE.PROPERTY_MANAGER) {
@@ -373,9 +336,7 @@ const WorkOrder = ({
         });
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as Option;
-        const technicianName = removedTechnician.label.includes(' (viewed)')
-          ? removedTechnician.label.replace(' (viewed)', '')
-          : removedTechnician.label;
+        const technicianName = removedTechnician.label.includes(' (viewed)') ? removedTechnician.label.replace(' (viewed)', '') : removedTechnician.label;
 
         await axios.post('/api/remove-technician', {
           workOrderId: deconstructKey(workOrderId),
@@ -418,22 +379,10 @@ const WorkOrder = ({
 
   useEffect(() => {
     const updateViewedList = async () => {
-      if (
-        !user ||
-        !workOrder ||
-        !workOrderId ||
-        !userType ||
-        userType !== USER_TYPE.TECHNICIAN ||
-        !workOrder.assignedTo
-      )
-        return;
+      if (!user || !workOrder || !workOrderId || !userType || userType !== USER_TYPE.TECHNICIAN || !workOrder.assignedTo) return;
       const assignedToList = Array.from(workOrder.assignedTo);
       //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
-      if (
-        (assignedToList.includes(user.email) ||
-          assignedToList.includes(constructNameEmailString(user.email, user.name))) &&
-        !workOrder.viewedWO?.includes(user.email)
-      ) {
+      if ((assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) && !workOrder.viewedWO?.includes(user.email)) {
         //Handle async update viewed list
         const newViewedWOList: string[] = [...(workOrder.viewedWO ?? []), user.email];
         const params = UpdateViewedWORequestSchema.parse({
@@ -461,42 +410,33 @@ const WorkOrder = ({
         <div className="w-full sticky top-0 overflow-hidden">
           <div className=" bg-blue-200 text-gray-600 text-center py-2 px-4 text-sm">
             Created on {createdToFormattedDateTime(workOrder.created).join(' @ ')}
-            <MdOutlineClear
-              className="float-right my-auto h-6 text-xl text-gray-600 cursor-pointer"
-              onClick={() => handleCloseWorkOrderModal()}
-            />
+            <MdOutlineClear className="float-right my-auto h-6 text-xl text-gray-600 cursor-pointer" onClick={() => handleCloseWorkOrderModal()} />
           </div>
           <div className="flex flex-col w-full align-middle items-center">
             <div className="text-xl my-auto flex flex-row items-center justify-between text-gray-600 w-full p-4  border-b border-slate-200">
               <div className=" flex flex-col">
                 {toTitleCase(workOrder?.issue)}
-                <div className="text-gray-400 md:text-base text-sm">
-                  # {deconstructKey(workOrderId)}
-                </div>
+                <div className="text-gray-400 md:text-base text-sm"># {deconstructKey(workOrderId)}</div>
               </div>
               <div className="flex flex-row items-center">
                 {!isMobile ? (
                   <>
                     {userType !== USER_TYPE.TENANT ? (
-                      <a
-                        href="#wo-modal-comments"
-                        className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4"
-                      >
+                      <a href="#wo-modal-comments" className="text-sm bg-white border rounded border-slate-600 px-2 py-1 text-slate-600 hover:bg-slate-300 mr-4">
                         Go to comments
                       </a>
                     ) : null}
 
-                    {userType === USER_TYPE.PROPERTY_MANAGER &&
-                      workOrder.status !== WO_STATUS.DELETED && (
-                        <div
-                          onClick={() => {
-                            if (workOrder.status === WO_STATUS.DELETED) return;
-                            setConfirmDeleteModalIsOpen(true);
-                          }}
-                        >
-                          <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
-                        </div>
-                      )}
+                    {userType === USER_TYPE.PROPERTY_MANAGER && workOrder.status !== WO_STATUS.DELETED && (
+                      <div
+                        onClick={() => {
+                          if (workOrder.status === WO_STATUS.DELETED) return;
+                          setConfirmDeleteModalIsOpen(true);
+                        }}
+                      >
+                        <BsTrashFill className="hover:text-red-600 cursor-pointer text-2xl mr-4" />
+                      </div>
+                    )}
                   </>
                 ) : null}
               </div>
@@ -515,11 +455,7 @@ const WorkOrder = ({
               <>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) =>
-                    !isUpdatingStatus &&
-                    userType !== USER_TYPE.TENANT &&
-                    handleUpdateStatus(e, WO_STATUS.TO_DO)
-                  }
+                  onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.TO_DO)}
                   className={`${workOrder.status === WO_STATUS.TO_DO && 'bg-blue-200'} ${
                     userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
                   } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
@@ -529,11 +465,7 @@ const WorkOrder = ({
                 </button>
                 <button
                   disabled={isUpdatingStatus}
-                  onClick={(e) =>
-                    !isUpdatingStatus &&
-                    userType !== USER_TYPE.TENANT &&
-                    handleUpdateStatus(e, WO_STATUS.COMPLETE)
-                  }
+                  onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.COMPLETE)}
                   className={`${workOrder.status === WO_STATUS.COMPLETE && 'bg-blue-200'} ${
                     userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
                   } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
@@ -550,13 +482,7 @@ const WorkOrder = ({
           <div className="mt-4 font-bold">Assigned To</div>
           <div className="w-full mt-0.5">
             <AsyncSelect
-              placeholder={
-                isUpdatingAssignedTechnicians || fetchingTechnicians
-                  ? 'Loading...'
-                  : assignedTechnicians.length === 0
-                  ? 'Unassigned'
-                  : 'Assign technicians...'
-              }
+              placeholder={isUpdatingAssignedTechnicians || fetchingTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
               isDisabled={isUpdatingAssignedTechnicians || userType !== ENTITIES.PROPERTY_MANAGER} // potentially could have logic for technicians to "self assign"
               className={'w-11/12 md:w-10/12 mt-1'}
               closeMenuOnSelect={true}
@@ -572,11 +498,7 @@ const WorkOrder = ({
             />
           </div>
           <div className="font-bold mt-4">Photos</div>
-          <div
-            className={`w-full mt-0.5 pb-2 ${
-              images && images.length && 'grid grid-cols-3 md:grid-cols-5 md:gap-x-4 gap-x-0'
-            }`}
-          >
+          <div className={`w-full mt-0.5 pb-2 ${images && images.length && 'grid grid-cols-3 md:grid-cols-5 md:gap-x-4 gap-x-0'}`}>
             {imagesLoading ? (
               <LoadingSpinner />
             ) : images && images.length ? (
@@ -599,22 +521,8 @@ const WorkOrder = ({
               'No photos found'
             )}
           </div>
-          <div
-            className={
-              'w-full md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200'
-            }
-          >
-            {uploadingFiles ? (
-              <LoadingSpinner />
-            ) : (
-              <input
-                type="file"
-                multiple
-                name="image"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-            )}
+          <div className={'w-full md:grid-cols-5 md:gap-x-4 mt-0.5 gap-x-0 pb-2 border-b border-slate-200'}>
+            {uploadingFiles ? <LoadingSpinner /> : <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />}
           </div>
           <div className="mt-4 font-bold">Permission to Enter</div>
           <div className={`${isUpdatingPTE && 'opacity-50'} text-center w-48`}>
@@ -628,26 +536,18 @@ const WorkOrder = ({
                 v?.value && handleUpdatePTE(v.value);
               }}
               defaultValue={undefined}
-              isDisabled={
-                (!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) &&
-                  !user?.roles?.includes(USER_TYPE.TENANT)) ||
-                isUpdatingPTE
-              }
+              isDisabled={(!user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) && !user?.roles?.includes(USER_TYPE.TENANT)) || isUpdatingPTE}
               placeholder={workOrder.permissionToEnter as PTE_Type}
             />
           </div>
           <div className="font-bold mt-4">Address</div>
           <div className="mt-0.5">
-            {workOrder.address?.unit
-              ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit)
-              : toTitleCase(workOrder.address.address)}
+            {workOrder.address?.unit ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit) : toTitleCase(workOrder.address.address)}
           </div>
           <div className="font-bold mt-4">Tenant</div>
           <div className="mt-0.5">{toTitleCase(workOrder.tenantName)}</div>
           <div className="font-bold mt-4">Location</div>
-          <div className="mt-0.5">
-            {workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}
-          </div>
+          <div className="mt-0.5">{workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}</div>
           {workOrder.additionalDetails && workOrder.additionalDetails.length > 0 ? (
             <>
               <div className="font-bold mt-4">Additional Info</div>
@@ -660,10 +560,7 @@ const WorkOrder = ({
             <>
               <div className="flex flex-row items-center border-t border-slate-200 pt-2 mt-4">
                 <div className="font-bold text-lg">Comments</div>
-                <button
-                  onClick={() => setOpenAddCommentModal(true)}
-                  className="ml-3 rounded px-4 py-0.5 text-sm border bg-blue-200 hover:bg-blue-100"
-                >
+                <button onClick={() => setOpenAddCommentModal(true)} className="ml-3 rounded px-4 py-0.5 text-sm border bg-blue-200 hover:bg-blue-100">
                   Add Comment
                 </button>
               </div>
@@ -674,10 +571,7 @@ const WorkOrder = ({
                     if (event) {
                       const formattedDateTime = createdToFormattedDateTime(event.created!);
                       return (
-                        <div
-                          key={`${ENTITIES.EVENT}-${i}`}
-                          className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 last-of-type:mb-0 py-2 px-3 text-left"
-                        >
+                        <div key={`${ENTITIES.EVENT}-${i}`} className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 last-of-type:mb-0 py-2 px-3 text-left">
                           <div className="mb-0.5 flex flex-row">
                             <p className="font-bold mr-2">{toTitleCase(event.madeByName)} </p>
                             <p className="text-slate-600">
@@ -760,9 +654,7 @@ const WorkOrder = ({
   }
   return (
     <div>
-      <div className="w-full flex items-center justify-center font-bold mt-8">
-        Work order not found.
-      </div>
+      <div className="w-full flex items-center justify-center font-bold mt-8">Work order not found.</div>
     </div>
   );
 };

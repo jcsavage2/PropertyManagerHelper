@@ -22,11 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const sessionUser: IUser = session?.user;
 
     //User must be an admin pm to create a pm
-    if (
-      !session ||
-      !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) ||
-      !sessionUser?.isAdmin
-    ) {
+    if (!session || !sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || !sessionUser?.isAdmin) {
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
@@ -116,8 +112,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

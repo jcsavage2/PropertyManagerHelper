@@ -80,18 +80,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const userEntity = new UserEntity();
     let promises = [];
     for (const email of newProperty?.tenantEmails || []) {
-      promises.push(userEntity.editAddress({
-        propertyUUId: body.propertyUUId,
-        tenantEmail: email,
-        address: body.address,
-        city: body.city,
-        country: body.country,
-        postalCode: body.postalCode,
-        state: body.state,
-        unit: body.unit,
-        numBeds: body.numBeds,
-        numBaths: body.numBaths,
-      }))
+      promises.push(
+        userEntity.editAddress({
+          propertyUUId: body.propertyUUId,
+          tenantEmail: email,
+          address: body.address,
+          city: body.city,
+          country: body.country,
+          postalCode: body.postalCode,
+          state: body.state,
+          unit: body.unit,
+          numBeds: body.numBeds,
+          numBaths: body.numBaths,
+        })
+      );
     }
 
     await Promise.all(promises);

@@ -8,10 +8,7 @@ export const INVALID_PARAM_ERROR = (paramName: string) => `Invalid ${paramName} 
 // Validates the env variable and sets the api key for sendgrid
 export function initializeSendgrid(sendgrid: MailService, apiKey: string | undefined) {
   if (!apiKey) {
-    throw new ApiError(
-      API_STATUS.INTERNAL_SERVER_ERROR,
-      MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY')
-    );
+    throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, MISSING_ENV('NEXT_PUBLIC_SENDGRID_API_KEY'));
   }
   sendgrid.setApiKey(apiKey);
 }

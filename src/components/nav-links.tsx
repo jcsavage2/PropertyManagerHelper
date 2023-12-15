@@ -22,10 +22,7 @@ export const NavLinks = () => {
 
   if (isMobile) {
     return (
-      <nav
-        style={{ height: '7dvh', width: '100vw' }}
-        className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62"
-      >
+      <nav style={{ height: '7dvh', width: '100vw' }} className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62">
         <div className={'flex text-center'} style={{ width: '100vw' }}>
           <div className="flex cursor-pointer" onClick={() => router.push('/')}>
             <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
@@ -40,10 +37,7 @@ export const NavLinks = () => {
   }
 
   return (
-    <nav
-      style={{ height: '7dvh', width: '100vw' }}
-      className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62"
-    >
+    <nav style={{ height: '7dvh', width: '100vw' }} className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62">
       <div className={'flex space-x-5 text-center'} style={{ width: '100vw' }}>
         <div className="flex cursor-pointer" onClick={() => router.push('/')}>
           <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
