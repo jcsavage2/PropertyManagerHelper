@@ -4,15 +4,7 @@ import { INDEXES, PillarDynamoTable } from '..';
 import { constructNameEmailString, generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
 import { PAGE_SIZE, WO_STATUS } from '@/constants';
-import {
-  AssignTechnicianBody,
-  GetAllWorkOrdersForUser,
-  PTE_Type,
-  Property,
-  PropertyWithId,
-  UpdateImages,
-  WoStatus,
-} from '@/types';
+import { AssignTechnicianBody, GetAllWorkOrdersForUser, PTE_Type, Property, PropertyWithId, UpdateImages, WoStatus } from '@/types';
 
 type CreateWorkOrderProps = {
   uuid: string;
@@ -128,10 +120,7 @@ export class WorkOrderEntity {
       {
         pk: workOrderIdKey,
         sk: workOrderIdKey,
-        GSI1PK: generateKey(
-          ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
-          pmEmail
-        ),
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail),
         GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail),
         GSI2SK: ksuID,
@@ -194,14 +183,7 @@ export class WorkOrderEntity {
    *
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
-  public async getAllForUser({
-    email,
-    userType,
-    orgId,
-    startKey,
-    statusFilter,
-    reverse = true,
-  }: GetAllWorkOrdersForUser) {
+  public async getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse = true }: GetAllWorkOrdersForUser) {
     const workOrders: IWorkOrder[] = [];
     let pk: string = '';
     let index: undefined | string;
@@ -211,10 +193,7 @@ export class WorkOrderEntity {
     } else {
       switch (userType) {
         case ENTITIES.PROPERTY_MANAGER:
-          pk = generateKey(
-            ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
-            email?.toLowerCase()
-          );
+          pk = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
           index = INDEXES.GSI1;
           break;
         case ENTITIES.TECHNICIAN:
@@ -332,22 +311,13 @@ export class WorkOrderEntity {
   }: AssignTechnicianBody) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
     try {
-      let assignedTo: string[] = [
-        ...oldAssignedTo,
-        constructNameEmailString(technicianEmail, technicianName),
-      ];
+      let assignedTo: string[] = [...oldAssignedTo, constructNameEmailString(technicianEmail, technicianName)];
       // Create companion row for the technician
       await this.workOrderEntity.update({
         pk: workOrderIdKey,
-        sk: generateKey(
-          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail
-        ),
+        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail),
         address: this.generateAddress(property),
-        GSI3PK: generateKey(
-          ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER,
-          technicianEmail
-        ),
+        GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail),
         GSI3SK: ksuID,
         issue: issueDescription,
         permissionToEnter,
@@ -389,32 +359,18 @@ export class WorkOrderEntity {
       //Delete relationship between WO and technician
       await this.workOrderEntity.delete({
         pk: key,
-        sk: generateKey(
-          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail
-        ),
+        sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail),
       });
 
       //Backwards compatibility when removing technicians from WO
       let newAssignedTo: string[];
       const oldAssignedTo = [...assignedTo];
-      if (
-        oldAssignedTo.includes(
-          constructNameEmailString(technicianEmail, technicianName)
-        )
-      ) {
-        newAssignedTo = [...oldAssignedTo].filter(
-          (assignedTo) =>
-            assignedTo !== constructNameEmailString(technicianEmail, technicianName)
-        );
+      if (oldAssignedTo.includes(constructNameEmailString(technicianEmail, technicianName))) {
+        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== constructNameEmailString(technicianEmail, technicianName));
       } else {
-        newAssignedTo = [...oldAssignedTo].filter(
-          (assignedTo) => assignedTo !== technicianEmail
-        );
+        newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail);
       }
-      const newViewedWOList = [...viewedWO].filter(
-        (email) => email !== technicianEmail
-      );
+      const newViewedWOList = [...viewedWO].filter((email) => email !== technicianEmail);
 
       const result = await this.workOrderEntity.update(
         {
@@ -433,23 +389,14 @@ export class WorkOrderEntity {
 
   public async updateImages({ pk, sk, images, addNew }: UpdateImages) {
     try {
-      const updatedWorkOrder = (
-        await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })
-      ).Attributes;
+      const updatedWorkOrder = (await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })).Attributes;
       return updatedWorkOrder;
     } catch (err) {
       console.log({ err });
     }
   }
 
-  private generateAddress({
-    address,
-    country,
-    city,
-    state,
-    postalCode,
-    unit,
-  }: Property | PropertyWithId) {
+  private generateAddress({ address, country, city, state, postalCode, unit }: Property | PropertyWithId) {
     return {
       address,
       unit,

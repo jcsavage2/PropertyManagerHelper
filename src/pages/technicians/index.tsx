@@ -36,10 +36,7 @@ const Technicians = () => {
       if (!user || !userType) return;
       setTechsLoading(true);
       try {
-        if (
-          userType !== USER_TYPE.PROPERTY_MANAGER ||
-          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
-        ) {
+        if (userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         //Reset filter options on initial fetch
@@ -72,11 +69,7 @@ const Technicians = () => {
     async ({ pk, sk, roles }: DeleteUser) => {
       setTechsLoading(true);
       try {
-        if (
-          !user ||
-          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) ||
-          userType !== USER_TYPE.PROPERTY_MANAGER
-        ) {
+        if (!user || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         const params: DeleteEntity = DeleteEntitySchema.parse({
@@ -110,11 +103,7 @@ const Technicians = () => {
   );
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
-    return (
-      <p>
-        You are not authorized to use this page. You must be a property manager in an organization.
-      </p>
-    );
+    return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
 
   return (
@@ -124,19 +113,11 @@ const Technicians = () => {
         confirmationModalIsOpen={confirmDeleteModalIsOpen}
         setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
         onConfirm={() => handleDeleteTech(toDelete)}
-        childrenComponents={
-          <div className="text-center">
-            Are you sure you want to delete the technician record for {toTitleCase(toDelete.name)}?
-          </div>
-        }
+        childrenComponents={<div className="text-center">Are you sure you want to delete the technician record for {toTitleCase(toDelete.name)}?</div>}
         onCancel={() => setToDelete(DEFAULT_DELETE_USER)}
       />
       <div className="lg:max-w-5xl">
-        <div
-          className={
-            isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`
-          }
-        >
+        <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Technicians</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
             <button
@@ -150,11 +131,7 @@ const Technicians = () => {
             </button>
           </div>
         </div>
-        <div
-          className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 ${
-            techsLoading && 'opacity-50 pointer-events-none'
-          }`}
-        >
+        <div className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 ${techsLoading && 'opacity-50 pointer-events-none'}`}>
           <input
             type="text"
             placeholder="Search technicians..."
@@ -171,9 +148,7 @@ const Technicians = () => {
           />
           <MdClear
             fontSize={28}
-            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${
-              !techSearchString && 'opacity-0 pointer-events-none'
-            }}`}
+            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${!techSearchString && 'opacity-0 pointer-events-none'}}`}
             onClick={() => {
               if (techsLoading || !techSearchString) return;
               setTechSearchString('');
@@ -195,8 +170,7 @@ const Technicians = () => {
             <div className="flex flex-col items-center">
               {techs.length ? (
                 <p className="text-sm place-self-start font-light italic mb-1 ml-2 text-gray-500">
-                  {'Showing ' + techs.length}{' '}
-                  {techs.length === 1 ? ' technician...' : 'technicians...'}
+                  {'Showing ' + techs.length} {techs.length === 1 ? ' technician...' : 'technicians...'}
                 </p>
               ) : null}
               {techs.map((tech: IUser, index) => {
@@ -246,13 +220,9 @@ const Technicians = () => {
                     {techs.map((tech: IUser) => {
                       return (
                         <tr key={`${tech.pk}-${tech.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(
-                            tech.name
-                          )}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tech.name)}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${tech.email}`}</td>
-                          <td className="border-b border-t px-4 py-1">
-                            {createdToFormattedDateTime(tech.created)[0]}
-                          </td>
+                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tech.created)[0]}</td>
                           <td className="pl-6 py-1">
                             <CiCircleRemove
                               className="text-3xl text-red-500 cursor-pointer"
@@ -277,9 +247,7 @@ const Technicians = () => {
             </div>
           </div>
         )}
-        {!techsLoading && techs.length === 0 && (
-          <div className="font-bold text-center md:mt-6">Sorry, no technicians found.</div>
-        )}
+        {!techsLoading && techs.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no technicians found.</div>}
         {techsLoading && (
           <div className="mt-8">
             <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
@@ -288,9 +256,7 @@ const Technicians = () => {
         {techs.length && startKey && !techsLoading ? (
           <div className="w-full flex items-center justify-center mb-24">
             <button
-              onClick={() =>
-                fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)
-              }
+              onClick={() => fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)}
               className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
             >
               Load more
@@ -300,11 +266,7 @@ const Technicians = () => {
           <div className="mb-24"></div>
         )}
       </div>
-      <AddTechnicianModal
-        technicianModalIsOpen={addTechModalIsOpen}
-        setTechnicianModalIsOpen={setAddTechModalIsOpen}
-        onSuccessfulAdd={() => fetchTechs(true)}
-      />
+      <AddTechnicianModal technicianModalIsOpen={addTechModalIsOpen} setTechnicianModalIsOpen={setAddTechModalIsOpen} onSuccessfulAdd={() => fetchTechs(true)} />
       {isMobile && <BottomNavigationPanel />}
     </div>
   );

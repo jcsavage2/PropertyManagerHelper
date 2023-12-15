@@ -29,16 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const body: CreateTenant = CreateTenantSchema.parse(req.body);
-    const {
-      pmEmail,
-      pmName,
-      tenantEmail,
-      tenantName,
-      organization,
-      organizationName,
-      property,
-      createNewProperty,
-    } = body;
+    const { pmEmail, pmName, tenantEmail, tenantName, organization, organizationName, property, createNewProperty } = body;
 
     if (!property) {
       throw new ApiError(API_STATUS.BAD_REQUEST, INVALID_PARAM_ERROR('property'));
@@ -100,7 +91,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-
     if (tenantEmail) {
       /** SEND THE EMAIL TO THE USER */
       if (!tenantEmail.startsWith(NO_EMAIL_PREFIX)) {
@@ -110,9 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         await sendgrid.send({
           to: tenantEmail,
           from: 'pillar@pillarhq.co',
-          subject: `${toTitleCase(pmName)} @ ${toTitleCase(
-            organizationName
-          )} is requesting you to join Pillar`,
+          subject: `${toTitleCase(pmName)} @ ${toTitleCase(organizationName)} is requesting you to join Pillar`,
           html: emailBody,
         });
       }
@@ -122,8 +110,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log(error);
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

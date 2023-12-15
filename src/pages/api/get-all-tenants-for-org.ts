@@ -15,8 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
-    const { organization, startKey, tenantSearchString, statusFilter, fetchAllTenants } =
-      GetTenantsForOrgSchema.parse(req.body);
+    const { organization, startKey, tenantSearchString, statusFilter, fetchAllTenants } = GetTenantsForOrgSchema.parse(req.body);
 
     const userEntity = new UserEntity();
     const response = await userEntity.getAllTenantsForOrg({
@@ -33,8 +32,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

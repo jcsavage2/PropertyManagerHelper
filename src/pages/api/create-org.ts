@@ -26,8 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

@@ -157,10 +157,7 @@ const PropertySelector = ({
         </div>
       )}
       <div className="flex flex-row items-center justify-center mb-2 mt-4">
-        <p className="font-bold mr-2">
-          {' '}
-          {selectedProperty ? `Selected Property: ` : `Select Property* `}{' '}
-        </p>
+        <p className="font-bold mr-2"> {selectedProperty ? `Selected Property: ` : `Select Property* `} </p>
         {selectedProperty && (
           <p>
             {selectedProperty.address} {selectedProperty.unit}
@@ -195,26 +192,19 @@ const PropertySelector = ({
                     <p className="text-sm text-gray-800">
                       {o.address.trim()} {o.unit ? ' ' + o.unit : ''}
                     </p>
-                    <p className="text-sm font-light">
-                      {o.city + ', ' + o.state + ' ' + o.postalCode}
-                    </p>
+                    <p className="text-sm font-light">{o.city + ', ' + o.state + ' ' + o.postalCode}</p>
                   </div>
                 );
               })
             : null}
           {filteredOptions.length === 0 && !selectedProperty && (
-            <p className="text-base text-red-500 text-center">
-              Sorry, no properties found. Try creating a property first.
-            </p>
+            <p className="text-base text-red-500 text-center">Sorry, no properties found. Try creating a property first.</p>
           )}
         </>
       )}
 
       {selectedProperty && (
-        <button
-          className="bg-slate-200 py-1 px-2 rounded w-full hover:bg-slate-300"
-          onClick={() => setSelectedProperty(null)}
-        >
+        <button className="bg-slate-200 py-1 px-2 rounded w-full hover:bg-slate-300" onClick={() => setSelectedProperty(null)}>
           Select Other Property
         </button>
       )}

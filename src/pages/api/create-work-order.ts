@@ -26,26 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
-    const {
-      property,
-      permissionToEnter,
-      creatorEmail,
-      creatorName,
-      images,
-      createdByType,
-      tenantEmail,
-      organization,
-      tenantName,
-      pmEmail,
-      pmName,
-      woId,
-    } = body;
+    const { property, permissionToEnter, creatorEmail, creatorName, images, createdByType, tenantEmail, organization, tenantName, pmEmail, pmName, woId } = body;
 
     if (createdByType !== USER_TYPE.TENANT && (!tenantEmail || !tenantName || !pmName)) {
-      throw new ApiError(
-        API_STATUS.BAD_REQUEST,
-        "Missing tenant email, name, or pmName when creating a WO on a tenant's behalf."
-      );
+      throw new ApiError(API_STATUS.BAD_REQUEST, "Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
     }
 
     const derivedTenantEmail = createdByType === USER_TYPE.TENANT ? creatorEmail : tenantEmail!;
@@ -82,9 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       unit: property.unit,
     });
 
-    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
-      generateKey(ENTITY_KEY.WORK_ORDER, woId)
-    )}`;
+    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
 
     /** SEND THE EMAIL TO THE USER */
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
@@ -112,8 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
       from: 'pillar@pillarhq.co',
-      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${toTitleCase(body.property.address) ?? ''
-        } ${toTitleCase(body.property.unit) ?? ''}`,
+      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${toTitleCase(body.property.address) ?? ''} ${toTitleCase(body.property.unit) ?? ''}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -203,15 +184,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           </table>
           <h2 style="font-size: 20px;">Chat History:</p>
           <div style="font-size: 14px;">
-            ${body.messages
-          ?.map(
-            (m: ChatCompletionRequestMessage) =>
-              `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(
-                m.role
-              )}: </span>${m.content}</p>`
-          )
-          .join(' ') ?? 'No user chat history'
-        }
+            ${
+              body.messages
+                ?.map((m: ChatCompletionRequestMessage) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(m.role)}: </span>${m.content}</p>`)
+                .join(' ') ?? 'No user chat history'
+            }
           </div>
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
@@ -305,8 +282,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

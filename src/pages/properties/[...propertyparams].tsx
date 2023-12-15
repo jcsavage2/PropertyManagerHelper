@@ -147,7 +147,7 @@ export default function PropertyPage() {
   };
 
   const handleAddRemoveTenantToProperty = async (_tenantEmail: string | undefined, _tenantName: string | undefined, remove: boolean) => {
-    if (!_tenantEmail || !_tenantName) return
+    if (!_tenantEmail || !_tenantName) return;
     setTenantsReassigning(true);
     try {
       if (!user || userType !== ENTITIES.PROPERTY_MANAGER) {

@@ -88,22 +88,16 @@ export const ImportTenantsModal = ({
 
   const renderPreUploadTenantCard = (tenant: ImportTenant, index: number) => {
     return (
-      <div
-        className="flex flex-row justify-between items-center w-full p-2 first:mt-0 mt-2 border-2 rounded border-slate-300"
-        key={index}
-      >
+      <div className="flex flex-row justify-between items-center w-full p-2 first:mt-0 mt-2 border-2 rounded border-slate-300" key={index}>
         <div className="flex flex-col text-gray-600 text-sm">
           <p className="font-bold">{toTitleCase(tenant.tenantName ?? '')}</p>
           <p className="mb-1">{tenant.tenantEmail}</p>
           <div>
             <p>
-              {tenant.property?.address && toTitleCase(tenant.property?.address)}{' '}
-              {tenant.property?.unit && toTitleCase(tenant.property.unit)}
+              {tenant.property?.address && toTitleCase(tenant.property?.address)} {tenant.property?.unit && toTitleCase(tenant.property.unit)}
             </p>
             <p>
-              {tenant.property?.city && toTitleCase(tenant.property?.city)},{' '}
-              {tenant.property?.state && tenant.property?.state.toUpperCase()}{' '}
-              {tenant.property?.postalCode}
+              {tenant.property?.city && toTitleCase(tenant.property?.city)}, {tenant.property?.state && tenant.property?.state.toUpperCase()} {tenant.property?.postalCode}
             </p>
           </div>
           {tenant.error && (
@@ -177,14 +171,7 @@ export const ImportTenantsModal = ({
     async (parsed: any[]) => {
       setPreImportTenantsLoading(true);
       try {
-        if (
-          !user ||
-          !user.email ||
-          !user.name ||
-          userType !== USER_TYPE.PROPERTY_MANAGER ||
-          !user?.roles?.includes(ENTITIES.PROPERTY_MANAGER) ||
-          !user.organization
-        ) {
+        if (!user || !user.email || !user.name || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(ENTITIES.PROPERTY_MANAGER) || !user.organization) {
           alert('User must be a property manager part of an organization to import tenants');
           return;
         }
@@ -260,8 +247,7 @@ export const ImportTenantsModal = ({
               organization: user.organization,
               organizationName: user.organizationName,
               error: undefined,
-              warning:
-                'Property already exists, this tenant will be added to the existing property at this address',
+              warning: 'Property already exists, this tenant will be added to the existing property at this address',
             });
           } else {
             const property = validatePropertyWithId.parse({
@@ -286,10 +272,7 @@ export const ImportTenantsModal = ({
               createNewProperty: true,
               organization: user.organization,
               organizationName: user.organizationName,
-              error:
-                missingFields.length > 0
-                  ? `Missing required field(s): {${missingFields}}`
-                  : undefined,
+              error: missingFields.length > 0 ? `Missing required field(s): {${missingFields}}` : undefined,
             });
           }
 
@@ -305,11 +288,7 @@ export const ImportTenantsModal = ({
   );
 
   const handleImportTenants = async () => {
-    if (
-      !user ||
-      userType !== USER_TYPE.PROPERTY_MANAGER ||
-      !user.roles?.includes(ENTITIES.PROPERTY_MANAGER)
-    ) {
+    if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(ENTITIES.PROPERTY_MANAGER)) {
       alert(USER_PERMISSION_ERROR);
       return;
     }
@@ -393,27 +372,15 @@ export const ImportTenantsModal = ({
         <div className="w-full mt-1">
           <h1 className={`text-center text-lg font-bold`}>Import Tenants</h1>
         </div>
-        <button
-          className="bg-blue-200 h-7 w-7 flex items-center justify-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          onClick={onClose}
-        >
+        <button className="bg-blue-200 h-7 w-7 flex items-center justify-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={onClose}>
           X
         </button>
       </div>
       <div className="clear-right mt-6 w-full">
         <div className="mb-4 flex flex-col justify-center items-center mx-auto text-slate-500">
-          <p className="text-center mb-2 ">
-            To add tenants in bulk, upload a .csv or .xls/.xlsx file
-          </p>
+          <p className="text-center mb-2 ">To add tenants in bulk, upload a .csv or .xls/.xlsx file</p>
           <div className="flex flex-row items-center">
-            <input
-              className="text-center mx-auto w-72 py-4 pr-4"
-              type="file"
-              name="fileUpload"
-              id="fileUpload"
-              accept=".xls, .xlsx, .csv"
-              onChange={handleFileUpload}
-            />
+            <input className="text-center mx-auto w-72 py-4 pr-4" type="file" name="fileUpload" id="fileUpload" accept=".xls, .xlsx, .csv" onChange={handleFileUpload} />
             <button
               onClick={() => {
                 setUploadList([]);
@@ -438,10 +405,7 @@ export const ImportTenantsModal = ({
             <p>{isMobile ? 'Template csv' : 'Download csv template'}</p>
             <AiOutlineLink className="ml-1" fontSize={15} />
           </div>
-          <div
-            onClick={fetchFile('xls')}
-            className="flex flex-row items-center pl-3 hover:cursor-pointer hover:underline"
-          >
+          <div onClick={fetchFile('xls')} className="flex flex-row items-center pl-3 hover:cursor-pointer hover:underline">
             <p>{isMobile ? 'Template xls' : 'Download xls template'}</p>
             <AiOutlineLink className="ml-1" fontSize={15} />
           </div>
@@ -465,13 +429,8 @@ export const ImportTenantsModal = ({
 
         {importTenantsLoading && uploadList.length > 1 && (
           <div className="bg-slate-200 w-full h-6 text-center rounded mt-4">
-            <div
-              className="absolute h-6 bg-blue-300 rounded"
-              style={{ width: formatProgressToPercent(importTenantProgress).toString() + '%' }}
-            ></div>
-            <div className="relative h-full w-full">
-              {formatProgressToPercent(importTenantProgress)} %
-            </div>
+            <div className="absolute h-6 bg-blue-300 rounded" style={{ width: formatProgressToPercent(importTenantProgress).toString() + '%' }}></div>
+            <div className="relative h-full w-full">{formatProgressToPercent(importTenantProgress)} %</div>
           </div>
         )}
 
@@ -493,9 +452,7 @@ export const ImportTenantsModal = ({
           {importTenantsLoading || preImportTenantsLoading ? (
             <LoadingSpinner />
           ) : uploadList.length ? (
-            'Create ' +
-            uploadList.length.toString() +
-            (uploadList.length > 1 ? ' Tenants' : ' Tenant')
+            'Create ' + uploadList.length.toString() + (uploadList.length > 1 ? ' Tenants' : ' Tenant')
           ) : (
             'Import Tenants'
           )}

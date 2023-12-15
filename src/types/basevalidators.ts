@@ -8,12 +8,7 @@ export const requiredNumber = z.coerce.number();
 export const requiredString = z.string().min(1, { message: 'Input is required' }).trim();
 export const upperCaseRequiredString = requiredString.toUpperCase();
 export const lowerCaseRequiredString = requiredString.toLowerCase();
-export const lowerCaseRequiredEmail = z
-  .string()
-  .email({ message: 'Please use a valid email' })
-  .min(1, { message: 'Input is required' })
-  .toLowerCase()
-  .trim();
+export const lowerCaseRequiredEmail = z.string().email({ message: 'Please use a valid email' }).min(1, { message: 'Input is required' }).toLowerCase().trim();
 
 //Empty strings resolve to undefined
 export const optionalString = z
@@ -53,12 +48,7 @@ export const nullableString = z
   .transform((val) => (val?.length ? val : null));
 
 // -- Addresses -- //
-export const zipCode = z.coerce
-  .string()
-  .min(1, { message: 'Input is required' })
-  .max(10, { message: 'Input must be a zip code' })
-  .toUpperCase()
-  .trim();
+export const zipCode = z.coerce.string().min(1, { message: 'Input is required' }).max(10, { message: 'Input must be a zip code' }).toUpperCase().trim();
 //Default to the US for now
 export const country = z.string().min(1).max(2).trim().toUpperCase().default('US');
 export const validateProperty = z.object({
@@ -86,11 +76,7 @@ export const validatePropertyWithId = z.object({
 
 // -- Other -- //
 export const validatePTE = z.enum([PTE.YES, PTE.NO]);
-export const validateUserType = z.enum([
-  USER_TYPE.TENANT,
-  USER_TYPE.TECHNICIAN,
-  USER_TYPE.PROPERTY_MANAGER,
-]);
+export const validateUserType = z.enum([USER_TYPE.TENANT, USER_TYPE.TECHNICIAN, USER_TYPE.PROPERTY_MANAGER]);
 export const validateStartKey = z.any().optional();
 
 export const validateInviteStatusFilter = z.object({

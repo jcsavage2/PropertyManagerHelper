@@ -14,9 +14,7 @@ describe('Go to Home Page', () => {
     cy.visit('http://localhost:3000/work-order-chatbot');
   });
   it('Pro user identifies issue in one response', () => {
-    cy.get('[data-testid="userMessageInput"]').type(
-      'Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right.'
-    );
+    cy.get('[data-testid="userMessageInput"]').type('Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right.');
     cy.get('[data-testid="send"]').click();
     cy.wait(5000);
     cy.get('[data-testid="response-1"]').should(

@@ -43,9 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       await sendgrid.send({
         to: tenantEmail,
         from: 'pillar@pillarhq.co',
-        subject: `${toTitleCase(pmName)} @ ${toTitleCase(
-          organizationName
-        )} re-invited you to join Pillar`,
+        subject: `${toTitleCase(pmName)} @ ${toTitleCase(organizationName)} re-invited you to join Pillar`,
         html: emailBody,
       });
 
@@ -58,8 +56,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

@@ -21,12 +21,7 @@ export type AddCommentModalProps = {
   onSuccessfulAdd: () => void;
 };
 
-export const AddCommentModal = ({
-  addCommentModalIsOpen,
-  workOrderId,
-  setAddCommentModalIsOpen,
-  onSuccessfulAdd,
-}: AddCommentModalProps) => {
+export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddCommentModalIsOpen, onSuccessfulAdd }: AddCommentModalProps) => {
   const { user } = useSessionUser();
   const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
@@ -95,18 +90,9 @@ export const AddCommentModal = ({
   );
 
   return (
-    <Modal
-      isOpen={addCommentModalIsOpen}
-      onAfterOpen={() => toggleBodyScroll(true)}
-      onRequestClose={closeModal}
-      contentLabel="Add Comment Modal"
-      style={customStyles}
-    >
+    <Modal isOpen={addCommentModalIsOpen} onAfterOpen={() => toggleBodyScroll(true)} onRequestClose={closeModal} contentLabel="Add Comment Modal" style={customStyles}>
       <div className="w-full text-right mb-2">
-        <button
-          className="bg-blue-200 h-6 w-6 text-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          onClick={closeModal}
-        >
+        <button className="bg-blue-200 h-6 w-6 text-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
           X
         </button>
       </div>
@@ -124,17 +110,11 @@ export const AddCommentModal = ({
             required: true,
           })}
         />
-        {errors.comment && (
-          <p className="text-red-500 text-xs mt-1 italic">{errors.comment.message}</p>
-        )}
+        {errors.comment && <p className="text-red-500 text-xs mt-1 italic">{errors.comment.message}</p>}
         <input type="hidden" {...register('workOrderId')} value={workOrderId} />
         <input type="hidden" {...register('email')} value={user?.email ?? ''} />
         <input type="hidden" {...register('name')} value={altName ?? user?.name ?? ''} />
-        <button
-          className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          type="submit"
-          disabled={isSubmitting || !isValid}
-        >
+        <button className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner /> : 'Add Comment'}
         </button>
       </form>

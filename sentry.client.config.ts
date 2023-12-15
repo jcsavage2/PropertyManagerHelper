@@ -21,7 +21,7 @@ if (!process.env.NEXT_PUBLIC_IS_LOCAL) {
     replaysSessionSampleRate: 0.1,
 
     // You can remove this option if you're not planning to use the Sentry Session Replay feature:
-    integrations: [ 
+    integrations: [
       new Sentry.Replay({
         // Additional Replay configuration goes in here, for example:
         maskAllText: true,
