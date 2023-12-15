@@ -30,12 +30,13 @@ export const GetUserSchema = z.object({
 
 export const GetUsersSchema = z.object({
   emails: z.array(lowerCaseRequiredEmail),
-})
+});
 
 export const UpdateUserSchema = z.object({
   pk: requiredString,
   sk: requiredString,
   hasSeenDownloadPrompt: z.boolean().optional(),
+  name: lowerCaseOptionalString
 });
 
 export const AddRemoveTenantToPropertySchema = z.object({
