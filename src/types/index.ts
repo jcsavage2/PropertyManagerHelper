@@ -65,7 +65,7 @@ export type AddressOption = {
 
 export type ChatMessage = ChatCompletionRequestMessage & {
   ksuId?: string;
-}
+};
 
 export type WoStatus = (typeof WO_STATUS)[keyof typeof WO_STATUS];
 

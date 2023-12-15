@@ -27,8 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const body: CreateTechnician = CreateTechnicianSchema.parse(req.body);
-    const { technicianEmail, technicianName, organization, organizationName, pmEmail, pmName } =
-      body;
+    const { technicianEmail, technicianName, organization, organizationName, pmEmail, pmName } = body;
 
     const userEntity = new UserEntity();
 
@@ -103,9 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
           <h1>You've Been Invited To Create a Technician Account With Pillar</h1>
-          <a href="${authLink}">Login to Pillar to see view work orders for ${toTitleCase(
-            organizationName
-          )}</a>
+          <a href="${authLink}">Login to Pillar to see view work orders for ${toTitleCase(organizationName)}</a>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
           </p>
@@ -118,8 +115,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

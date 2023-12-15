@@ -42,11 +42,7 @@ const OrgMethods = () => {
 
   return (
     <div className="w-full text-center">
-      <form
-        onSubmit={handleSubmit(handleCreateOrganization)}
-        className="w-1/2 mx-auto mt-4"
-        style={{ display: 'grid' }}
-      >
+      <form onSubmit={handleSubmit(handleCreateOrganization)} className="w-1/2 mx-auto mt-4" style={{ display: 'grid' }}>
         <input
           className="rounded px-1 border-solid border-2 border-slate-200"
           id="orgName"
@@ -57,11 +53,7 @@ const OrgMethods = () => {
           })}
         />
         {errors.orgName && <p className="text-red-500 text-xs italic">{errors.orgName.message}</p>}
-        <button
-          className="bg-blue-200 p-3 mt-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          type="submit"
-          disabled={isSubmitting || !isValid}
-        >
+        <button className="bg-blue-200 p-3 mt-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
           Create Organization
         </button>
       </form>

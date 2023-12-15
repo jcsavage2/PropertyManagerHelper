@@ -2,15 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { convertChatMessagesToOpenAI, generateKSUID, hasAllIssueInfo, renderToastError, toTitleCase } from '@/utils';
-import {
-  AddressOption,
-  AiJSONResponse,
-  ChatMessage,
-  ChatbotRequest,
-  CreateWorkOrder,
-  IssueInformation,
-  PTE_Type,
-} from '@/types';
+import { AddressOption, AiJSONResponse, ChatMessage, ChatbotRequest, CreateWorkOrder, IssueInformation, PTE_Type } from '@/types';
 import Select, { SingleValue } from 'react-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
@@ -20,11 +12,7 @@ import { AI_MESSAGE_START, API_STATUS, PTE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from 'react-modal';
 import * as amplitude from '@amplitude/analytics-browser';
-import {
-  ChatbotRequestSchema,
-  CreateWorkOrderSchema,
-  UpdateUserSchema,
-} from '@/types/customschemas';
+import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@/types/customschemas';
 import * as Sentry from '@sentry/react';
 
 export default function WorkOrderChatbot() {
@@ -70,9 +58,7 @@ export default function WorkOrderChatbot() {
       Object.values(user?.addresses)?.map(
         (address: any) =>
           ({
-            label: `${toTitleCase(address?.address)} ${
-              address?.unit ? toTitleCase(address?.unit) : ''
-            }`.trim(),
+            label: `${toTitleCase(address?.address)} ${address?.unit ? toTitleCase(address?.unit) : ''}`.trim(),
             value: address,
           }) as AddressOption
       ) ?? []
@@ -90,24 +76,13 @@ export default function WorkOrderChatbot() {
   useEffect(() => {
     if (isBrowser) {
       const isDesktop = window.innerWidth >= 800;
-      setPlatform(
-        isDesktop
-          ? 'Desktop'
-          : window.navigator.userAgent.toLowerCase().includes('android')
-          ? 'Android'
-          : 'iOS'
-      );
+      setPlatform(isDesktop ? 'Desktop' : window.navigator.userAgent.toLowerCase().includes('android') ? 'Android' : 'iOS');
     }
   }, [isBrowser]);
 
   useEffect(() => {
     const hasSeenDownloadModal = localStorage.getItem('Pillar::HAS_SEEN');
-    if (
-      (platform === 'iOS' || platform === 'Android') &&
-      user &&
-      !user?.hasSeenDownloadPrompt &&
-      !hasSeenDownloadModal
-    ) {
+    if ((platform === 'iOS' || platform === 'Android') && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
       async function updateUserHasSeenDownloadPrompt() {
         const params = UpdateUserSchema.parse({
           pk: user?.pk,
@@ -193,9 +168,7 @@ export default function WorkOrderChatbot() {
         workOrderId: woId,
       });
       if (!user || !user.organization || !user.pmEmail || !user.email) {
-        alert(
-          'Your user account is not set up properly, please contact your property manager for assistance.'
-        );
+        alert('Your user account is not set up properly, please contact your property manager for assistance.');
         return;
       }
 
@@ -235,16 +208,13 @@ export default function WorkOrderChatbot() {
         permissionToEnter,
         workOrderId: woId,
       });
-      toast.success(
-        'Successfully Submitted Work Order. An email has been sent to you as confirmation',
-        {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        }
-      );
+      toast.success('Successfully Submitted Work Order. An email has been sent to you as confirmation', {
+        position: toast.POSITION.TOP_CENTER,
+        draggable: false,
+      });
     } catch (error: any) {
       console.log({ error });
-      Sentry.captureException(error)
+      Sentry.captureException(error);
       amplitude.track('Submit Work Order', {
         status: 'failure',
         issueDescription,
@@ -340,13 +310,10 @@ export default function WorkOrderChatbot() {
         userMessage,
         messages: convertChatMessagesToOpenAI(messages),
         ...workOrder,
-        unitInfo:
-          parsedAddress.numBeds && parsedAddress.numBaths
-            ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms`
-            : '',
+        unitInfo: parsedAddress.numBeds && parsedAddress.numBaths ? `${parsedAddress.numBeds} bedrooms and ${parsedAddress.numBaths} bathrooms` : '',
         streetAddress: parsedAddress.address.toLowerCase(),
       });
-      
+
       const res = await fetch(process.env.NEXT_PUBLIC_CHAT_URL, {
         method: 'POST',
         headers: {
@@ -403,11 +370,7 @@ export default function WorkOrderChatbot() {
 
             const aiMessage = buffer.substring(aiMessageStart, aiMessageEnd);
             if (aiMessage.length > 0) {
-              setMessages([
-                ...messages,
-                { role: 'user', content: userMessage, ksuId: sentTimestamp },
-                { role: 'assistant', content: aiMessage },
-              ]);
+              setMessages([...messages, { role: 'user', content: userMessage, ksuId: sentTimestamp }, { role: 'assistant', content: aiMessage }]);
             }
           }
         }
@@ -420,20 +383,15 @@ export default function WorkOrderChatbot() {
     } catch (err: any) {
       let assistantMessage = 'Sorry - I had a hiccup on my end. Could you please try again?';
       console.log({ err });
-      Sentry.captureException(err)
+      Sentry.captureException(err);
 
       if (errorCount >= 1) {
-        assistantMessage =
-          'Sorry - Looks like I am having some connection issues right now. Feel free to try again later, or use the button below to submit your work order.';
+        assistantMessage = 'Sorry - Looks like I am having some connection issues right now. Feel free to try again later, or use the button below to submit your work order.';
       }
       setErrorCount((prev) => prev + 1);
 
       //Manually set assistant message and reset user message to their last input
-      setMessages([
-        ...messages,
-        { role: 'user', content: userMessage, ksuId: sentTimestamp },
-        { role: 'assistant', content: assistantMessage, ksuId: generateKSUID() },
-      ]);
+      setMessages([...messages, { role: 'user', content: userMessage, ksuId: sentTimestamp }, { role: 'assistant', content: assistantMessage, ksuId: generateKSUID() }]);
       setUserMessage(lastUserMessage);
     }
     setIsResponding(false);
@@ -486,11 +444,7 @@ export default function WorkOrderChatbot() {
   }
 
   if (!user?.roles?.includes(USER_TYPE.TENANT)) {
-    return (
-      <p className="p-4">
-        User must have the tenant Role assigned to them by a property manager or Owner.
-      </p>
-    );
+    return <p className="p-4">User must have the tenant Role assigned to them by a property manager or Owner.</p>;
   }
   const customStyles = {
     content: {
@@ -519,25 +473,14 @@ export default function WorkOrderChatbot() {
 
   return (
     <div id="chatbot">
-      <Modal
-        isOpen={downloadModalIsOpen}
-        onRequestClose={closeModal}
-        contentLabel="Add Comment Modal"
-        ariaHideApp={false}
-        style={customStyles}
-      >
+      <Modal isOpen={downloadModalIsOpen} onRequestClose={closeModal} contentLabel="Add Comment Modal" ariaHideApp={false} style={customStyles}>
         <div className="p-6">
-          <h2 className="text-center text-2xl font-bold mb-4">
-            Instructions to Save Pillar App to Your Home Screen
-          </h2>
+          <h2 className="text-center text-2xl font-bold mb-4">Instructions to Save Pillar App to Your Home Screen</h2>
 
           <div className="space-y-2">
             {platform === 'iOS' ? (
               <>
-                <p>
-                  1. Tap the share icon (square with an arrow pointing out of it) at the bottom of
-                  the screen.
-                </p>
+                <p>1. Tap the share icon (square with an arrow pointing out of it) at the bottom of the screen.</p>
                 <p>{'2. Scroll down and tap "Add to Home Screen".'}</p>
                 <p>{'3. Name it as you wish and then tap "Add" on the top-right.'}</p>
               </>
@@ -547,16 +490,11 @@ export default function WorkOrderChatbot() {
                 <p>{'2. Tap "Add to Home screen".'}</p>
               </>
             ) : (
-              <p>
-                Your device is not recognized. Please refer to its documentation for instructions.
-              </p>
+              <p>Your device is not recognized. Please refer to its documentation for instructions.</p>
             )}
           </div>
 
-          <button
-            onClick={closeModal}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
+          <button onClick={closeModal} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             Close
           </button>
         </div>
@@ -564,17 +502,9 @@ export default function WorkOrderChatbot() {
       <main style={{ height: '92dvh' }} className="text-center">
         <div>
           <div>
-            <div
-              id="container"
-              style={{ margin: '1dvh auto 0 auto ' }}
-              className="w-11/12 lg:w-6/12 md:w-7/12 sm:w-9/12 mx-auto"
-            >
+            <div id="container" style={{ margin: '1dvh auto 0 auto ' }} className="w-11/12 lg:w-6/12 md:w-7/12 sm:w-9/12 mx-auto">
               <div className="shadow-xl rounded-lg">
-                <div
-                  id="chatbox-header"
-                  style={{ padding: '0.5dvh 0' }}
-                  className="text-left bg-blue-200 rounded-t-lg"
-                >
+                <div id="chatbox-header" style={{ padding: '0.5dvh 0' }} className="text-left bg-blue-200 rounded-t-lg">
                   <h3 className="text-xl my-auto text-gray-600 text-center">PILLAR Chat</h3>
                 </div>
                 <div
@@ -588,137 +518,78 @@ export default function WorkOrderChatbot() {
                   {renderChatHeader()}
                   {!!messages?.length &&
                     messages.map((message, index) => (
-                      <div
-                        key={`${message.content?.[0] ?? index}-${index}`}
-                        className="mb-3 break-all"
-                      >
-                        <div
-                          className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${
-                            !!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'
-                          }`}
-                        >
-                          {workOrder.issueDescription &&
-                            index === lastSystemMessageIndex &&
-                            !submitAnywaysSkip && (
-                              <div className="text-left mb-1 text-gray-700">
-                                <h3 className="text-left font-semibold">
-                                  Issue:{' '}
-                                  <span className="font-normal">{`${workOrder.issueDescription}`}</span>
-                                </h3>
-                              </div>
-                            )}
-                          {workOrder.issueLocation &&
-                            index === lastSystemMessageIndex &&
-                            !submitAnywaysSkip && (
-                              <div className="text-left mb-1 text-gray-700">
-                                <h3 className="text-left font-semibold">
-                                  Issue Location:{' '}
-                                  <span className="font-normal">{workOrder.issueLocation}</span>
-                                </h3>
-                              </div>
-                            )}
-                          <div
-                            data-testid={`response-${index}`}
-                            className="whitespace-pre-line break-keep"
-                          >
+                      <div key={`${message.content?.[0] ?? index}-${index}`} className="mb-3 break-all">
+                        <div className={`text-gray-800 w-11/12 rounded-md py-2 px-4 inline-block ${!!(index % 2) ? 'bg-gray-200 text-left' : 'bg-blue-100 text-right'}`}>
+                          {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
+                            <div className="text-left mb-1 text-gray-700">
+                              <h3 className="text-left font-semibold">
+                                Issue: <span className="font-normal">{`${workOrder.issueDescription}`}</span>
+                              </h3>
+                            </div>
+                          )}
+                          {workOrder.issueLocation && index === lastSystemMessageIndex && !submitAnywaysSkip && (
+                            <div className="text-left mb-1 text-gray-700">
+                              <h3 className="text-left font-semibold">
+                                Issue Location: <span className="font-normal">{workOrder.issueLocation}</span>
+                              </h3>
+                            </div>
+                          )}
+                          <div data-testid={`response-${index}`} className="whitespace-pre-line break-keep">
                             <p>{message.content}</p>{' '}
-                            {message.role === 'assistant' &&
-                              index === lastSystemMessageIndex &&
-                              isTyping &&
-                              aiMessageEnded && (
-                                <LoadingSpinner
-                                  containerClass="mt-2"
-                                  spinnerClass="spinner-small"
-                                />
-                              )}
-                          </div>
-                          {index === lastSystemMessageIndex &&
-                            (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
-                              <>
-                                <div
-                                  data-testid="final-response"
-                                  style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '1fr',
-                                    rowGap: '0rem',
-                                    marginTop: '1rem',
-                                  }}
-                                >
-                                  {submitAnywaysSkip && (
-                                    <>
-                                      <label htmlFor="issueDescription">
-                                        {isMobile ? 'Issue*' : 'Issue Details*'}
-                                      </label>
-                                      <input
-                                        className="rounded px-1"
-                                        id="issueDescription"
-                                        type={'text'}
-                                        value={issueDescription}
-                                        onChange={handleIssueDescriptionChange}
-                                      />
-                                      <label htmlFor="issueLocation">
-                                        {isMobile ? 'Location*' : 'Issue Location*'}
-                                      </label>
-                                      <input
-                                        className="rounded px-1"
-                                        id="issueLocation"
-                                        type={'text'}
-                                        value={issueLocation}
-                                        onChange={handleIssueLocationChange}
-                                      />
-                                    </>
-                                  )}
-                                  <label htmlFor="additionalDetails">
-                                    {isMobile ? 'Details' : 'Additional Details'}
-                                  </label>
-                                  <input
-                                    className="rounded px-1"
-                                    id="additionalDetails"
-                                    type={'text'}
-                                    value={additionalDetails}
-                                    onChange={handleAdditionalDetailsChange}
-                                  />
-                                </div>
-                                <form className="mt-2" onSubmit={() => {}}>
-                                  <input
-                                    type="file"
-                                    multiple
-                                    name="image"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                  />
-                                </form>
-                                <p className="mt-2">
-                                  Permission To Enter{' '}
-                                  {selectedAddress
-                                    ? toTitleCase(selectedAddress.label)
-                                    : 'Property'}
-                                  *{' '}
-                                </p>
-                                <div>
-                                  <input
-                                    className="rounded px-1"
-                                    id="permission-yes"
-                                    name={'permission'}
-                                    type={'radio'}
-                                    value={PTE.YES}
-                                    checked={permissionToEnter === PTE.YES}
-                                    onChange={handlePermissionChange}
-                                  />
-                                  <label htmlFor="permission-yes">{PTE.YES}</label>
-                                  <input
-                                    className="rounded px-1 ml-4"
-                                    id="permission-no"
-                                    name={'permission'}
-                                    type={'radio'}
-                                    value={PTE.NO}
-                                    checked={permissionToEnter === PTE.NO}
-                                    onChange={handlePermissionChange}
-                                  />
-                                  <label htmlFor="permission-no">{PTE.NO}</label>
-                                </div>
-                              </>
+                            {message.role === 'assistant' && index === lastSystemMessageIndex && isTyping && aiMessageEnded && (
+                              <LoadingSpinner containerClass="mt-2" spinnerClass="spinner-small" />
                             )}
+                          </div>
+                          {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
+                            <>
+                              <div
+                                data-testid="final-response"
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '1fr',
+                                  rowGap: '0rem',
+                                  marginTop: '1rem',
+                                }}
+                              >
+                                {submitAnywaysSkip && (
+                                  <>
+                                    <label htmlFor="issueDescription">{isMobile ? 'Issue*' : 'Issue Details*'}</label>
+                                    <input className="rounded px-1" id="issueDescription" type={'text'} value={issueDescription} onChange={handleIssueDescriptionChange} />
+                                    <label htmlFor="issueLocation">{isMobile ? 'Location*' : 'Issue Location*'}</label>
+                                    <input className="rounded px-1" id="issueLocation" type={'text'} value={issueLocation} onChange={handleIssueLocationChange} />
+                                  </>
+                                )}
+                                <label htmlFor="additionalDetails">{isMobile ? 'Details' : 'Additional Details'}</label>
+                                <input className="rounded px-1" id="additionalDetails" type={'text'} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
+                              </div>
+                              <form className="mt-2" onSubmit={() => {}}>
+                                <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />
+                              </form>
+                              <p className="mt-2">Permission To Enter {selectedAddress ? toTitleCase(selectedAddress.label) : 'Property'}* </p>
+                              <div>
+                                <input
+                                  className="rounded px-1"
+                                  id="permission-yes"
+                                  name={'permission'}
+                                  type={'radio'}
+                                  value={PTE.YES}
+                                  checked={permissionToEnter === PTE.YES}
+                                  onChange={handlePermissionChange}
+                                />
+                                <label htmlFor="permission-yes">{PTE.YES}</label>
+                                <input
+                                  className="rounded px-1 ml-4"
+                                  id="permission-no"
+                                  name={'permission'}
+                                  type={'radio'}
+                                  value={PTE.NO}
+                                  checked={permissionToEnter === PTE.NO}
+                                  onChange={handlePermissionChange}
+                                />
+                                <label htmlFor="permission-no">{PTE.NO}</label>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -729,55 +600,36 @@ export default function WorkOrderChatbot() {
                       <div className="dot animate-loader animation-delay-400"></div>
                     </div>
                   )}
-                  {!isResponding &&
-                    !isTyping &&
-                    !submitAnywaysSkip &&
-                    !hasAllIssueInfo(workOrder) &&
-                    (issueDescription.length > 0 || errorCount > 0) && (
-                      <button
-                        onClick={() => {
-                          setSubmitAnywaysSkip(true);
-                          setMessages((prev) => {
-                            prev[prev.length - 1] = {
-                              role: 'assistant',
-                              content:
-                                'Please complete the form below. When complete, press submit to send your work order!',
-                              ksuId: generateKSUID(),
-                            };
-                            return prev;
-                          });
-                          if (issueDescription.length === 0) {
-                            setIssueDescription(userMessage);
-                          }
-                        }}
-                        className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
-                      >
-                        {'Submit Anyways?'}
-                      </button>
-                    )}
+                  {!isResponding && !isTyping && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
+                    <button
+                      onClick={() => {
+                        setSubmitAnywaysSkip(true);
+                        setMessages((prev) => {
+                          prev[prev.length - 1] = {
+                            role: 'assistant',
+                            content: 'Please complete the form below. When complete, press submit to send your work order!',
+                            ksuId: generateKSUID(),
+                          };
+                          return prev;
+                        });
+                        if (issueDescription.length === 0) {
+                          setIssueDescription(userMessage);
+                        }
+                      }}
+                      className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
+                    >
+                      {'Submit Anyways?'}
+                    </button>
+                  )}
                 </div>
-                <div
-                  id="chatbox-footer"
-                  className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center"
-                  style={{ height: '12dvh' }}
-                >
+                <div id="chatbox-footer" className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center" style={{ height: '12dvh' }}>
                   {(hasAllIssueInfo(workOrder) || submitAnywaysSkip) && messages.length > 1 ? (
                     <button
                       onClick={handleSubmitWorkOrder}
-                      disabled={
-                        issueDescription.length === 0 ||
-                        submittingWorkOrderLoading ||
-                        uploadingFiles
-                      }
+                      disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles}
                       className="text-white bg-blue-500 px-3 py-2 font-bold hover:bg-blue-900 rounded disabled:text-gray-200 disabled:bg-gray-400 disabled:hover:bg-gray-400"
                     >
-                      {submittingWorkOrderLoading ? (
-                        <LoadingSpinner />
-                      ) : uploadingFiles ? (
-                        'Files Uploading...'
-                      ) : (
-                        'Submit Work Order'
-                      )}
+                      {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? 'Files Uploading...' : 'Submit Work Order'}
                     </button>
                   ) : (
                     <form
@@ -785,12 +637,7 @@ export default function WorkOrderChatbot() {
                       style={{ display: 'grid', gridTemplateColumns: '9fr 1fr' }}
                       onKeyDown={(e) => {
                         //Users can press enter to submit the form, enter + shift to add a new line
-                        if (
-                          e.key === 'Enter' &&
-                          !e.shiftKey &&
-                          !isResponding &&
-                          addressHasBeenSelected
-                        ) {
+                        if (e.key === 'Enter' && !e.shiftKey && !isResponding && addressHasBeenSelected) {
                           e.preventDefault();
                           handleSubmitText(e);
                         }
@@ -800,26 +647,14 @@ export default function WorkOrderChatbot() {
                         value={userMessage}
                         data-testid="userMessageInput"
                         className={`p-2 w-full border-solid border-2 border-gray-200 rounded-md resize-none`}
-                        placeholder={
-                          messages.length
-                            ? hasAllIssueInfo(workOrder)
-                              ? ''
-                              : ''
-                            : 'Tell us about your issue.'
-                        }
+                        placeholder={messages.length ? (hasAllIssueInfo(workOrder) ? '' : '') : 'Tell us about your issue.'}
                         onChange={handleChange}
                       />
                       <button
                         data-testid="send"
                         type="submit"
                         className="text-blue-500 px-1 ml-2 font-bold hover:text-blue-900 rounded disabled:text-gray-400 "
-                        disabled={
-                          isResponding ||
-                          isTyping ||
-                          !userMessage ||
-                          userMessage.length === 0 ||
-                          !addressHasBeenSelected
-                        }
+                        disabled={isResponding || isTyping || !userMessage || userMessage.length === 0 || !addressHasBeenSelected}
                       >
                         Send
                       </button>

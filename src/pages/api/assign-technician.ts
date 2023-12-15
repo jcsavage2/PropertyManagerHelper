@@ -70,9 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
-    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(
-      workOrderId
-    )}`;
+    const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(workOrderId)}`;
 
     /**
      * Send SMS message to the technician if they have a phone number.
@@ -100,9 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         twilioClient.messages.create({
           to: technicianUser.phone,
           from: '+18449092150',
-          body: `You've been assigned a work order in Pillar by ${toTitleCase(
-            pmName
-          )}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(property.address)}\n\n${
+          body: `You've been assigned a work order in Pillar by ${toTitleCase(pmName)}!\n\nIssue: ${issueDescription}\n\nAddress: ${toTitleCase(property.address)}\n\n${
             !!property.unit ? `${`Unit: ${toTitleCase(property.unit)}`}\n\n` : ``
           }${tenantName && `Tenant: ${toTitleCase(tenantName)}`}\n\n${
             permissionToEnter && `Permission To Enter: ${permissionToEnter}\n\n`
@@ -202,8 +198,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.error(error);
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

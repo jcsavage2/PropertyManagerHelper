@@ -137,12 +137,7 @@ export const AddWorkOrderModal = ({
           permissionToEnter: params.permissionToEnter,
           workOrderId: woId,
         });
-        if (
-          !user ||
-          userType !== USER_TYPE.PROPERTY_MANAGER ||
-          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
-        )
-          throw new Error(USER_PERMISSION_ERROR);
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
 
         const validatedBody = CreateWorkOrderSchema.parse({
           ...params,
@@ -203,10 +198,7 @@ export const AddWorkOrderModal = ({
       style={customStyles}
     >
       <div className="w-full text-center mb-2 h-6">
-        <button
-          className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          onClick={closeModal}
-        >
+        <button className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
           X Close
         </button>
         <p className="clear-left text-lg md:w-2/5 mx-auto pt-0.5">Create New Work Order</p>
@@ -221,9 +213,7 @@ export const AddWorkOrderModal = ({
             type={'text'}
             {...register('issueDescription', { required: true })}
           />
-          {errors.issueDescription && (
-            <p className="text-red-500 text-xs">{errors.issueDescription.message}</p>
-          )}
+          {errors.issueDescription && <p className="text-red-500 text-xs">{errors.issueDescription.message}</p>}
           <div className="mb-5">
             <Controller
               control={control}
@@ -240,27 +230,13 @@ export const AddWorkOrderModal = ({
                 />
               )}
             />
-            {errors.tenantEmail && (
-              <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>
-            )}
+            {errors.tenantEmail && <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>}
           </div>
           <div className="mb-5">
             <p className="mt-2">Permission To Enter Property* </p>
-            <input
-              className="rounded px-1"
-              id="permission-yes"
-              type={'radio'}
-              value={PTE.YES}
-              {...register('permissionToEnter')}
-            />
+            <input className="rounded px-1" id="permission-yes" type={'radio'} value={PTE.YES} {...register('permissionToEnter')} />
             <label htmlFor="permission-yes">{PTE.YES}</label>
-            <input
-              className="rounded px-1 ml-4"
-              id="permission-no"
-              type={'radio'}
-              value={PTE.NO}
-              {...register('permissionToEnter')}
-            />
+            <input className="rounded px-1 ml-4" id="permission-no" type={'radio'} value={PTE.NO} {...register('permissionToEnter')} />
             <label htmlFor="permission-no">{PTE.NO}</label>
           </div>
 
@@ -283,34 +259,14 @@ export const AddWorkOrderModal = ({
           {showAdditionalOptions && (
             <>
               <label htmlFor="issueLocation">Issue Location </label>
-              <input
-                className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
-                id="issueLocation"
-                type={'text'}
-                {...register('issueLocation')}
-              />
+              <input className="rounded px-1 border-solid border-2 border-slate-200 mb-5" id="issueLocation" type={'text'} {...register('issueLocation')} />
               <label htmlFor="additionalDetails">Additional Details </label>
-              <input
-                className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
-                id="additionalDetails"
-                type={'text'}
-                {...register('additionalDetails')}
-              />
+              <input className="rounded px-1 border-solid border-2 border-slate-200 mb-5" id="additionalDetails" type={'text'} {...register('additionalDetails')} />
             </>
           )}
         </div>
-        <button
-          className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          type="submit"
-          disabled={isSubmitting || !isValid || userLoading}
-        >
-          {isSubmitting ? (
-            <LoadingSpinner />
-          ) : userLoading ? (
-            'Loading user info...'
-          ) : (
-            'Add Work Order'
-          )}
+        <button className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid || userLoading}>
+          {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading user info...' : 'Add Work Order'}
         </button>
       </form>
     </Modal>

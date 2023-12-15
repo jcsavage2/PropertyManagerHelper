@@ -271,7 +271,7 @@ export class PropertyEntity {
       numBaths,
     });
 
-    if(newProperty && oldProperty.sk !== newProperty.sk) {
+    if (newProperty && oldProperty.sk !== newProperty.sk) {
       await this.delete({ pk: oldProperty.pk, sk: oldProperty.sk });
     }
 

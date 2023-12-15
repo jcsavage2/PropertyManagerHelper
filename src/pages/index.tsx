@@ -38,16 +38,11 @@ const Home = () => {
   return (
     <>
       <div className="text-center">
-        <h1 className={` ${isMobile ? 'text-xl' : 'text-2xl'} mt-6`}>
-          Welcome to Pillar {!!user?.organizationName && `@ ${user.organizationName}`}
-        </h1>
+        <h1 className={` ${isMobile ? 'text-xl' : 'text-2xl'} mt-6`}>Welcome to Pillar {!!user?.organizationName && `@ ${user.organizationName}`}</h1>
         <br />
         {user && user.email ? (
           <div className="flex flex-col justify-center w-full items-center">
-            <button
-              onClick={() => router.push('/work-orders')}
-              className="bg-blue-200 px-3 py-2 mb-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44"
-            >
+            <button onClick={() => router.push('/work-orders')} className="bg-blue-200 px-3 py-2 mb-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44">
               View work orders
             </button>
             <button

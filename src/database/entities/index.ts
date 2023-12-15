@@ -37,7 +37,7 @@ export function generateAddressSk({
   postalCode,
   unit,
 }: {
-  entityKey: string
+  entityKey: string;
   address: string;
   country: string;
   city: string;
@@ -63,37 +63,9 @@ export function generateAddressSk({
 }
 
 //Creates a new substring that contains an address in plain text
-export function createAddressString({
-  address,
-  city,
-  state,
-  postalCode,
-  unit,
-}: {
-  address: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  unit?: string;
-}) {
-  if(!unit) {
-    return (
-      [
-        address.toUpperCase(),
-        city.toUpperCase(),
-        state.toUpperCase(),
-        postalCode.toUpperCase(),
-      ].join(' ') + '###'
-    );
+export function createAddressString({ address, city, state, postalCode, unit }: { address: string; city: string; state: string; postalCode: string; unit?: string }) {
+  if (!unit) {
+    return [address.toUpperCase(), city.toUpperCase(), state.toUpperCase(), postalCode.toUpperCase()].join(' ') + '###';
   }
-  return (
-    [
-      address.toUpperCase(),
-      unit.toUpperCase(),
-      city.toUpperCase(),
-      state.toUpperCase(),
-      postalCode.toUpperCase(),
-      
-    ].join(' ') + '###'
-  );
+  return [address.toUpperCase(), unit.toUpperCase(), city.toUpperCase(), state.toUpperCase(), postalCode.toUpperCase()].join(' ') + '###';
 }
