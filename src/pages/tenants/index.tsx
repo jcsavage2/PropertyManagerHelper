@@ -20,7 +20,7 @@ import { DeleteEntity, DeleteUser, Property } from '@/types';
 import { useUserContext } from '@/context/user';
 import { DeleteEntitySchema, UpdateUserSchema } from '@/types/customschemas';
 import { MdModeEditOutline, MdClear } from 'react-icons/md';
-import { FaCheck } from 'react-icons/fa';
+import { BsCheckCircle, BsXCircle } from 'react-icons/bs';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -211,7 +211,7 @@ const Tenants = () => {
       toast.success("Successfully updated user's name!", { position: toast.POSITION.TOP_CENTER, draggable: false });
       setEditingTenant(null);
       setTenantNewName('');
-      fetchTenants(false, undefined, true);
+      fetchTenants(false, tenantSearchString, true);
     } catch (error) {
       console.log(error);
       toast.error((error as any) ?? "Error updating user's name", { position: toast.POSITION.TOP_CENTER, draggable: false });
@@ -283,7 +283,7 @@ const Tenants = () => {
           </div>
         }
       />
-      <div className="lg:max-w-5xl">
+      <div className="lg:max-w-7xl">
         <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Tenants</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
@@ -468,14 +468,14 @@ const Tenants = () => {
           <div className={`${tenantsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
             <div className="overflow-x-auto">
               {tenants && tenants.length > 0 && (
-                <table className="w-full border-spacing-x-10 table-auto">
+                <table className="w-full border-spacing-x-4 table table-lg">
                   <thead className="">
                     <tr className="text-left text-gray-400">
-                      <th className="font-normal w-52">Name</th>
-                      <th className="font-normal w-64">Email</th>
-                      <th className="font-normal w-36">Status</th>
-                      <th className="font-normal w-72">Primary Address</th>
-                      <th className="font-normal w-10">Created</th>
+                      <th className="font-normal">Name</th>
+                      <th className="font-normal">Email</th>
+                      <th className="font-normal">Status</th>
+                      <th className="font-normal">Primary Address</th>
+                      <th className="font-normal">Created</th>
                       <th className=""></th>
                     </tr>
                   </thead>
@@ -499,20 +499,21 @@ const Tenants = () => {
                                   type={'text'}
                                 />
                                 <button
+                                  className="ml-1"
                                   onClick={() => {
                                     handleChangeName();
                                   }}
                                 >
-                                  <FaCheck />
+                                  <BsCheckCircle />
                                 </button>
                                 <button
-                                  className="ml-3"
+                                  className="ml-1"
                                   onClick={() => {
                                     setEditingTenant(null);
                                     setTenantNewName('');
                                   }}
                                 >
-                                  <MdClear />
+                                  <BsXCircle />
                                 </button>
                               </>
                             ) : (
