@@ -13,14 +13,13 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import { toast } from 'react-toastify';
 import { CiCircleRemove } from 'react-icons/ci';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { MdClear } from 'react-icons/md';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { AiOutlineMail } from 'react-icons/ai';
 import { DEFAULT_DELETE_USER, INVITE_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
 import { DeleteEntity, DeleteUser, Property } from '@/types';
 import { useUserContext } from '@/context/user';
-import { DeleteEntitySchema, UpdateUserSchema } from '@/types/customschemas';
-import { MdModeEditOutline, MdClear } from 'react-icons/md';
-import { FaCheck } from 'react-icons/fa';
+import { DeleteEntitySchema } from '@/types/customschemas';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -38,12 +37,11 @@ const Tenants = () => {
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
   const [toDelete, setToDelete] = useState<DeleteUser>(DEFAULT_DELETE_USER);
   const [tenants, setTenants] = useState<IUser[]>([]);
-  const [editingTenant, setEditingTenant] = useState<IUser | null>(null);
-  const [tenantNewName, setTenantNewName] = useState('');
+  const [editingTenant, setEditingTenant] = useState<string>('');
   const [tenantsToReinvite, setTenantsToReinvite] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
   const [resendingInvite, setResendingInvite] = useState<boolean>(false);
-  const [tenantSearchString, setTenantSearchString] = useState('');
+  const [tenantSearchString, setTenantSearchString] = useState<string>('');
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>>({
     JOINED: true,
@@ -192,31 +190,7 @@ const Tenants = () => {
     },
     [user, altName, tenants]
   );
-
-  const handleEditTenantName: React.ChangeEventHandler<HTMLInputElement> = (event) => {
-    setTenantNewName(event.target.value);
-  };
-
-  const handleChangeName = async () => {
-    try {
-      if (!editingTenant) {
-        throw new Error('You Must be editing a Tenant');
-      }
-      const params = UpdateUserSchema.parse({
-        pk: editingTenant.pk,
-        sk: editingTenant.sk,
-        name: tenantNewName.toLowerCase(),
-      });
-      await axios.post('/api/update-user', params);
-      toast.success("Successfully updated user's name!", { position: toast.POSITION.TOP_CENTER, draggable: false });
-      setEditingTenant(null);
-      setTenantNewName('');
-      fetchTenants(false, undefined, true);
-    } catch (error) {
-      console.log(error);
-      toast.error((error as any) ?? "Error updating user's name", { position: toast.POSITION.TOP_CENTER, draggable: false });
-    }
-  };
+  console.log(editingTenant);
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
@@ -488,44 +462,13 @@ const Tenants = () => {
                       return (
                         <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
                           <td className="border-b border-t px-2 py-1">
-                            {editingTenant?.email === tenant.email ? (
+                            {editingTenant === tenant.email ? (
                               <>
-                                <input
-                                  onChange={handleEditTenantName}
-                                  autoFocus
-                                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
-                                  id="name"
-                                  value={toTitleCase(tenantNewName)}
-                                  type={'text'}
-                                />
-                                <button
-                                  onClick={() => {
-                                    handleChangeName();
-                                  }}
-                                >
-                                  <FaCheck />
-                                </button>
-                                <button
-                                  className="ml-3"
-                                  onClick={() => {
-                                    setEditingTenant(null);
-                                    setTenantNewName('');
-                                  }}
-                                >
-                                  <MdClear />
-                                </button>
+                                {`Selected!`} <button onClick={() => setEditingTenant(tenant.email)}>E</button>
                               </>
                             ) : (
                               <>
-                                {`${toTitleCase(tenant.name)}`}{' '}
-                                <button
-                                  onClick={() => {
-                                    setEditingTenant(tenant);
-                                    setTenantNewName(tenant.name);
-                                  }}
-                                >
-                                  <MdModeEditOutline />
-                                </button>
+                                {`${toTitleCase(tenant.name)}`} <button onClick={() => setEditingTenant(tenant.email)}>E</button>
                               </>
                             )}
                           </td>

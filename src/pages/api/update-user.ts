@@ -17,10 +17,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const body: UpdateUser = UpdateUserSchema.parse(req.body);
-    const { pk, sk, hasSeenDownloadPrompt, name } = body;
+    const { pk, sk, hasSeenDownloadPrompt } = body;
 
     const userEntity = new UserEntity();
-    const updatedUser = await userEntity.updateUser({ pk, sk, hasSeenDownloadPrompt, name });
+    const updatedUser = await userEntity.updateUser({ pk, sk, hasSeenDownloadPrompt });
 
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(updatedUser) });
   } catch (error: any) {
