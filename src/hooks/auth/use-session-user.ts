@@ -10,13 +10,7 @@ export const useSessionUser = () => {
   const pathname = typeof window !== 'undefined' && window.location?.pathname;
 
   //Only allow logged out users to see home, t&c, and privacy policy
-  if (
-    sessionStatus === 'unauthenticated' &&
-    pathname &&
-    pathname !== '/' &&
-    pathname !== '/terms-and-conditions' &&
-    pathname !== '/privacy-policy'
-  ) {
+  if (sessionStatus === 'unauthenticated' && pathname && pathname !== '/' && pathname !== '/terms-and-conditions' && pathname !== '/privacy-policy') {
     router.push('/');
   }
 

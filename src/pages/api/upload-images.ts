@@ -63,9 +63,7 @@ export default async function handler(req: any, res: any) {
     console.error(error);
     Sentry.captureException(error);
     //@ts-ignore
-    return res
-      .status(API_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ success: false, message: error.message });
+    return res.status(API_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
   }
 }
 

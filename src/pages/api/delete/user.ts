@@ -35,12 +35,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       if (tenant && tenant.addresses) {
         let promises = [];
         for (const propertyUUId of Object.keys(tenant.addresses)) {
-
-          promises.push(propertyEntity.addRemoveTenant({
-            propertyUUId,
-            tenantEmail: tenant.email,
-            remove: true,
-          }));
+          promises.push(
+            propertyEntity.addRemoveTenant({
+              propertyUUId,
+              tenantEmail: tenant.email,
+              remove: true,
+            })
+          );
         }
 
         await Promise.all(promises);

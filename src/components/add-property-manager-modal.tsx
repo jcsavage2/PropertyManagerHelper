@@ -141,6 +141,7 @@ export const AddPropertyManagerModal = ({
         </div>
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
+        <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
 
         <button className="bg-blue-200 btn hover:bg-blue-300" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner containerClass="h-10" /> : 'Create Property Manager'}

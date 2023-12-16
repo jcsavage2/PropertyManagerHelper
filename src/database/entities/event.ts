@@ -81,14 +81,11 @@ export class EventEntity {
    * @returns All events for a property
    */
   public async getPropertyEvents({ propertyId, startKey }: GetPropertyEvents) {
-    const { Items, LastEvaluatedKey } = await this.eventEntity.query(
-      generateKey(ENTITY_KEY.EVENT + ENTITY_KEY.PROPERTY, propertyId),
-      {
-        startKey,
-        reverse: true,
-        limit: PAGE_SIZE,
-      }
-    );
+    const { Items, LastEvaluatedKey } = await this.eventEntity.query(generateKey(ENTITY_KEY.EVENT + ENTITY_KEY.PROPERTY, propertyId), {
+      startKey,
+      reverse: true,
+      limit: PAGE_SIZE,
+    });
     startKey = LastEvaluatedKey as StartKey;
     return { events: Items ?? [], startKey };
   }
@@ -97,14 +94,11 @@ export class EventEntity {
    * @returns All events for a work order
    */
   public async getWOEvents({ workOrderId, startKey }: GetWorkOrderEvents) {
-    const { Items, LastEvaluatedKey } = await this.eventEntity.query(
-      generateKey(ENTITY_KEY.EVENT, workOrderId),
-      {
-        startKey,
-        reverse: true,
-        limit: PAGE_SIZE,
-      }
-    );
+    const { Items, LastEvaluatedKey } = await this.eventEntity.query(generateKey(ENTITY_KEY.EVENT, workOrderId), {
+      startKey,
+      reverse: true,
+      limit: PAGE_SIZE,
+    });
     startKey = LastEvaluatedKey as StartKey;
     return { events: Items ?? [], startKey };
   }

@@ -8,7 +8,7 @@ import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { Option, PTE_Type } from '@/types';
+import { AssignRemoveTechnician, DeleteWorkOrder, Option, PTE_Type, UpdateViewedWORequest } from '@/types';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { API_STATUS, PTE, WO_STATUS, TECHNICIAN_DELIM, USER_PERMISSION_ERROR } from '@/constants';
@@ -290,7 +290,7 @@ const WorkOrder = ({
           sk: workOrderId,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
-        });
+        } as DeleteWorkOrder);
         if (data.response) {
           router.push('/work-orders');
           toast.success('Work Order Deleted!', {
@@ -316,35 +316,24 @@ const WorkOrder = ({
       const actionType = actionMeta.action;
       if (actionType === 'select-option') {
         const selectedTechnician = actionMeta.option as Option;
-        await axios.post('/api/assign-technician', {
-          organization: user.organization,
-          workOrderId,
-          ksuID: workOrder.GSI1SK,
+        await axios.post('/api/update/work-order/assign-technician', {
+          pk: workOrderId,
           pmEmail: user.email,
           pmName: altName ?? user.name,
           technicianEmail: selectedTechnician.value,
           technicianName: selectedTechnician.label,
-          status: workOrder.status,
-          permissionToEnter: workOrder?.permissionToEnter,
-          issueDescription: workOrder?.issue,
-          tenantName: workOrder?.tenantName,
-          tenantEmail: workOrder?.tenantEmail,
-          oldAssignedTo: workOrder?.assignedTo ?? [],
-          property: workOrder?.address,
-        });
+        } as AssignRemoveTechnician);
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as Option;
         const technicianName = removedTechnician.label.includes(' (viewed)') ? removedTechnician.label.replace(' (viewed)', '') : removedTechnician.label;
 
-        await axios.post('/api/remove-technician', {
-          workOrderId: deconstructKey(workOrderId),
+        await axios.post('/api/update/work-order/remove-technician', {
+          pk: workOrderId,
           pmEmail: user.email,
           pmName: altName ?? user.name,
           technicianEmail: removedTechnician.value,
           technicianName,
-          oldAssignedTo: workOrder?.assignedTo ?? [],
-          oldViewedWO: workOrder?.viewedWO ?? [],
-        });
+        } as AssignRemoveTechnician);
       }
       await getWorkOrder();
       await getWorkOrderEvents(true);
@@ -381,16 +370,12 @@ const WorkOrder = ({
       const assignedToList = Array.from(workOrder.assignedTo);
       //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
       if ((assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) && !workOrder.viewedWO?.includes(user.email)) {
-        //Handle async update viewed list
-        const newViewedWOList: string[] = [...(workOrder.viewedWO ?? []), user.email];
-        const params = UpdateViewedWORequestSchema.parse({
+        await axios.post('/api/update/work-order/technician-viewed', {
           pk: workOrderId,
           sk: workOrderId,
-          email: user.email,
-          newViewedWOList,
+          technicianEmail: user.email,
           pmEmail: workOrder.pmEmail,
-        });
-        await axios.post('/api/update-viewed-wo-list', params);
+        } as UpdateViewedWORequest);
         await getWorkOrder();
       }
     };

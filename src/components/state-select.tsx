@@ -59,14 +59,14 @@ export const StateSelect = ({
   label,
   placeholder,
   isDirty,
-  selectClass
+  selectClass,
 }: {
   state: string;
   setState: React.Dispatch<SetStateAction<string>> | React.Dispatch<SetStateAction<string | null>>;
   label: string | null;
   placeholder?: string;
   isDirty?: boolean;
-  selectClass?: string
+  selectClass?: string;
 }) => {
   const handleSelectChange: ChangeEventHandler<HTMLSelectElement> = (event) => {
     setState(event.target.value);

@@ -76,16 +76,16 @@ export function generateKSUID() {
 export function setToShortenedString(set: Set<string> | string[]): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
-  const firstVal = toTitleCase(
-    arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]
-  );
+  const firstVal = toTitleCase(arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]);
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
 }
 
 //Turn a property object into a displayable string with that property information
 export function createPropertyDisplayString(property: Property, includeBedBath: boolean = true) {
   if (!property) return '';
-  const baseString = `${toTitleCase(property.address)} ${property.unit ? ' ' + toTitleCase(property.unit) : ''}, ${toTitleCase(property.city)}, ${property.state.toUpperCase()} ${property.postalCode}`;
+  const baseString = `${toTitleCase(property.address)} ${property.unit ? ' ' + toTitleCase(property.unit) : ''}, ${toTitleCase(
+    property.city
+  )}, ${property.state.toUpperCase()} ${property.postalCode}`;
   return includeBedBath ? baseString + ` ${property.numBeds} Bed ${property.numBaths} Bath` : baseString;
 }
 
@@ -119,11 +119,7 @@ export function toggleBodyScroll(open: boolean) {
   }
 }
 
-export function getInviteTenantSendgridEmailBody(
-  tenantName: string,
-  authLink: string,
-  pmName: string
-): string {
+export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: string, pmName: string): string {
   const displayPmName = toTitleCase(pmName);
   const displayTenantName = toTitleCase(tenantName);
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

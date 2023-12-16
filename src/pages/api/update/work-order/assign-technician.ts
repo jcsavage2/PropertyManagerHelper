@@ -3,13 +3,13 @@ import { WorkOrderEntity } from '@/database/entities/work-order';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
-import { options } from './auth/[...nextauth]';
+import { options } from '../../auth/[...nextauth]';
 import { deconstructKey, toTitleCase } from '@/utils';
 import twilio from 'twilio';
 import { UserEntity } from '@/database/entities/user';
 import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
-import { ApiError, ApiResponse } from './_types';
-import { MISSING_ENV, errorToResponse, initializeSendgrid } from './_utils';
+import { ApiError, ApiResponse } from '../../_types';
+import { MISSING_ENV, errorToResponse, initializeSendgrid } from '../../_utils';
 import { AssignRemoveTechnician } from '@/types';
 import { init, track } from '@amplitude/analytics-node';
 import * as Sentry from '@sentry/nextjs';
@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       technicianName,
     });
 
-    if(!updatedWO) {
+    if (!updatedWO) {
       throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Error assigning technician, updating work order partition failed');
     }
 
@@ -76,9 +76,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         twilioClient.messages.create({
           to: technicianUser.phone,
           from: '+18449092150',
-          body: `You've been assigned a work order in Pillar by ${toTitleCase(pmName)}!\n\nIssue: ${updatedWO?.issue}\n\nAddress: ${toTitleCase(updatedWO.address?.address)}\n\n${
-            !!updatedWO.address?.unit ? `${`Unit: ${toTitleCase(updatedWO.address.unit)}`}\n\n` : ``
-          }${updatedWO.tenantName && `Tenant: ${toTitleCase(updatedWO.tenantName)}`}\n\n
+          body: `You've been assigned a work order in Pillar by ${toTitleCase(pmName)}!\n\nIssue: ${updatedWO?.issue}\n\nAddress: ${toTitleCase(
+            updatedWO.address?.address
+          )}\n\n${!!updatedWO.address?.unit ? `${`Unit: ${toTitleCase(updatedWO.address.unit)}`}\n\n` : ``}${
+            updatedWO.tenantName && `Tenant: ${toTitleCase(updatedWO.tenantName)}`
+          }\n\n
           ${updatedWO.permissionToEnter && `Tenant: ${updatedWO.permissionToEnter}`}\n\n
           View the full work order at ${workOrderLink}\n\n 
           `,

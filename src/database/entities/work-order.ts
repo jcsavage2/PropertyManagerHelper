@@ -290,6 +290,24 @@ export class WorkOrderEntity {
     return primaryWO;
   }
 
+  public async addViewedTechnician({ pk, technicianEmail }: { pk: string; technicianEmail: string; }) {
+    const workOrderPrimaryRow = (await this.workOrderEntity.get({ pk, sk: pk })).Item;
+    if (!workOrderPrimaryRow) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Work order not found', true);
+    }
+    if (workOrderPrimaryRow.viewedWO?.includes(technicianEmail)) {
+      return workOrderPrimaryRow;
+    }
+    
+    //Set viewedWO list for all rows in partition
+    const result = await this.updateWOPartition({
+      pk,
+      viewedWO: [...(workOrderPrimaryRow.viewedWO ?? []), technicianEmail],
+    });
+
+    return result;
+  }
+
   public async assignTechnician({ pk, technicianEmail, technicianName }: { pk: string; technicianEmail: string; technicianName: string }) {
     const workOrderPrimaryRow = (await this.workOrderEntity.get({ pk, sk: pk })).Item;
     if (!workOrderPrimaryRow) {

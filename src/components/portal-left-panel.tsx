@@ -33,9 +33,7 @@ export const PortalLeftPanel = () => {
       <hr style={{ height: '2px', color: '#e5e7eb', backgroundColor: '#e5e7eb' }} />
       {userType === ENTITIES.PROPERTY_MANAGER && (
         <>
-          <p className="mt-2">
-            {'Hey, ' + (altName ? toTitleCase(altName) : toTitleCase(user?.name))}
-          </p>
+          <p className="mt-2">{'Hey, ' + (altName ? toTitleCase(altName) : toTitleCase(user?.name))}</p>
           <Select
             options={altNameOptions}
             className="mb-4 mt-2"
@@ -55,12 +53,7 @@ export const PortalLeftPanel = () => {
       <div className="mt-4 ml-2 text-lg" style={{ display: 'grid', rowGap: '0.5rem' }}>
         <div className="flex flex-row items-center justify-start">
           <RiFilePaper2Fill className="inline mr-2 my-auto" />
-          <Link
-            className={`${
-              router.pathname === '/work-orders' ? 'text-black' : 'text-gray-500'
-            } hover:text-slate-400`}
-            href={'/work-orders'}
-          >
+          <Link className={`${router.pathname === '/work-orders' ? 'text-black' : 'text-gray-500'} hover:text-slate-400`} href={'/work-orders'}>
             Work Orders
           </Link>
         </div>
@@ -69,45 +62,25 @@ export const PortalLeftPanel = () => {
           <>
             <div className="flex flex-row items-center justify-start">
               <BsPersonLinesFill className={`inline mr-2 my-auto`} />
-              <Link
-                className={`${
-                  router.pathname.includes('/property-managers') ? 'text-black' : 'text-gray-500'
-                }  hover:text-slate-400`}
-                href={'/property-managers'}
-              >
+              <Link className={`${router.pathname.includes('/property-managers') ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`} href={'/property-managers'}>
                 Property Managers
               </Link>
             </div>
             <div className="flex flex-row items-center justify-start">
               <BsFillPersonFill className={`inline mr-2 my-auto`} />
-              <Link
-                className={`${
-                  router.pathname.includes('/tenants') ? 'text-black' : 'text-gray-500'
-                }  hover:text-slate-400`}
-                href={'/tenants'}
-              >
+              <Link className={`${router.pathname.includes('/tenants') ? 'text-black' : 'text-gray-500'}  hover:text-slate-400`} href={'/tenants'}>
                 Tenants
               </Link>
             </div>
             <div className="flex flex-row items-center justify-start">
               <MdEngineering className={`inline mr-2 my-auto`} />
-              <Link
-                className={`${
-                  router.pathname.includes('/technicians') ? 'text-black' : 'text-gray-500'
-                }  hover:text-gray-400`}
-                href={'/technicians'}
-              >
+              <Link className={`${router.pathname.includes('/technicians') ? 'text-black' : 'text-gray-500'}  hover:text-gray-400`} href={'/technicians'}>
                 Technicians
               </Link>
             </div>
             <div className="flex flex-row items-center justify-start">
               <CiLocationOn className="inline mr-2 my-auto" />
-              <Link
-                className={`${
-                  router.pathname.includes('/properties') ? 'text-black' : 'text-gray-500'
-                }  hover:text-gray-400`}
-                href={'/properties'}
-              >
+              <Link className={`${router.pathname.includes('/properties') ? 'text-black' : 'text-gray-500'}  hover:text-gray-400`} href={'/properties'}>
                 Properties
               </Link>
             </div>

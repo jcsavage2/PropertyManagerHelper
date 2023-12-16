@@ -335,7 +335,6 @@ export class UserEntity {
 
   //Delete a role from roles, deletes the entity if the user only has one role
   public async deleteUserRole({ pk, sk, roleToDelete }: { pk: string; sk: string; roleToDelete: string }) {
-
     let attempt = 0;
     while (attempt < MAX_RETRIES) {
       //Get current user roles

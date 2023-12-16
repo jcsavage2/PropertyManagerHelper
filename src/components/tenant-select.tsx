@@ -66,9 +66,11 @@ export const TenantSelect = ({
 
   return (
     <div className="flex flex-col align-center w-full justify-center">
-      {label && <div className="label">
-              <span className="label-text">{label}</span>
-            </div>}
+      {label && (
+        <div className="label">
+          <span className="label-text">{label}</span>
+        </div>
+      )}
       <AsyncSelect
         placeholder={tenantOptionsLoading ? 'Loading...' : 'Select tenant...'}
         defaultOptions={tenantOptions}

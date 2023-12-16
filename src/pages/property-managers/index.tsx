@@ -27,11 +27,7 @@ const PropertyManagers = () => {
       if (!user || !userType) return;
       setPMsLoading(true);
       try {
-        if (
-          !user ||
-          userType !== USER_TYPE.PROPERTY_MANAGER ||
-          !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
-        ) {
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
         const { data } = await axios.post('/api/get-all-pms-for-org', {
@@ -55,22 +51,14 @@ const PropertyManagers = () => {
   }, [user, userType]);
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
-    return (
-      <p>
-        You are not authorized to use this page. You must be a property manager in an organization.
-      </p>
-    );
+    return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
 
   return (
     <div id="property-managers" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
       {!isMobile && <PortalLeftPanel />}
       <div className="lg:max-w-5xl mb-44 md:mb-10">
-        <div
-          className={
-            isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`
-          }
-        >
+        <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Property Managers</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
             {user?.isAdmin ? (
@@ -91,8 +79,7 @@ const PropertyManagers = () => {
             <div className="flex flex-col items-center">
               {pms.length ? (
                 <p className="text-sm place-self-start font-light italic mb-1 ml-2 text-gray-500">
-                  {'Showing ' + pms.length}{' '}
-                  {pms.length === 1 ? ' property manager...' : ' property managers...'}
+                  {'Showing ' + pms.length} {pms.length === 1 ? ' property manager...' : ' property managers...'}
                 </p>
               ) : null}
               {pms.map((pm: IUser, index) => {
@@ -134,17 +121,11 @@ const PropertyManagers = () => {
                     {pms.map((pm: IUser) => {
                       return (
                         <tr key={`${pm.pk}-${pm.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(
-                            pm.name
-                          )}`}</td>
+                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(pm.name)}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.email}`}</td>
                           <td className="border-b border-t px-4 py-1">{`${pm.status}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${
-                            pm.isAdmin ? 'Yes' : 'No'
-                          }`}</td>
-                          <td className="border-b border-t px-4 py-1">
-                            {createdToFormattedDateTime(pm.created)[0]}
-                          </td>
+                          <td className="border-b border-t px-4 py-1">{`${pm.isAdmin ? 'Yes' : 'No'}`}</td>
+                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(pm.created)[0]}</td>
                         </tr>
                       );
                     })}
@@ -154,9 +135,7 @@ const PropertyManagers = () => {
             </div>
           </div>
         )}
-        {!pmsLoading && pms.length === 0 && (
-          <div className="font-bold text-center md:mt-6">Sorry, no property managers found.</div>
-        )}
+        {!pmsLoading && pms.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no property managers found.</div>}
         {pmsLoading && (
           <div className="md:mt-8">
             <LoadingSpinner spinnerClass="spinner-large" />
@@ -164,20 +143,13 @@ const PropertyManagers = () => {
         )}
         {pms.length && startKey && !pmsLoading ? (
           <div className="w-full flex items-center justify-center">
-            <button
-              onClick={() => fetchPMs(false)}
-              className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
-            >
+            <button onClick={() => fetchPMs(false)} className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24">
               Load more
             </button>
           </div>
         ) : null}
       </div>
-      <AddPropertyManagerModal
-        addPMModalIsOpen={addPMModalIsOpen}
-        setAddPMModalIsOpen={setAddPMModalIsOpen}
-        onSuccessfulAdd={() => fetchPMs(true)}
-      />
+      <AddPropertyManagerModal addPMModalIsOpen={addPMModalIsOpen} setAddPMModalIsOpen={setAddPMModalIsOpen} onSuccessfulAdd={() => fetchPMs(true)} />
       {isMobile && <BottomNavigationPanel />}
     </div>
   );

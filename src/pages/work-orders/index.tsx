@@ -91,9 +91,7 @@ const WorkOrders = () => {
       const { data } = await axios.post('/api/update-work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
-        setWorkOrders(
-          workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo))
-        );
+        setWorkOrders(workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)));
       }
     } catch (e: any) {
       console.log(e);
@@ -124,10 +122,7 @@ const WorkOrders = () => {
           sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
         }
       } catch (error) {
-        toast.error(
-          (error as any)?.response?.data?.response ?? 'Failed to get work orders for user',
-          { position: toast.POSITION.TOP_CENTER }
-        );
+        toast.error((error as any)?.response?.data?.response ?? 'Failed to get work orders for user', { position: toast.POSITION.TOP_CENTER });
       }
       setIsFetching(false);
     },
@@ -147,15 +142,7 @@ const WorkOrders = () => {
     fetchWorkOrders(true);
   };
 
-  const formattedStatusOptions = ({
-    value,
-    label,
-    icon,
-  }: {
-    value: string;
-    label: string;
-    icon: any;
-  }) => (
+  const formattedStatusOptions = ({ value, label, icon }: { value: string; label: string; icon: any }) => (
     <div className="flex flex-row items-center">
       {icon}
       <span className="ml-1 text-sm">{label}</span>
@@ -201,15 +188,9 @@ const WorkOrders = () => {
             ) : null}
           </div>
           {userType !== ENTITIES.TENANT && (
-            <div
-              className={`flex flex-row cursor-pointer mb-2 text-slate-700 ${
-                isFetching && 'opacity-50 pointer-events-none '
-              }`}
-            >
+            <div className={`flex flex-row cursor-pointer mb-2 text-slate-700 ${isFetching && 'opacity-50 pointer-events-none '}`}>
               <div
-                className={`p-2 px-3 rounded-l border border-slate-300 hover:bg-blue-100 ${
-                  !orgMode ? 'bg-blue-300' : 'bg-blue-200'
-                }`}
+                className={`p-2 px-3 rounded-l border border-slate-300 hover:bg-blue-100 ${!orgMode ? 'bg-blue-300' : 'bg-blue-200'}`}
                 onClick={() => {
                   if (isFetching) return;
                   setOrgMode(false);
@@ -217,12 +198,7 @@ const WorkOrders = () => {
               >
                 {userType === ENTITIES.TECHNICIAN ? 'Assigned to me' : 'My work orders'}
               </div>
-              <div
-                className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${
-                  orgMode ? 'bg-blue-300' : 'bg-blue-200'
-                }`}
-                onClick={() => setOrgMode(true)}
-              >
+              <div className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`} onClick={() => setOrgMode(true)}>
                 All {user?.organizationName || 'org'} work orders
               </div>
             </div>

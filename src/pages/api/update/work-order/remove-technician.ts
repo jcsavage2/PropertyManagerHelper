@@ -2,11 +2,11 @@ import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { options } from './auth/[...nextauth]';
+import { options } from '../../auth/[...nextauth]';
 import { IUser, USER_TYPE } from '@/database/entities/user';
-import { ApiError, ApiResponse } from './_types';
+import { ApiError, ApiResponse } from '../../_types';
 import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
-import { errorToResponse } from './_utils';
+import { errorToResponse } from '../../_utils';
 import { deconstructKey, toTitleCase } from '@/utils';
 import * as Sentry from '@sentry/nextjs';
 import { AssignRemoveTechnicianSchema } from '@/types/customschemas';
@@ -24,13 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const body: AssignRemoveTechnician = AssignRemoveTechnicianSchema.parse(req.body);
-    const {
-      pk,
-      pmEmail,
-      technicianEmail,
-      technicianName,
-      pmName,
-    } = body;
+    const { pk, pmEmail, technicianEmail, technicianName, pmName } = body;
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
@@ -52,8 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   } catch (error: any) {
     console.error(error);
     Sentry.captureException(error);
-    return res
-      .status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorToResponse(error));
+    return res.status(error?.statusCode || API_STATUS.INTERNAL_SERVER_ERROR).json(errorToResponse(error));
   }
 }

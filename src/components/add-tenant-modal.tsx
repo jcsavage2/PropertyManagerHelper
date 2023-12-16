@@ -154,11 +154,7 @@ export const AddTenantModal = ({
 
   const renderSubmitButton = () => {
     return (
-      <button
-        className="bg-blue-200 mt-3 btn hover:bg-blue-300 "
-        type="submit"
-        disabled={propertyForm.formState.isSubmitting || !propertyForm.formState.isValid}
-      >
+      <button className="bg-blue-200 mt-3 btn hover:bg-blue-300 " type="submit" disabled={propertyForm.formState.isSubmitting || !propertyForm.formState.isValid}>
         {propertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
       </button>
     );

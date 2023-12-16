@@ -65,13 +65,13 @@ export type AddressOption = {
 
 export type ChatMessage = ChatCompletionRequestMessage & {
   ksuId?: string;
-}
+};
 
 export type WoStatus = (typeof WO_STATUS)[keyof typeof WO_STATUS];
 
 export type InviteStatus = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];
 
-export type DeleteUser = { pk: string; sk: string; name: string; };
+export type DeleteUser = { pk: string; sk: string; name: string };
 
 export type GetUserBody = z.infer<typeof GetUserSchema>;
 

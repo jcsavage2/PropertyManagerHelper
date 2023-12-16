@@ -7,7 +7,7 @@ export const SearchBar = ({
   resultsLoading,
   onSearch,
   onClear,
-  placeholder
+  placeholder,
 }: {
   searchString: string;
   setSearchString: Dispatch<SetStateAction<string>>;

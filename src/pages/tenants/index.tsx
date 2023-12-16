@@ -17,7 +17,7 @@ import { MdClear } from 'react-icons/md';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { AiOutlineMail } from 'react-icons/ai';
 import { DEFAULT_DELETE_USER, INVITE_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
-import { DeleteUser, Property } from '@/types';
+import { DeleteUser, DeleteUserBody, Property } from '@/types';
 import { useUserContext } from '@/context/user';
 import { SearchBar } from '@/components/search-bar';
 
@@ -101,7 +101,7 @@ const Tenants = () => {
           roleToDelete: USER_TYPE.TENANT,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
-        });
+        } as DeleteUserBody);
         if (data.response) {
           toast.success('Tenant Deleted!', {
             position: toast.POSITION.TOP_CENTER,
@@ -154,7 +154,7 @@ const Tenants = () => {
         const successfulResponses = allResponses.map((r) => r.status === 200);
 
         if (successfulResponses.length === allResponses.length) {
-          toast.success('All Re-invitations successfully sent', {
+          toast.success(`${allResponses.length === 1 ? 'Re-invitation' : 'All Re-invitations'} successfully sent`, {
             position: toast.POSITION.TOP_CENTER,
             draggable: false,
           });
@@ -220,6 +220,8 @@ const Tenants = () => {
         buttonsDisabled={resendingInvite}
         childrenComponents={
           <div className="flex flex-col text-center items-center justify-center mt-2">
+            <div>{"Are you sure? This will resend an invitation email to ALL tenants whose status is 'Invited'."}</div>
+            <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
             <div>{"Are you sure? This will resend an invitation email to ALL tenants whose status is 'Invited'."}</div>
             <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
             <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
