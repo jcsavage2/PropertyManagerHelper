@@ -222,8 +222,6 @@ const Tenants = () => {
           <div className="flex flex-col text-center items-center justify-center mt-2">
             <div>{"Are you sure? This will resend an invitation email to ALL tenants whose status is 'Invited'."}</div>
             <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
-            <div>{"Are you sure? This will resend an invitation email to ALL tenants whose status is 'Invited'."}</div>
-            <div className="italic mt-2 mb-2">This action will email all {tenantsToReinvite.length} of the tenants in this list.</div>
             <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
               {tenantsToReinvite && tenantsToReinvite.length ? (
                 tenantsToReinvite.map((tenant: IUser, i) => {
