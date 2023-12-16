@@ -233,7 +233,6 @@ export const ImportTenantSchema = CreateTenantSchema.merge(
 export const UpdateWorkOrderSchema = z
   .object({
     pk: z.string(),
-    sk: z.string(),
     email: lowerCaseRequiredEmail,
     name: lowerCaseRequiredString,
     status: validateWoStatus.optional(),

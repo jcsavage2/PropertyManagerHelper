@@ -8,7 +8,7 @@ import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { AssignRemoveTechnician, DeleteWorkOrder, Option, PTE_Type, UpdateViewedWORequest } from '@/types';
+import { AssignRemoveTechnician, DeleteWorkOrder, Option, PTE_Type, UpdateViewedWORequest, UpdateWorkOrder } from '@/types';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { API_STATUS, PTE, WO_STATUS, TECHNICIAN_DELIM, USER_PERMISSION_ERROR } from '@/constants';
@@ -237,7 +237,7 @@ const WorkOrder = ({
         email: user.email,
         name: altName ?? user.name,
       });
-      const { data } = await axios.post('/api/update-work-order', params);
+      const { data } = await axios.post('/api/update/work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrder(updatedWorkOrder);
@@ -257,14 +257,13 @@ const WorkOrder = ({
       if (!user || (!user.roles?.includes(USER_TYPE.TENANT) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))) {
         throw new Error(USER_PERMISSION_ERROR);
       }
-      const params = UpdateWorkOrderSchema.parse({
+      const { data } = await axios.post('/api/update/work-order', {
         pk: workOrderId,
         sk: workOrderId,
         email: user.email,
         name: altName ?? user.name,
         permissionToEnter: newValue,
-      });
-      const { data } = await axios.post('/api/update-work-order', params);
+      } as UpdateWorkOrder);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrder(updatedWorkOrder);

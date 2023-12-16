@@ -29,7 +29,7 @@ export const DEFAULT_PROPERTY: Property = {
 };
 export const DEFAULT_PROPERTY_WITH_ID = { ...DEFAULT_PROPERTY, propertyUUId: '' };
 
-export const DEFAULT_DELETE_USER: DeleteUser = { pk: '', sk: '', name: '', roles: [] };
+export const DEFAULT_DELETE_USER: DeleteUser = { pk: '', sk: '', name: '' };
 
 export const INVITE_STATUS = {
   JOINED: 'JOINED',

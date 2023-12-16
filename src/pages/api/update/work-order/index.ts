@@ -6,10 +6,10 @@ import { deconstructKey, toTitleCase } from '@/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import sendgrid from '@sendgrid/mail';
 import { getServerSession } from 'next-auth';
-import { options } from './auth/[...nextauth]';
+import { options } from '../../auth/[...nextauth]';
 import { USER_TYPE } from '@/database/entities/user';
-import { errorToResponse, initializeSendgrid } from './_utils';
-import { ApiError, ApiResponse } from './_types';
+import { errorToResponse, initializeSendgrid } from '../../_utils';
+import { ApiError, ApiResponse } from '../../_types';
 import { UpdateWorkOrderSchema } from '@/types/customschemas';
 import * as Sentry from '@sentry/nextjs';
 
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const sessionUser: IUser = session?.user;
 
     const body: UpdateWorkOrder = UpdateWorkOrderSchema.parse(req.body);
-    const { pk, sk, status, email, permissionToEnter, name } = body;
+    const { pk, status, email, permissionToEnter, name } = body;
 
     //User must be a pm or technician to update a work order's status
     //User must be a tenant or pm to update a work order's permission to enter
@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
-    const updatedWorkOrder = await workOrderEntity.update({
+    const updatedWorkOrder = await workOrderEntity.updateWOPartition({
       pk,
       status,
       ...(permissionToEnter && { permissionToEnter }),
