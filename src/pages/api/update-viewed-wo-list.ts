@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(pk)}`;
-    const wo = await woEntity.update({ pk, viewedWO: newViewedWOList });
+    const wo = await woEntity.updateWOPartition({ pk, viewedWO: newViewedWOList });
     await sendgrid.send({
       to: pmEmail,
       from: 'pillar@pillarhq.co',

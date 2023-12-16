@@ -3,16 +3,9 @@ import { ENTITIES, ENTITY_KEY, StartKey } from '.';
 import { INDEXES, PillarDynamoTable } from '..';
 import { constructNameEmailString, generateKSUID, generateKey } from '@/utils';
 import { UserType } from './user';
-import { PAGE_SIZE, WO_STATUS } from '@/constants';
-import {
-  AssignTechnicianBody,
-  GetAllWorkOrdersForUser,
-  PTE_Type,
-  Property,
-  PropertyWithId,
-  UpdateImages,
-  WoStatus,
-} from '@/types';
+import { API_STATUS, PAGE_SIZE, WO_STATUS } from '@/constants';
+import { GetAllWorkOrdersForUser, PTE_Type, Property, PropertyWithId, UpdateImages, WoStatus } from '@/types';
+import { ApiError } from '@/pages/api/_types';
 
 type CreateWorkOrderProps = {
   uuid: string;
@@ -128,10 +121,7 @@ export class WorkOrderEntity {
       {
         pk: workOrderIdKey,
         sk: workOrderIdKey,
-        GSI1PK: generateKey(
-          ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
-          pmEmail
-        ),
+        GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail),
         GSI1SK: ksuID,
         GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail),
         GSI2SK: ksuID,
@@ -194,14 +184,7 @@ export class WorkOrderEntity {
    *
    * @returns work orders for a given user, based on userType. If org is passed, fetch all for the organization.
    */
-  public async getAllForUser({
-    email,
-    userType,
-    orgId,
-    startKey,
-    statusFilter,
-    reverse = true,
-  }: GetAllWorkOrdersForUser) {
+  public async getAllForUser({ email, userType, orgId, startKey, statusFilter, reverse = true }: GetAllWorkOrdersForUser) {
     const workOrders: IWorkOrder[] = [];
     let pk: string = '';
     let index: undefined | string;
@@ -211,10 +194,7 @@ export class WorkOrderEntity {
     } else {
       switch (userType) {
         case ENTITIES.PROPERTY_MANAGER:
-          pk = generateKey(
-            ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER,
-            email?.toLowerCase()
-          );
+          pk = generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, email?.toLowerCase());
           index = INDEXES.GSI1;
           break;
         case ENTITIES.TECHNICIAN:
@@ -264,7 +244,7 @@ export class WorkOrderEntity {
   }
 
   //Update in a loop to ensure we update all companion rows for a WO
-  public async update({
+  public async updateWOPartition({
     pk,
     status,
     permissionToEnter,
@@ -279,177 +259,113 @@ export class WorkOrderEntity {
   }) {
     let startKey: StartKey;
     const workOrders = [];
-    try {
-      do {
-        try {
-          const { Items, LastEvaluatedKey } = await this.workOrderEntity.query(pk, {
-            reverse: true,
-            beginsWith: `${ENTITY_KEY.WORK_ORDER}`,
-            startKey,
-          });
-          startKey = LastEvaluatedKey as StartKey;
-          Items?.length && workOrders.push(...Items);
-        } catch (err) {
-          console.log({ err });
-        }
-      } while (!!startKey);
-
-      let result = null;
-      for (const workOrder of workOrders) {
-        result = await this.workOrderEntity.update(
-          {
-            pk: workOrder.pk,
-            sk: workOrder.sk,
-            ...(status && { status: status }),
-            ...(permissionToEnter && { permissionToEnter }),
-            ...(assignedTo && { assignedTo }),
-            ...(viewedWO && { viewedWO }),
-          },
-          { returnValues: 'ALL_NEW', strictSchemaCheck: true }
-        );
-      }
-      return result?.Attributes;
-    } catch (err) {
-      console.log({ err });
-    }
-  }
-
-  public async assignTechnician({
-    organization,
-    ksuID,
-    workOrderId,
-    technicianEmail,
-    technicianName,
-    property,
-    status,
-    issueDescription,
-    permissionToEnter,
-    pmEmail,
-    pmName,
-    tenantEmail,
-    tenantName,
-    oldAssignedTo,
-  }: AssignTechnicianBody) {
-    const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
-    try {
-      let assignedTo: string[] = [
-        ...oldAssignedTo,
-        constructNameEmailString(technicianEmail, technicianName),
-      ];
-      // Create companion row for the technician
-      await this.workOrderEntity.update({
-        pk: workOrderIdKey,
-        sk: generateKey(
-          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail
-        ),
-        address: this.generateAddress(property),
-        GSI3PK: generateKey(
-          ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER,
-          technicianEmail
-        ),
-        GSI3SK: ksuID,
-        issue: issueDescription,
-        permissionToEnter,
-        assignedTo,
-        pmEmail,
-        status,
-        organization,
-        tenantEmail,
-        tenantName,
+    do {
+      const { Items, LastEvaluatedKey } = await this.workOrderEntity.query(pk, {
+        reverse: true,
+        beginsWith: `${ENTITY_KEY.WORK_ORDER}`,
+        startKey,
       });
+      startKey = LastEvaluatedKey as StartKey;
+      Items?.length && workOrders.push(...Items);
+    } while (!!startKey);
 
-      //Need to update all companion rows for the work order
-      const result = await this.update({
-        pk: workOrderIdKey,
-        assignedTo,
-      });
-
-      return result ?? null;
-    } catch (err) {
-      console.log({ err });
-    }
-  }
-
-  public async removeTechnician({
-    workOrderId,
-    technicianEmail,
-    technicianName,
-    assignedTo,
-    viewedWO,
-  }: {
-    workOrderId: string;
-    technicianEmail: string;
-    technicianName: string;
-    assignedTo: string[];
-    viewedWO: string[];
-  }) {
-    const key = generateKey(ENTITY_KEY.WORK_ORDER, workOrderId);
-    try {
-      //Delete relationship between WO and technician
-      await this.workOrderEntity.delete({
-        pk: key,
-        sk: generateKey(
-          ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN,
-          technicianEmail
-        ),
-      });
-
-      //Backwards compatibility when removing technicians from WO
-      let newAssignedTo: string[];
-      const oldAssignedTo = [...assignedTo];
-      if (
-        oldAssignedTo.includes(
-          constructNameEmailString(technicianEmail, technicianName)
-        )
-      ) {
-        newAssignedTo = [...oldAssignedTo].filter(
-          (assignedTo) =>
-            assignedTo !== constructNameEmailString(technicianEmail, technicianName)
-        );
-      } else {
-        newAssignedTo = [...oldAssignedTo].filter(
-          (assignedTo) => assignedTo !== technicianEmail
-        );
-      }
-      const newViewedWOList = [...viewedWO].filter(
-        (email) => email !== technicianEmail
-      );
-
+    let primaryWO = null;
+    for (const workOrder of workOrders) {
       const result = await this.workOrderEntity.update(
         {
-          pk: key,
-          sk: key,
-          assignedTo: newAssignedTo,
-          viewedWO: newViewedWOList,
+          pk: workOrder.pk,
+          sk: workOrder.sk,
+          ...(status && { status: status }),
+          ...(permissionToEnter && { permissionToEnter }),
+          ...(assignedTo && { assignedTo }),
+          ...(viewedWO && { viewedWO }),
         },
-        { returnValues: 'ALL_NEW' }
+        { returnValues: 'ALL_NEW', strictSchemaCheck: true }
       );
-      return result;
-    } catch (err) {
-      console.log({ err });
+
+      if (workOrder.sk === pk) {
+        primaryWO = result.Attributes;
+      }
     }
+    return primaryWO;
+  }
+
+  public async assignTechnician({ pk, technicianEmail, technicianName }: { pk: string; technicianEmail: string; technicianName: string }) {
+    const workOrderPrimaryRow = (await this.workOrderEntity.get({ pk, sk: pk })).Item;
+    if (!workOrderPrimaryRow) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Work order not found', true);
+    }
+
+    const nameEmailString = constructNameEmailString(technicianEmail, technicianName);
+    if (workOrderPrimaryRow.assignedTo?.includes(technicianEmail) || workOrderPrimaryRow.assignedTo?.includes(nameEmailString)) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Technician already assigned to this work order', true);
+    }
+    // Create companion row for the technician
+    await this.workOrderEntity.update({
+      pk,
+      sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail),
+      address: workOrderPrimaryRow.address,
+      GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail),
+      GSI3SK: workOrderPrimaryRow.GSI3SK,
+      issue: workOrderPrimaryRow.issue,
+      permissionToEnter: workOrderPrimaryRow.permissionToEnter,
+      pmEmail: workOrderPrimaryRow.pmEmail,
+      status: workOrderPrimaryRow.status,
+      organization: workOrderPrimaryRow.organization,
+      tenantEmail: workOrderPrimaryRow.tenantEmail,
+      tenantName: workOrderPrimaryRow.tenantName,
+    });
+
+    //Set assignedTo list for all rows in partition
+    const result = await this.updateWOPartition({
+      pk,
+      assignedTo: [...(workOrderPrimaryRow.assignedTo ?? []), constructNameEmailString(technicianEmail, technicianName)],
+    });
+
+    return result;
+  }
+
+  public async removeTechnician({ pk, technicianEmail, technicianName }: { pk: string; technicianEmail: string; technicianName: string }) {
+    const workOrderPrimaryRow = (await this.workOrderEntity.get({ pk, sk: pk })).Item;
+    if (!workOrderPrimaryRow) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Work order not found', true);
+    }
+
+    //Delete relationship between WO and technician
+    await this.workOrderEntity.delete({
+      pk,
+      sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail),
+    });
+
+    //Backwards compatibility when removing technicians from WO
+    let newAssignedTo: string[];
+    const oldAssignedTo = [...(workOrderPrimaryRow.assignedTo ?? [])];
+    if (oldAssignedTo.includes(constructNameEmailString(technicianEmail, technicianName))) {
+      newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== constructNameEmailString(technicianEmail, technicianName));
+    } else {
+      newAssignedTo = [...oldAssignedTo].filter((assignedTo) => assignedTo !== technicianEmail);
+    }
+    const newViewedWOList = [...(workOrderPrimaryRow.viewedWO ?? [])].filter((email) => email !== technicianEmail);
+
+    //Update assignedTo and viewedWO list for all rows in partition
+    const result = await this.updateWOPartition({
+      pk,
+      assignedTo: newAssignedTo,
+      viewedWO: newViewedWOList,
+    });
+    return result;
   }
 
   public async updateImages({ pk, sk, images, addNew }: UpdateImages) {
     try {
-      const updatedWorkOrder = (
-        await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })
-      ).Attributes;
+      const updatedWorkOrder = (await this.workOrderEntity.update({ pk, sk, images }, { returnValues: 'ALL_NEW' })).Attributes;
       return updatedWorkOrder;
     } catch (err) {
       console.log({ err });
     }
   }
 
-  private generateAddress({
-    address,
-    country,
-    city,
-    state,
-    postalCode,
-    unit,
-  }: Property | PropertyWithId) {
+  private generateAddress({ address, country, city, state, postalCode, unit }: Property | PropertyWithId) {
     return {
       address,
       unit,

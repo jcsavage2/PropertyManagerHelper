@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, MAX_RETRIES, PillarDynamoTable } from '..';
-import { generateKey } from '@/utils';
+import { deconstructKey, generateKey } from '@/utils';
 import { API_STATUS, INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -139,7 +139,7 @@ export class UserEntity {
     numBaths,
   }: ICreateTenant) {
     if (tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
-      throw new Error('Cannot create a user with this account');
+      throw new ApiError(API_STATUS.BAD_REQUEST, 'Cannot create a user with this email', true);
     }
     const guaranteedEmail = tenantEmail ?? `${NO_EMAIL_PREFIX}${uuidv4()}@gmail.com`;
     const tenant = await this.userEntity.update(
@@ -185,21 +185,25 @@ export class UserEntity {
   public async updateUserVersion({
     pk,
     sk,
+    roles,
     hasSeenDownloadPrompt,
     status,
     addresses,
     addressString,
     GSI4SK,
+    GSI4PK,
     version,
     toRemove = [],
   }: {
     pk: string;
     sk: string;
+    roles?: string[];
     hasSeenDownloadPrompt?: boolean;
     status?: InviteStatus;
     addresses?: Record<string, any>;
     addressString?: string;
     GSI4SK?: string;
+    GSI4PK?: string;
     version: number;
     toRemove?: Attributes[]; //Array of attributes to remove as strings
   }): Promise<{ user: any; err: any }> {
@@ -208,11 +212,13 @@ export class UserEntity {
         {
           pk,
           sk,
+          ...(GSI4PK && { GSI4PK }),
           ...(GSI4SK && { GSI4SK }),
           ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
           ...(status && { status }),
           ...(addresses && { addresses }),
           ...(addressString && { addressString }),
+          ...(roles && { roles }),
           version: version + 1,
           $remove: toRemove,
         },
@@ -230,17 +236,7 @@ export class UserEntity {
     }
   }
 
-  public async updateUser({
-    pk,
-    sk,
-    hasSeenDownloadPrompt,
-    status,
-  }: {
-    pk: string;
-    sk: string;
-    hasSeenDownloadPrompt?: boolean;
-    status?: InviteStatus;
-  }) {
+  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatus }) {
     const updatedUser = await this.userEntity.update(
       {
         pk,
@@ -337,28 +333,57 @@ export class UserEntity {
     return result;
   }
 
-  //Delete a role from roles; also fix GSI1 if needed
-  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
-    //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
-    const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
-    const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
-    const shouldDeleteIndexing: boolean = (roleToDelete === USER_TYPE.TENANT && !isTech) || (roleToDelete === USER_TYPE.TECHNICIAN && !isTenant);
+  //Delete a role from roles, deletes the entity if the user only has one role
+  public async deleteUserRole({ pk, sk, roleToDelete }: { pk: string; sk: string; roleToDelete: string }) {
 
-    const params = {
-      pk,
-      sk,
-      ...(shouldDeleteIndexing && {
-        GSI1PK: null,
-        GSI1SK: null,
-        GSI4PK: null,
-        GSI4SK: null,
-        pmEmail: null,
-        pmName: null,
-      }),
-      roles: { $delete: [roleToDelete] },
-    };
-    const result = await this.userEntity.update(params);
-    return result;
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
+      //Get current user roles
+      const userAccount = await this.get({ email: deconstructKey(pk) });
+
+      if (!userAccount || !userAccount.roles.includes(roleToDelete)) {
+        throw new ApiError(API_STATUS.BAD_REQUEST, 'User not found', true);
+      }
+
+      //If the user only has one role and we are deleting it, then delete their entire record
+      if (userAccount.roles.length === 1) {
+        return await this.delete({ pk, sk });
+      }
+
+      const newRoles: string[] = userAccount.roles.filter((role: string) => role !== roleToDelete);
+
+      let res: any;
+      if (!newRoles.includes(USER_TYPE.TENANT) && !newRoles.includes(USER_TYPE.TECHNICIAN)) {
+        //The user is now only a PM, so we need to remove all tenant and technician indexes, replace technician index with pm index just in case
+        //TODO: this is a temporary fix, the indexes here are a bit hacky, technically we overwrite the GSI4 index depending on the most recently added role
+        res = await this.updateUserVersion({
+          pk,
+          sk,
+          version: userAccount.version ?? 1,
+          toRemove: ['GSI1PK', 'GSI1SK', 'pmEmail', 'pmName'],
+          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, userAccount.organization),
+          GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
+          roles: newRoles,
+        });
+      } else {
+        res = await this.updateUserVersion({
+          pk,
+          sk,
+          version: userAccount.version ?? 1,
+          roles: newRoles,
+        });
+      }
+
+      const user = res.user;
+      const err = res.err;
+
+      if (err && err.$metadata?.httpStatusCode === API_STATUS.BAD_REQUEST) {
+        attempt++;
+        continue;
+      }
+      return user;
+    }
+    throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Failed to delete user after maximum retries');
   }
 
   public async getAllTenantsForOrg({

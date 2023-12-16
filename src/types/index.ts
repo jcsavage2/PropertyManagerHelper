@@ -4,7 +4,6 @@ import { INVITE_STATUS, PTE, WO_STATUS } from '../constants';
 import {
   CreateTenant_AddressSchema,
   AiJSONResponseSchema,
-  AssignTechnicianSchema,
   ChatbotRequestSchema,
   CreateOrgSchema,
   CreatePMSchema,
@@ -12,7 +11,6 @@ import {
   CreateTechnicianSchema,
   CreateTenantSchema,
   CreateWorkOrderSchema,
-  DeleteEntitySchema,
   FinishFormRequestSchema,
   GetAllWorkOrdersForUserSchema,
   GetPMSchema,
@@ -26,7 +24,6 @@ import {
   ImportTenantSchema,
   IssueInformationSchema,
   ReinviteTenantsSchema,
-  RemoveTechnicianSchema,
   CreateTenant_TenantInfoSchema,
   UpdateImagesSchema,
   UpdateUserSchema,
@@ -41,6 +38,9 @@ import {
   EditPropertySchema,
   GetUsersSchema,
   AddRemoveTenantToPropertySchema,
+  DeleteWorkOrderSchema,
+  DeleteUserSchema,
+  AssignRemoveTechnicianSchema,
 } from './customschemas';
 import { ChatCompletionRequestMessage } from 'openai';
 
@@ -71,7 +71,7 @@ export type WoStatus = (typeof WO_STATUS)[keyof typeof WO_STATUS];
 
 export type InviteStatus = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];
 
-export type DeleteUser = { pk: string; sk: string; name: string; roles: string[] };
+export type DeleteUser = { pk: string; sk: string; name: string; };
 
 export type GetUserBody = z.infer<typeof GetUserSchema>;
 
@@ -79,9 +79,7 @@ export type GetUsersBody = z.infer<typeof GetUsersSchema>;
 
 export type AddRemoveTenantToProperty = z.infer<typeof AddRemoveTenantToPropertySchema>;
 
-export type AssignTechnicianBody = z.infer<typeof AssignTechnicianSchema>;
-
-export type RemoveTechnicianBody = z.infer<typeof RemoveTechnicianSchema>;
+export type AssignRemoveTechnician = z.infer<typeof AssignRemoveTechnicianSchema>;
 
 export type IssueInformation = z.infer<typeof IssueInformationSchema>;
 
@@ -99,7 +97,9 @@ export type CreateProperty = z.infer<typeof CreatePropertySchema>;
 
 export type EditProperty = z.infer<typeof EditPropertySchema>;
 
-export type DeleteEntity = z.infer<typeof DeleteEntitySchema>;
+export type DeleteWorkOrder = z.infer<typeof DeleteWorkOrderSchema>;
+
+export type DeleteUserBody = z.infer<typeof DeleteUserSchema>;
 
 export type GetPM = z.infer<typeof GetPMSchema>;
 

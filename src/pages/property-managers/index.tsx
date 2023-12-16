@@ -8,13 +8,11 @@ import { useUserContext } from '@/context/user';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { createdToFormattedDateTime, getPageLayout, toTitleCase } from '@/utils';
 import { IUser, USER_TYPE } from '@/database/entities/user';
-import { ENTITIES, StartKey } from '@/database/entities';
+import { StartKey } from '@/database/entities';
 import { AddPropertyManagerModal } from '@/components/add-property-manager-modal';
 import { USER_PERMISSION_ERROR } from '@/constants';
-import { GetPM } from '@/types';
-import { GetPMSchema } from '@/types/customschemas';
 
-const Technicians = () => {
+const PropertyManagers = () => {
   const { user } = useSessionUser();
   const { userType } = useUserContext();
   const { isMobile } = useDevice();
@@ -185,4 +183,4 @@ const Technicians = () => {
   );
 };
 
-export default Technicians;
+export default PropertyManagers;

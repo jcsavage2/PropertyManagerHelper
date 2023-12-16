@@ -13,10 +13,9 @@ import { IUser, USER_TYPE } from '@/database/entities/user';
 import { MdClear } from 'react-icons/md';
 import ConfirmationModal from '@/components/confirmation-modal';
 import { toast } from 'react-toastify';
-import { ENTITIES, StartKey } from '@/database/entities';
+import { StartKey } from '@/database/entities';
 import { DEFAULT_DELETE_USER, USER_PERMISSION_ERROR } from '@/constants';
-import { DeleteEntity, DeleteUser } from '@/types';
-import { DeleteEntitySchema, GetTechsForOrgSchema } from '@/types/customschemas';
+import { DeleteUser } from '@/types';
 
 const Technicians = () => {
   const { user } = useSessionUser();
@@ -69,7 +68,7 @@ const Technicians = () => {
   }, [user, userType]);
 
   const handleDeleteTech = useCallback(
-    async ({ pk, sk, roles }: DeleteUser) => {
+    async ({ pk, sk }: DeleteUser) => {
       setTechsLoading(true);
       try {
         if (
@@ -79,16 +78,13 @@ const Technicians = () => {
         ) {
           throw new Error(USER_PERMISSION_ERROR);
         }
-        const params: DeleteEntity = DeleteEntitySchema.parse({
+        const { data } = await axios.post('/api/delete/user', {
           pk,
           sk,
-          entity: ENTITIES.USER,
-          roleToDelete: ENTITIES.TECHNICIAN,
-          currentUserRoles: roles,
+          roleToDelete: USER_TYPE.TECHNICIAN,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
         });
-        const { data } = await axios.post('/api/delete', params);
         if (data.response) {
           toast.success('Technician Deleted!', {
             position: toast.POSITION.TOP_CENTER,
@@ -96,9 +92,6 @@ const Technicians = () => {
           });
           setTechs(techs.filter((t) => t.pk !== pk));
         }
-
-        //TODO: delete technician should unassign them from all wo roles
-        //Update this when you add fetching from technician entity to get all assigned WOs
       } catch (err: any) {
         console.error(err);
         renderToastError(err, 'Error Deleting Technician');
@@ -106,7 +99,7 @@ const Technicians = () => {
       setConfirmDeleteModalIsOpen(false);
       setTechsLoading(false);
     },
-    [user, userType, techs]
+    [user, userType, techs, altName]
   );
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
@@ -219,7 +212,6 @@ const Technicians = () => {
                           pk: tech.pk,
                           sk: tech.sk,
                           name: tech.name,
-                          roles: tech.roles,
                         });
                         setConfirmDeleteModalIsOpen(true);
                       }}
@@ -262,7 +254,6 @@ const Technicians = () => {
                                   pk: tech.pk,
                                   sk: tech.sk,
                                   name: tech.name,
-                                  roles: tech.roles,
                                 });
                                 setConfirmDeleteModalIsOpen(true);
                               }}

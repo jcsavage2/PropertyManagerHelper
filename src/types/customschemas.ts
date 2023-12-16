@@ -47,31 +47,12 @@ export const AddRemoveTenantToPropertySchema = z.object({
   remove: z.boolean()
 });
 
-export const AssignTechnicianSchema = z.object({
-  organization: requiredString,
-  ksuID: requiredString,
+export const AssignRemoveTechnicianSchema = z.object({
+  pk: requiredString,
   technicianEmail: lowerCaseRequiredEmail,
   technicianName: lowerCaseRequiredString,
-  workOrderId: requiredString,
-  property: validateProperty,
-  status: validateWoStatus,
-  issueDescription: lowerCaseRequiredString,
-  permissionToEnter: validatePTE,
   pmEmail: lowerCaseRequiredEmail,
   pmName: lowerCaseRequiredString,
-  tenantEmail: lowerCaseRequiredEmail,
-  tenantName: lowerCaseRequiredString,
-  oldAssignedTo: z.array(requiredString),
-});
-
-export const RemoveTechnicianSchema = z.object({
-  workOrderId: requiredString,
-  pmEmail: lowerCaseRequiredEmail,
-  technicianEmail: lowerCaseRequiredEmail,
-  technicianName: lowerCaseRequiredString,
-  pmName: lowerCaseRequiredString,
-  oldAssignedTo: z.array(requiredString),
-  oldViewedWO: z.array(requiredString),
 });
 
 export const IssueInformationSchema = z.object({
@@ -147,14 +128,19 @@ export const EditPropertySchema = validateProperty.merge(
   })
 );
 
-export const DeleteEntitySchema = z.object({
-  entity: requiredString,
+export const DeleteWorkOrderSchema = z.object({
   pk: requiredString,
   sk: requiredString,
   madeByEmail: lowerCaseRequiredEmail,
   madeByName: lowerCaseRequiredString,
-  roleToDelete: optionalString,
-  currentUserRoles: z.array(requiredString).optional(),
+});
+
+export const DeleteUserSchema = z.object({
+  pk: requiredString,
+  sk: requiredString,
+  madeByEmail: lowerCaseRequiredEmail,
+  madeByName: lowerCaseRequiredString,
+  roleToDelete: requiredString,
 });
 
 export const AddWorkOrderModalSchema = z.object({

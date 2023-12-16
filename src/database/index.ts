@@ -50,7 +50,7 @@ export const INDEXES = {
   GSI4: 'org-index', // organization index
 } as const;
 
-export const MAX_RETRIES = 50;
+export const MAX_RETRIES = 200;
 
 export const PillarDynamoTable = new Table({
   name: 'pillar-hq',

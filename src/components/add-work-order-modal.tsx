@@ -137,12 +137,7 @@ export const AddWorkOrderModal = ({
           permissionToEnter: params.permissionToEnter,
           workOrderId: woId,
         });
-        if (
-          !user ||
-          userType !== USER_TYPE.PROPERTY_MANAGER ||
-          !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)
-        )
-          throw new Error(USER_PERMISSION_ERROR);
+        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
 
         const validatedBody = CreateWorkOrderSchema.parse({
           ...params,
@@ -191,6 +186,7 @@ export const AddWorkOrderModal = ({
     },
     [user, userType, altName, onSuccessfulAdd, tenant, property]
   );
+  console.log(showAdditionalOptions);
 
   return (
     <Modal
@@ -203,10 +199,7 @@ export const AddWorkOrderModal = ({
       style={customStyles}
     >
       <div className="w-full text-center mb-2 h-6">
-        <button
-          className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          onClick={closeModal}
-        >
+        <button className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
           X Close
         </button>
         <p className="clear-left text-lg md:w-2/5 mx-auto pt-0.5">Create New Work Order</p>
@@ -214,17 +207,12 @@ export const AddWorkOrderModal = ({
 
       <form onSubmit={handleSubmit(handleCreateWorkOrder)} className="flex flex-col">
         <div className="flex flex-col mt-4">
-          <label htmlFor="issueDescription">What is the issue?* </label>
-          <input
-            className="rounded px-1 border-solid border-2 border-slate-200 mb-1"
-            id="issueDescription"
-            type={'text'}
-            {...register('issueDescription', { required: true })}
-          />
-          {errors.issueDescription && (
-            <p className="text-red-500 text-xs">{errors.issueDescription.message}</p>
-          )}
-          <div className="mb-5">
+          <div className="label">
+            <span className="label-text">What is the issue?*</span>
+          </div>
+          <input className="input input-sm input-bordered" id="issueDescription" type={'text'} {...register('issueDescription', { required: true })} />
+          {errors.issueDescription && <p className="text-red-500 text-xs mt-1">{errors.issueDescription.message}</p>}
+          <div className="mb-3">
             <Controller
               control={control}
               name="tenantEmail"
@@ -240,77 +228,39 @@ export const AddWorkOrderModal = ({
                 />
               )}
             />
-            {errors.tenantEmail && (
-              <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>
-            )}
+            {errors.tenantEmail && <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>}
           </div>
-          <div className="mb-5">
-            <p className="mt-2">Permission To Enter Property* </p>
-            <input
-              className="rounded px-1"
-              id="permission-yes"
-              type={'radio'}
-              value={PTE.YES}
-              {...register('permissionToEnter')}
-            />
-            <label htmlFor="permission-yes">{PTE.YES}</label>
-            <input
-              className="rounded px-1 ml-4"
-              id="permission-no"
-              type={'radio'}
-              value={PTE.NO}
-              {...register('permissionToEnter')}
-            />
-            <label htmlFor="permission-no">{PTE.NO}</label>
+          <p className="text-sm">Permission To Enter Property* </p>
+          <div className="flex flex-row">
+            <label className="label cursor-pointer">
+              <span className="label-text">Yes</span>
+              <input className="radio ml-3" id="permission-yes" type={'radio'} value={PTE.YES} {...register('permissionToEnter')} />
+            </label>
+            <label className="label cursor-pointer ml-4">
+              <span className="label-text">No</span>
+              <input className="radio ml-3" id="permission-no" type={'radio'} value={PTE.NO} {...register('permissionToEnter')} />
+            </label>
           </div>
 
-          <div
-            className="w-max mx-auto flex flex-row items-center justify-center bg-blue-200 px-4 py-1 cursor-pointer text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-            onClick={() => setShowAdditionalOptions(!showAdditionalOptions)}
-          >
-            {!showAdditionalOptions ? (
-              <>
-                <p>Show more options</p>
-                <MdOutlineKeyboardDoubleArrowDown className="text-2xl ml-1" />
-              </>
-            ) : (
-              <>
-                <p>Hide more options</p>
-                <MdOutlineKeyboardDoubleArrowUp className="text-2xl ml-1" />
-              </>
-            )}
+          <div className="collapse">
+            <input type="checkbox" onClick={() => setShowAdditionalOptions(!showAdditionalOptions)} />
+            <div className="collapse-title text-center mx-auto my-auto p-0 pt-4">
+              <button className="bg-blue-200 text-gray-600 hover:bg-blue-300 btn btn-sm">{showAdditionalOptions ? 'Hide options' : 'Show more options'}</button>
+            </div>
+            <div className="collapse-content -mt-4">
+              <div className="label">
+                <span className="label-text">Issue Location</span>
+              </div>
+              <input className="input input-sm input-bordered w-full" id="issueLocation" type={'text'} {...register('issueLocation')} />
+              <div className="label">
+                <span className="label-text">Additional Details</span>
+              </div>
+              <input className="input input-sm input-bordered w-full" id="additionalDetails" type={'text'} {...register('additionalDetails')} />
+            </div>
           </div>
-          {showAdditionalOptions && (
-            <>
-              <label htmlFor="issueLocation">Issue Location </label>
-              <input
-                className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
-                id="issueLocation"
-                type={'text'}
-                {...register('issueLocation')}
-              />
-              <label htmlFor="additionalDetails">Additional Details </label>
-              <input
-                className="rounded px-1 border-solid border-2 border-slate-200 mb-5"
-                id="additionalDetails"
-                type={'text'}
-                {...register('additionalDetails')}
-              />
-            </>
-          )}
         </div>
-        <button
-          className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
-          type="submit"
-          disabled={isSubmitting || !isValid || userLoading}
-        >
-          {isSubmitting ? (
-            <LoadingSpinner />
-          ) : userLoading ? (
-            'Loading user info...'
-          ) : (
-            'Add Work Order'
-          )}
+        <button className="bg-blue-200 btn mt-3 hover:bg-blue-300" type="submit" disabled={isSubmitting || !isValid || userLoading}>
+          {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading user info...' : 'Add Work Order'}
         </button>
       </form>
     </Modal>

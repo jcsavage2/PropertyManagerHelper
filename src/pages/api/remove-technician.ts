@@ -6,11 +6,11 @@ import { options } from './auth/[...nextauth]';
 import { IUser, USER_TYPE } from '@/database/entities/user';
 import { ApiError, ApiResponse } from './_types';
 import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
-import { RemoveTechnicianSchema } from '@/types/customschemas';
-import { RemoveTechnicianBody } from '@/types';
 import { errorToResponse } from './_utils';
-import { toTitleCase } from '@/utils';
+import { deconstructKey, toTitleCase } from '@/utils';
 import * as Sentry from '@sentry/nextjs';
+import { AssignRemoveTechnicianSchema } from '@/types/customschemas';
+import { AssignRemoveTechnician } from '@/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -23,32 +23,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
-    const body: RemoveTechnicianBody = RemoveTechnicianSchema.parse(req.body);
+    const body: AssignRemoveTechnician = AssignRemoveTechnicianSchema.parse(req.body);
     const {
-      workOrderId,
+      pk,
       pmEmail,
       technicianEmail,
       technicianName,
       pmName,
-      oldAssignedTo,
-      oldViewedWO,
     } = body;
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
+
+    const response = await workOrderEntity.removeTechnician({
+      pk,
+      technicianEmail,
+      technicianName,
+    });
+
     await eventEntity.createWOEvent({
-      workOrderId,
+      workOrderId: deconstructKey(pk),
       madeByEmail: pmEmail,
       madeByName: pmName,
       message: `Removed ${toTitleCase(technicianName)} from the work order`,
-    });
-
-    const response = await workOrderEntity.removeTechnician({
-      workOrderId: workOrderId,
-      technicianEmail,
-      technicianName,
-      assignedTo: oldAssignedTo,
-      viewedWO: oldViewedWO,
     });
 
     return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify(response) });

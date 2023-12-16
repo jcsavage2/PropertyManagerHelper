@@ -59,12 +59,14 @@ export const StateSelect = ({
   label,
   placeholder,
   isDirty,
+  selectClass
 }: {
   state: string;
   setState: React.Dispatch<SetStateAction<string>> | React.Dispatch<SetStateAction<string | null>>;
   label: string | null;
   placeholder?: string;
   isDirty?: boolean;
+  selectClass?: string
 }) => {
   const handleSelectChange: ChangeEventHandler<HTMLSelectElement> = (event) => {
     setState(event.target.value);
@@ -78,7 +80,7 @@ export const StateSelect = ({
         </div>
       )}
       <select
-        className={`select h-8 ${!state || (state.length === 0 && 'text-gray-400')} ${isDirty ? 'select-warning' : 'select-bordered'}`}
+        className={`select ${selectClass ? selectClass : 'select-sm'} ${!state || (state.length === 0 && 'text-gray-400')} ${isDirty ? 'select-warning' : 'select-bordered'}`}
         value={state}
         name="state"
         onChange={handleSelectChange}

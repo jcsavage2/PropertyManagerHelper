@@ -13,7 +13,7 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { EditProperty, Option } from '@/types';
 import { EditPropertySchema } from '@/types/customschemas';
-import { createPropertyDisplayString, createdToFormattedDateTime, deconstructKey, getPageLayout, renderToastError, toTitleCase } from '@/utils';
+import { createPropertyDisplayString, createdToFormattedDateTime, deconstructKey, getPageLayout, getTenantDisplayEmail, renderToastError, toTitleCase } from '@/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import Link from 'next/link';
@@ -147,7 +147,7 @@ export default function PropertyPage() {
   };
 
   const handleAddRemoveTenantToProperty = async (_tenantEmail: string | undefined, _tenantName: string | undefined, remove: boolean) => {
-    if (!_tenantEmail || !_tenantName) return
+    if (!_tenantEmail || !_tenantName) return;
     setTenantsReassigning(true);
     try {
       if (!user || userType !== ENTITIES.PROPERTY_MANAGER) {
@@ -317,7 +317,9 @@ export default function PropertyPage() {
                     <Controller
                       control={control}
                       name="state"
-                      render={({ field: { onChange, value } }) => <StateSelect state={value} setState={onChange} label={'State'} isDirty={dirtyFields.state} />}
+                      render={({ field: { onChange, value } }) => (
+                        <StateSelect state={value} setState={onChange} selectClass="select-md" label={'State'} isDirty={dirtyFields.state} />
+                      )}
                     />
                     {errors.state && <p className="text-red-500 text-xs mt-1 italic">{errors.state.message}</p>}
                   </div>
@@ -335,9 +337,9 @@ export default function PropertyPage() {
                   {errors.postalCode && <p className="text-red-500 text-xs mt-1 italic">{errors.postalCode.message}</p>}
 
                   <div className={`flex flex-row w-full mt-4 mb-2 items-center`}>
-                    <label className="text-center mr-4" htmlFor="beds">
-                      Beds:{' '}
-                    </label>
+                    <div className="label">
+                      <span className="label-text">Beds</span>
+                    </div>
                     <input
                       className={`input mr-auto w-20 ${dirtyFields.numBeds ? 'input-warning' : 'input-bordered'}`}
                       type="number"
@@ -347,9 +349,9 @@ export default function PropertyPage() {
                       max={10}
                       {...register('numBeds')}
                     />
-                    <label className="text-center ml-2 mr-4" htmlFor="baths">
-                      Baths:{' '}
-                    </label>
+                    <div className="label">
+                      <span className="label-text">Baths</span>
+                    </div>
                     <input
                       className={`input mr-auto w-20 ${dirtyFields.numBaths ? 'input-warning' : 'input-bordered'}`}
                       type="number"
@@ -415,7 +417,7 @@ export default function PropertyPage() {
                       <tbody>
                         {tenants.map((user: IUser, i: number) => {
                           const numAddresses = Object.keys(user.addresses).length ?? 0;
-                          const correctedEmail = user.email.startsWith(NO_EMAIL_PREFIX) ? 'No email' : user.email;
+                          const correctedEmail = getTenantDisplayEmail(user.email);
                           return (
                             <tr key={`${ENTITIES.USER}-${i}`}>
                               <th>{i + 1}</th>
