@@ -106,14 +106,14 @@ const WorkOrder = ({
             images: [...(response?.data?.files ?? []), ...(workOrder?.images ?? [])],
           });
           setUploadedFiles(response?.data?.files ?? []);
-          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
+          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER, draggable: false });
           setUploadingFiles(false);
         } else {
-          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
           setUploadingFiles(false);
         }
       } catch (error) {
-        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
         setUploadingFiles(false);
       }
     },
@@ -439,8 +439,8 @@ const WorkOrder = ({
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.TO_DO)}
                   className={`${workOrder.status === WO_STATUS.TO_DO && 'bg-blue-200'} ${
-                    userType !== USER_TYPE.TENANT && 'hover:bg-blue-100 cursor-pointer'
-                  } rounded pointer-events-none px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
+                    userType === USER_TYPE.TENANT ? 'pointer-events-none' : 'hover:bg-blue-100 cursor-pointer'
+                  } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <GoTasklist />
                   <span className="text-xs">Todo</span>
@@ -449,8 +449,8 @@ const WorkOrder = ({
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.COMPLETE)}
                   className={`${workOrder.status === WO_STATUS.COMPLETE && 'bg-blue-200'} ${
-                    userType !== USER_TYPE.TENANT && 'hover:bg-blue-100 cursor-pointer'
-                  } rounded pointer-events-none px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
+                    userType === USER_TYPE.TENANT ? 'pointer-events-none' : 'hover:bg-blue-100 cursor-pointer'
+                  } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <AiOutlineCheck />
                   <span className="text-xs">Complete</span>

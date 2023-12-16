@@ -1,7 +1,7 @@
 import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, MAX_RETRIES, PillarDynamoTable } from '..';
-import { deconstructKey, generateKey } from '@/utils';
+import { generateKey } from '@/utils';
 import { API_STATUS, INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -331,58 +331,6 @@ export class UserEntity {
     };
     const result = await this.userEntity.delete(params);
     return result;
-  }
-
-  //Delete a role from roles, deletes the entity if the user only has one role
-  public async deleteUserRole({ pk, sk, roleToDelete }: { pk: string; sk: string; roleToDelete: string }) {
-    let attempt = 0;
-    while (attempt < MAX_RETRIES) {
-      //Get current user roles
-      const userAccount = await this.get({ email: deconstructKey(pk) });
-
-      if (!userAccount || !userAccount.roles.includes(roleToDelete)) {
-        throw new ApiError(API_STATUS.BAD_REQUEST, 'User not found', true);
-      }
-
-      //If the user only has one role and we are deleting it, then delete their entire record
-      if (userAccount.roles.length === 1) {
-        return await this.delete({ pk, sk });
-      }
-
-      const newRoles: string[] = userAccount.roles.filter((role: string) => role !== roleToDelete);
-
-      let res: any;
-      if (!newRoles.includes(USER_TYPE.TENANT) && !newRoles.includes(USER_TYPE.TECHNICIAN)) {
-        //The user is now only a PM, so we need to remove all tenant and technician indexes, replace technician index with pm index just in case
-        //TODO: this is a temporary fix, the indexes here are a bit hacky, technically we overwrite the GSI4 index depending on the most recently added role
-        res = await this.updateUserVersion({
-          pk,
-          sk,
-          version: userAccount.version ?? 1,
-          toRemove: ['GSI1PK', 'GSI1SK', 'pmEmail', 'pmName'],
-          GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.PROPERTY_MANAGER, userAccount.organization),
-          GSI4SK: generateKey(ENTITY_KEY.PROPERTY_MANAGER, ENTITIES.PROPERTY_MANAGER),
-          roles: newRoles,
-        });
-      } else {
-        res = await this.updateUserVersion({
-          pk,
-          sk,
-          version: userAccount.version ?? 1,
-          roles: newRoles,
-        });
-      }
-
-      const user = res.user;
-      const err = res.err;
-
-      if (err && err.$metadata?.httpStatusCode === API_STATUS.BAD_REQUEST) {
-        attempt++;
-        continue;
-      }
-      return user;
-    }
-    throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Failed to delete user after maximum retries');
   }
 
   public async getAllTenantsForOrg({

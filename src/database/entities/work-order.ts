@@ -290,7 +290,7 @@ export class WorkOrderEntity {
     return primaryWO;
   }
 
-  public async addViewedTechnician({ pk, technicianEmail }: { pk: string; technicianEmail: string; }) {
+  public async addViewedTechnician({ pk, technicianEmail }: { pk: string; technicianEmail: string }) {
     const workOrderPrimaryRow = (await this.workOrderEntity.get({ pk, sk: pk })).Item;
     if (!workOrderPrimaryRow) {
       throw new ApiError(API_STATUS.BAD_REQUEST, 'Work order not found', true);
@@ -298,7 +298,7 @@ export class WorkOrderEntity {
     if (workOrderPrimaryRow.viewedWO?.includes(technicianEmail)) {
       return workOrderPrimaryRow;
     }
-    
+
     //Set viewedWO list for all rows in partition
     const result = await this.updateWOPartition({
       pk,

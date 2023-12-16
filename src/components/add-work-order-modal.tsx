@@ -186,7 +186,6 @@ export const AddWorkOrderModal = ({
     },
     [user, userType, altName, onSuccessfulAdd, tenant, property]
   );
-  console.log(showAdditionalOptions);
 
   return (
     <Modal

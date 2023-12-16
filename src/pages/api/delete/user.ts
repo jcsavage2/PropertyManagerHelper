@@ -35,6 +35,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       if (tenant && tenant.addresses) {
         let promises = [];
         for (const propertyUUId of Object.keys(tenant.addresses)) {
+          //If somehow the user got into a state where the property on their record doesn't exist, then skip it
+          const propertyExists = await propertyEntity.getById({ uuid: propertyUUId });
+          if (!propertyExists) {
+            continue;
+          }
+
           promises.push(
             propertyEntity.addRemoveTenant({
               propertyUUId,
@@ -48,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       }
     }
 
-    await userEntity.deleteUserRole({ pk, sk, roleToDelete });
+    await userEntity.delete({ pk, sk });
 
     return res.status(API_STATUS.SUCCESS).json({ response: 'Successfully deleted entity' });
   } catch (error: any) {

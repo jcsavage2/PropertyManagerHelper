@@ -26,10 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
 
-    const wo = await woEntity.addViewedTechnician({ pk, technicianEmail});
+    const wo = await woEntity.addViewedTechnician({ pk, technicianEmail });
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(pk)}`;
-    
+
     const shortenedWorkOrderIdString = pk.substring(pk.length - 4);
     await sendgrid.send({
       to: pmEmail,
