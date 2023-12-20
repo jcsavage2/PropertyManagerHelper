@@ -12,6 +12,7 @@ import { INVALID_PARAM_ERROR, errorToResponse, initializeSendgrid } from './_uti
 import { CreateTenant } from '@/types';
 import * as Sentry from '@sentry/nextjs';
 import { EventEntity } from '@/database/entities/event';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  *
@@ -45,11 +46,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       if (existingTenant && existingTenant.status !== INVITE_STATUS.CREATED) {
         throw new ApiError(API_STATUS.FORBIDDEN, 'User already exists.', true);
       }
+
+      if (tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
+        throw new Error('Cannot create a user with this account');
+      }
     }
+
+    const guaranteedEmail = tenantEmail ?? `${NO_EMAIL_PREFIX}${uuidv4()}@gmail.com`;
 
     // Create Tenant
     const newTenant = await userEntity.createTenant({
-      tenantEmail,
+      tenantEmail: guaranteedEmail,
       tenantName,
       pmEmail,
       pmName,
@@ -69,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // Create Property if necessary
     if (createNewProperty) {
       await propertyEntity.create({
-        tenantEmails: tenantEmail ? [tenantEmail] : [],
+        tenantEmails: [guaranteedEmail],
         propertyManagerEmail: pmEmail,
         organization,
         uuid: property.propertyUUId,
@@ -87,7 +94,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         propertyId: property.propertyUUId,
         madeByEmail: pmEmail,
         madeByName: pmName,
-        message: 'Property created!' + (tenantEmail ? ' Tenant ' + tenantEmail + ' added' : ''),
+        message: `Property created! Tenant ${tenantName} added`,
+      });
+    } else {
+      await propertyEntity.addRemoveTenant({
+        tenantEmail: guaranteedEmail,
+        propertyUUId: property.propertyUUId,
+        remove: false,
       });
     }
 

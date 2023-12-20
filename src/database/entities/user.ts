@@ -4,7 +4,6 @@ import { INDEXES, MAX_RETRIES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
 import { API_STATUS, INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from '@/pages/api/_types';
 
 interface IBaseUser {
@@ -32,7 +31,7 @@ interface ICreateUser {
 interface ICreateTenant {
   pmName: string;
   pmEmail: string;
-  tenantEmail?: string;
+  tenantEmail: string;
   tenantName: string;
   address: string;
   organization: string;
@@ -138,13 +137,9 @@ export class UserEntity {
     numBeds,
     numBaths,
   }: ICreateTenant) {
-    if (tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
-      throw new Error('Cannot create a user with this account');
-    }
-    const guaranteedEmail = tenantEmail ?? `${NO_EMAIL_PREFIX}${uuidv4()}@gmail.com`;
     const tenant = await this.userEntity.update(
       {
-        pk: generateKey(ENTITY_KEY.USER, guaranteedEmail),
+        pk: generateKey(ENTITY_KEY.USER, tenantEmail),
         sk: generateKey(ENTITY_KEY.USER, ENTITIES.USER),
         pmEmail,
         pmName,
@@ -153,7 +148,7 @@ export class UserEntity {
         GSI1SK: generateKey(ENTITY_KEY.TENANT, ENTITIES.TENANT),
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.TENANT, organization),
         GSI4SK: this.createGSI4SK({
-          email: guaranteedEmail,
+          email: tenantEmail,
           entityKey: ENTITY_KEY.TENANT,
           address,
           city,
@@ -162,7 +157,7 @@ export class UserEntity {
           postalCode,
           unit,
         }),
-        email: guaranteedEmail,
+        email: tenantEmail,
         name: tenantName,
         organization,
         phone,
