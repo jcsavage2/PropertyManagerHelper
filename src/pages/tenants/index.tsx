@@ -182,10 +182,7 @@ const Tenants = () => {
         setTenantSearchString('');
       } catch (err) {
         console.error(err);
-        toast.error('Error sending reinvite email(s)', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error sending reinvite email(s)');
       }
       setTenantsToReinvite(tenants.filter((t) => t.status === INVITE_STATUS.INVITED));
       setResendingInvite(false);
@@ -213,8 +210,8 @@ const Tenants = () => {
       setTenantNewName('');
       fetchTenants(false, tenantSearchString, true);
     } catch (error) {
-      console.log(error);
-      toast.error((error as any) ?? "Error updating user's name", { position: toast.POSITION.TOP_CENTER, draggable: false });
+      console.log({ error });
+      renderToastError(error, "Error Updatng User's Name");
     }
   };
 
