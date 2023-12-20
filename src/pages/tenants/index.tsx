@@ -196,6 +196,11 @@ const Tenants = () => {
 
   const handleChangeName = async () => {
     try {
+      if (tenantNewName.toLowerCase() === editingTenant?.name.toLowerCase()) {
+        setEditingTenant(null);
+        setTenantNewName('');
+        return;
+      }
       if (!editingTenant) {
         throw new Error('You Must be editing a Tenant');
       }
@@ -306,7 +311,7 @@ const Tenants = () => {
           <input
             type="text"
             placeholder="Search tenants..."
-            className="text-black pl-3 h-full rounded pr-9 w-80 border border-blue-200"
+            className="input input-bordered input-sm"
             value={tenantSearchString}
             onChange={(e) => {
               setTenantSearchString(e.target.value);
@@ -487,36 +492,36 @@ const Tenants = () => {
                           <td className="border-b border-t px-2 py-1">
                             {editingTenant?.email === tenant.email ? (
                               <>
-                                <input
-                                  onChange={handleEditTenantName}
-                                  autoFocus
-                                  className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
-                                  id="name"
-                                  value={toTitleCase(tenantNewName)}
-                                  type={'text'}
-                                />
                                 <button
-                                  className="ml-1"
+                                  className="mr-1"
                                   onClick={() => {
                                     handleChangeName();
                                   }}
                                 >
-                                  <BsCheckCircle />
+                                  <BsCheckCircle color="green" />
                                 </button>
                                 <button
-                                  className="ml-1"
+                                  className="mr-2"
                                   onClick={() => {
                                     setEditingTenant(null);
                                     setTenantNewName('');
                                   }}
                                 >
-                                  <BsXCircle />
+                                  <BsXCircle color="red" />
                                 </button>
+                                <input
+                                  onChange={handleEditTenantName}
+                                  autoFocus
+                                  className="rounded input input-bordered input-sm mr-1"
+                                  id="name"
+                                  value={toTitleCase(tenantNewName)}
+                                  type={'text'}
+                                />
                               </>
                             ) : (
                               <>
-                                {`${toTitleCase(tenant.name)}`}{' '}
                                 <button
+                                  className="mr-2"
                                   onClick={() => {
                                     setEditingTenant(tenant);
                                     setTenantNewName(tenant.name);
@@ -524,6 +529,7 @@ const Tenants = () => {
                                 >
                                   <MdModeEditOutline />
                                 </button>
+                                {`${toTitleCase(tenant.name)}`}{' '}
                               </>
                             )}
                           </td>
