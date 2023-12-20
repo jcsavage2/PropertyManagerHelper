@@ -291,12 +291,12 @@ export class PropertyEntity {
 
       if (remove) {
         if (!newTenantEmails.includes(tenantEmail)) {
-          throw new ApiError(API_STATUS.BAD_REQUEST, 'Tenant not in property', true);
+          return oldProperty;
         }
         newTenantEmails = newTenantEmails.filter((email) => email !== tenantEmail);
       } else {
         if (newTenantEmails.includes(tenantEmail)) {
-          throw new ApiError(API_STATUS.BAD_REQUEST, 'Tenant already added to property', true);
+          return oldProperty
         }
 
         newTenantEmails.push(tenantEmail);
