@@ -113,7 +113,7 @@ const WorkOrder = ({
           setUploadingFiles(false);
         }
       } catch (error) {
-        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
+        renderToastError(error, 'Images upload failed');
         setUploadingFiles(false);
       }
     },
