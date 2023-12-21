@@ -243,7 +243,9 @@ export class WorkOrderEntity {
     return { workOrders, startKey };
   }
 
-  //Update in a loop to ensure we update all companion rows for a WO
+  /**
+   * Update in a loop to ensure we update all companion rows for a Work Order.
+   */
   public async updateWOPartition({
     pk,
     status,
