@@ -2,7 +2,7 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, MAX_RETRIES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
-import { API_STATUS, INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
+import { API_STATUS, INVITE_STATUS, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
 import { ApiError } from '@/pages/api/_types';
 
