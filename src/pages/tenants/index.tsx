@@ -13,13 +13,14 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import { toast } from 'react-toastify';
 import { CiCircleRemove } from 'react-icons/ci';
 import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
-import { MdClear } from 'react-icons/md';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { AiOutlineMail } from 'react-icons/ai';
 import { DEFAULT_DELETE_USER, INVITE_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
 import { DeleteEntity, DeleteUser, Property } from '@/types';
 import { useUserContext } from '@/context/user';
-import { DeleteEntitySchema } from '@/types/customschemas';
+import { DeleteEntitySchema, UpdateUserSchema } from '@/types/customschemas';
+import { MdModeEditOutline, MdClear } from 'react-icons/md';
+import { BsCheckCircle, BsXCircle } from 'react-icons/bs';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -37,10 +38,12 @@ const Tenants = () => {
   const [confirmDeleteModalIsOpen, setConfirmDeleteModalIsOpen] = useState(false);
   const [toDelete, setToDelete] = useState<DeleteUser>(DEFAULT_DELETE_USER);
   const [tenants, setTenants] = useState<IUser[]>([]);
+  const [editingTenant, setEditingTenant] = useState<IUser | null>(null);
+  const [tenantNewName, setTenantNewName] = useState('');
   const [tenantsToReinvite, setTenantsToReinvite] = useState<IUser[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
   const [resendingInvite, setResendingInvite] = useState<boolean>(false);
-  const [tenantSearchString, setTenantSearchString] = useState<string>('');
+  const [tenantSearchString, setTenantSearchString] = useState('');
   const [startKey, setStartKey] = useState<StartKey | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<Record<'JOINED' | 'INVITED' | 'RE_INVITED', boolean>>({
     JOINED: true,
@@ -179,16 +182,43 @@ const Tenants = () => {
         setTenantSearchString('');
       } catch (err) {
         console.error(err);
-        toast.error('Error sending reinvite email(s)', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastError(err, 'Error sending reinvite email(s)');
       }
       setTenantsToReinvite(tenants.filter((t) => t.status === INVITE_STATUS.INVITED));
       setResendingInvite(false);
     },
     [user, altName, tenants]
   );
+
+  const handleEditTenantName: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+    setTenantNewName(event.target.value);
+  };
+
+  const handleChangeName = async () => {
+    try {
+      if (tenantNewName.toLowerCase() === editingTenant?.name.toLowerCase()) {
+        setEditingTenant(null);
+        setTenantNewName('');
+        return;
+      }
+      if (!editingTenant) {
+        throw new Error('You Must be editing a Tenant');
+      }
+      const params = UpdateUserSchema.parse({
+        pk: editingTenant.pk,
+        sk: editingTenant.sk,
+        name: tenantNewName.toLowerCase(),
+      });
+      await axios.post('/api/update-user', params);
+      toast.success("Successfully updated user's name!", { position: toast.POSITION.TOP_CENTER, draggable: false });
+      setEditingTenant(null);
+      setTenantNewName('');
+      fetchTenants(false, tenantSearchString, true);
+    } catch (error) {
+      console.log({ error });
+      renderToastError(error, "Error Updatng User's Name");
+    }
+  };
 
   if (user && !user.organization && userType !== USER_TYPE.PROPERTY_MANAGER) {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
@@ -255,7 +285,7 @@ const Tenants = () => {
           </div>
         }
       />
-      <div className="lg:max-w-5xl">
+      <div className="lg:max-w-7xl">
         <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Tenants</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
@@ -281,7 +311,7 @@ const Tenants = () => {
           <input
             type="text"
             placeholder="Search tenants..."
-            className="text-black pl-3 h-full rounded pr-9 w-80 border border-blue-200"
+            className="input input-bordered input-sm"
             value={tenantSearchString}
             onChange={(e) => {
               setTenantSearchString(e.target.value);
@@ -397,7 +427,7 @@ const Tenants = () => {
                     } ${index < tenants.length - 1 && 'mb-3'}`}
                   >
                     <div className="pl-2 text-gray-800">
-                      <p className="text-2xl ">{toTitleCase(tenant.name)} </p>
+                      <p className="text-2xl ">{toTitleCase(tenant.name)}</p>
                       <p className="text-sm mt-2">{correctedEmail} </p>
                       <p className="text-sm mt-1">{toTitleCase(displayAddress)} </p>
                       <div className={`text-sm mt-2 flex flex-row`}>
@@ -440,14 +470,14 @@ const Tenants = () => {
           <div className={`${tenantsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
             <div className="overflow-x-auto">
               {tenants && tenants.length > 0 && (
-                <table className="w-full border-spacing-x-10 table-auto">
+                <table className="w-full border-spacing-x-4 table table-lg">
                   <thead className="">
                     <tr className="text-left text-gray-400">
-                      <th className="font-normal w-52">Name</th>
-                      <th className="font-normal w-64">Email</th>
-                      <th className="font-normal w-36">Status</th>
-                      <th className="font-normal w-72">Primary Address</th>
-                      <th className="font-normal w-10">Created</th>
+                      <th className="font-normal">Name</th>
+                      <th className="font-normal">Email</th>
+                      <th className="font-normal">Status</th>
+                      <th className="font-normal">Primary Address</th>
+                      <th className="font-normal">Created</th>
                       <th className=""></th>
                     </tr>
                   </thead>
@@ -459,7 +489,50 @@ const Tenants = () => {
                       const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX) ? 'None' : tenant.email;
                       return (
                         <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
-                          <td className="border-b border-t px-2 py-1">{`${toTitleCase(tenant.name)}`}</td>
+                          <td className="border-b border-t px-2 py-1">
+                            {editingTenant?.email === tenant.email ? (
+                              <>
+                                <button
+                                  className="mr-1"
+                                  onClick={() => {
+                                    handleChangeName();
+                                  }}
+                                >
+                                  <BsCheckCircle color="green" />
+                                </button>
+                                <button
+                                  className="mr-2"
+                                  onClick={() => {
+                                    setEditingTenant(null);
+                                    setTenantNewName('');
+                                  }}
+                                >
+                                  <BsXCircle color="red" />
+                                </button>
+                                <input
+                                  onChange={handleEditTenantName}
+                                  autoFocus
+                                  className="rounded input input-bordered input-sm mr-1"
+                                  id="name"
+                                  value={toTitleCase(tenantNewName)}
+                                  type={'text'}
+                                />
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  className="mr-2"
+                                  onClick={() => {
+                                    setEditingTenant(tenant);
+                                    setTenantNewName(tenant.name);
+                                  }}
+                                >
+                                  <MdModeEditOutline />
+                                </button>
+                                {`${toTitleCase(tenant.name)}`}{' '}
+                              </>
+                            )}
+                          </td>
                           <td className="border-b border-t px-2 py-1">{`${correctedEmail}`}</td>
                           <td className="border-b border-t">
                             <div className="flex flex-row items-center justify-start">

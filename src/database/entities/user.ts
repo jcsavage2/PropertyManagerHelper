@@ -225,13 +225,14 @@ export class UserEntity {
     }
   }
 
-  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatus }) {
+  public async updateUser({ pk, sk, hasSeenDownloadPrompt, status, name }: { pk: string; sk: string; hasSeenDownloadPrompt?: boolean; status?: InviteStatus; name?: string }) {
     const updatedUser = await this.userEntity.update(
       {
         pk,
         sk,
         ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
         ...(status && { status }),
+        ...(name && { name }),
       },
       { returnValues: 'ALL_NEW' }
     );
