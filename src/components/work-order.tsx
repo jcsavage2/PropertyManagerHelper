@@ -22,7 +22,7 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import Modal from 'react-modal';
 import { USER_TYPE } from '@/database/entities/user';
 import { MdOutlineClear } from 'react-icons/md';
-import { UpdateViewedWORequestSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
+import { UpdateWorkOrderSchema } from '@/types/customschemas';
 
 const WorkOrder = ({
   workOrderId,
