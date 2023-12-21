@@ -94,13 +94,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         propertyId: property.propertyUUId,
         madeByEmail: pmEmail,
         madeByName: pmName,
-        message: `Property created! Tenant ${tenantName} added`,
+        message: `Property created! Tenant ${toTitleCase(tenantName)} added`,
       });
     } else {
       await propertyEntity.addRemoveTenant({
         tenantEmail: guaranteedEmail,
         propertyUUId: property.propertyUUId,
         remove: false,
+      });
+
+      await eventEntity.createPropertyEvent({
+        propertyId: property.propertyUUId,
+        madeByEmail: pmEmail,
+        madeByName: pmName,
+        message: `Tenant added: ${toTitleCase(tenantName)}`,
       });
     }
 
