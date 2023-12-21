@@ -167,7 +167,10 @@ export class WorkOrderEntity {
     }
   }
 
-  //Soft delete work order
+  /**
+   * Soft delete work orders.
+   * The work order is still retrieveable in the DB, but we will not render it in the frontend.
+   */
   public async delete({ pk, sk }: { pk: string; sk: string }) {
     const result = await this.workOrderEntity.update(
       {
