@@ -238,6 +238,7 @@ export class WorkOrderEntity {
         ...(index && { index }),
         ...(startKey && { startKey }),
       };
+
       const { Items, LastEvaluatedKey } = await PillarDynamoTable.query(pk, options);
       startKey = LastEvaluatedKey as StartKey;
       remainingWOToFetch -= Items?.length ?? 0;
@@ -329,7 +330,7 @@ export class WorkOrderEntity {
       sk: generateKey(ENTITY_KEY.WORK_ORDER + ENTITY_KEY.TECHNICIAN, technicianEmail),
       address: workOrderPrimaryRow.address,
       GSI3PK: generateKey(ENTITY_KEY.TECHNICIAN + ENTITY_KEY.WORK_ORDER, technicianEmail),
-      GSI3SK: workOrderPrimaryRow.GSI3SK,
+      GSI3SK: workOrderPrimaryRow.GSI1SK,
       issue: workOrderPrimaryRow.issue,
       permissionToEnter: workOrderPrimaryRow.permissionToEnter,
       pmEmail: workOrderPrimaryRow.pmEmail,

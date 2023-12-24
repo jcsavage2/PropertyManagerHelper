@@ -28,14 +28,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       statusFilter,
       reverse,
     });
-    const workOrders = response.workOrders
-      ? response.workOrders.sort((a: IWorkOrder, b: IWorkOrder) => {
-          //@ts-ignore
-          return new Date(b.created) - new Date(a.created);
-        })
-      : [];
 
-    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify({ workOrders, startKey: response.startKey }) });
+
+    return res.status(API_STATUS.SUCCESS).json({ response: JSON.stringify({ workOrders: response.workOrders ?? [], startKey: response.startKey }) });
   } catch (error: any) {
     console.log({ error });
     Sentry.captureException(error);
