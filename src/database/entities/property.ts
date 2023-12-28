@@ -296,7 +296,7 @@ export class PropertyEntity {
         newTenantEmails = newTenantEmails.filter((email) => email !== tenantEmail);
       } else {
         if (newTenantEmails.includes(tenantEmail)) {
-          return oldProperty
+          return oldProperty;
         }
 
         newTenantEmails.push(tenantEmail);

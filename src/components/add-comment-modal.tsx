@@ -91,18 +91,18 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
 
   return (
     <Modal isOpen={addCommentModalIsOpen} onAfterOpen={() => toggleBodyScroll(true)} onRequestClose={closeModal} contentLabel="Add Comment Modal" style={customStyles}>
-      <div className="w-full text-right mb-2">
+      <div className="w-full text-right">
         <button className="bg-blue-200 h-6 w-6 text-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
           X
         </button>
       </div>
 
       <form onSubmit={handleSubmit(handleCreateNewComment)} style={{ display: 'grid' }}>
-        <label htmlFor="comment" className="mb-1">
-          What would you like to say?*{' '}
-        </label>
+        <div className="label">
+          <span className="label-text">What would you like to say?</span>
+        </div>
         <input
-          className="rounded px-1 border-solid border-2 border-slate-200"
+          className="input input-sm input-bordered"
           id="comment"
           placeholder={"Ex. 'Toilet was leaking from tank, not bowl'"}
           type={'text'}
@@ -114,7 +114,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
         <input type="hidden" {...register('workOrderId')} value={workOrderId} />
         <input type="hidden" {...register('email')} value={user?.email ?? ''} />
         <input type="hidden" {...register('name')} value={altName ?? user?.name ?? ''} />
-        <button className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
+        <button className="btn bg-blue-200 hover:bg-blue-300 mt-2" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner /> : 'Add Comment'}
         </button>
       </form>

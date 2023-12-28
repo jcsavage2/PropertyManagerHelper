@@ -8,7 +8,7 @@ import Select, { ActionMeta, MultiValue } from 'react-select';
 import { useUserContext } from '@/context/user';
 import { AddCommentModal } from './add-comment-modal';
 import AsyncSelect from 'react-select/async';
-import { DeleteEntity, Option, PTE_Type } from '@/types';
+import { AssignRemoveTechnician, DeleteWorkOrder, Option, PTE_Type, UpdateViewedWORequest, UpdateWorkOrder } from '@/types';
 import { GoTasklist } from 'react-icons/go';
 import { AiOutlineCheck } from 'react-icons/ai';
 import { API_STATUS, PTE, WO_STATUS, TECHNICIAN_DELIM, USER_PERMISSION_ERROR } from '@/constants';
@@ -22,7 +22,7 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import Modal from 'react-modal';
 import { USER_TYPE } from '@/database/entities/user';
 import { MdOutlineClear } from 'react-icons/md';
-import { DeleteEntitySchema, UpdateViewedWORequestSchema, UpdateWorkOrderSchema } from '@/types/customschemas';
+import { UpdateWorkOrderSchema } from '@/types/customschemas';
 
 const WorkOrder = ({
   workOrderId,
@@ -106,14 +106,14 @@ const WorkOrder = ({
             images: [...(response?.data?.files ?? []), ...(workOrder?.images ?? [])],
           });
           setUploadedFiles(response?.data?.files ?? []);
-          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER });
+          toast.success('Images uploaded successfully!', { position: toast.POSITION.TOP_CENTER, draggable: false });
           setUploadingFiles(false);
         } else {
-          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+          toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER, draggable: false });
           setUploadingFiles(false);
         }
       } catch (error) {
-        toast.error('Images upload failed', { position: toast.POSITION.TOP_CENTER });
+        renderToastError(error, 'Images upload failed');
         setUploadingFiles(false);
       }
     },
@@ -237,7 +237,7 @@ const WorkOrder = ({
         email: user.email,
         name: altName ?? user.name,
       });
-      const { data } = await axios.post('/api/update-work-order', params);
+      const { data } = await axios.post('/api/update/work-order', params);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrder(updatedWorkOrder);
@@ -257,14 +257,13 @@ const WorkOrder = ({
       if (!user || (!user.roles?.includes(USER_TYPE.TENANT) && !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER))) {
         throw new Error(USER_PERMISSION_ERROR);
       }
-      const params = UpdateWorkOrderSchema.parse({
+      const { data } = await axios.post('/api/update/work-order', {
         pk: workOrderId,
         sk: workOrderId,
         email: user.email,
         name: altName ?? user.name,
         permissionToEnter: newValue,
-      });
-      const { data } = await axios.post('/api/update-work-order', params);
+      } as UpdateWorkOrder);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrder(updatedWorkOrder);
@@ -285,14 +284,12 @@ const WorkOrder = ({
         if (!user || userType !== ENTITIES.PROPERTY_MANAGER || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) {
           throw new Error(USER_PERMISSION_ERROR);
         }
-        const params: DeleteEntity = DeleteEntitySchema.parse({
+        const { data } = await axios.post('/api/delete/work-order', {
           pk: workOrderId,
           sk: workOrderId,
-          entity: ENTITIES.WORK_ORDER,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
-        });
-        const { data } = await axios.post('/api/delete', params);
+        } as DeleteWorkOrder);
         if (data.response) {
           router.push('/work-orders');
           toast.success('Work Order Deleted!', {
@@ -318,35 +315,24 @@ const WorkOrder = ({
       const actionType = actionMeta.action;
       if (actionType === 'select-option') {
         const selectedTechnician = actionMeta.option as Option;
-        await axios.post('/api/assign-technician', {
-          organization: user.organization,
-          workOrderId,
-          ksuID: workOrder.GSI1SK,
+        await axios.post('/api/update/work-order/assign-technician', {
+          pk: workOrderId,
           pmEmail: user.email,
           pmName: altName ?? user.name,
           technicianEmail: selectedTechnician.value,
           technicianName: selectedTechnician.label,
-          status: workOrder.status,
-          permissionToEnter: workOrder?.permissionToEnter,
-          issueDescription: workOrder?.issue,
-          tenantName: workOrder?.tenantName,
-          tenantEmail: workOrder?.tenantEmail,
-          oldAssignedTo: workOrder?.assignedTo ?? [],
-          property: workOrder?.address,
-        });
+        } as AssignRemoveTechnician);
       } else if (actionType === 'remove-value') {
         const removedTechnician = actionMeta.removedValue as Option;
         const technicianName = removedTechnician.label.includes(' (viewed)') ? removedTechnician.label.replace(' (viewed)', '') : removedTechnician.label;
 
-        await axios.post('/api/remove-technician', {
-          workOrderId: deconstructKey(workOrderId),
+        await axios.post('/api/update/work-order/remove-technician', {
+          pk: workOrderId,
           pmEmail: user.email,
           pmName: altName ?? user.name,
           technicianEmail: removedTechnician.value,
           technicianName,
-          oldAssignedTo: workOrder?.assignedTo ?? [],
-          oldViewedWO: workOrder?.viewedWO ?? [],
-        });
+        } as AssignRemoveTechnician);
       }
       await getWorkOrder();
       await getWorkOrderEvents(true);
@@ -383,16 +369,12 @@ const WorkOrder = ({
       const assignedToList = Array.from(workOrder.assignedTo);
       //When a tech is opening the WO and they are assigned to it and they have not viewed it yet
       if ((assignedToList.includes(user.email) || assignedToList.includes(constructNameEmailString(user.email, user.name))) && !workOrder.viewedWO?.includes(user.email)) {
-        //Handle async update viewed list
-        const newViewedWOList: string[] = [...(workOrder.viewedWO ?? []), user.email];
-        const params = UpdateViewedWORequestSchema.parse({
+        await axios.post('/api/update/work-order/technician-viewed', {
           pk: workOrderId,
           sk: workOrderId,
-          email: user.email,
-          newViewedWOList,
+          technicianEmail: user.email,
           pmEmail: workOrder.pmEmail,
-        });
-        await axios.post('/api/update-viewed-wo-list', params);
+        } as UpdateViewedWORequest);
         await getWorkOrder();
       }
     };
@@ -457,7 +439,7 @@ const WorkOrder = ({
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.TO_DO)}
                   className={`${workOrder.status === WO_STATUS.TO_DO && 'bg-blue-200'} ${
-                    userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
+                    userType === USER_TYPE.TENANT ? 'pointer-events-none' : 'hover:bg-blue-100 cursor-pointer'
                   } rounded px-5 py-3 mr-4 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <GoTasklist />
@@ -467,7 +449,7 @@ const WorkOrder = ({
                   disabled={isUpdatingStatus}
                   onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.COMPLETE)}
                   className={`${workOrder.status === WO_STATUS.COMPLETE && 'bg-blue-200'} ${
-                    userType !== USER_TYPE.TENANT && 'hover:bg-blue-100'
+                    userType === USER_TYPE.TENANT ? 'pointer-events-none' : 'hover:bg-blue-100 cursor-pointer'
                   } rounded px-2 py-3 border-2 border-slate-300 flex flex-col items-center disabled:opacity-25`}
                 >
                   <AiOutlineCheck />

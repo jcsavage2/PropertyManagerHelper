@@ -33,7 +33,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       bottom: 'auto',
       marginRight: '-50%',
       transform: 'translate(-50%, -50%)',
-      width: isMobile ? '75%' : '50%',
+      width: isMobile ? '95%' : '50%',
       backgroundColor: 'rgba(255, 255, 255)',
     },
     overLay: {
@@ -101,13 +101,13 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
     >
       <div className="w-full text-right">
         <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
-          X Close
+          X
         </button>
       </div>
 
       <form onSubmit={handleSubmit(handleCreateNewTechnician)} style={{ display: 'grid' }}>
         <input
-          className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
+          className="input input-sm input-bordered mt-3"
           id="name"
           placeholder="Technician Full Name*"
           type={'text'}
@@ -117,7 +117,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
         />
         {errors.technicianName && <p className="text-red-500 text-xs">{errors.technicianName.message}</p>}
         <input
-          className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
+          className="input input-sm input-bordered mt-3"
           id="email"
           placeholder="Technician Email*"
           type="email"
@@ -130,7 +130,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
         <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
-        <button className="bg-blue-200 p-3 mt-7 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
+        <button className="bg-blue-200 mt-3 btn hover:bg-blue-300" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner /> : 'Create Technician'}
         </button>
       </form>

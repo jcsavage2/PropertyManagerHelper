@@ -20,7 +20,7 @@ import { IWorkOrder } from '@/database/entities/work-order';
 import { getPageLayout, renderToastError, toggleBodyScroll } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
-import { StatusOption, WoStatus } from '@/types';
+import { StatusOption, UpdateWorkOrder, WoStatus } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
 import { UpdateWorkOrderSchema } from '@/types/customschemas';
@@ -81,14 +81,13 @@ const WorkOrders = () => {
   const handleUpdateStatus = async ({ val, pk, sk }: HandleUpdateStatusProps) => {
     setIsFetching(true);
     try {
-      const params = UpdateWorkOrderSchema.parse({
+      const { data } = await axios.post('/api/update/work-order', {
         pk,
         sk,
         status: val?.value,
         email: user?.email,
         name: altName ?? user?.name,
-      });
-      const { data } = await axios.post('/api/update-work-order', params);
+      } as UpdateWorkOrder);
       const updatedWorkOrder = JSON.parse(data.response);
       if (updatedWorkOrder) {
         setWorkOrders(workOrders.map((wo) => (wo.pk === updatedWorkOrder.pk ? updatedWorkOrder : wo)));

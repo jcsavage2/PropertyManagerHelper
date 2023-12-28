@@ -17,6 +17,7 @@ import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { useRouter } from 'next/router';
+import { SearchBar } from '@/components/search-bar';
 
 const Properties = () => {
   const router = useRouter();
@@ -77,41 +78,21 @@ const Properties = () => {
             + New Property
           </button>
         </div>
-        {/* TODO: move to reusable component */}
-        <div className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 mb-2 ${propertiesLoading && 'opacity-50 pointer-events-none'}`}>
-          <input
-            type="text"
-            placeholder="Search properties..."
-            className="text-black pl-3 h-full rounded pr-9 w-80 border border-blue-200"
-            value={propertySearchString}
-            onChange={(e) => {
-              setPropertySearchString(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && propertySearchString.length !== 0 && !propertiesLoading) {
-                fetchProperties(true, propertySearchString);
-              }
-            }}
-          />
-          <MdClear
-            fontSize={28}
-            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${!propertySearchString && 'opacity-0 pointer-events-none'}}`}
-            onClick={() => {
-              if (propertiesLoading || !propertySearchString) return;
-              setPropertySearchString('');
-              fetchProperties(true);
-            }}
-          />
-          <div
-            className="relative -left-3 cursor-pointer rounded px-3 py-1 hover:bg-blue-300 bg-blue-200"
-            onClick={() => {
-              if (propertiesLoading || !propertySearchString) return;
-              fetchProperties(true, propertySearchString);
-            }}
-          >
-            Search
-          </div>
-        </div>
+        <SearchBar
+          placeholder="Search properties..."
+          searchString={propertySearchString}
+          setSearchString={setPropertySearchString}
+          resultsLoading={propertiesLoading}
+          onSearch={() => {
+            if (propertiesLoading || !propertySearchString) return;
+            fetchProperties(true, propertySearchString);
+          }}
+          onClear={() => {
+            if (propertiesLoading || !propertySearchString) return;
+            setPropertySearchString('');
+            fetchProperties(true);
+          }}
+        />
         {isMobile ? (
           <div className={`mt-4 pb-4`}>
             <div className="flex flex-col items-center">

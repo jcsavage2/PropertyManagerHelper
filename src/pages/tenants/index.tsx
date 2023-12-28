@@ -7,7 +7,7 @@ import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
 import { ImportTenantsModal } from '@/components/import-tenants-modal';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { IUser, USER_TYPE } from '@/database/entities/user';
-import { createdToFormattedDateTime, getPageLayout, renderToastError, toTitleCase } from '@/utils';
+import { createdToFormattedDateTime, getPageLayout, getTenantDisplayEmail, renderToastError, toTitleCase } from '@/utils';
 import ConfirmationModal from '@/components/confirmation-modal';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { toast } from 'react-toastify';
@@ -16,11 +16,12 @@ import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { AiOutlineMail } from 'react-icons/ai';
 import { DEFAULT_DELETE_USER, INVITE_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
-import { DeleteEntity, DeleteUser, Property } from '@/types';
+import { DeleteUser, DeleteUserBody, Property } from '@/types';
 import { useUserContext } from '@/context/user';
-import { DeleteEntitySchema, UpdateUserSchema } from '@/types/customschemas';
-import { MdModeEditOutline, MdClear } from 'react-icons/md';
+import { SearchBar } from '@/components/search-bar';
 import { BsCheckCircle, BsXCircle } from 'react-icons/bs';
+import { MdClear, MdModeEditOutline } from 'react-icons/md';
+import { UpdateUserSchema } from '@/types/customschemas';
 
 export type SearchTenantsBody = {
   orgId: string;
@@ -92,22 +93,19 @@ const Tenants = () => {
   }, [user, statusFilter, userType]);
 
   const handleDeleteTenant = useCallback(
-    async ({ pk, sk, roles }: DeleteUser) => {
+    async ({ pk, sk }: DeleteUser) => {
       setTenantsLoading(true);
       try {
         if (!user || !user.roles?.includes(USER_TYPE.PROPERTY_MANAGER) || userType !== USER_TYPE.PROPERTY_MANAGER) {
           throw new Error(USER_PERMISSION_ERROR);
         }
-        const params: DeleteEntity = DeleteEntitySchema.parse({
+        const { data } = await axios.post('/api/delete/user', {
           pk: pk,
           sk: sk,
-          entity: ENTITIES.USER,
-          roleToDelete: ENTITIES.TENANT,
-          currentUserRoles: roles,
+          roleToDelete: USER_TYPE.TENANT,
           madeByEmail: user.email,
           madeByName: altName ?? user.name,
-        });
-        const { data } = await axios.post('/api/delete', params);
+        } as DeleteUserBody);
         if (data.response) {
           toast.success('Tenant Deleted!', {
             position: toast.POSITION.TOP_CENTER,
@@ -258,7 +256,7 @@ const Tenants = () => {
             <div className="overflow-y-scroll max-h-96 h-96 w-full px-4 py-2 border rounded border-gray-300">
               {tenantsToReinvite && tenantsToReinvite.length ? (
                 tenantsToReinvite.map((tenant: IUser, i) => {
-                  const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX) ? 'None' : tenant.email;
+                  const correctedEmail = getTenantDisplayEmail(tenant.email);
                   return (
                     <div
                       key={'reinvitelist' + tenant.name + tenant.email + i}
@@ -307,40 +305,22 @@ const Tenants = () => {
             </button>
           </div>
         </div>
-        <div className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 mb-2 ${tenantsLoading && 'opacity-50 pointer-events-none'}`}>
-          <input
-            type="text"
-            placeholder="Search tenants..."
-            className="input input-bordered input-sm"
-            value={tenantSearchString}
-            onChange={(e) => {
-              setTenantSearchString(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && tenantSearchString.length !== 0 && !tenantsLoading) {
-                fetchTenants(true, tenantSearchString);
-              }
-            }}
-          />
-          <MdClear
-            fontSize={28}
-            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${!tenantSearchString && 'opacity-0 pointer-events-none'}}`}
-            onClick={() => {
-              if (tenantsLoading || !tenantSearchString) return;
-              setTenantSearchString('');
-              fetchTenants(true);
-            }}
-          />
-          <div
-            className="relative -left-3 cursor-pointer rounded px-3 py-1 hover:bg-blue-300 bg-blue-200"
-            onClick={() => {
-              if (tenantsLoading || !tenantSearchString) return;
+        <SearchBar
+          placeholder="Search tenants..."
+          searchString={tenantSearchString}
+          setSearchString={setTenantSearchString}
+          resultsLoading={tenantsLoading}
+          onSearch={() => {
+            if (tenantSearchString.length !== 0 && !tenantsLoading) {
               fetchTenants(true, tenantSearchString);
-            }}
-          >
-            Search
-          </div>
-        </div>
+            }
+          }}
+          onClear={() => {
+            if (tenantsLoading || !tenantSearchString) return;
+            setTenantSearchString('');
+            fetchTenants(true);
+          }}
+        />
         <div className={`flex flex-row justify-between w-full items-center text-gray-600 ${tenantsLoading && 'pointer-events-none'}`}>
           <div>
             <button
@@ -417,8 +397,8 @@ const Tenants = () => {
               {tenants.map((tenant: IUser, index) => {
                 const primaryAddress = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
                 const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
+                const correctedEmail = getTenantDisplayEmail(tenant.email);
 
-                const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX) ? 'No Email' : tenant.email;
                 return (
                   <div
                     key={`list-${tenant.pk}-${tenant.sk}-${index}`}
@@ -456,7 +436,6 @@ const Tenants = () => {
                           pk: tenant.pk,
                           sk: tenant.sk,
                           name: tenant.name,
-                          roles: tenant.roles,
                         });
                         setConfirmDeleteModalIsOpen(true);
                       }}
@@ -486,7 +465,7 @@ const Tenants = () => {
                       const primaryAddress: Property = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
                       const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''}`;
 
-                      const correctedEmail = tenant.email?.startsWith(NO_EMAIL_PREFIX) ? 'None' : tenant.email;
+                      const correctedEmail = getTenantDisplayEmail(tenant.email);
                       return (
                         <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
                           <td className="border-b border-t px-2 py-1">
@@ -566,7 +545,6 @@ const Tenants = () => {
                                   pk: tenant.pk,
                                   sk: tenant.sk,
                                   name: tenant.name,
-                                  roles: tenant.roles,
                                 });
                                 setConfirmDeleteModalIsOpen(true);
                               }}

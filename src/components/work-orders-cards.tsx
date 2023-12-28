@@ -1,4 +1,4 @@
-import { deconstructKey, setToShortenedString, toTitleCase } from '@/utils';
+import { deconstructKey, getTenantDisplayEmail, setToShortenedString, toTitleCase } from '@/utils';
 import { IWorkOrder } from '@/database/entities/work-order';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -119,7 +119,7 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
           ? workOrders?.map((workOrder, index) => {
               const { assignedTo } = workOrder;
               const assignedToString = setToShortenedString(assignedTo);
-              const correctedEmail = workOrder.tenantEmail?.startsWith(NO_EMAIL_PREFIX) ? toTitleCase(workOrder.tenantName) : workOrder.tenantEmail;
+              const correctedEmail = getTenantDisplayEmail(workOrder.tenantEmail, toTitleCase(workOrder.tenantName));
               return (
                 <div className="py-4 px-3 bg-gray-100 rounded w-full shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]" key={`${workOrder.pk}-${workOrder.sk}-${index}`}>
                   <p className="text-lg text-gray-800 ml-1 mb-1.5">{toTitleCase(workOrder.issue)} </p>

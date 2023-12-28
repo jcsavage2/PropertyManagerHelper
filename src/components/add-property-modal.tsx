@@ -130,9 +130,11 @@ export const AddPropertyModal = ({
         </div>
 
         <form onSubmit={handleSubmit(handleCreateNewProperty)} style={{ display: 'grid' }}>
-          <label htmlFor="address">Address* </label>
+          <div className="label">
+            <span className="label-text">Address*</span>
+          </div>
           <input
-            className="rounded px-1 border-solid border-2 border-slate-200 text-gray-600"
+            className="input input-sm input-bordered"
             placeholder="123 some street"
             id="address"
             type={'text'}
@@ -141,18 +143,22 @@ export const AddPropertyModal = ({
             })}
           />
           {errors.address && <p className="text-red-500 text-xs mt-1 italic">{errors.address.message}</p>}
-          <label htmlFor="unit">Unit </label>
-          <input className="rounded px-1 border-solid border-2 border-slate-200" id="unit" placeholder="1704" type={'text'} {...register('unit')} />
+          <div className="label">
+            <span className="label-text">Unit*</span>
+          </div>
+          <input className="input input-sm input-bordered" id="unit" placeholder="1704" type={'text'} {...register('unit')} />
           <Controller
             control={control}
             name="state"
             render={({ field: { onChange, value } }) => <StateSelect state={value} setState={onChange} label={'State*'} placeholder="Select..." />}
           />
           {errors.state && <p className="text-red-500 text-xs mt-1 italic">{errors.state.message}</p>}
-          <label htmlFor="address">City*</label>
+          <div className="label">
+            <span className="label-text">City*</span>
+          </div>
           <input
-            className="rounded px-1 border-solid border-2 border-slate-200"
-            id="address"
+            className="input input-sm input-bordered"
+            id="city"
             type={'text'}
             placeholder="Springfield"
             {...register('city', {
@@ -160,10 +166,12 @@ export const AddPropertyModal = ({
             })}
           />
           {errors.city && <p className="text-red-500 text-xs mt-1 italic">{errors.city.message}</p>}
-          <label htmlFor="address">Zip* </label>
+          <div className="label">
+            <span className="label-text">Postal Code*</span>
+          </div>
           <input
-            className="rounded px-1 border-solid border-2 border-slate-200"
-            id="address"
+            className="input input-sm input-bordered"
+            id="postalCode"
             type={'text'}
             {...register('postalCode', {
               required: true,
@@ -172,22 +180,14 @@ export const AddPropertyModal = ({
           />
           {errors.postalCode && <p className="text-red-500 text-xs mt-1 italic">{errors.postalCode.message}</p>}
           <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
-            <label className="text-center mr-4" htmlFor="beds">
-              Beds*:{' '}
-            </label>
-            <input className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto" type="number" id="beds" step={1} min={1} max={10} {...register('numBeds')} />
-            <label className="text-center ml-2 mr-4" htmlFor="baths">
-              Baths*:{' '}
-            </label>
-            <input
-              className="rounded px-1 border-solid border-2 border-slate-200 w-20 mr-auto"
-              type="number"
-              id="baths"
-              min={1}
-              max={10}
-              step={0.5}
-              {...register('numBaths')}
-            />
+            <div className="label">
+              <span className="label-text">Beds*</span>
+            </div>
+            <input className="input input-sm input-bordered mr-auto" type="number" id="beds" step={1} min={1} max={10} {...register('numBeds')} />
+            <div className="label">
+              <span className="label-text">Baths*</span>
+            </div>
+            <input className="input input-sm input-bordered mr-auto" type="number" id="baths" min={1} max={10} step={0.5} {...register('numBaths')} />
           </div>
 
           <Controller
@@ -206,7 +206,7 @@ export const AddPropertyModal = ({
           <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
           <input type="hidden" {...register('pmEmail')} value={user?.email ?? ''} />
           <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
-          <button className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mt-4" type="submit" disabled={isSubmitting || !isValid}>
+          <button className="bg-blue-200 btn hover:bg-blue-300 mt-4" type="submit" disabled={isSubmitting || !isValid}>
             {isSubmitting ? <LoadingSpinner /> : 'Add Property'}
           </button>
         </form>

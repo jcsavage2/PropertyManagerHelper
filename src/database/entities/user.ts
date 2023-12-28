@@ -2,7 +2,7 @@ import { Entity } from 'dynamodb-toolbox';
 import { ENTITIES, ENTITY_KEY, StartKey, createAddressString, generateAddressSk } from '.';
 import { INDEXES, MAX_RETRIES, PillarDynamoTable } from '..';
 import { generateKey } from '@/utils';
-import { API_STATUS, INVITE_STATUS, NO_EMAIL_PREFIX, PAGE_SIZE } from '@/constants';
+import { API_STATUS, INVITE_STATUS, PAGE_SIZE } from '@/constants';
 import { CreatePMSchemaType, InviteStatus } from '@/types';
 import { ApiError } from '@/pages/api/_types';
 
@@ -180,21 +180,25 @@ export class UserEntity {
   public async updateUserVersion({
     pk,
     sk,
+    roles,
     hasSeenDownloadPrompt,
     status,
     addresses,
     addressString,
     GSI4SK,
+    GSI4PK,
     version,
     toRemove = [],
   }: {
     pk: string;
     sk: string;
+    roles?: string[];
     hasSeenDownloadPrompt?: boolean;
     status?: InviteStatus;
     addresses?: Record<string, any>;
     addressString?: string;
     GSI4SK?: string;
+    GSI4PK?: string;
     version: number;
     toRemove?: Attributes[]; //Array of attributes to remove as strings
   }): Promise<{ user: any; err: any }> {
@@ -203,11 +207,13 @@ export class UserEntity {
         {
           pk,
           sk,
+          ...(GSI4PK && { GSI4PK }),
           ...(GSI4SK && { GSI4SK }),
           ...(hasSeenDownloadPrompt && { hasSeenDownloadPrompt }),
           ...(status && { status }),
           ...(addresses && { addresses }),
           ...(addressString && { addressString }),
+          ...(roles && { roles }),
           version: version + 1,
           $remove: toRemove,
         },
@@ -320,30 +326,6 @@ export class UserEntity {
       sk,
     };
     const result = await this.userEntity.delete(params);
-    return result;
-  }
-
-  //Delete a role from roles; also fix GSI1 if needed
-  public async deleteRole({ pk, sk, roleToDelete, existingRoles }: { pk: string; sk: string; roleToDelete: string; existingRoles: string[] }) {
-    //If the user will no longer need to be queried by a PM entity, then we should remove those indexes so they dont continue to show up when a pm queries for tenants or technicians in an org
-    const isTech: boolean = existingRoles.includes(ENTITIES.TECHNICIAN);
-    const isTenant: boolean = existingRoles.includes(ENTITIES.TENANT);
-    const shouldDeleteIndexing: boolean = (roleToDelete === USER_TYPE.TENANT && !isTech) || (roleToDelete === USER_TYPE.TECHNICIAN && !isTenant);
-
-    const params = {
-      pk,
-      sk,
-      ...(shouldDeleteIndexing && {
-        GSI1PK: null,
-        GSI1SK: null,
-        GSI4PK: null,
-        GSI4SK: null,
-        pmEmail: null,
-        pmName: null,
-      }),
-      roles: { $delete: [roleToDelete] },
-    };
-    const result = await this.userEntity.update(params);
     return result;
   }
 

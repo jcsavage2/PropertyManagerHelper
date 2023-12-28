@@ -1,4 +1,4 @@
-import { TECHNICIAN_DELIM } from '@/constants';
+import { NO_EMAIL_PREFIX, TECHNICIAN_DELIM } from '@/constants';
 import { ChatMessage, IssueInformation, Property } from '@/types';
 import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
@@ -191,4 +191,11 @@ export function convertChatMessagesToOpenAI(messages: ChatMessage[]): ChatComple
     const { ksuId, ...rest } = message;
     return rest;
   });
+}
+
+//Tenants created without an email will have a email constructed with a uuid. We don't want to display this to the user.
+//Instead show "No email" or the replacement string if provided
+export function getTenantDisplayEmail(email: string | undefined | null, replacementString: string = 'No email') {
+  if (!email) return '';
+  return email.startsWith(NO_EMAIL_PREFIX) ? replacementString : email;
 }

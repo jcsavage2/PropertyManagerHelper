@@ -105,9 +105,9 @@ export const AddPropertyManagerModal = ({
         <p className="clear-left text-lg md:w-2/5 w-3/5 mx-auto pt-0.5">{isMobile ? 'Create PM' : 'Create New Property Manager'}</p>
       </div>
 
-      <form onSubmit={handleSubmit(handleCreatePM)} className="flex flex-col">
+      <form onSubmit={handleSubmit(handleCreatePM)} className="flex flex-col pt-3">
         <input
-          className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
+          className="input input-sm input-bordered"
           id="name"
           placeholder="Full Name*"
           type={'text'}
@@ -117,7 +117,7 @@ export const AddPropertyManagerModal = ({
         />
         {errors.userName && <p className="text-red-500 text-xs mt-1 italic">{errors.userName.message}</p>}
         <input
-          className="rounded px-1 border-solid border-2 border-slate-200 mt-5"
+          className="input input-sm input-bordered mt-3"
           id="email"
           placeholder="Email*"
           type="email"
@@ -126,23 +126,24 @@ export const AddPropertyManagerModal = ({
           })}
         />
         {errors.userEmail && <p className="text-red-500 text-xs mt-1 italic">{errors.userEmail.message}</p>}
-        <div className="flex flex-row items-center justify-center h-4 mt-5">
-          <label htmlFor="isAdmin" className=" mr-2">
-            Is admin?
+        <div className="flex flex-row items-center justify-center mt-2">
+          <label className="label cursor-pointer">
+            <span className="label-text">Is admin?</span>
+            <input
+              className="checkbox ml-3"
+              id="isAdmin"
+              type="checkbox"
+              {...register('isAdmin', {
+                required: true,
+              })}
+            />
           </label>
-          <input
-            className="rounded px-1 border-solid border-2 w-4 h-4 border-slate-200"
-            id="isAdmin"
-            type="checkbox"
-            {...register('isAdmin', {
-              required: true,
-            })}
-          />
         </div>
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
+        <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
 
-        <button className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
+        <button className="bg-blue-200 btn hover:bg-blue-300" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner containerClass="h-10" /> : 'Create Property Manager'}
         </button>
       </form>
