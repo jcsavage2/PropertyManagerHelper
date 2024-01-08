@@ -63,11 +63,10 @@ const PropertyManagers = () => {
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
             {user?.isAdmin ? (
               <button
-                className="bg-blue-200 mr-4 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-7/12 md:w-44 text-center "
+                className="btn btn-primary"
                 onClick={() => {
                   !pmsLoading && setAddPMModalIsOpen(true);
                 }}
-                disabled={pmsLoading}
               >
                 + Property Manager
               </button>
@@ -75,7 +74,7 @@ const PropertyManagers = () => {
           </div>
         </div>
         {isMobile ? (
-          <div className={`mt-4 pb-4`}>
+          <div className={`mt-1 pb-4`}>
             <div className="flex flex-col items-center">
               {pms.length ? (
                 <p className="text-sm place-self-start font-light italic mb-1 ml-2 text-gray-500">
@@ -104,28 +103,28 @@ const PropertyManagers = () => {
             </div>
           </div>
         ) : (
-          <div className={`${pmsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-8`}>
+          <div className={`${pmsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
             <div className="overflow-x-auto">
               {pms && pms.length > 0 && (
-                <table className="w-full border-spacing-x-10 table-auto">
+                <table className="table">
                   <thead className="">
-                    <tr className="text-left text-gray-400">
-                      <th className="font-normal w-72">Name</th>
-                      <th className="font-normal w-72">Email</th>
-                      <th className="font-normal w-24">Status</th>
-                      <th className="font-normal w-24">Is Admin?</th>
-                      <th className="font-normal w-36">Created</th>
+                    <tr className="">
+                      <th className="">Name</th>
+                      <th className="">Email</th>
+                      <th className="">Status</th>
+                      <th className="">Is Admin?</th>
+                      <th className="">Created</th>
                     </tr>
                   </thead>
-                  <tbody className="text-gray-700">
+                  <tbody className="">
                     {pms.map((pm: IUser) => {
                       return (
-                        <tr key={`${pm.pk}-${pm.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(pm.name)}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${pm.email}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${pm.status}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${pm.isAdmin ? 'Yes' : 'No'}`}</td>
-                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(pm.created)[0]}</td>
+                        <tr key={`${pm.pk}-${pm.sk}`} className="h-16">
+                          <td className="">{`${toTitleCase(pm.name)}`}</td>
+                          <td className="">{`${pm.email}`}</td>
+                          <td className="">{`${pm.status}`}</td>
+                          <td className="">{`${pm.isAdmin ? 'Yes' : 'No'}`}</td>
+                          <td className="">{createdToFormattedDateTime(pm.created)[0]}</td>
                         </tr>
                       );
                     })}
@@ -143,7 +142,7 @@ const PropertyManagers = () => {
         )}
         {pms.length && startKey && !pmsLoading ? (
           <div className="w-full flex items-center justify-center">
-            <button onClick={() => fetchPMs(false)} className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24">
+            <button onClick={() => fetchPMs(false)} className="btn btn-secondary mx-auto mb-24">
               Load more
             </button>
           </div>

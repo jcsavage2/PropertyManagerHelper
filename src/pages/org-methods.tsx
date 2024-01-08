@@ -52,7 +52,7 @@ const OrgMethods = () => {
             required: true,
           })}
         />
-        {errors.orgName && <p className="text-red-500 text-xs italic">{errors.orgName.message}</p>}
+        {errors.orgName && <p className="text-error text-xs italic">{errors.orgName.message}</p>}
         <button className="bg-blue-200 p-3 mt-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" type="submit" disabled={isSubmitting || !isValid}>
           Create Organization
         </button>

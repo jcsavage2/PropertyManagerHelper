@@ -287,7 +287,7 @@ export default function PropertyPage() {
                       required: true,
                     })}
                   />
-                  {errors.address && <p className="text-red-500 text-xs mt-1 italic">{errors.address.message}</p>}
+                  {errors.address && <p className="text-error text-xs mt-1 italic">{errors.address.message}</p>}
 
                   <div className="label">
                     <span className="label-text">Unit</span>
@@ -299,7 +299,7 @@ export default function PropertyPage() {
                       required: true,
                     })}
                   />
-                  {errors.unit && <p className="text-red-500 text-xs mt-1 italic">{errors.unit?.message}</p>}
+                  {errors.unit && <p className="text-error text-xs mt-1 italic">{errors.unit?.message}</p>}
 
                   <div className="label">
                     <span className="label-text">City</span>
@@ -311,7 +311,7 @@ export default function PropertyPage() {
                       required: true,
                     })}
                   />
-                  {errors.city && <p className="text-red-500 text-xs mt-1 italic">{errors.city.message}</p>}
+                  {errors.city && <p className="text-error text-xs mt-1 italic">{errors.city.message}</p>}
 
                   <div className="mt-1 mb-1">
                     <Controller
@@ -321,7 +321,7 @@ export default function PropertyPage() {
                         <StateSelect state={value} setState={onChange} selectClass="select-md" label={'State'} isDirty={dirtyFields.state} />
                       )}
                     />
-                    {errors.state && <p className="text-red-500 text-xs mt-1 italic">{errors.state.message}</p>}
+                    {errors.state && <p className="text-error text-xs mt-1 italic">{errors.state.message}</p>}
                   </div>
 
                   <div className="label">
@@ -334,7 +334,7 @@ export default function PropertyPage() {
                       required: true,
                     })}
                   />
-                  {errors.postalCode && <p className="text-red-500 text-xs mt-1 italic">{errors.postalCode.message}</p>}
+                  {errors.postalCode && <p className="text-error text-xs mt-1 italic">{errors.postalCode.message}</p>}
 
                   <div className={`flex flex-row w-full mt-4 mb-2 items-center`}>
                     <div className="label">
@@ -480,7 +480,7 @@ export default function PropertyPage() {
                     <button
                       disabled={isLoadingEvents}
                       onClick={() => getPropertyEvents(eventsStartKey)}
-                      className="bg-blue-200 mx-auto py-1 md:w-1/4 w-2/5 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                      className="btn btn-secondary mx-auto"
                     >
                       Load more
                     </button>

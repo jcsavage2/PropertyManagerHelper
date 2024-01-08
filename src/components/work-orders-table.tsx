@@ -35,13 +35,13 @@ interface IWorkOrdersTableProps {
 export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatusFilter, handleUpdateStatus, formattedStatusOptions }: IWorkOrdersTableProps) => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const { userType } = useUserContext();
-  const columns: { label: string; accessor: keyof IWorkOrder; width: string }[] = [
-    { label: 'Issue', accessor: 'issue', width: 'w-72' },
-    { label: 'Status', accessor: 'status', width: 'w-44' },
-    { label: 'Address', accessor: 'address', width: 'w-44' },
-    { label: 'Assigned To', accessor: 'assignedTo', width: 'w-32' },
-    { label: 'Created', accessor: 'created', width: '' },
-    { label: 'Tenant', accessor: 'tenantName', width: '' },
+  const columns: { label: string; accessor: keyof IWorkOrder; }[] = [
+    { label: 'Issue', accessor: 'issue' },
+    { label: 'Status', accessor: 'status' },
+    { label: 'Address', accessor: 'address'},
+    { label: 'Assigned To', accessor: 'assignedTo' },
+    { label: 'Created', accessor: 'created' },
+    { label: 'Tenant', accessor: 'tenantName' },
   ];
 
   const renderWoCardStatus = (workOrder: IWorkOrder) => {
@@ -51,7 +51,7 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
     if (userType === USER_TYPE.TENANT) {
       const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
       return (
-        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-yellow-200 ' : 'bg-green-200'} px-2 py-1 rounded-lg`}>
+        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-warning ' : 'bg-success'} px-2 py-1 rounded-lg`}>
           {formattedStatusOptions({
             value: StatusOptions[index].value,
             label: StatusOptions[index].label,
@@ -62,8 +62,8 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
     }
     return (
       <Select
-        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === WO_STATUS.TO_DO && 'bg-yellow-200'} ${
-          workOrder.status === WO_STATUS.COMPLETE && 'bg-green-200'
+        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === WO_STATUS.TO_DO && 'bg-warning'} ${
+          workOrder.status === WO_STATUS.COMPLETE && 'bg-success'
         }`}
         value={StatusOptions.find((o) => o.value === workOrder.status)!}
         onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
@@ -139,7 +139,7 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
       <div className={`flex flex-row w-full items-center ${isFetching && 'pointer-events-none'}`}>
         <div>
           <button
-            className={`${isFetching && 'opacity-50'} h-full mr-2 px-3 py-2 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? 'bg-blue-200' : 'bg-gray-200'}`}
+            className={`${isFetching && 'opacity-50'} mt-2 h-full mr-2 px-3 py-2 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? 'bg-blue-200' : 'bg-gray-200'}`}
             onClick={() => setShowStatusFilter((s) => !s)}
           >
             Status
@@ -180,21 +180,21 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
         </div>
       </div>
 
-      <div className="border-collapse mt-2">
+      <div className="border-collapse">
         {remappedWorkOrders.length > 0 ? (
-          <table className={`w-full border-spacing-x-10 table-auto ${isFetching && 'opacity-25 pointer-events-none'}`}>
+          <table className={`table table-zebra ${ isFetching && "opacity-50 pointer-events-none"}`}>
             <thead className="">
               <tr className="text-left text-gray-400">
-                {columns.map(({ label, accessor, width }) => {
+                {columns.map(({ label, accessor }) => {
                   return (
-                    <th className={`font-normal px-4 ${width}`} key={accessor}>
+                    <th className={`font-normal px-4`} key={accessor}>
                       {label}
                     </th>
                   );
                 })}
               </tr>
             </thead>
-            <tbody className="text-gray-700">{sortedWorkOrderTable}</tbody>
+            <tbody className="">{sortedWorkOrderTable}</tbody>
           </table>
         ) : (
           !isFetching && <div className="text-center font-bold">Sorry, no work orders found.</div>

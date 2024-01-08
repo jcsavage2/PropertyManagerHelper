@@ -37,22 +37,17 @@ export const NavLinks = () => {
   }
 
   return (
-    <nav style={{ height: '7dvh', width: '100vw' }} className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62">
-      <div className={'flex space-x-5 text-center'} style={{ width: '100vw' }}>
-        <div className="flex cursor-pointer" onClick={() => router.push('/')}>
+    <div className="navbar bg-base-200">
+      <div className="navbar-start">
+        <div className="flex cursor-pointer mr-6" onClick={() => router.push('/')}>
           <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
           <Image src="/2.png" alt="1" width={30} height={0} />
         </div>
-        <div className="my-auto flex space-x-4">
+        <div className="text-lg child:mr-4">
           {user ? (
             <>
-              {user?.email && (
-                <Link onClick={handleClick} className="hover:text-gray-500 text-lg" href={'/'}>
-                  {'Sign Out'}
-                </Link>
-              )}
               {userType === USER_TYPE.TENANT && (
-                <Link className="hover:text-gray-500 text-lg" href={'/work-order-chatbot'}>
+                <Link className=" t" href={'/work-order-chatbot'}>
                   New Work Order
                 </Link>
               )}
@@ -74,6 +69,14 @@ export const NavLinks = () => {
           </Link>
         </div>
       </div>
-    </nav>
+
+      {user?.email && (
+        <div className="navbar-end">
+          <Link onClick={handleClick} className="btn btn-secondary" href={'/'}>
+            {'Sign Out'}
+          </Link>
+        </div>
+      )}
+    </div>
   );
 };

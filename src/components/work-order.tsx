@@ -575,7 +575,7 @@ const WorkOrder = ({
                     <button
                       disabled={isLoadingEvents}
                       onClick={() => getWorkOrderEvents(false, eventsStartKey)}
-                      className="bg-blue-200 mx-auto py-1 md:w-1/4 w-2/5 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+                      className="btn btn-secondary mx-auto"
                     >
                       Load more
                     </button>

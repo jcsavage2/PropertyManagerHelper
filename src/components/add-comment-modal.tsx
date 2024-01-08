@@ -48,7 +48,6 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
     },
   };
 
@@ -92,7 +91,7 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
   return (
     <Modal isOpen={addCommentModalIsOpen} onAfterOpen={() => toggleBodyScroll(true)} onRequestClose={closeModal} contentLabel="Add Comment Modal" style={customStyles}>
       <div className="w-full text-right">
-        <button className="bg-blue-200 h-6 w-6 text-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button className="btn btn-secondary btn-sm" onClick={closeModal}>
           X
         </button>
       </div>
@@ -110,11 +109,11 @@ export const AddCommentModal = ({ addCommentModalIsOpen, workOrderId, setAddComm
             required: true,
           })}
         />
-        {errors.comment && <p className="text-red-500 text-xs mt-1 italic">{errors.comment.message}</p>}
+        {errors.comment && <p className="text-error text-xs mt-1 italic">{errors.comment.message}</p>}
         <input type="hidden" {...register('workOrderId')} value={workOrderId} />
         <input type="hidden" {...register('email')} value={user?.email ?? ''} />
         <input type="hidden" {...register('name')} value={altName ?? user?.name ?? ''} />
-        <button className="btn bg-blue-200 hover:bg-blue-300 mt-2" type="submit" disabled={isSubmitting || !isValid}>
+        <button className="btn btn-primary mt-2" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner /> : 'Add Comment'}
         </button>
       </form>

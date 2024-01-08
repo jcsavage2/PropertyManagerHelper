@@ -99,7 +99,7 @@ export const AddPropertyManagerModal = ({
       style={customStyles}
     >
       <div className="w-full text-center mb-2 h-6">
-        <button className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button className="btn btn-sm btn-secondary float-right" onClick={closeModal}>
           X
         </button>
         <p className="clear-left text-lg md:w-2/5 w-3/5 mx-auto pt-0.5">{isMobile ? 'Create PM' : 'Create New Property Manager'}</p>
@@ -115,7 +115,7 @@ export const AddPropertyManagerModal = ({
             required: true,
           })}
         />
-        {errors.userName && <p className="text-red-500 text-xs mt-1 italic">{errors.userName.message}</p>}
+        {errors.userName && <p className="text-error text-xs mt-1 italic">{errors.userName.message}</p>}
         <input
           className="input input-sm input-bordered mt-3"
           id="email"
@@ -125,7 +125,7 @@ export const AddPropertyManagerModal = ({
             required: true,
           })}
         />
-        {errors.userEmail && <p className="text-red-500 text-xs mt-1 italic">{errors.userEmail.message}</p>}
+        {errors.userEmail && <p className="text-error text-xs mt-1 italic">{errors.userEmail.message}</p>}
         <div className="flex flex-row items-center justify-center mt-2">
           <label className="label cursor-pointer">
             <span className="label-text">Is admin?</span>
@@ -143,7 +143,7 @@ export const AddPropertyManagerModal = ({
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
 
-        <button className="bg-blue-200 btn hover:bg-blue-300" type="submit" disabled={isSubmitting || !isValid}>
+        <button className="btn btn-primary" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner containerClass="h-10" /> : 'Create Property Manager'}
         </button>
       </form>

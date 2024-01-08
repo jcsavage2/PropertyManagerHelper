@@ -198,7 +198,7 @@ const PropertySelector = ({
               })
             : null}
           {filteredOptions.length === 0 && !selectedProperty && (
-            <p className="text-base text-red-500 text-center">Sorry, no properties found. Try creating a property first.</p>
+            <p className="text-base text-error text-center">Sorry, no properties found. Try creating a property first.</p>
           )}
         </>
       )}

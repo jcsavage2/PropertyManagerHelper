@@ -71,10 +71,7 @@ const Properties = () => {
       <div className="lg:max-w-5xl">
         <div style={isMobile ? {} : { display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
           <h1 className="text-4xl">Properties</h1>
-          <button
-            className="bg-blue-200 mt-2 md:mt-0 p-2 mb-auto text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-6/12 w-40 justify-self-end text-center "
-            onClick={() => setAddPropertyModalIsOpen(true)}
-          >
+          <button className="btn btn-primary mt-2mb-auto justify-self-end " onClick={() => setAddPropertyModalIsOpen(true)}>
             + New Property
           </button>
         </div>
@@ -125,7 +122,7 @@ const Properties = () => {
                       <p className="text-sm mt-1">{toTitleCase(property.postalCode)} </p>
                       <p className="text-sm mt-1">{toTitleCase(property.unit)} </p>
                       <div className="text-sm mt-3">
-                        Tenants: <p className={`inline ${!tenantDisplayEmails && 'text-red-500'}`}> {tenantDisplayEmails.length ? tenantDisplayEmails : 'No tenants'} </p>
+                        Tenants: <p className={`inline ${!tenantDisplayEmails && 'text-error'}`}> {tenantDisplayEmails.length ? tenantDisplayEmails : 'No tenants'} </p>
                       </div>
                     </div>
                   </div>
@@ -137,28 +134,28 @@ const Properties = () => {
           <div className={`${propertiesLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
             <div className="overflow-x-auto">
               {properties && properties.length > 0 && (
-                <table className="w-full border-spacing-x-10 table-auto">
+                <table className="table">
                   <thead className="">
-                    <tr className="text-left text-gray-400">
-                      <th className="font-normal w-72">Address</th>
-                      <th className="font-normal w-40">City</th>
-                      <th className="font-normal w-12">State</th>
-                      <th className="font-normal w-24 pl-4">Zip</th>
-                      <th className="font-normal w-36">Unit</th>
+                    <tr className="">
+                      <th className="">Address</th>
+                      <th className="">City</th>
+                      <th className="">State</th>
+                      <th className="">Zip</th>
+                      <th className="">Unit</th>
                     </tr>
                   </thead>
-                  <tbody className="text-gray-700">
+                  <tbody className="">
                     {properties.map((property: IProperty) => {
                       return (
                         <tr key={`${property.pk}-${property.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.address)}</td>
-                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.city)}</td>
-                          <td className="border-b border-t px-4 py-1">{property.state.toUpperCase()}</td>
-                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.postalCode)}</td>
-                          <td className="border-b border-t px-4 py-1">{toTitleCase(property.unit)}</td>
-                          <td className="border-b border-t px-1 py-1">
+                          <td className="">{toTitleCase(property.address)}</td>
+                          <td className="">{toTitleCase(property.city)}</td>
+                          <td className="">{property.state.toUpperCase()}</td>
+                          <td className="">{toTitleCase(property.postalCode)}</td>
+                          <td className="">{toTitleCase(property.unit)}</td>
+                          <td className="">
                             <Link href={`/properties/${encodeURIComponent(deconstructKey(property.pk))}/edit`}>
-                              <FaEdit className="text-blue-300 hover:text-blue-500 cursor-pointer" fontSize={25} />
+                              <FaEdit className="text-secondary hover:text-primary cursor-pointer" fontSize={25} />
                             </Link>
                           </td>
                         </tr>
@@ -182,7 +179,7 @@ const Properties = () => {
               onClick={() => {
                 fetchProperties(false);
               }}
-              className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
+              className="btn btn-secondary mx-auto mb-24"
             >
               Load more
             </button>

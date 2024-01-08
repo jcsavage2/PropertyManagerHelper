@@ -174,9 +174,7 @@ const WorkOrders = () => {
             <h1 className="text-4xl">{`Work Orders`}</h1>
             {userType === ENTITIES.PROPERTY_MANAGER ? (
               <button
-                className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${
-                  isFetching && 'opacity-50 pointer-events-none'
-                }'}`}
+                className={` btn btn-primary mb-2 mt-2 md:mt-0 md:w-56 w-32 ${isFetching && 'opacity-50 pointer-events-none'}'}`}
                 onClick={() => {
                   if (isFetching) return;
                   setAddWorkOrderModalIsOpen(true);
@@ -187,20 +185,30 @@ const WorkOrders = () => {
             ) : null}
           </div>
           {userType !== ENTITIES.TENANT && (
-            <div className={`flex flex-row cursor-pointer mb-2 text-slate-700 ${isFetching && 'opacity-50 pointer-events-none '}`}>
-              <div
-                className={`p-2 px-3 rounded-l border border-slate-300 hover:bg-blue-100 ${!orgMode ? 'bg-blue-300' : 'bg-blue-200'}`}
+            <ul className={`menu menu-horizontal bg-base-200 rounded-box`} >
+              <li>
+                <a   
+                  className={`tooltip ${!orgMode ? ' bg-secondary' : 'bg-neutral-content'}`}
+                  data-tip="Load work orders created by or assigned to me"
+                  onClick={() => {
+                    if (isFetching) return;
+                    setOrgMode(false);
+                  }}
+                >
+                  {userType === ENTITIES.TECHNICIAN ? 'Assigned to me' : 'My work orders'}
+                </a>
+              </li>
+              <li>
+                <a className={`tooltip ${orgMode ? 'bg-secondary' : 'bg-neutral-content'}`} 
+                data-tip={`Load work orders for ${user?.organizationName || 'my org'}`}
                 onClick={() => {
                   if (isFetching) return;
-                  setOrgMode(false);
-                }}
-              >
-                {userType === ENTITIES.TECHNICIAN ? 'Assigned to me' : 'My work orders'}
-              </div>
-              <div className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`} onClick={() => setOrgMode(true)}>
-                All {user?.organizationName || 'org'} work orders
-              </div>
-            </div>
+                  setOrgMode(true)
+                  }}>
+                  All {user?.organizationName || 'org'} work orders
+                </a>
+              </li>
+            </ul>
           )}
           {isMobile ? (
             <WorkOrdersCards
@@ -223,11 +231,7 @@ const WorkOrders = () => {
           )}
           {workOrders.length && startKey && !isFetching ? (
             <div className="w-full flex items-center justify-center mb-8">
-              <button
-                disabled={isFetching}
-                onClick={() => fetchWorkOrders(false)}
-                className="bg-blue-200 mx-auto py-1 w-1/4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
-              >
+              <button disabled={isFetching} onClick={() => fetchWorkOrders(false)} className="btn mx-auto w-1/4 mb-24">
                 Load more
               </button>
             </div>

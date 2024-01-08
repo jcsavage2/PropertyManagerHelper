@@ -101,7 +101,7 @@ export const ImportTenantsModal = ({
             </p>
           </div>
           {tenant.error && (
-            <div className="text-red-500 flex flex-row items-center">
+            <div className="text-error flex flex-row items-center">
               <BiError fontSize={30} className="mr-2" />
               {tenant.error}
             </div>
@@ -435,7 +435,7 @@ export const ImportTenantsModal = ({
         )}
 
         {fileUploadError && (
-          <div className="w-full text-red-500 flex flex-row items-center justify-center">
+          <div className="w-full text-error flex flex-row items-center justify-center">
             <BiError fontSize={30} className="mr-2" />
             {fileUploadError}
           </div>

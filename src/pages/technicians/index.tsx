@@ -16,6 +16,7 @@ import { toast } from 'react-toastify';
 import { StartKey } from '@/database/entities';
 import { DEFAULT_DELETE_USER, USER_PERMISSION_ERROR } from '@/constants';
 import { DeleteUser, DeleteUserBody } from '@/types';
+import { SearchBar } from '@/components/search-bar';
 
 const Technicians = () => {
   const { user } = useSessionUser();
@@ -109,12 +110,12 @@ const Technicians = () => {
         childrenComponents={<div className="text-center">Are you sure you want to delete the technician record for {toTitleCase(toDelete.name)}?</div>}
         onCancel={() => setToDelete(DEFAULT_DELETE_USER)}
       />
-      <div className="lg:max-w-5xl">
+      <div className="">
         <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
           <h1 className="text-4xl">Technicians</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
             <button
-              className="bg-blue-200 mr-4 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-5/12 md:w-36 text-center "
+              className="btn btn-primary mr-4"
               onClick={() => {
                 !techsLoading && setAddTechModalIsOpen(true);
               }}
@@ -124,40 +125,17 @@ const Technicians = () => {
             </button>
           </div>
         </div>
-        <div className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 ${techsLoading && 'opacity-50 pointer-events-none'}`}>
-          <input
-            type="text"
-            placeholder="Search technicians..."
-            className="text-black pl-3 h-full rounded pr-9 w-80 border border-blue-200"
-            value={techSearchString}
-            onChange={(e) => {
-              setTechSearchString(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && techSearchString.length !== 0 && !techsLoading) {
-                fetchTechs(true, techSearchString);
-              }
-            }}
-          />
-          <MdClear
-            fontSize={28}
-            className={` cursor-pointer text-red-500 hover:text-red-600 relative -left-8 ${!techSearchString && 'opacity-0 pointer-events-none'}}`}
-            onClick={() => {
-              if (techsLoading || !techSearchString) return;
-              setTechSearchString('');
-              fetchTechs(true);
-            }}
-          />
-          <div
-            className="relative -left-3 cursor-pointer rounded px-3 py-1 hover:bg-blue-300 bg-blue-200"
-            onClick={() => {
-              if (techsLoading || techSearchString.length === 0) return;
-              fetchTechs(true, techSearchString);
-            }}
-          >
-            Search
-          </div>
-        </div>
+        <SearchBar
+          searchString={techSearchString}
+          setSearchString={setTechSearchString}
+          resultsLoading={techsLoading}
+          onSearch={() => fetchTechs(true, techSearchString)}
+          onClear={() => {
+            setTechSearchString('');
+            fetchTechs(true);
+          }}
+          placeholder={'Search Technicians...'}
+        />
         {isMobile ? (
           <div className={`mt-4 pb-4`}>
             <div className="flex flex-col items-center">
@@ -179,7 +157,7 @@ const Technicians = () => {
                       <p className="text-sm mt-2">{`${tech.email}`} </p>
                     </div>
                     <CiCircleRemove
-                      className="text-3xl text-red-500 cursor-pointer"
+                      className="text-3xl text-error cursor-pointer"
                       onClick={() => {
                         if (techsLoading) return;
                         setToDelete({
@@ -196,28 +174,28 @@ const Technicians = () => {
             </div>
           </div>
         ) : (
-          <div className={`${techsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
+          <div className={`${techsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-1`}>
             <div className="overflow-x-auto">
               {techs && techs.length > 0 && (
-                <table className="w-full border-spacing-x-10 table-auto">
+                <table className="table">
                   <thead className="">
-                    <tr className="text-left text-gray-400">
-                      <th className="font-normal w-72">Name</th>
-                      <th className="font-normal w-72">Email</th>
-                      <th className="font-normal w-36">Created</th>
-                      <th className="w-24"></th>
+                    <tr className="">
+                      <th className="">Name</th>
+                      <th className="">Email</th>
+                      <th className="">Created</th>
+                      <th className=""></th>
                     </tr>
                   </thead>
-                  <tbody className="text-gray-700">
+                  <tbody className="">
                     {techs.map((tech: IUser) => {
                       return (
-                        <tr key={`${tech.pk}-${tech.sk}`} className="h-20">
-                          <td className="border-b border-t px-4 py-1">{`${toTitleCase(tech.name)}`}</td>
-                          <td className="border-b border-t px-4 py-1">{`${tech.email}`}</td>
-                          <td className="border-b border-t px-4 py-1">{createdToFormattedDateTime(tech.created)[0]}</td>
-                          <td className="pl-6 py-1">
+                        <tr key={`${tech.pk}-${tech.sk}`} className="h-16">
+                          <td className="">{`${toTitleCase(tech.name)}`}</td>
+                          <td className="">{`${tech.email}`}</td>
+                          <td className="">{createdToFormattedDateTime(tech.created)[0]}</td>
+                          <td className="">
                             <CiCircleRemove
-                              className="text-3xl text-red-500 cursor-pointer"
+                              className="text-3xl text-error cursor-pointer"
                               onClick={() => {
                                 if (techsLoading) return;
                                 setToDelete({
@@ -248,13 +226,13 @@ const Technicians = () => {
           <div className="w-full flex items-center justify-center mb-24">
             <button
               onClick={() => fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)}
-              className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
+              className="btn btn-secondary mx-auto mb-24"
             >
               Load more
             </button>
           </div>
         ) : (
-          <div className="mb-24"></div>
+          <div className="mb-8"></div>
         )}
       </div>
       <AddTechnicianModal technicianModalIsOpen={addTechModalIsOpen} setTechnicianModalIsOpen={setAddTechModalIsOpen} onSuccessfulAdd={() => fetchTechs(true)} />

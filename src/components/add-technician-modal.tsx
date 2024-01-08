@@ -42,7 +42,6 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
     },
   };
 
@@ -100,7 +99,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
       style={customStyles}
     >
       <div className="w-full text-right">
-        <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
+        <button className="btn btn-sm btn-secondary" onClick={closeModal}>
           X
         </button>
       </div>
@@ -115,7 +114,7 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
             required: true,
           })}
         />
-        {errors.technicianName && <p className="text-red-500 text-xs">{errors.technicianName.message}</p>}
+        {errors.technicianName && <p className="text-error text-xs">{errors.technicianName.message}</p>}
         <input
           className="input input-sm input-bordered mt-3"
           id="email"
@@ -125,12 +124,12 @@ export const AddTechnicianModal = ({ technicianModalIsOpen, setTechnicianModalIs
             required: true,
           })}
         />
-        {errors.technicianEmail && <p className="text-red-500 text-xs">{errors.technicianEmail.message}</p>}
+        {errors.technicianEmail && <p className="text-error text-xs">{errors.technicianEmail.message}</p>}
         <input type="hidden" {...register('pmEmail')} value={user?.email ?? ''} />
         <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
         <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
-        <button className="bg-blue-200 mt-3 btn hover:bg-blue-300" type="submit" disabled={isSubmitting || !isValid}>
+        <button className="mt-3 btn btn-primary" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner /> : 'Create Technician'}
         </button>
       </form>

@@ -48,7 +48,6 @@ export const AddTenantModal = ({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
     },
   };
 
@@ -146,7 +145,7 @@ export const AddTenantModal = ({
 
   const renderPreviousButton = () => {
     return (
-      <button onClick={() => setStage(0)} className="bg-blue-200 mt-3 btn hover:bg-blue-300 " type="button">
+      <button onClick={() => setStage(0)} className="mt-3 btn btn-secondary " type="button">
         Previous
       </button>
     );
@@ -154,7 +153,7 @@ export const AddTenantModal = ({
 
   const renderSubmitButton = () => {
     return (
-      <button className="bg-blue-200 mt-3 btn hover:bg-blue-300 " type="submit" disabled={propertyForm.formState.isSubmitting || !propertyForm.formState.isValid}>
+      <button className="btn mt-3 btn-primary" type="submit" disabled={propertyForm.formState.isSubmitting || !propertyForm.formState.isValid}>
         {propertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
       </button>
     );
@@ -170,8 +169,8 @@ export const AddTenantModal = ({
       style={customStyles}
     >
       <div className="w-full text-right">
-        <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={() => closeModal()}>
-          X Close
+        <button className="btn btn-sm btn-secondary" onClick={() => closeModal()}>
+          X
         </button>
       </div>
 
@@ -187,7 +186,7 @@ export const AddTenantModal = ({
                 required: true,
               })}
             />
-            {tenantInfoForm.formState.errors.tenantName && <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantName.message}</div>}
+            {tenantInfoForm.formState.errors.tenantName && <div className="text-error text-xs">{tenantInfoForm.formState.errors.tenantName.message}</div>}
             <input
               className="input input-sm input-bordered  mt-5"
               id="email"
@@ -197,12 +196,12 @@ export const AddTenantModal = ({
                 required: false,
               })}
             />
-            {tenantInfoForm.formState.errors.tenantEmail && <div className="text-red-500 text-xs">{tenantInfoForm.formState.errors.tenantEmail.message}</div>}
+            {tenantInfoForm.formState.errors.tenantEmail && <div className="text-error text-xs">{tenantInfoForm.formState.errors.tenantEmail.message}</div>}
             <input type="hidden" {...tenantInfoForm.register('pmEmail')} value={user?.email ?? ''} />
             <input type="hidden" {...tenantInfoForm.register('pmName')} value={altName ?? user?.name ?? ''} />
             <input type="hidden" {...tenantInfoForm.register('organization')} value={user?.organization ?? ''} />
             <input type="hidden" {...tenantInfoForm.register('organizationName')} value={user?.organizationName ?? ''} />
-            <button className="bg-blue-200 mt-3 btn hover:bg-blue-300" type="submit" disabled={tenantInfoForm.formState.isSubmitting || !tenantInfoForm.formState.isValid}>
+            <button className="btn mt-3 btn-primary" type="submit" disabled={tenantInfoForm.formState.isSubmitting || !tenantInfoForm.formState.isValid}>
               Next
             </button>
           </div>
@@ -218,8 +217,8 @@ export const AddTenantModal = ({
                 propertyForm.setValue('property', DEFAULT_PROPERTY_WITH_ID);
                 propertyForm.setValue('property.propertyUUId', uuidv4());
               }}
-              className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
-                createNewProperty && 'bg-blue-200 border-blue-200'
+              className={`rounded mr-2 md:mr-8 p-2 border-b-2 cursor-pointer hover:bg-secondary md:w-full text-center ${
+                createNewProperty && 'bg-primary'
               }`}
             >
               {isMobile ? 'New Property' : 'Create New Property'}
@@ -230,8 +229,8 @@ export const AddTenantModal = ({
                 setCreateNewProperty(false);
                 propertyForm.setValue('property', null);
               }}
-              className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-blue-300 hover:border-blue-300 md:w-full text-center ${
-                !createNewProperty && 'bg-blue-200 border-blue-200'
+              className={`rounded md:ml-8 p-2 border-b-2 cursor-pointer hover:bg-secondary md:w-full text-center ${
+                !createNewProperty && 'bg-primary'
               }`}
             >
               {isMobile ? 'Existing Property' : 'Use Existing Property'}
@@ -254,12 +253,12 @@ export const AddTenantModal = ({
                         required: true,
                       })}
                     />
-                    {propertyForm.formState.errors.property?.address && <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.address?.message}</div>}
+                    {propertyForm.formState.errors.property?.address && <div className="text-error text-xs">{propertyForm.formState.errors.property?.address?.message}</div>}
                     <div className="label">
                       <span className="label-text">Unit</span>
                     </div>
                     <input className="input input-sm input-bordered" id="unit" placeholder="1704" type={'text'} {...propertyForm.register('property.unit')} />
-                    {propertyForm.formState.errors.property?.unit && <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.unit?.message}</div>}
+                    {propertyForm.formState.errors.property?.unit && <div className="text-error text-xs">{propertyForm.formState.errors.property?.unit?.message}</div>}
                     <Controller
                       control={propertyForm.control}
                       name="property.state"
@@ -277,7 +276,7 @@ export const AddTenantModal = ({
                         required: true,
                       })}
                     />
-                    {propertyForm.formState.errors.property?.city && <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.city?.message}</div>}
+                    {propertyForm.formState.errors.property?.city && <div className="text-error text-xs">{propertyForm.formState.errors.property?.city?.message}</div>}
                     <div className="label">
                       <span className="label-text">Postal Code*</span>
                     </div>
@@ -291,7 +290,7 @@ export const AddTenantModal = ({
                       placeholder="000000"
                     />
                     {propertyForm.formState.errors.property?.postalCode && (
-                      <div className="text-red-500 text-xs">{propertyForm.formState.errors.property?.postalCode?.message}</div>
+                      <div className="text-error text-xs">{propertyForm.formState.errors.property?.postalCode?.message}</div>
                     )}
                     <div className={`flex flex-row w-5/6 mt-4 mb-2 items-center sm:w-full`}>
                       <div className="label">

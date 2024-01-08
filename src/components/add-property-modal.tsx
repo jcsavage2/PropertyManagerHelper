@@ -124,8 +124,8 @@ export const AddPropertyModal = ({
         onAfterOpen={() => toggleBodyScroll(true)}
       >
         <div className="w-full text-right">
-          <button className="bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
-            X Close
+          <button className="btn btn-sm btn-secondary" onClick={closeModal}>
+            X
           </button>
         </div>
 
@@ -142,9 +142,9 @@ export const AddPropertyModal = ({
               required: true,
             })}
           />
-          {errors.address && <p className="text-red-500 text-xs mt-1 italic">{errors.address.message}</p>}
+          {errors.address && <p className="text-error text-xs mt-1 italic">{errors.address.message}</p>}
           <div className="label">
-            <span className="label-text">Unit*</span>
+            <span className="label-text">Unit </span>
           </div>
           <input className="input input-sm input-bordered" id="unit" placeholder="1704" type={'text'} {...register('unit')} />
           <Controller
@@ -152,7 +152,7 @@ export const AddPropertyModal = ({
             name="state"
             render={({ field: { onChange, value } }) => <StateSelect state={value} setState={onChange} label={'State*'} placeholder="Select..." />}
           />
-          {errors.state && <p className="text-red-500 text-xs mt-1 italic">{errors.state.message}</p>}
+          {errors.state && <p className="text-error text-xs mt-1 italic">{errors.state.message}</p>}
           <div className="label">
             <span className="label-text">City*</span>
           </div>
@@ -165,7 +165,7 @@ export const AddPropertyModal = ({
               required: true,
             })}
           />
-          {errors.city && <p className="text-red-500 text-xs mt-1 italic">{errors.city.message}</p>}
+          {errors.city && <p className="text-error text-xs mt-1 italic">{errors.city.message}</p>}
           <div className="label">
             <span className="label-text">Postal Code*</span>
           </div>
@@ -178,7 +178,7 @@ export const AddPropertyModal = ({
             })}
             placeholder="000000"
           />
-          {errors.postalCode && <p className="text-red-500 text-xs mt-1 italic">{errors.postalCode.message}</p>}
+          {errors.postalCode && <p className="text-error text-xs mt-1 italic">{errors.postalCode.message}</p>}
           <div className={`flex flex-row w-5/6 mt-2 mb-2 items-center sm:w-full`}>
             <div className="label">
               <span className="label-text">Beds*</span>
@@ -206,7 +206,7 @@ export const AddPropertyModal = ({
           <input type="hidden" {...register('organization')} value={user?.organization ?? ''} />
           <input type="hidden" {...register('pmEmail')} value={user?.email ?? ''} />
           <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
-          <button className="bg-blue-200 btn hover:bg-blue-300 mt-4" type="submit" disabled={isSubmitting || !isValid}>
+          <button className="btn btn-primary mt-4" type="submit" disabled={isSubmitting || !isValid}>
             {isSubmitting ? <LoadingSpinner /> : 'Add Property'}
           </button>
         </form>

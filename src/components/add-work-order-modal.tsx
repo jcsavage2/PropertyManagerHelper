@@ -198,8 +198,8 @@ export const AddWorkOrderModal = ({
       style={customStyles}
     >
       <div className="w-full text-center mb-2 h-6">
-        <button className="float-right bg-blue-200 px-2 py-1 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={closeModal}>
-          X Close
+        <button className="float-right btn btn-sm btn-secondary" onClick={closeModal}>
+          X
         </button>
         <p className="clear-left text-lg md:w-2/5 mx-auto pt-0.5">Create New Work Order</p>
       </div>
@@ -210,7 +210,7 @@ export const AddWorkOrderModal = ({
             <span className="label-text">What is the issue?*</span>
           </div>
           <input className="input input-sm input-bordered" id="issueDescription" type={'text'} {...register('issueDescription', { required: true })} />
-          {errors.issueDescription && <p className="text-red-500 text-xs mt-1">{errors.issueDescription.message}</p>}
+          {errors.issueDescription && <p className="text-error text-xs mt-1">{errors.issueDescription.message}</p>}
           <div className="mb-3">
             <Controller
               control={control}
@@ -227,7 +227,7 @@ export const AddWorkOrderModal = ({
                 />
               )}
             />
-            {errors.tenantEmail && <p className="text-red-500 text-xs mt-1">{errors.tenantEmail.message}</p>}
+            {errors.tenantEmail && <p className="text-error text-xs mt-1">{errors.tenantEmail.message}</p>}
           </div>
           <p className="text-sm">Permission To Enter Property* </p>
           <div className="flex flex-row">
@@ -244,7 +244,7 @@ export const AddWorkOrderModal = ({
           <div className="collapse">
             <input type="checkbox" onClick={() => setShowAdditionalOptions(!showAdditionalOptions)} />
             <div className="collapse-title text-center mx-auto my-auto p-0 pt-4">
-              <button className="bg-blue-200 text-gray-600 hover:bg-blue-300 btn btn-sm">{showAdditionalOptions ? 'Hide options' : 'Show more options'}</button>
+              <button className="bg-accent btn btn-sm">{showAdditionalOptions ? 'Hide options' : 'Show more options'}</button>
             </div>
             <div className="collapse-content -mt-4">
               <div className="label">
@@ -258,7 +258,7 @@ export const AddWorkOrderModal = ({
             </div>
           </div>
         </div>
-        <button className="bg-blue-200 btn mt-3 hover:bg-blue-300" type="submit" disabled={isSubmitting || !isValid || userLoading}>
+        <button className="btn mt-3 btn-primary" type="submit" disabled={isSubmitting || !isValid || userLoading}>
           {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading user info...' : 'Add Work Order'}
         </button>
       </form>

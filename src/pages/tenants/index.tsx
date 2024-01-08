@@ -288,7 +288,7 @@ const Tenants = () => {
           <h1 className="text-4xl">Tenants</h1>
           <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
             <button
-              className="bg-blue-200 mr-4 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-5/12 md:w-36 text-center "
+              className="btn btn-primary mr-4"
               onClick={() => {
                 !tenantsLoading && setAddTenantModalIsOpen(true);
               }}
@@ -296,11 +296,7 @@ const Tenants = () => {
             >
               + Tenant
             </button>
-            <button
-              className="bg-blue-200 md:mt-0 p-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-5/12 md:w-36 text-center "
-              onClick={() => !tenantsLoading && setImportTenantModalIsOpen(true)}
-              disabled={tenantsLoading}
-            >
+            <button className="btn btn-secondary" onClick={() => !tenantsLoading && setImportTenantModalIsOpen(true)} disabled={tenantsLoading}>
               Import Tenants
             </button>
           </div>
@@ -379,7 +375,7 @@ const Tenants = () => {
           </div>
           {!isMobile && tenants && tenantsToReinvite && tenantsToReinvite.length > 0 ? (
             <button
-              className={`cursor-pointer  rounded px-4 py-2 mr-4 hover:bg-blue-300 bg-blue-200 ${tenantsLoading && 'opacity-50 pointer-events-none'}}`}
+              className={`btn btn-secondary ${tenantsLoading && 'opacity-50 pointer-events-none'}}`}
               onClick={() => !tenantsLoading && setConfirmReinviteTenantsModalIsOpen(true)}
             >
               Bulk Re-Invite
@@ -387,10 +383,10 @@ const Tenants = () => {
           ) : null}
         </div>
         {isMobile ? (
-          <div className={`mt-4 pb-4`}>
+          <div className={`mt-2 pb-4`}>
             <div className="flex flex-col items-center">
               {tenants.length ? (
-                <p className="text-sm place-self-start font-light italic mb-1 ml-2 text-gray-500">
+                <p className="text-sm place-self-start font-light italic mb-1 ml-2">
                   {'Showing ' + tenants.length} {tenants.length === 1 ? ' tenant...' : 'tenants...'}
                 </p>
               ) : null}
@@ -429,7 +425,7 @@ const Tenants = () => {
                       </div>
                     </div>
                     <CiCircleRemove
-                      className="text-3xl text-red-500 cursor-pointer"
+                      className="text-3xl text-error cursor-pointer"
                       onClick={() => {
                         if (tenantsLoading) return;
                         setToDelete({
@@ -449,78 +445,76 @@ const Tenants = () => {
           <div className={`${tenantsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
             <div className="overflow-x-auto">
               {tenants && tenants.length > 0 && (
-                <table className="w-full border-spacing-x-4 table table-lg">
+                <table className="table">
                   <thead className="">
-                    <tr className="text-left text-gray-400">
-                      <th className="font-normal">Name</th>
-                      <th className="font-normal">Email</th>
-                      <th className="font-normal">Status</th>
-                      <th className="font-normal">Primary Address</th>
-                      <th className="font-normal">Created</th>
+                    <tr className="">
+                      <th className="">Name</th>
+                      <th className="">Email</th>
+                      <th className="">Status</th>
+                      <th className="">Primary Address</th>
+                      <th className="">Created</th>
                       <th className=""></th>
                     </tr>
                   </thead>
-                  <tbody className="text-gray-700">
+                  <tbody className="">
                     {tenants.map((tenant: IUser) => {
                       const primaryAddress: Property = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
                       const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''}`;
 
                       const correctedEmail = getTenantDisplayEmail(tenant.email);
                       return (
-                        <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-20">
-                          <td className="border-b border-t px-2 py-1">
+                        <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-16">
+                          <td className="">
                             {editingTenant?.email === tenant.email ? (
-                              <>
+                              <div className='flex flex-row align-middle'>
+                                <input
+                                  onChange={handleEditTenantName}
+                                  autoFocus
+                                  className="rounded input input-bordered input-sm"
+                                  id="name"
+                                  value={toTitleCase(tenantNewName)}
+                                  type={'text'}
+                                />
                                 <button
-                                  className="mr-1"
+                                  className="ml-2"
                                   onClick={() => {
                                     handleChangeName();
                                   }}
                                 >
-                                  <BsCheckCircle color="green" />
+                                  <BsCheckCircle className="text-success" fontSize={18} />
                                 </button>
                                 <button
-                                  className="mr-2"
+                                  className="ml-1"
                                   onClick={() => {
                                     setEditingTenant(null);
                                     setTenantNewName('');
                                   }}
                                 >
-                                  <BsXCircle color="red" />
+                                  <BsXCircle className="text-error" fontSize={18} />
                                 </button>
-                                <input
-                                  onChange={handleEditTenantName}
-                                  autoFocus
-                                  className="rounded input input-bordered input-sm mr-1"
-                                  id="name"
-                                  value={toTitleCase(tenantNewName)}
-                                  type={'text'}
-                                />
-                              </>
+                              </div>
                             ) : (
-                              <>
+                              <div className='flex flex-row align-middle'>
+                                {`${toTitleCase(tenant.name)}`}{' '}
                                 <button
-                                  className="mr-2"
+                                  className="ml-2"
                                   onClick={() => {
                                     setEditingTenant(tenant);
                                     setTenantNewName(tenant.name);
                                   }}
                                 >
-                                  <MdModeEditOutline />
+                                  <MdModeEditOutline fontSize={16} className='text-accent' />
                                 </button>
-                                {`${toTitleCase(tenant.name)}`}{' '}
-                              </>
+                              </div>
                             )}
                           </td>
-                          <td className="border-b border-t px-2 py-1">{`${correctedEmail}`}</td>
-                          <td className="border-b border-t">
+                          <td className="">{`${correctedEmail}`}</td>
+                          <td className="">
                             <div className="flex flex-row items-center justify-start">
-                              <div className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-green-600' : 'text-yellow-500'} my-auto h-max inline-block`}>
-                                {tenant.status}
-                              </div>{' '}
+                              <div className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-success' : 'text-warning'} my-auto h-max inline-block`}>{tenant.status}</div>{' '}
                               {tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED ? (
                                 <button
-                                  className="cursor-pointer w-8 h-8 hover:bg-blue-100 bg-blue-200 rounded px-2 py-2 ml-2 disabled:opacity-50"
+                                  className="btn btn-secondary btn-sm ml-2"
                                   onClick={() => {
                                     if (resendingInvite) return;
                                     handleReinviteTenants({
@@ -534,11 +528,11 @@ const Tenants = () => {
                               ) : null}
                             </div>
                           </td>
-                          <td className="border-b border-t px-2 py-1">{toTitleCase(displayAddress)}</td>
-                          <td className="border-b border-t px-1 py-1">{createdToFormattedDateTime(tenant.created)[0]}</td>
-                          <td className="pl-6 py-1">
+                          <td className="">{toTitleCase(displayAddress)}</td>
+                          <td className="">{createdToFormattedDateTime(tenant.created)[0]}</td>
+                          <td className="">
                             <CiCircleRemove
-                              className="text-3xl text-red-500 cursor-pointer"
+                              className="text-3xl text-error cursor-pointer"
                               onClick={() => {
                                 if (tenantsLoading) return;
                                 setToDelete({
@@ -567,10 +561,7 @@ const Tenants = () => {
         )}
         {tenants.length && startKey && !tenantsLoading ? (
           <div className="w-full flex items-center justify-center mb-32">
-            <button
-              onClick={() => fetchTenants(false, tenantSearchString.length !== 0 ? tenantSearchString : undefined)}
-              className="bg-blue-200 mx-auto py-3 px-4 w-44 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
-            >
+            <button onClick={() => fetchTenants(false, tenantSearchString.length !== 0 ? tenantSearchString : undefined)} className="btn btn-secondary mx-auto mb-24">
               Load more
             </button>
           </div>

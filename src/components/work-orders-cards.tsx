@@ -33,7 +33,7 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
     if (userType === USER_TYPE.TENANT) {
       const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
       return (
-        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-yellow-200 w-20' : 'bg-green-200 w-24'} px-2 py-1 rounded-lg`}>
+        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-warning w-20' : 'bg-success w-24'} px-2 py-1 rounded-lg`}>
           {formattedStatusOptions({
             value: StatusOptions[index].value,
             label: StatusOptions[index].label,
@@ -49,7 +49,7 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
       rounded 
       p-1 
       w-48
-      ${workOrder.status === WO_STATUS.TO_DO ? 'bg-yellow-200' : 'bg-green-200'} 
+      ${workOrder.status === WO_STATUS.TO_DO ? 'bg-warning' : 'bg-success'} 
     `}
         value={StatusOptions.find((o) => o.value === workOrder.status)}
         blurInputOnSelect={false}
@@ -131,12 +131,12 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
                   </div>
                   <div className="ml-1 text-sm mt-0.5 flex flex-row">
                     Assigned To:{' '}
-                    {assignedToString === 'Unassigned' ? <p className="font-light ml-1 text-red-500">Unassigned</p> : <p className="font-light ml-1">{assignedToString}</p>}
+                    {assignedToString === 'Unassigned' ? <p className="font-light ml-1 text-error">Unassigned</p> : <p className="font-light ml-1">{assignedToString}</p>}
                   </div>
                   <div className="flex flex-row items-center justify-between">
                     <div className="ml-1 text-sm flex flex-row">
                       Permission To Enter:{' '}
-                      <p className={`font-light ml-1 ${workOrder.permissionToEnter === PTE.NO ? 'text-red-500' : 'text-green-600'}`}>{workOrder.permissionToEnter}</p>
+                      <p className={`font-light ml-1 ${workOrder.permissionToEnter === PTE.NO ? 'text-error' : 'text-green-600'}`}>{workOrder.permissionToEnter}</p>
                     </div>
                     <Link
                       className="px-4 py-1 bg-slate-500 text-slate-100 rounded"
