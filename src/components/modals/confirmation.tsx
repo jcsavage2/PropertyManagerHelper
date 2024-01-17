@@ -1,69 +1,45 @@
-import { useDevice } from '@/hooks/use-window-size';
-import { toggleBodyScroll } from '@/utils';
 import { Dispatch, SetStateAction } from 'react';
-import Modal from 'react-modal';
+import Modal from '../modal';
+
+const modalIdPrefix = 'confirmation-modal';
 
 export const ConfirmationModal = ({
+  id,
+  openButtonText,
   confirmationModalIsOpen,
   setConfirmationModalIsOpen,
   onConfirm,
   childrenComponents,
   onCancel,
   buttonsDisabled,
-  fetchAllTenants,
 }: {
+  id: string;
+  openButtonText?: string;
   confirmationModalIsOpen: boolean;
   setConfirmationModalIsOpen: Dispatch<SetStateAction<boolean>>;
   onConfirm: () => void;
   childrenComponents: React.ReactNode;
   onCancel?: () => void;
   buttonsDisabled?: boolean;
-  fetchAllTenants?: () => void;
 }) => {
-  const { isMobile } = useDevice();
+  const modalId = `${modalIdPrefix}-${id}`;
 
   function closeModal() {
+    (document.getElementById(modalId) as HTMLFormElement)?.close();
     setConfirmationModalIsOpen(false);
   }
 
-  const customStyles = {
-    content: {
-      top: '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      transform: 'translate(-50%, -50%)',
-      width: isMobile ? '80%' : '40%',
-      backgroundColor: 'rgba(255, 255, 255)',
-    },
-    overLay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
-    },
-  };
-
   return (
     <Modal
+      id={modalId}
+      openButtonText={openButtonText}
       isOpen={confirmationModalIsOpen}
-      onAfterOpen={() => {
-        fetchAllTenants && fetchAllTenants();
-        toggleBodyScroll(true);
-      }}
-      onAfterClose={() => toggleBodyScroll(false)}
-      onRequestClose={closeModal}
-      contentLabel="Example Modal"
-      closeTimeoutMS={0}
-      style={customStyles}
-      ariaHideApp={false}
+      onClose={closeModal}
     >
-      <div className="w-full h-full">{childrenComponents}</div>
+      <div className="w-full h-full mt-4">{childrenComponents}</div>
       <div className="flex flex-row md:w-1/2 w-3/4 mx-auto justify-between mt-6">
         <button
-          className="w-20 bg-blue-200 rounded py-1 hover:bg-blue-300 disabled:opacity-50"
+          className="w-20 btn btn-sm btn-secondary"
           disabled={buttonsDisabled ?? false}
           onClick={() => {
             if (buttonsDisabled) return;
@@ -74,7 +50,7 @@ export const ConfirmationModal = ({
         </button>
         <button
           disabled={buttonsDisabled ?? false}
-          className="w-20 bg-blue-200 rounded py-1 hover:bg-blue-300 disabled:opacity-50"
+          className="w-20 btn btn-sm btn-secondary"
           onClick={() => {
             if (buttonsDisabled) return;
             closeModal();

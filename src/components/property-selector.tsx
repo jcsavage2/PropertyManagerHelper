@@ -2,7 +2,7 @@ import { IProperty } from '@/database/entities/property';
 import axios from 'axios';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import Select from 'react-select';
-import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { LoadingSpinner } from './loading-spinner';
 import { deconstructKey } from '@/utils';
 import { PropertyWithId } from '@/types';
 

@@ -76,7 +76,8 @@ export function generateKSUID() {
 export function setToShortenedString(set: Set<string> | string[]): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
-  const firstVal = toTitleCase(arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0]);
+  //TODO: need to handle for the no email tenants
+  let firstVal = toTitleCase(getTenantDisplayEmail(arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0], "No email tenant"));
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
 }
 
@@ -107,16 +108,6 @@ export function createdToFormattedDateTime(created: string) {
 
 export function getPageLayout(isMobile: boolean) {
   return isMobile ? {} : { display: 'grid', gridTemplateColumns: '2fr 9fr', columnGap: '2rem' };
-}
-
-export function toggleBodyScroll(open: boolean) {
-  if (open) {
-    document.body.style.overflowY = 'hidden';
-    document.body.style.overflowX = 'hidden';
-  } else {
-    document.body.style.overflowX = 'hidden';
-    document.body.style.overflowY = 'auto';
-  }
 }
 
 export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: string, pmName: string): string {
@@ -176,12 +167,22 @@ export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: s
   </html>`;
 }
 
-// Handles rendering api error messages to toast when necessary, otherwise uses defaultMesssage
-export function renderToastError(e: any, defaultMessage: string) {
+// Handles rendering api error messages with containerId to toast when necessary, otherwise uses defaultMesssage
+export function renderToastError(e: any, defaultMessage: string, containerId?: string) {
   const errorMessage: string = e?.response?.data?.userErrorMessage ?? defaultMessage;
   toast.error(errorMessage, {
     position: toast.POSITION.TOP_CENTER,
     draggable: false,
+    containerId,
+  });
+}
+
+// Handles rendering toast success message to a containerId
+export function renderToastSuccess(successMessage: string, containerId?: string) {
+  toast.success(successMessage, {
+    position: toast.POSITION.TOP_CENTER,
+    draggable: false,
+    containerId,
   });
 }
 

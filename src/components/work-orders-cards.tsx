@@ -6,12 +6,13 @@ import Select from 'react-select';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { NO_EMAIL_PREFIX, PTE, WO_STATUS } from '@/constants';
 import { StatusOptions } from './work-orders-table';
-import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '@/components/loading-spinner';
 import { HandleUpdateStatusProps } from '../pages/work-orders';
 import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
 import { WoStatus } from '@/types';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
+import MobileCard from './mobile-card';
 
 interface IWorkOrdersCardsProps {
   workOrders: IWorkOrder[];
@@ -28,7 +29,7 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
 
   const renderWoCardStatus = (workOrder: IWorkOrder) => {
     if (workOrder.status === WO_STATUS.DELETED) {
-      return <p className="text-red-600 ml-1">{WO_STATUS.DELETED}</p>;
+      return <p className="text-error ml-1">{WO_STATUS.DELETED}</p>;
     }
     if (userType === USER_TYPE.TENANT) {
       const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
@@ -67,10 +68,10 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
   };
 
   return (
-    <div className={`mt-4 pb-24`}>
+    <div className={`mt-4 pb-24 min-h-screen`}>
       <div className="w-full mb-4 flex flex-col">
         <div
-          className={`text-gray-600 w-3/5 flex flex-row px-2 h-9 items-center justify-center bg-blue-200 rounded ${filtersOpen && 'w-3/5'} ${
+          className={`w-3/5 flex flex-row px-2 h-9 items-center justify-center bg-primary rounded ${filtersOpen && 'w-3/5'} ${
             isFetching && 'opacity-50 pointer-events-none'
           }}`}
           onClick={() => {
@@ -92,7 +93,7 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
         </div>
         <div className={`w-full ${!filtersOpen && 'hidden'} ${isFetching && 'opacity-50 pointer-events-none'} mt-1`}>
           <div
-            className={`flex flex-row items-center h-8 w-3/5 ${statusFilter.TO_DO ? 'hover:bg-blue-200' : 'hover:bg-gray-200'} px-4`}
+            className={`flex flex-row items-center h-8 w-3/5 px-4 hover:bg-secondary`}
             onClick={() => {
               if (isFetching) return;
               setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
@@ -103,43 +104,40 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
           </div>
 
           <div
-            className={`flex flex-row items-center h-8 w-3/5 ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'} px-4`}
+            className={`flex flex-row items-center h-8 w-3/5 px-4 hover:bg-secondary`}
             onClick={() => {
               if (isFetching) return;
               setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
             }}
           >
-            <p className={`cursor-pointer flex items-center w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>Complete</p>
+            <p className={`cursor-pointer w-full rounded`}>Complete</p>
             {!statusFilter.COMPLETE ? <BiCheckbox className="mr-3 justify-self-end text-3xl" /> : <BiCheckboxChecked className="mr-3 justify-self-end text-3xl" />}
           </div>
         </div>
       </div>
-      <div className={`grid gap-y-3 ${isFetching && 'opacity-50'}`}>
+      <div className={`${isFetching && 'opacity-50'}`}>
         {workOrders.length > 0
           ? workOrders?.map((workOrder, index) => {
               const { assignedTo } = workOrder;
               const assignedToString = setToShortenedString(assignedTo);
               const correctedEmail = getTenantDisplayEmail(workOrder.tenantEmail, toTitleCase(workOrder.tenantName));
               return (
-                <div className="py-4 px-3 bg-gray-100 rounded w-full shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)]" key={`${workOrder.pk}-${workOrder.sk}-${index}`}>
-                  <p className="text-lg text-gray-800 ml-1 mb-1.5">{toTitleCase(workOrder.issue)} </p>
-
-                  {renderWoCardStatus(workOrder)}
-                  <p className="ml-1 text-base mt-2 font-light">{workOrder.address.address + ' ' + (workOrder?.address?.unit ?? '')} </p>
-                  <div className="ml-1 text-sm mt-1 flex flex-row">
-                    Tenant: <p className="font-light ml-1">{correctedEmail}</p>
-                  </div>
-                  <div className="ml-1 text-sm mt-0.5 flex flex-row">
-                    Assigned To:{' '}
-                    {assignedToString === 'Unassigned' ? <p className="font-light ml-1 text-error">Unassigned</p> : <p className="font-light ml-1">{assignedToString}</p>}
-                  </div>
-                  <div className="flex flex-row items-center justify-between">
-                    <div className="ml-1 text-sm flex flex-row">
-                      Permission To Enter:{' '}
-                      <p className={`font-light ml-1 ${workOrder.permissionToEnter === PTE.NO ? 'text-error' : 'text-green-600'}`}>{workOrder.permissionToEnter}</p>
+                <MobileCard title={toTitleCase(workOrder.issue)} key={`${workOrder.pk}-${workOrder.sk}-${index}`}>
+                  <div className="text-sm flex flex-col">
+                    {renderWoCardStatus(workOrder)}
+                    <p className="text-base mt-2 font-light">{workOrder.address.address + ' ' + (workOrder?.address?.unit ?? '')} </p>
+                    <div className="flex flex-row mt-1">
+                      Tenant: <p className="font-light ml-1">{correctedEmail}</p>
+                    </div>
+                    <div className="flex flex-row">
+                      Assigned To:{' '}
+                      {assignedToString === 'Unassigned' ? <p className="font-light ml-1 text-error">Unassigned</p> : <p className="font-light ml-1">{assignedToString}</p>}
+                    </div>
+                    <div className="flex flex-row">
+                      Permission To Enter: <p className={`font-light ml-1 ${workOrder.permissionToEnter === PTE.NO ? 'text-error' : ' '}`}>{workOrder.permissionToEnter}</p>
                     </div>
                     <Link
-                      className="px-4 py-1 bg-slate-500 text-slate-100 rounded"
+                      className="btn btn-sm btn-primary w-1/3 place-self-end"
                       key={workOrder.pk + index}
                       href={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}
                       as={`/work-orders/?workOrderId=${encodeURIComponent(workOrder.pk)}`}
@@ -147,7 +145,7 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
                       Open Details
                     </Link>
                   </div>
-                </div>
+                </MobileCard>
               );
             })
           : !isFetching && <div className="text-center font-bold">Sorry, no work orders found.</div>}

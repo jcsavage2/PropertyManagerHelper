@@ -1,5 +1,5 @@
-import ConfirmationModal from '@/components/confirmation-modal';
-import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import ConfirmationModal from '@/components/modals/confirmation';
+import { LoadingSpinner } from '@/components/loading-spinner';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { StateSelect } from '@/components/state-select';
 import { TenantSelect } from '@/components/tenant-select';
@@ -13,7 +13,16 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { EditProperty, Option } from '@/types';
 import { EditPropertySchema } from '@/types/customschemas';
-import { createPropertyDisplayString, createdToFormattedDateTime, deconstructKey, getPageLayout, getTenantDisplayEmail, renderToastError, toTitleCase } from '@/utils';
+import {
+  createPropertyDisplayString,
+  createdToFormattedDateTime,
+  deconstructKey,
+  getPageLayout,
+  getTenantDisplayEmail,
+  renderToastError,
+  renderToastSuccess,
+  toTitleCase,
+} from '@/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import Link from 'next/link';
@@ -22,7 +31,6 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { CiLocationOn } from 'react-icons/ci';
 import { SingleValue } from 'react-select';
-import { toast } from 'react-toastify';
 
 const PropertyPageTabs = ['edit', 'tenants', 'history'];
 
@@ -136,10 +144,7 @@ export default function PropertyPage() {
       const { data } = await axios.post('/api/edit-property', params);
       const { property } = JSON.parse(data.response);
       setProperty(property);
-      toast.success('Property updated successfully!', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
+      renderToastSuccess('Property updated successfully!');
     } catch (e) {
       console.log({ e });
       renderToastError(e, 'Error updating property');
@@ -164,10 +169,7 @@ export default function PropertyPage() {
       const { property: _property } = JSON.parse(data.response);
       setProperty(_property);
       setTenantToDelete({ name: '', email: '' });
-      toast.success(remove ? 'Tenant removed from property' : 'Tenant added to property', {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
+      renderToastSuccess(remove ? 'Tenant removed from property' : 'Tenant added to property');
     } catch (e) {
       console.log({ e });
       renderToastError(e, remove ? 'Error removing tenant' : 'Error adding tenant');
@@ -216,7 +218,7 @@ export default function PropertyPage() {
             <ul className="mb-4 ml-2">
               <li>
                 <Link href="/properties">
-                  <CiLocationOn className="inline mr-2 my-auto" />
+                  <CiLocationOn className="inline mr-1 my-auto" />
                   Properties
                 </Link>
               </li>
@@ -251,7 +253,7 @@ export default function PropertyPage() {
           </div>
         ) : property && propertyparams ? (
           <div className="w-full justify-center flex flex-col">
-            <div role="tablist" className="tabs tabs-bordered mt-2 mb-4">
+            <div role="tablist" className="tabs tabs-bordered mt-2 mb-4 text-primary">
               <div
                 role="tab"
                 className={`tab ${selectedTab === PropertyPageTabs[0] && 'tab-active'}`}
@@ -365,11 +367,11 @@ export default function PropertyPage() {
                   <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
 
                   <div className="mx-auto md:w-1/2 w-full mt-4 flex flex-row justify-center">
-                    <button className="btn text-black bg-blue-300 mr-3 w-3/4" type="submit" disabled={isSubmitting || !isValid || !isDirty}>
+                    <button className="btn btn-primary mr-3 w-3/4" type="submit" disabled={isSubmitting || !isValid || !isDirty}>
                       {isSubmitting ? <LoadingSpinner /> : 'Save Changes'}
                     </button>
                     <button
-                      className="btn text-black bg bg-red-500"
+                      className="btn btn-error"
                       onClick={() => {
                         reset();
                       }}
@@ -390,10 +392,9 @@ export default function PropertyPage() {
                     onChange={(e: SingleValue<Option>) => {
                       if (e) setTenantToAdd(e);
                     }}
-                    shouldFetch={true}
                   />
                   <button
-                    className="btn ml-2 py-0 bg-blue-200 hover:bg-blue-300"
+                    className="btn btn-primary ml-2"
                     onClick={() => !tenantsLoading && !tenantsReassigning && handleAddRemoveTenantToProperty(tenantToAdd?.value, tenantToAdd?.label, false)}
                     disabled={tenantsLoading || tenantsReassigning}
                   >
@@ -405,7 +406,7 @@ export default function PropertyPage() {
                   {tenantsLoading ? (
                     <LoadingSpinner containerClass="mt-4" />
                   ) : tenants && tenants.length ? (
-                    <table className="table mb-0">
+                    <table className="table table-zebra mb-0">
                       <thead>
                         <tr>
                           <th></th>
@@ -429,7 +430,7 @@ export default function PropertyPage() {
                                   data-tip={`${numAddresses === 1 ? 'To remove this tenant, please assign them to another address first' : ''}`}
                                 >
                                   <button
-                                    className="btn bg-red-500 hover:bg-red-600 py-1 px-1"
+                                    className="btn btn-error py-1 px-1"
                                     onClick={() => {
                                       if (tenantsReassigning) return;
                                       setTenantToDelete({ name: user.name, email: user.email });
@@ -458,7 +459,7 @@ export default function PropertyPage() {
                     if (event) {
                       const formattedDateTime = createdToFormattedDateTime(event.created!);
                       return (
-                        <div key={`${ENTITIES.EVENT}-${i}`} className="mx-auto text-sm text-slate-800 rounded-md bg-gray-200 mt-2 mb-2 py-2 px-3 text-left">
+                        <div key={`${ENTITIES.EVENT}-${i}`} className="mx-auto text-sm text-slate-800 rounded-md bg-base-300 mt-2 mb-2 py-2 px-3 text-left">
                           <div className="mb-0.5 flex flex-row">
                             <p className="font-bold mr-2">{toTitleCase(event.madeByName)} </p>
                             <p className="text-slate-600">
@@ -477,11 +478,7 @@ export default function PropertyPage() {
                   <LoadingSpinner containerClass="mt-4" />
                 ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
                   <div className="w-full flex items-center justify-center">
-                    <button
-                      disabled={isLoadingEvents}
-                      onClick={() => getPropertyEvents(eventsStartKey)}
-                      className="btn btn-secondary mx-auto"
-                    >
+                    <button disabled={isLoadingEvents} onClick={() => getPropertyEvents(eventsStartKey)} className="btn btn-secondary mx-auto">
                       Load more
                     </button>
                   </div>
@@ -493,6 +490,7 @@ export default function PropertyPage() {
           <div className="flex justify-center font-bold mt-4">Sorry, property not found</div>
         )}
         <ConfirmationModal
+          id="confirm-remove-tenant-from-property"
           confirmationModalIsOpen={tenantRemoveConfirmOpen}
           setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
           onConfirm={() => {

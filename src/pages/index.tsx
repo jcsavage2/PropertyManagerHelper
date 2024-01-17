@@ -1,7 +1,7 @@
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '@/components/loading-spinner';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
 import { useDevice } from '@/hooks/use-window-size';
@@ -9,7 +9,7 @@ import { useDevice } from '@/hooks/use-window-size';
 const Home = () => {
   const router = useRouter();
   const { query } = router;
-  const { userType, setUserType, logOut } = useUserContext();
+  const { userType, logOut } = useUserContext();
   const { user, sessionStatus } = useSessionUser();
   const { isMobile } = useDevice();
 
@@ -42,14 +42,14 @@ const Home = () => {
         <br />
         {user && user.email ? (
           <div className="flex flex-col justify-center w-full items-center">
-            <button onClick={() => router.push('/work-orders')} className="bg-blue-200 px-3 py-2 mb-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44">
+            <button onClick={() => router.push('/work-orders')} className="mb-4 btn btn-primary">
               View work orders
             </button>
             <button
               onClick={() => {
                 logOut();
               }}
-              className="bg-blue-200 px-3 py-2 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-44"
+              className="btn btn-primary"
             >
               Sign Out
             </button>
@@ -59,7 +59,7 @@ const Home = () => {
             onClick={() => {
               signIn();
             }}
-            className="bg-blue-200 p-3 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+            className="btn btn-primary"
           >
             Sign In/Sign Up
           </button>

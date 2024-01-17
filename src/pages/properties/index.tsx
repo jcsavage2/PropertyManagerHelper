@@ -2,27 +2,27 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { useDevice } from '@/hooks/use-window-size';
-import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
-import { AddPropertyModal } from '@/components/add-property-modal';
+import { BottomNavigationPanel } from '@/components/navigation/bottom-navigation-panel';
+import { CreatePropertyModal } from '@/components/modals/create-property';
 import React from 'react';
 import { IProperty } from '@/database/entities/property';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { deconstructKey, getPageLayout, setToShortenedString, toTitleCase } from '@/utils';
 import { StartKey } from '@/database/entities';
-import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '@/components/loading-spinner';
 import { FaEdit } from 'react-icons/fa';
 import Link from 'next/link';
-import { MdClear } from 'react-icons/md';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { useRouter } from 'next/router';
 import { SearchBar } from '@/components/search-bar';
+import MobileCard from '@/components/mobile-card';
 
 const Properties = () => {
   const router = useRouter();
   const { user } = useSessionUser();
-  const [addPropertyModalIsOpen, setAddPropertyModalIsOpen] = useState(false);
+  const [CreatePropertyModalIsOpen, setCreatePropertyModalIsOpen] = useState(false);
   const [properties, setProperties] = useState<IProperty[]>([]);
   const { isMobile } = useDevice();
   const { userType } = useUserContext();
@@ -66,131 +66,122 @@ const Properties = () => {
   }, [user]);
 
   return (
-    <div id="testing" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
-      {!isMobile && <PortalLeftPanel />}
-      <div className="lg:max-w-5xl">
-        <div style={isMobile ? {} : { display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-          <h1 className="text-4xl">Properties</h1>
-          <button className="btn btn-primary mt-2mb-auto justify-self-end " onClick={() => setAddPropertyModalIsOpen(true)}>
-            + New Property
-          </button>
-        </div>
-        <SearchBar
-          placeholder="Search properties..."
-          searchString={propertySearchString}
-          setSearchString={setPropertySearchString}
-          resultsLoading={propertiesLoading}
-          onSearch={() => {
-            if (propertiesLoading || !propertySearchString) return;
-            fetchProperties(true, propertySearchString);
-          }}
-          onClear={() => {
-            if (propertiesLoading || !propertySearchString) return;
-            setPropertySearchString('');
-            fetchProperties(true);
-          }}
-        />
-        {isMobile ? (
-          <div className={`mt-4 pb-4`}>
-            <div className="flex flex-col items-center">
-              {properties.length ? (
-                <p className="text-sm place-self-start font-light italic mb-1 ml-2 text-gray-500">
-                  {'Showing ' + properties.length} {properties.length === 1 ? ' property...' : 'properties...'}
-                </p>
-              ) : null}
-              {properties.map((property: IProperty, index) => {
-                const tenantDisplayEmails = property.tenantEmails && property.tenantEmails.length ? setToShortenedString(property.tenantEmails) : '';
-                return (
-                  <div
-                    key={`${property.pk}-${property.sk}-${index}`}
-                    className={`flex flex-row items-center w-full rounded-lg py-2 px-2 h-48 bg-gray-100 shadow-[0px_1px_5px_0px_rgba(0,0,0,0.3)] ${index === 0 && 'mt-1'} ${
-                      index < properties.length - 1 && 'mb-3'
-                    }`}
-                  >
-                    <div className="pl-2 w-full text-gray-800 flex flex-col">
-                      <div className="flex w-full flex-row justify-between">
-                        <p className="text-xl my-auto">{toTitleCase(property.address)} </p>
+    <>
+      <div id="testing" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
+        {!isMobile && <PortalLeftPanel />}
+        <div className="">
+          <div className="flex flex-row justify-between">
+            <h1 className="text-4xl">Properties</h1>
+            <CreatePropertyModal onSuccess={() => fetchProperties(true)} />
+          </div>
+          <SearchBar
+            placeholder="Search properties..."
+            searchString={propertySearchString}
+            setSearchString={setPropertySearchString}
+            resultsLoading={propertiesLoading}
+            onSearch={() => {
+              if (propertiesLoading || !propertySearchString) return;
+              fetchProperties(true, propertySearchString);
+            }}
+            onClear={() => {
+              if (propertiesLoading || !propertySearchString) return;
+              setPropertySearchString('');
+              fetchProperties(true);
+            }}
+          />
+          {isMobile ? (
+            <div className={`mt-4 pb-4 min-h-screen`}>
+              <div className="flex flex-col items-center">
+                {properties.length ? (
+                  <p className="text-sm place-self-start font-light italic mb-1 ml-2">
+                    {'Showing ' + properties.length} {properties.length === 1 ? ' property...' : 'properties...'}
+                  </p>
+                ) : null}
+                {properties.map((property: IProperty, index) => {
+                  const tenantDisplayEmails = property.tenantEmails && property.tenantEmails.length ? setToShortenedString(property.tenantEmails) : '';
+                  return (
+                    <MobileCard title={toTitleCase(property.address)} key={`${property.pk}-${property.sk}-${index}`}>
+                      <div className="w-full text-gray-800 flex flex-col text-sm child:mt-1">
+                        <p className="">{toTitleCase(property.city)} </p>
+                        <p className="">{property.state.toUpperCase()} </p>
+                        <p className="">{toTitleCase(property.postalCode)} </p>
+                        <p className="">{toTitleCase(property.unit)} </p>
+                        <div className="">
+                          Tenants: <p className={`inline ${!tenantDisplayEmails && 'text-error'}`}> {tenantDisplayEmails.length ? tenantDisplayEmails : 'No tenants'} </p>
+                        </div>
                         <button
-                          className="btn btn-sm bg-blue-200 hover:bg-blue-300 mr-4"
+                          className="btn btn-sm btn-primary w-1/3 place-self-end"
                           onClick={() => router.push(`/properties/${encodeURIComponent(deconstructKey(property.pk))}/edit`)}
                         >
                           Edit
                         </button>
                       </div>
-                      <p className="text-sm mt-1">{toTitleCase(property.city)} </p>
-                      <p className="text-sm mt-1">{property.state.toUpperCase()} </p>
-                      <p className="text-sm mt-1">{toTitleCase(property.postalCode)} </p>
-                      <p className="text-sm mt-1">{toTitleCase(property.unit)} </p>
-                      <div className="text-sm mt-3">
-                        Tenants: <p className={`inline ${!tenantDisplayEmails && 'text-error'}`}> {tenantDisplayEmails.length ? tenantDisplayEmails : 'No tenants'} </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    </MobileCard>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className={`${propertiesLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
-            <div className="overflow-x-auto">
-              {properties && properties.length > 0 && (
-                <table className="table">
-                  <thead className="">
-                    <tr className="">
-                      <th className="">Address</th>
-                      <th className="">City</th>
-                      <th className="">State</th>
-                      <th className="">Zip</th>
-                      <th className="">Unit</th>
-                    </tr>
-                  </thead>
-                  <tbody className="">
-                    {properties.map((property: IProperty) => {
-                      return (
-                        <tr key={`${property.pk}-${property.sk}`} className="h-20">
-                          <td className="">{toTitleCase(property.address)}</td>
-                          <td className="">{toTitleCase(property.city)}</td>
-                          <td className="">{property.state.toUpperCase()}</td>
-                          <td className="">{toTitleCase(property.postalCode)}</td>
-                          <td className="">{toTitleCase(property.unit)}</td>
-                          <td className="">
-                            <Link href={`/properties/${encodeURIComponent(deconstructKey(property.pk))}/edit`}>
-                              <FaEdit className="text-secondary hover:text-primary cursor-pointer" fontSize={25} />
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+          ) : (
+            <div className={`${propertiesLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
+              <div className="overflow-x-auto">
+                {properties && properties.length > 0 && (
+                  <table className="table table-zebra">
+                    <thead className="">
+                      <tr className="">
+                        <th className="">Address</th>
+                        <th className="">City</th>
+                        <th className="">State</th>
+                        <th className="">Zip</th>
+                        <th className="">Unit</th>
+                      </tr>
+                    </thead>
+                    <tbody className="">
+                      {properties.map((property: IProperty) => {
+                        return (
+                          <tr key={`${property.pk}-${property.sk}`} className="h-20">
+                            <td className="">{toTitleCase(property.address)}</td>
+                            <td className="">{toTitleCase(property.city)}</td>
+                            <td className="">{property.state.toUpperCase()}</td>
+                            <td className="">{toTitleCase(property.postalCode)}</td>
+                            <td className="">{toTitleCase(property.unit)}</td>
+                            <td className="">
+                              <Link href={`/properties/${encodeURIComponent(deconstructKey(property.pk))}/edit`}>
+                                <FaEdit className="text-secondary hover:text-primary cursor-pointer" fontSize={25} />
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-        {!propertiesLoading && properties.length === 0 && <div className="mt-6 font-bold text-center">Sorry, no properties found.</div>}
-        {propertiesLoading && (
-          <div className="mt-8">
-            <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
-          </div>
-        )}
-        {properties.length && startKey && !propertiesLoading ? (
-          <div className="w-full flex items-center justify-center mb-24">
-            <button
-              onClick={() => {
-                fetchProperties(false);
-              }}
-              className="btn btn-secondary mx-auto mb-24"
-            >
-              Load more
-            </button>
-          </div>
-        ) : (
-          <div className="mb-24"></div>
-        )}
+          )}
+          {!propertiesLoading && properties.length === 0 && <div className="mt-6 font-bold text-center">Sorry, no properties found.</div>}
+          {propertiesLoading && (
+            <div className="mt-8">
+              <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
+            </div>
+          )}
+          {properties.length && startKey && !propertiesLoading ? (
+            <div className="w-full flex items-center justify-center mb-24">
+              <button
+                onClick={() => {
+                  fetchProperties(false);
+                }}
+                className="btn btn-secondary mx-auto mb-24"
+              >
+                Load more
+              </button>
+            </div>
+          ) : (
+            <div className="mb-24"></div>
+          )}
+        </div>
       </div>
-      <AddPropertyModal addPropertyModalIsOpen={addPropertyModalIsOpen} setAddPropertyModalIsOpen={setAddPropertyModalIsOpen} onSuccess={() => fetchProperties(true)} />
       {isMobile && <BottomNavigationPanel />}
-    </div>
+    </>
   );
 };
 

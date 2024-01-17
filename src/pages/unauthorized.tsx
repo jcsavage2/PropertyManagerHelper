@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '@/components/loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { deconstructKey } from '@/utils';
 import { signIn } from 'next-auth/react';

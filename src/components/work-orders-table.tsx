@@ -8,18 +8,18 @@ import Link from 'next/link';
 import { WO_STATUS } from '@/constants';
 import { GoTasklist } from 'react-icons/go';
 import { WoStatus, StatusOption } from '@/types';
-import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '@/components/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
 
 export const StatusOptions: StatusOption[] = [
-  { value: WO_STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-gray-500" /> },
+  { value: WO_STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-primary-content" /> },
   {
     value: WO_STATUS.COMPLETE,
     label: 'Complete',
-    icon: <AiOutlineCheck className="text-green-500" />,
+    icon: <AiOutlineCheck className="text-primary-content" />,
   },
 ];
 
@@ -46,12 +46,12 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
 
   const renderWoCardStatus = (workOrder: IWorkOrder) => {
     if (workOrder.status === WO_STATUS.DELETED) {
-      return <p className="text-red-600 ml-1">{WO_STATUS.DELETED}</p>;
+      return <p className="text-error ml-1">{WO_STATUS.DELETED}</p>;
     }
     if (userType === USER_TYPE.TENANT) {
       const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
       return (
-        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-warning ' : 'bg-success'} px-2 py-1 rounded-lg`}>
+        <div className={`${workOrder.status === WO_STATUS.TO_DO ? 'badge-warning' : 'badge-success'} badge`}>
           {formattedStatusOptions({
             value: StatusOptions[index].value,
             label: StatusOptions[index].label,
@@ -135,19 +135,19 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
       : [];
 
   return (
-    <div className="z-1 mb-2">
+    <div className="mb-2">
       <div className={`flex flex-row w-full items-center ${isFetching && 'pointer-events-none'}`}>
         <div>
           <button
-            className={`${isFetching && 'opacity-50'} mt-2 h-full mr-2 px-3 py-2 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? 'bg-blue-200' : 'bg-gray-200'}`}
+            className={`${isFetching && 'opacity-50'} mt-2 h-full mr-2 px-3 py-2 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? 'bg-secondary' : 'bg-base-300'}`}
             onClick={() => setShowStatusFilter((s) => !s)}
           >
             Status
           </button>
           {showStatusFilter && (
-            <div className="absolute opacity-100 z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
+            <div className="absolute opacity-100 z-10 rounded bg-base-200 p-5 mt-1 w-52 shadow-lg grid grid-cols-1 gap-y-4">
               <div
-                className={`flex ${statusFilter.TO_DO ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                className={`flex ${statusFilter.TO_DO ? 'hover:bg-base-300' : 'hover:bg-base-200'}`}
                 onClick={() => {
                   if (isFetching) return;
                   setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
@@ -162,13 +162,13 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
               </div>
 
               <div
-                className={`flex ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
+                className={`flex ${statusFilter.COMPLETE ? 'hover:bg-base-300' : 'hover:bg-base-200'}`}
                 onClick={() => {
                   if (isFetching) return;
                   setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
                 }}
               >
-                <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>Complete</p>
+                <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-base-300' : 'hover:bg-base-200'}`}>Complete</p>
                 {!statusFilter.COMPLETE ? (
                   <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
                 ) : (
@@ -184,7 +184,7 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
         {remappedWorkOrders.length > 0 ? (
           <table className={`table table-zebra ${ isFetching && "opacity-50 pointer-events-none"}`}>
             <thead className="">
-              <tr className="text-left text-gray-400">
+              <tr className="text-left">
                 {columns.map(({ label, accessor }) => {
                   return (
                     <th className={`font-normal px-4`} key={accessor}>

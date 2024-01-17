@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
-import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '@/components/loading-spinner';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { CreateOrgSchema } from '@/types/customschemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateOrg } from '@/types';
-import { toast } from 'react-toastify';
+import { renderToastSuccess } from '@/utils';
 
 const OrgMethods = () => {
   const session = useSession();
@@ -15,10 +15,7 @@ const OrgMethods = () => {
   const handleCreateOrganization: SubmitHandler<CreateOrg> = async (params) => {
     await axios.post('/api/create-org', params);
     reset();
-    toast.success('Org Created!', {
-      position: toast.POSITION.TOP_CENTER,
-      draggable: false,
-    });
+    renderToastSuccess('Organization Created!');
   };
 
   const {

@@ -1,61 +1,30 @@
 import axios from 'axios';
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import Modal from 'react-modal';
-import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { useCallback } from 'react';
+import { LoadingSpinner } from '../loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
-import { useDevice } from '@/hooks/use-window-size';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { renderToastError, toggleBodyScroll } from '@/utils';
+import { renderToastError, renderToastSuccess } from '@/utils';
 import { CreatePMSchema } from '@/types/customschemas';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { CreatePMSchemaType } from '@/types';
+import Modal from '../modal';
 
-export const AddPropertyManagerModal = ({
-  addPMModalIsOpen,
-  setAddPMModalIsOpen,
+const modalId = 'create-pm-modal';
+
+export const CreatePropertyManagerModal = ({
   onSuccessfulAdd,
 }: {
-  addPMModalIsOpen: boolean;
-  setAddPMModalIsOpen: Dispatch<SetStateAction<boolean>>;
   onSuccessfulAdd: () => void;
 }) => {
   const { user } = useSessionUser();
   const { userType } = useUserContext();
-  const { isMobile } = useDevice();
-
-  const customStyles = {
-    content: {
-      top: '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      transform: 'translate(-50%, -50%)',
-      width: isMobile ? '90%' : '60%',
-      backgroundColor: 'rgba(255, 255, 255)',
-    },
-    overLay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
-    },
-  };
-
-  const [isBrowser, setIsBrowser] = useState(false);
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
-  isBrowser && Modal.setAppElement('#property-managers');
 
   function closeModal() {
+    (document.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
-    setAddPMModalIsOpen(false);
   }
 
   const {
@@ -74,38 +43,20 @@ export const AddPropertyManagerModal = ({
 
         const res = await axios.post('api/create-pm', params);
 
-        toast.success('Successfully Created PM!', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastSuccess('Successfully Created PM!', modalId);
         onSuccessfulAdd();
         closeModal();
       } catch (err: any) {
         console.log({ err });
-        renderToastError(err, 'Error Creating PM');
+        renderToastError(err, 'Error Creating PM', modalId);
       }
     },
     [user, userType]
   );
 
   return (
-    <Modal
-      isOpen={addPMModalIsOpen}
-      onAfterOpen={() => toggleBodyScroll(true)}
-      onAfterClose={() => toggleBodyScroll(false)}
-      onRequestClose={closeModal}
-      contentLabel="Create PM Modal"
-      closeTimeoutMS={200}
-      style={customStyles}
-    >
-      <div className="w-full text-center mb-2 h-6">
-        <button className="btn btn-sm btn-secondary float-right" onClick={closeModal}>
-          X
-        </button>
-        <p className="clear-left text-lg md:w-2/5 w-3/5 mx-auto pt-0.5">{isMobile ? 'Create PM' : 'Create New Property Manager'}</p>
-      </div>
-
-      <form onSubmit={handleSubmit(handleCreatePM)} className="flex flex-col pt-3">
+    <Modal id={modalId} onClose={closeModal} openButtonText='+ Property Manager'>
+      <form onSubmit={handleSubmit(handleCreatePM)} className="flex flex-col mt-6">
         <input
           className="input input-sm input-bordered"
           id="name"
@@ -143,7 +94,7 @@ export const AddPropertyManagerModal = ({
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
         <input type="hidden" {...register('organizationName')} value={user?.organizationName ?? ''} />
 
-        <button className="btn btn-primary" type="submit" disabled={isSubmitting || !isValid}>
+        <button className="btn btn-primary mt-4" type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? <LoadingSpinner containerClass="h-10" /> : 'Create Property Manager'}
         </button>
       </form>

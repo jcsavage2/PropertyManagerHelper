@@ -1,18 +1,15 @@
 import axios from 'axios';
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
-import Modal from 'react-modal';
+import { useCallback, useEffect, useState } from 'react';
 import { useDevice } from '@/hooks/use-window-size';
 import * as xlsx from 'xlsx';
 import { BiError } from 'react-icons/bi';
-import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { LoadingSpinner } from '../loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { v4 as uuid } from 'uuid';
-import { deconstructKey, toTitleCase } from '@/utils';
-import { toast } from 'react-toastify';
+import { deconstructKey, renderToastError, renderToastSuccess, toTitleCase } from '@/utils';
 import Papa from 'papaparse';
 import { useUserContext } from '@/context/user';
 import { AiOutlineLink } from 'react-icons/ai';
-import { toggleBodyScroll } from '@/utils';
 import { ENTITIES } from '@/database/entities';
 import { validatePropertyWithId } from '@/types/basevalidators';
 import { USER_TYPE } from '@/database/entities/user';
@@ -20,45 +17,14 @@ import { USER_PERMISSION_ERROR } from '@/constants';
 import { ImportTenantSchema } from '@/types/customschemas';
 import { CreateTenant, ImportTenant } from '@/types';
 import { CiWarning } from 'react-icons/ci';
+import Modal from '../modal';
 
-export const ImportTenantsModal = ({
-  modalIsOpen,
-  setModalIsOpen,
-  onSuccessfulAdd,
-}: {
-  modalIsOpen: boolean;
-  setModalIsOpen: Dispatch<SetStateAction<boolean>>;
-  onSuccessfulAdd: () => void;
-}) => {
+const modalId = 'import-tenants-modal';
+
+export const ImportTenantsModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => void }) => {
   const { user } = useSessionUser();
   const { userType, altName } = useUserContext();
   const { isMobile } = useDevice();
-  const [isBrowser, setIsBrowser] = useState(false);
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
-  isBrowser && Modal.setAppElement('#tenants');
-
-  const customStyles = {
-    content: {
-      top: '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      transform: 'translate(-50%, -50%)',
-      width: isMobile ? '95%' : '65%',
-      maxHeight: isMobile ? '80%' : '90%',
-      backgroundColor: 'rgba(255, 255, 255)',
-    },
-    overLay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
-    },
-  };
 
   const [uploadList, setUploadList] = useState<ImportTenant[]>([]);
   const [formattingError, setFormattingError] = useState<boolean>(false);
@@ -67,10 +33,10 @@ export const ImportTenantsModal = ({
   const [preImportTenantsLoading, setPreImportTenantsLoading] = useState<boolean>(false);
   const [importTenantProgress, setImportTenantProgress] = useState<number>(0);
 
-  const onClose = () => {
+  const closeModal = () => {
     setUploadList([]);
-    setModalIsOpen(false);
     setFormattingError(false);
+    (document.getElementById(modalId) as HTMLFormElement)?.close();
   };
 
   const formatProgressToPercent = (progress: number) => {
@@ -115,7 +81,7 @@ export const ImportTenantsModal = ({
         </div>
         <div className="flex flex-row">
           <button
-            className="bg-blue-200 h-7 w-7 flex items-center justify-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25"
+            className="btn btn-square btn-sm btn-secondary"
             onClick={() => {
               setUploadList((prev) => prev.filter((t) => t.key !== tenant.key));
             }}
@@ -319,16 +285,10 @@ export const ImportTenantsModal = ({
     }
 
     if (!errorList.length) {
-      onClose();
-      toast.success(`${uploadList.length} tenants successfully created!`, {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
+      closeModal();
+      renderToastSuccess(`${uploadList.length} tenants successfully created!`, modalId);
     } else {
-      toast.error(`Error uploading ${errorList.length} tenants. Please try again`, {
-        position: toast.POSITION.TOP_CENTER,
-        draggable: false,
-      });
+      renderToastError(undefined, `Error uploading ${errorList.length} tenants. Please try again`, modalId);
     }
     onSuccessfulAdd();
     setUploadList(errorList);
@@ -359,25 +319,9 @@ export const ImportTenantsModal = ({
   };
 
   return (
-    <Modal
-      isOpen={modalIsOpen}
-      onRequestClose={onClose}
-      contentLabel="Import Tenants Modal"
-      closeTimeoutMS={200}
-      style={customStyles}
-      onAfterOpen={() => toggleBodyScroll(true)}
-      onAfterClose={() => toggleBodyScroll(false)}
-    >
-      <div className="flex flex-row items-center">
-        <div className="w-full mt-1">
-          <h1 className={`text-center text-lg font-bold`}>Import Tenants</h1>
-        </div>
-        <button className="bg-blue-200 h-7 w-7 flex items-center justify-center text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25" onClick={onClose}>
-          X
-        </button>
-      </div>
+    <Modal id={modalId} onClose={closeModal} openButtonText="Import Tenants" title="Import Tenants" bodyClasses="w-11/12 max-w-3xl">
       <div className="clear-right mt-6 w-full">
-        <div className="mb-4 flex flex-col justify-center items-center mx-auto text-slate-500">
+        <div className="mb-4 flex flex-col justify-center items-center mx-auto">
           <p className="text-center mb-2 ">To add tenants in bulk, upload a .csv or .xls/.xlsx file</p>
           <div className="flex flex-row items-center">
             <input className="text-center mx-auto w-72 py-4 pr-4" type="file" name="fileUpload" id="fileUpload" accept=".xls, .xlsx, .csv" onChange={handleFileUpload} />
@@ -389,14 +333,14 @@ export const ImportTenantsModal = ({
                 document.getElementById('fileUpload').value = '';
                 setFileUploadError(null);
               }}
-              className="text-base disabled:opacity-30 disabled:hover:cursor-auto disabled:hover:text-white disabled:hover:bg-red-400 hover:bg-red-500 h-7 w-7 flex items-center justify-center bg-red-400 hover:cursor-pointer text-white rounded-lg"
+              className="btn btn-square btn-sm bg-error flex items-center justify-center  text-white"
             >
               X
             </button>
           </div>
         </div>
 
-        <div className="flex flex-row justify-center text-sm text-blue-400">
+        <div className="flex flex-row justify-center text-sm text-accent">
           <div
             onClick={fetchFile('csv')}
             className="flex flex-row items-center border-slate-400 pr-3 hover:cursor-pointer hover:underline"
@@ -428,8 +372,8 @@ export const ImportTenantsModal = ({
         </div>
 
         {importTenantsLoading && uploadList.length > 1 && (
-          <div className="bg-slate-200 w-full h-6 text-center rounded mt-4">
-            <div className="absolute h-6 bg-blue-300 rounded" style={{ width: formatProgressToPercent(importTenantProgress).toString() + '%' }}></div>
+          <div className=" w-full h-6 text-center rounded mt-4">
+            <div className="absolute h-6 bg-accent rounded" style={{ width: formatProgressToPercent(importTenantProgress).toString() + '%' }}></div>
             <div className="relative h-full w-full">{formatProgressToPercent(importTenantProgress)} %</div>
           </div>
         )}
@@ -442,7 +386,7 @@ export const ImportTenantsModal = ({
         )}
 
         <button
-          className="bg-blue-200 p-3 mt-4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 w-full"
+          className="btn btn-primary mt-4 w-full"
           type="submit"
           disabled={uploadList.length === 0 || formattingError || importTenantsLoading}
           onClick={() => {
@@ -450,7 +394,7 @@ export const ImportTenantsModal = ({
           }}
         >
           {importTenantsLoading || preImportTenantsLoading ? (
-            <LoadingSpinner />
+            <LoadingSpinner containerClass="px-2" />
           ) : uploadList.length ? (
             'Create ' + uploadList.length.toString() + (uploadList.length > 1 ? ' Tenants' : ' Tenant')
           ) : (

@@ -18,7 +18,7 @@ const HamburgerMenu = () => {
     router.push('/');
   }, [logOut, router]);
 
-  const linkStyle = 'hover:text-gray-500 my-auto text-3xl text-white cursor-pointer mt-12';
+  const linkStyle = 'hover:text-base-300 text-base-100 my-auto text-3xl text-white cursor-pointer mt-12';
 
   return (
     <>
@@ -28,8 +28,8 @@ const HamburgerMenu = () => {
         <span className="block w-8 h-1 bg-gray-600"></span>
       </div>
       {isOpen && (
-        <div className="absolute left-0 bg-blue-300 mt-0 w-full grid z-10" style={{ top: '7dvh', height: '93dvh' }} onClick={() => setIsOpen(false)}>
-          <div className="flex flex-col h-12">
+        <div className="absolute top-16 left-0 bg-secondary text-base-100 mt-0 w-full z-50" style={{ height: '100dvh' }} onClick={() => setIsOpen(false)}>
+          <div className="flex flex-col text-primary child:mb-4">
             {user ? (
               <>
                 {userType === USER_TYPE.TENANT && (

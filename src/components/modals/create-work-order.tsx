@@ -1,67 +1,31 @@
 import axios from 'axios';
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import Modal from 'react-modal';
+import { useCallback, useEffect, useState } from 'react';
 import { AddWorkOrder, Option, Property } from '@/types';
-import { LoadingSpinner } from './loading-spinner/loading-spinner';
+import { LoadingSpinner } from '../loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
 import { IUser, USER_TYPE } from '@/database/entities/user';
-import { TenantSelect } from './tenant-select';
+import { TenantSelect } from '../tenant-select';
 import { SingleValue } from 'react-select';
-import { useDevice } from '@/hooks/use-window-size';
 import { PTE, USER_PERMISSION_ERROR } from '@/constants';
-import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
-import { renderToastError, toggleBodyScroll } from '@/utils';
+import { renderToastError, renderToastSuccess } from '@/utils';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { v4 as uuidv4 } from 'uuid';
 import { AddWorkOrderModalSchema, CreateWorkOrderSchema } from '@/types/customschemas';
 import * as amplitude from '@amplitude/analytics-browser';
+import Modal from '../modal';
 
-export const AddWorkOrderModal = ({
-  addWorkOrderModalIsOpen,
-  setAddWorkOrderModalIsOpen,
-  onSuccessfulAdd,
-}: {
-  addWorkOrderModalIsOpen: boolean;
-  setAddWorkOrderModalIsOpen: Dispatch<SetStateAction<boolean>>;
-  onSuccessfulAdd: () => void;
-}) => {
+const modalId = 'create-work-order';
+
+export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => void }) => {
   const { user } = useSessionUser();
   const { userType, altName } = useUserContext();
-  const { isMobile } = useDevice();
 
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const [tenant, setTenant] = useState<IUser>();
   const [property, setProperty] = useState<Property>();
   const [userLoading, setUserLoading] = useState(false);
-
-  const customStyles = {
-    content: {
-      top: '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      transform: 'translate(-50%, -50%)',
-      width: isMobile ? '90%' : '50%',
-      backgroundColor: 'rgba(255, 255, 255)',
-    },
-    overLay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
-    },
-  };
-
-  const [isBrowser, setIsBrowser] = useState(false);
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
-  isBrowser && Modal.setAppElement('#workOrder');
 
   const {
     register,
@@ -78,7 +42,7 @@ export const AddWorkOrderModal = ({
   const formValues = getValues();
 
   function closeModal() {
-    setAddWorkOrderModalIsOpen(false);
+    (document.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
     setShowAdditionalOptions(false);
   }
@@ -163,10 +127,7 @@ export const AddWorkOrderModal = ({
           permissionToEnter: params.permissionToEnter,
           workOrderId: woId,
         });
-        toast.success('Successfully Submitted Work Order!', {
-          position: toast.POSITION.TOP_CENTER,
-          draggable: false,
-        });
+        renderToastSuccess('Successfully Submitted Work Order!', modalId);
         onSuccessfulAdd();
         closeModal();
       } catch (err: any) {
@@ -181,29 +142,14 @@ export const AddWorkOrderModal = ({
           workOrderId: woId,
         });
         console.log({ err });
-        renderToastError(err, 'Error Creating Work Order');
+        renderToastError(err, 'Error Creating Work Order', modalId);
       }
     },
     [user, userType, altName, onSuccessfulAdd, tenant, property]
   );
 
   return (
-    <Modal
-      isOpen={addWorkOrderModalIsOpen}
-      onAfterOpen={() => toggleBodyScroll(true)}
-      onAfterClose={() => toggleBodyScroll(false)}
-      onRequestClose={closeModal}
-      contentLabel="Example Modal"
-      closeTimeoutMS={200}
-      style={customStyles}
-    >
-      <div className="w-full text-center mb-2 h-6">
-        <button className="float-right btn btn-sm btn-secondary" onClick={closeModal}>
-          X
-        </button>
-        <p className="clear-left text-lg md:w-2/5 mx-auto pt-0.5">Create New Work Order</p>
-      </div>
-
+    <Modal id={modalId} onClose={closeModal} openButtonText={'+ Work Order'}>
       <form onSubmit={handleSubmit(handleCreateWorkOrder)} className="flex flex-col">
         <div className="flex flex-col mt-4">
           <div className="label">
@@ -223,7 +169,7 @@ export const AddWorkOrderModal = ({
                   onChange={async (option: SingleValue<Option>) => {
                     onChange(option?.value.trim() ?? undefined);
                   }}
-                  shouldFetch={addWorkOrderModalIsOpen}
+                  modalTarget={modalId}
                 />
               )}
             />
@@ -244,7 +190,7 @@ export const AddWorkOrderModal = ({
           <div className="collapse">
             <input type="checkbox" onClick={() => setShowAdditionalOptions(!showAdditionalOptions)} />
             <div className="collapse-title text-center mx-auto my-auto p-0 pt-4">
-              <button className="bg-accent btn btn-sm">{showAdditionalOptions ? 'Hide options' : 'Show more options'}</button>
+              <button className="bg-secondary btn btn-sm">{showAdditionalOptions ? 'Hide options' : 'Show more options'}</button>
             </div>
             <div className="collapse-content -mt-4">
               <div className="label">
@@ -259,7 +205,7 @@ export const AddWorkOrderModal = ({
           </div>
         </div>
         <button className="btn mt-3 btn-primary" type="submit" disabled={isSubmitting || !isValid || userLoading}>
-          {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading user info...' : 'Add Work Order'}
+          {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading...' : 'Create Work Order'}
         </button>
       </form>
     </Modal>

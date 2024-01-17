@@ -53,7 +53,7 @@ export const PortalLeftPanel = () => {
       <div className="mt-4 ml-2 text-lg" style={{ display: 'grid', rowGap: '0.5rem' }}>
         <div className="flex flex-row items-center justify-start">
           <RiFilePaper2Fill className="inline mr-2 my-auto" />
-          <Link className={`${router.pathname === '/work-orders' ? 'text-black' : 'text-gray-500'} hover:text-slate-400`} href={'/work-orders'}>
+          <Link className={`${router.pathname.includes('/work-orders') ? 'text-black' : 'text-gray-500'} hover:text-slate-400`} href={'/work-orders'}>
             Work Orders
           </Link>
         </div>

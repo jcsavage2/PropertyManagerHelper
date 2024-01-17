@@ -4,7 +4,7 @@ import AsyncSelect from 'react-select/async';
 import axios from 'axios';
 import { Option } from '@/types';
 import { IUser, USER_TYPE, UserType } from '@/database/entities/user';
-import { ALL_TENANTS_FILTER, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
+import { ALL_TENANTS_FILTER, USER_PERMISSION_ERROR } from '@/constants';
 import { getTenantDisplayEmail, toTitleCase } from '@/utils';
 
 export const TenantSelect = ({
@@ -12,13 +12,13 @@ export const TenantSelect = ({
   user,
   userType,
   onChange,
-  shouldFetch,
+  modalTarget,
 }: {
   label: string;
   user: IUser | null;
   userType: UserType | null;
   onChange: (option: SingleValue<Option>) => void;
-  shouldFetch: boolean;
+  modalTarget?: string;
 }) => {
   const [tenantOptions, setTenantOptions] = useState<Option[]>([]);
   const [tenantOptionsLoading, setTenantOptionsLoading] = useState<boolean>(false);
@@ -59,10 +59,9 @@ export const TenantSelect = ({
   );
 
   useEffect(() => {
-    if (shouldFetch) {
-      handleGetTenants();
-    }
-  }, [shouldFetch]);
+    if (!user || !userType) return;
+    handleGetTenants();
+  }, [user, userType]);
 
   return (
     <div className="flex flex-col align-center w-full justify-center">
@@ -78,7 +77,7 @@ export const TenantSelect = ({
         id="tenant"
         onChange={(value: SingleValue<Option>) => onChange(value)}
         isClearable={true}
-        menuPortalTarget={document.body}
+        menuPortalTarget={modalTarget? document.getElementById(modalTarget) ?? document.body : document.body}
         captureMenuScroll={true}
         isLoading={tenantOptionsLoading}
       />

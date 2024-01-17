@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useCallback } from 'react';
-import { useUserContext } from '../context/user';
+import { useUserContext } from '../../context/user';
 import { useRouter } from 'next/router';
 import { useDevice } from '@/hooks/use-window-size';
 import HamburgerMenu from './hamburger-menu';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { USER_TYPE } from '@/database/entities/user';
+
+const navBarStyles = "navbar bg-base-200 sticky top-0 z-50 border-b border-base-300"
 
 export const NavLinks = () => {
   const { logOut } = useUserContext();
@@ -22,13 +24,13 @@ export const NavLinks = () => {
 
   if (isMobile) {
     return (
-      <nav style={{ height: '7dvh', width: '100vw' }} className="flex bg-slate-100 border-3 border-solid border-black py-3 space-x-62">
+      <nav className={navBarStyles}>
         <div className={'flex text-center'} style={{ width: '100vw' }}>
           <div className="flex cursor-pointer" onClick={() => router.push('/')}>
             <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
             <Image src="/2.png" alt="1" width={30} height={0} />
           </div>
-          <div className="my-auto ml-auto mr-4">
+          <div className="my-auto ml-auto">
             <HamburgerMenu />
           </div>
         </div>
@@ -37,7 +39,7 @@ export const NavLinks = () => {
   }
 
   return (
-    <div className="navbar bg-base-200">
+    <nav className={navBarStyles}>
       <div className="navbar-start">
         <div className="flex cursor-pointer mr-6" onClick={() => router.push('/')}>
           <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
@@ -77,6 +79,6 @@ export const NavLinks = () => {
           </Link>
         </div>
       )}
-    </div>
+    </nav>
   );
 };
