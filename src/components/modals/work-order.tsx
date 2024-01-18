@@ -24,6 +24,7 @@ import { useDevice } from '@/hooks/use-window-size';
 import Modal from '../modal';
 import LargeModalSkeleton from '../skeletons/large-modal-skeleton';
 import MobileCard from '../mobile-card';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'work-order-modal';
 
@@ -37,6 +38,7 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
   const { userType, altName } = useUserContext();
   const router = useRouter();
   const { isMobile } = useDevice();
+  const {clientDocument} = useDocument();
 
   const [workOrder, setWorkOrder] = useState<IWorkOrder | null>(null);
 
@@ -449,7 +451,7 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
                 isLoading={isUpdatingAssignedTechnicians || fetchingTechnicians}
                 onChange={handleAssignTechnician}
                 isClearable={false} //Don't have the functionality for remove all yet
-                menuPortalTarget={document.getElementById(modalId) ?? document.body}
+                menuPortalTarget={clientDocument?.getElementById(modalId) ?? clientDocument?.body}
               />
             </div>
             <div className="font-bold mt-4">Photos</div>

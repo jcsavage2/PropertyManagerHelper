@@ -12,7 +12,6 @@ import ConfirmationModal from '@/components/modals/confirmation';
 import { StartKey } from '@/database/entities';
 import { CiCircleRemove } from 'react-icons/ci';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import { AiOutlineMail } from 'react-icons/ai';
 import { DEFAULT_DELETE_USER, INVITE_STATUS, USER_PERMISSION_ERROR } from '@/constants';
 import { DeleteUser, DeleteUserBody, Property } from '@/types';
@@ -23,6 +22,7 @@ import { MdModeEditOutline } from 'react-icons/md';
 import { UpdateUserSchema } from '@/types/customschemas';
 import { BulkReinviteTenantsModal } from '@/components/modals/bulk-reinvite-tenants';
 import MobileCard from '@/components/mobile-card';
+import CheckboxSelect from '@/components/checkbox-select';
 
 const Tenants = () => {
   const { user } = useSessionUser();
@@ -44,7 +44,6 @@ const Tenants = () => {
     RE_INVITED: true,
     INVITED: true,
   });
-  const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   const fetchTenants = useCallback(
     async (isInitial: boolean, _searchString?: string) => {
@@ -201,59 +200,20 @@ const Tenants = () => {
               fetchTenants(true);
             }}
           />
-          <div className={`flex flex-row justify-between w-full items-center text-gray-600 ${tenantsLoading && 'pointer-events-none'}`}>
-            <div>
-              <button className={`${tenantsLoading && 'opacity-50'} h-full mr-2 px-3 py-2 rounded bg-base-300`} onClick={() => setShowStatusFilter((s) => !s)}>
-                Status
-              </button>
-              {showStatusFilter && (
-                <div className="absolute opacity-100 z-10 rounded bg-white p-5 mt-1 w-52 shadow-[0px_10px_20px_2px_rgba(0,0,0,0.3)] grid grid-cols-1 gap-y-4">
-                  <div
-                    className={`flex ${statusFilter.INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
-                    onClick={() => {
-                      if (tenantsLoading) return;
-                      setStatusFilter({ ...statusFilter, INVITED: !statusFilter.INVITED });
-                    }}
-                  >
-                    <p className={`py-1 px-3 cursor-pointer flex w-full rounded`}>Invited</p>
-                    {!statusFilter.INVITED ? (
-                      <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                    ) : (
-                      <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                    )}
-                  </div>
-
-                  <div
-                    className={`flex ${statusFilter.JOINED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
-                    onClick={() => {
-                      if (tenantsLoading) return;
-                      setStatusFilter({ ...statusFilter, JOINED: !statusFilter.JOINED });
-                    }}
-                  >
-                    <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.JOINED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>Joined</p>
-                    {!statusFilter.JOINED ? (
-                      <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                    ) : (
-                      <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                    )}
-                  </div>
-                  <div
-                    className={`flex ${statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}
-                    onClick={() => {
-                      if (tenantsLoading) return;
-                      setStatusFilter({ ...statusFilter, RE_INVITED: !statusFilter.RE_INVITED });
-                    }}
-                  >
-                    <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.RE_INVITED ? 'hover:bg-blue-200' : 'hover:bg-gray-200'}`}>Re-Invited</p>
-                    {!statusFilter.RE_INVITED ? (
-                      <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                    ) : (
-                      <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                    )}
-                  </div>
-                </div>
-              )}
+          <div className={`flex flex-row justify-between w-full items-center`}>
+            <div className={`${tenantsLoading && 'pointer-events-none opacity-20'}`}>
+              <CheckboxSelect
+                dropdownLabel="Status"
+                options={[
+                  { label: 'Invited', value: 'INVITED' },
+                  { label: 'Joined', value: 'JOINED' },
+                  { label: 'Re-Invited', value: 'RE_INVITED' },
+                ]}
+                selectedOptions={statusFilter}
+                setSelectedOptions={setStatusFilter}
+              />
             </div>
+
             {!isMobile && tenants && tenantsToReinvite && tenantsToReinvite.length > 0 ? <BulkReinviteTenantsModal /> : null}
           </div>
           {isMobile ? (

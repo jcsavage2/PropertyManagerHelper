@@ -8,13 +8,14 @@ import { IUser, USER_TYPE } from '@/database/entities/user';
 import { TenantSelect } from '../tenant-select';
 import { SingleValue } from 'react-select';
 import { PTE, USER_PERMISSION_ERROR } from '@/constants';
-import { renderToastError, renderToastSuccess } from '@/utils';
+import {  renderToastError, renderToastSuccess } from '@/utils';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { v4 as uuidv4 } from 'uuid';
 import { AddWorkOrderModalSchema, CreateWorkOrderSchema } from '@/types/customschemas';
 import * as amplitude from '@amplitude/analytics-browser';
 import Modal from '../modal';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'create-work-order';
 
@@ -40,9 +41,10 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
     defaultValues: { permissionToEnter: PTE.YES },
   });
   const formValues = getValues();
+  const {clientDocument} = useDocument();
 
   function closeModal() {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
     setShowAdditionalOptions(false);
   }

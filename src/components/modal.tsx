@@ -1,3 +1,4 @@
+import { useDocument } from '@/hooks/use-document';
 import React, { useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 
@@ -19,8 +20,10 @@ type ModalProps = {
 
 const Modal = ({ id, onOpen, onClose, openButtonText, title, children, bodyClasses, buttonClasses, closeButtonClasses, isOpen, overflowVisible = true }: ModalProps) => {
 
+  const {clientDocument} = useDocument();
+
   useEffect(() => {
-    const self = document.getElementById(id) as HTMLFormElement;
+    const self = clientDocument?.getElementById(id) as HTMLFormElement;
     if (!self) return;
     
     if (isOpen) {
@@ -37,7 +40,7 @@ const Modal = ({ id, onOpen, onClose, openButtonText, title, children, bodyClass
         <button
           className={`btn btn-primary ${buttonClasses ? buttonClasses : ''}`}
           onClick={() => {
-            (document.getElementById(id) as HTMLFormElement).showModal();
+            (clientDocument?.getElementById(id) as HTMLFormElement).showModal();
             onOpen && onOpen();
           }}
         >

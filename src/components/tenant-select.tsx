@@ -6,6 +6,7 @@ import { Option } from '@/types';
 import { IUser, USER_TYPE, UserType } from '@/database/entities/user';
 import { ALL_TENANTS_FILTER, USER_PERMISSION_ERROR } from '@/constants';
 import { getTenantDisplayEmail, toTitleCase } from '@/utils';
+import { useDocument } from '@/hooks/use-document';
 
 export const TenantSelect = ({
   label,
@@ -22,6 +23,7 @@ export const TenantSelect = ({
 }) => {
   const [tenantOptions, setTenantOptions] = useState<Option[]>([]);
   const [tenantOptionsLoading, setTenantOptionsLoading] = useState<boolean>(false);
+  const {clientDocument} = useDocument();
 
   const handleGetTenants = useCallback(
     async (_searchString?: string) => {
@@ -77,7 +79,7 @@ export const TenantSelect = ({
         id="tenant"
         onChange={(value: SingleValue<Option>) => onChange(value)}
         isClearable={true}
-        menuPortalTarget={modalTarget? document.getElementById(modalTarget) ?? document.body : document.body}
+        menuPortalTarget={modalTarget ? clientDocument?.getElementById(modalTarget) ?? clientDocument?.body : clientDocument?.body}
         captureMenuScroll={true}
         isLoading={tenantOptionsLoading}
       />

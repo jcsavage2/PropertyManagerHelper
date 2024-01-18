@@ -6,7 +6,7 @@ import { useDevice } from '@/hooks/use-window-size';
 import PropertySelector from '../property-selector';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from '../loading-spinner';
-import { deconstructKey, renderToastError, renderToastSuccess } from '@/utils';
+import { deconstructKey,  renderToastError, renderToastSuccess } from '@/utils';
 import { USER_TYPE } from '@/database/entities/user';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import { CreateTenant_Address, CreateTenant_TenantInfo, Property } from '@/types
 import { CreateTenant_AddressSchema, CreateTenantSchema, CreateTenant_TenantInfoSchema } from '@/types/customschemas';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../modal';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'add-tenant-modal';
 
@@ -22,6 +23,7 @@ export const AddTenantModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => voi
   const { user } = useSessionUser();
   const { isMobile } = useDevice();
   const { altName, userType } = useUserContext();
+  const {clientDocument} = useDocument();
   const [stage, setStage] = useState(0);
   const [createNewProperty, setCreateNewProperty] = useState(true);
 
@@ -36,7 +38,7 @@ export const AddTenantModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => voi
   });
 
   const closeModal = () => {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     tenantInfoForm.reset();
     propertyForm.reset();
     setCreateNewProperty(true);

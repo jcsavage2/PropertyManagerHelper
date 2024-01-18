@@ -8,7 +8,7 @@ import HamburgerMenu from './hamburger-menu';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { USER_TYPE } from '@/database/entities/user';
 
-const navBarStyles = "navbar bg-base-200 sticky top-0 z-50 border-b border-base-300"
+const navBarStyles = "navbar bg-base-200 sticky top-0 z-50 border-b border-neutral border-opacity-10"
 
 export const NavLinks = () => {
   const { logOut } = useUserContext();

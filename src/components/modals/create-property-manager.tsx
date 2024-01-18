@@ -11,6 +11,7 @@ import { CreatePMSchema } from '@/types/customschemas';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { CreatePMSchemaType } from '@/types';
 import Modal from '../modal';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'create-pm-modal';
 
@@ -21,9 +22,10 @@ export const CreatePropertyManagerModal = ({
 }) => {
   const { user } = useSessionUser();
   const { userType } = useUserContext();
+  const {clientDocument} = useDocument();
 
   function closeModal() {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
   }
 

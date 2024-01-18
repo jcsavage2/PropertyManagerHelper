@@ -22,7 +22,6 @@ import MobileCard from '@/components/mobile-card';
 const Properties = () => {
   const router = useRouter();
   const { user } = useSessionUser();
-  const [CreatePropertyModalIsOpen, setCreatePropertyModalIsOpen] = useState(false);
   const [properties, setProperties] = useState<IProperty[]>([]);
   const { isMobile } = useDevice();
   const { userType } = useUserContext();

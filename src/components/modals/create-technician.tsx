@@ -2,8 +2,7 @@ import { useUserContext } from '@/context/user';
 import axios from 'axios';
 import { useCallback } from 'react';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-import { renderToastError, renderToastSuccess } from '@/utils';
-import { useDevice } from '@/hooks/use-window-size';
+import {  renderToastError, renderToastSuccess } from '@/utils';
 import { USER_TYPE } from '@/database/entities/user';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -12,6 +11,7 @@ import { CreateTechnician } from '@/types';
 import { CreateTechnicianSchema } from '@/types/customschemas';
 import { LoadingSpinner } from '../loading-spinner';
 import Modal from '../modal';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'create-technician-modal';
 
@@ -21,11 +21,11 @@ export type CreateTechnicianModalProps = {
 
 export const CreateTechnicianModal = ({ onSuccessfulAdd }: CreateTechnicianModalProps) => {
   const { user } = useSessionUser();
-  const { isMobile } = useDevice();
   const { userType, altName } = useUserContext();
+  const {clientDocument} = useDocument();
 
   function closeModal() {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
   }
 

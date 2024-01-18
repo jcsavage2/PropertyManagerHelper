@@ -1,18 +1,17 @@
 import { IWorkOrder } from '@/database/entities/work-order';
 import { generateAddressKey, setToShortenedString, toTitleCase } from '@/utils';
 import { AiOutlineCheck } from 'react-icons/ai';
-import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
-import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 import Link from 'next/link';
 import { WO_STATUS } from '@/constants';
 import { GoTasklist } from 'react-icons/go';
-import { WoStatus, StatusOption } from '@/types';
+import { StatusOption } from '@/types';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import Select from 'react-select';
 import { HandleUpdateStatusProps } from '@/pages/work-orders';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
+import { useDocument } from '@/hooks/use-document';
 
 export const StatusOptions: StatusOption[] = [
   { value: WO_STATUS.TO_DO, label: 'To Do', icon: <GoTasklist className="text-primary-content" /> },
@@ -26,19 +25,17 @@ export const StatusOptions: StatusOption[] = [
 interface IWorkOrdersTableProps {
   workOrders: IWorkOrder[];
   isFetching: boolean;
-  statusFilter: Record<WoStatus, boolean>;
-  setStatusFilter: (statusFilter: Record<WoStatus, boolean>) => void;
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
 }
 
-export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatusFilter, handleUpdateStatus, formattedStatusOptions }: IWorkOrdersTableProps) => {
-  const [showStatusFilter, setShowStatusFilter] = useState(false);
+export const WorkOrdersTable = ({ workOrders, isFetching, handleUpdateStatus, formattedStatusOptions }: IWorkOrdersTableProps) => {
   const { userType } = useUserContext();
-  const columns: { label: string; accessor: keyof IWorkOrder; }[] = [
+  const { clientDocument } = useDocument();
+  const columns: { label: string; accessor: keyof IWorkOrder }[] = [
     { label: 'Issue', accessor: 'issue' },
     { label: 'Status', accessor: 'status' },
-    { label: 'Address', accessor: 'address'},
+    { label: 'Address', accessor: 'address' },
     { label: 'Assigned To', accessor: 'assignedTo' },
     { label: 'Created', accessor: 'created' },
     { label: 'Tenant', accessor: 'tenantName' },
@@ -62,14 +59,12 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
     }
     return (
       <Select
-        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === WO_STATUS.TO_DO && 'bg-warning'} ${
-          workOrder.status === WO_STATUS.COMPLETE && 'bg-success'
-        }`}
+        className={`cursor-pointer rounded p-1 min-w-max ${workOrder.status === WO_STATUS.TO_DO && 'bg-warning'} ${workOrder.status === WO_STATUS.COMPLETE && 'bg-success'}`}
         value={StatusOptions.find((o) => o.value === workOrder.status)!}
         onChange={(val) => handleUpdateStatus({ val: val, pk: workOrder.pk, sk: workOrder.sk })}
         formatOptionLabel={formattedStatusOptions}
         options={StatusOptions}
-        menuPortalTarget={document.body}
+        menuPortalTarget={clientDocument?.body}
       />
     );
   };
@@ -136,53 +131,9 @@ export const WorkOrdersTable = ({ workOrders, isFetching, statusFilter, setStatu
 
   return (
     <div className="mb-2">
-      <div className={`flex flex-row w-full items-center ${isFetching && 'pointer-events-none'}`}>
-        <div>
-          <button
-            className={`${isFetching && 'opacity-50'} mt-2 h-full mr-2 px-3 py-2 rounded ${!statusFilter.TO_DO || !statusFilter.COMPLETE ? 'bg-secondary' : 'bg-base-300'}`}
-            onClick={() => setShowStatusFilter((s) => !s)}
-          >
-            Status
-          </button>
-          {showStatusFilter && (
-            <div className="absolute opacity-100 z-10 rounded bg-base-200 p-5 mt-1 w-52 shadow-lg grid grid-cols-1 gap-y-4">
-              <div
-                className={`flex ${statusFilter.TO_DO ? 'hover:bg-base-300' : 'hover:bg-base-200'}`}
-                onClick={() => {
-                  if (isFetching) return;
-                  setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
-                }}
-              >
-                <p className={`py-1 px-3 cursor-pointer flex w-full rounded`}>To Do</p>
-                {!statusFilter.TO_DO ? (
-                  <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                ) : (
-                  <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                )}
-              </div>
-
-              <div
-                className={`flex ${statusFilter.COMPLETE ? 'hover:bg-base-300' : 'hover:bg-base-200'}`}
-                onClick={() => {
-                  if (isFetching) return;
-                  setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
-                }}
-              >
-                <p className={`py-1 px-3 cursor-pointer flex w-full rounded ${statusFilter.COMPLETE ? 'hover:bg-base-300' : 'hover:bg-base-200'}`}>Complete</p>
-                {!statusFilter.COMPLETE ? (
-                  <BiCheckbox className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                ) : (
-                  <BiCheckboxChecked className="mr-3 justify-self-end my-auto flex-end" size={'1.5em'} />
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="border-collapse">
         {remappedWorkOrders.length > 0 ? (
-          <table className={`table table-zebra ${ isFetching && "opacity-50 pointer-events-none"}`}>
+          <table className={`table table-zebra ${isFetching && 'opacity-50 pointer-events-none'}`}>
             <thead className="">
               <tr className="text-left">
                 {columns.map(({ label, accessor }) => {

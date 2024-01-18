@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import Modal from '../modal';
+import { useDocument } from '@/hooks/use-document';
 
 const modalIdPrefix = 'confirmation-modal';
 
@@ -23,9 +24,10 @@ export const ConfirmationModal = ({
   buttonsDisabled?: boolean;
 }) => {
   const modalId = `${modalIdPrefix}-${id}`;
+  const {clientDocument} = useDocument();
 
   function closeModal() {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     setConfirmationModalIsOpen(false);
   }
 

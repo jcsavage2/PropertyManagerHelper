@@ -12,15 +12,16 @@ export const BottomNavigationPanel = () => {
   const router = useRouter();
 
   if (userType !== ENTITIES.PROPERTY_MANAGER) return null;
+  console.log(router.pathname.includes('/work-orders'));
   return (
     <>
       {/* Allows us to use fixed and prevent content from being hidden by bottom nav */}
       <div className="btm-nav h-24 sticky opacity-0 pointer-events-none"></div>
-      <div className="btm-nav z-30 h-20 bg-base-200 fixed bottom-0 left-0 text-neutral text-sm border-t-2 border-base-300">
+      <div className="btm-nav z-30 h-20 bg-base-300 fixed bottom-0 left-0 text-neutral text-sm border-t-2 border-neutral border-opacity-10">
         <Link
-          href="work-orders"
+          href={'work-orders'}
           type="button"
-          className={`${userType !== ENTITIES.PROPERTY_MANAGER && 'col-span-4'} ${router.pathname.includes('/work-orders') && 'bg-base-100'}}`}
+          className={`${userType !== ENTITIES.PROPERTY_MANAGER && 'col-span-4'} ${router.pathname.includes('/work-orders') && 'bg-base-100'}`}
         >
           <RiFilePaper2Fill />
           <span className="">Work Orders</span>

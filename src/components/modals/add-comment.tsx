@@ -11,6 +11,7 @@ import { USER_PERMISSION_ERROR } from '@/constants';
 import { CreateComment } from '@/types';
 import { CreateCommentSchema } from '@/types/customschemas';
 import Modal from '../modal';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'add-comment-modal';
 
@@ -22,9 +23,10 @@ export type AddCommentModalProps = {
 export const AddCommentModal = ({ workOrderId, onSuccessfulAdd }: AddCommentModalProps) => {
   const { user } = useSessionUser();
   const { userType, altName } = useUserContext();
+  const {clientDocument} = useDocument();
 
   function closeModal() {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
   }
 

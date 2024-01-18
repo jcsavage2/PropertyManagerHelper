@@ -1,21 +1,14 @@
 // External dependencies
 import axios from 'axios';
-import Modal from 'react-modal';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-
-// Local components
 import { PortalLeftPanel } from '@/components/portal-left-panel';
 import WorkOrderModal from '@/components/modals/work-order';
 import { BottomNavigationPanel } from '@/components/navigation/bottom-navigation-panel';
 import { CreateWorkOrderModal } from '@/components/modals/create-work-order';
-
-// Hooks and context
 import { useDevice } from '@/hooks/use-window-size';
 import { useUserContext } from '@/context/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-
-// Types
 import { IWorkOrder } from '@/database/entities/work-order';
 import { getPageLayout, renderToastError } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
@@ -23,6 +16,7 @@ import { SingleValue } from 'react-select';
 import { StatusOption, UpdateWorkOrder, WoStatus } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
+import CheckboxSelect from '@/components/checkbox-select';
 
 export type HandleUpdateStatusProps = {
   val: SingleValue<StatusOption>;
@@ -126,7 +120,7 @@ const WorkOrders = () => {
       />
       <div id="workOrder" style={getPageLayout(isMobile)} className={`mx-4 mt-4`}>
         {!isMobile && <PortalLeftPanel />}
-        <div className={``}>
+        <div className={`flex flex-col`}>
           <div className="flex flex-row justify-between items-center mb-2">
             <h1 className="text-4xl">{`Work Orders`}</h1>
             {userType === ENTITIES.PROPERTY_MANAGER ? (
@@ -137,8 +131,8 @@ const WorkOrders = () => {
               />
             ) : null}
           </div>
-          {userType !== ENTITIES.TENANT && (
-            <ul className={`menu menu-horizontal bg-base-200 rounded-box`}>
+          {user && userType !== ENTITIES.TENANT && (
+            <ul className={`w-max menu menu-horizontal bg-base-200 rounded-box`}>
               <li>
                 <a
                   className={`tooltip ${!orgMode ? ' bg-secondary' : 'bg-neutral-content'}`}
@@ -165,24 +159,22 @@ const WorkOrders = () => {
               </li>
             </ul>
           )}
+          <div className={`mt-1 ${isFetching && 'pointer-events-none opacity-20'}`}>
+            <CheckboxSelect
+              dropdownLabel="Status"
+              options={[
+                { label: 'To Do', value: 'TO_DO' },
+                { label: 'Complete', value: 'COMPLETE' },
+              ]}
+              selectedOptions={statusFilter}
+              setSelectedOptions={setStatusFilter}
+            />
+          </div>
+
           {isMobile ? (
-            <WorkOrdersCards
-              workOrders={workOrders}
-              isFetching={isFetching}
-              handleUpdateStatus={handleUpdateStatus}
-              formattedStatusOptions={formattedStatusOptions}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-            />
+            <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} handleUpdateStatus={handleUpdateStatus} formattedStatusOptions={formattedStatusOptions} />
           ) : (
-            <WorkOrdersTable
-              workOrders={workOrders}
-              isFetching={isFetching}
-              handleUpdateStatus={handleUpdateStatus}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              formattedStatusOptions={formattedStatusOptions}
-            />
+            <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} handleUpdateStatus={handleUpdateStatus} formattedStatusOptions={formattedStatusOptions} />
           )}
           {workOrders.length && startKey && !isFetching ? (
             <div className="w-full flex items-center justify-center mb-8">

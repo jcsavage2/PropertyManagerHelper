@@ -6,7 +6,7 @@ import { BiError } from 'react-icons/bi';
 import { LoadingSpinner } from '../loading-spinner';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { v4 as uuid } from 'uuid';
-import { deconstructKey, renderToastError, renderToastSuccess, toTitleCase } from '@/utils';
+import { deconstructKey,  renderToastError, renderToastSuccess, toTitleCase } from '@/utils';
 import Papa from 'papaparse';
 import { useUserContext } from '@/context/user';
 import { AiOutlineLink } from 'react-icons/ai';
@@ -18,6 +18,7 @@ import { ImportTenantSchema } from '@/types/customschemas';
 import { CreateTenant, ImportTenant } from '@/types';
 import { CiWarning } from 'react-icons/ci';
 import Modal from '../modal';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'import-tenants-modal';
 
@@ -32,11 +33,12 @@ export const ImportTenantsModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () =>
   const [importTenantsLoading, setImportTenantsLoading] = useState<boolean>(false);
   const [preImportTenantsLoading, setPreImportTenantsLoading] = useState<boolean>(false);
   const [importTenantProgress, setImportTenantProgress] = useState<number>(0);
+  const {clientDocument} = useDocument();
 
   const closeModal = () => {
     setUploadList([]);
     setFormattingError(false);
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
   };
 
   const formatProgressToPercent = (progress: number) => {
@@ -304,14 +306,15 @@ export const ImportTenantsModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () =>
         key: downloadName,
       });
 
-      const downloadLink = document.createElement('a');
+      const downloadLink = clientDocument?.createElement('a');
+      if (!downloadLink) throw Error('Error creating download link');
       downloadLink.href = res.data.response;
       downloadLink.download = downloadName;
       downloadLink.style.display = 'none';
 
-      document.body.appendChild(downloadLink);
+      clientDocument?.body.appendChild(downloadLink);
       downloadLink.click();
-      document.body.removeChild(downloadLink);
+      clientDocument?.body.removeChild(downloadLink);
       URL.revokeObjectURL(downloadLink.href);
     } catch (err) {
       console.error(err);
@@ -329,8 +332,12 @@ export const ImportTenantsModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () =>
               onClick={() => {
                 setUploadList([]);
                 //Reset file input
-                //@ts-ignore
-                document.getElementById('fileUpload').value = '';
+                const elem: HTMLElement | null | undefined = clientDocument?.getElementById('fileUpload')
+                
+                if(elem){
+                  // @ts-ignore
+                  elem.value = "";
+                }
                 setFileUploadError(null);
               }}
               className="btn btn-square btn-sm bg-error flex items-center justify-center  text-white"

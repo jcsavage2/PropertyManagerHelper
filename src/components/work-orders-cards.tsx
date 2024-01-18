@@ -1,15 +1,11 @@
-import { deconstructKey, getTenantDisplayEmail, setToShortenedString, toTitleCase } from '@/utils';
+import { getTenantDisplayEmail, setToShortenedString, toTitleCase } from '@/utils';
 import { IWorkOrder } from '@/database/entities/work-order';
-import { useState } from 'react';
 import Link from 'next/link';
 import Select from 'react-select';
-import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
-import { NO_EMAIL_PREFIX, PTE, WO_STATUS } from '@/constants';
+import { PTE, WO_STATUS } from '@/constants';
 import { StatusOptions } from './work-orders-table';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { HandleUpdateStatusProps } from '../pages/work-orders';
-import { MdOutlineKeyboardDoubleArrowDown, MdOutlineKeyboardDoubleArrowUp } from 'react-icons/md';
-import { WoStatus } from '@/types';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
 import MobileCard from './mobile-card';
@@ -19,17 +15,14 @@ interface IWorkOrdersCardsProps {
   handleUpdateStatus: ({ val, pk, sk }: HandleUpdateStatusProps) => Promise<void>;
   isFetching: boolean;
   formattedStatusOptions: ({ value, label, icon }: { value: string; label: string; icon: any }) => JSX.Element;
-  statusFilter: Record<WoStatus, boolean>;
-  setStatusFilter: (statusFilter: Record<WoStatus, boolean>) => void;
 }
 
-export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, formattedStatusOptions, statusFilter, setStatusFilter }: IWorkOrdersCardsProps) => {
-  const [filtersOpen, setFiltersOpen] = useState(false);
+export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, formattedStatusOptions }: IWorkOrdersCardsProps) => {
   const { userType } = useUserContext();
 
   const renderWoCardStatus = (workOrder: IWorkOrder) => {
     if (workOrder.status === WO_STATUS.DELETED) {
-      return <p className="text-error ml-1">{WO_STATUS.DELETED}</p>;
+      return <p className="badge badge-error">{WO_STATUS.DELETED}</p>;
     }
     if (userType === USER_TYPE.TENANT) {
       const index = workOrder.status === WO_STATUS.TO_DO ? 0 : 1;
@@ -69,52 +62,6 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
 
   return (
     <div className={`mt-4 pb-24 min-h-screen`}>
-      <div className="w-full mb-4 flex flex-col">
-        <div
-          className={`w-3/5 flex flex-row px-2 h-9 items-center justify-center bg-primary rounded ${filtersOpen && 'w-3/5'} ${
-            isFetching && 'opacity-50 pointer-events-none'
-          }}`}
-          onClick={() => {
-            if (isFetching) return;
-            setFiltersOpen(!filtersOpen);
-          }}
-        >
-          {!filtersOpen ? (
-            <>
-              <p>Show Filters</p>
-              <MdOutlineKeyboardDoubleArrowDown className="text-2xl ml-1" />
-            </>
-          ) : (
-            <>
-              <p>Hide Filters</p>
-              <MdOutlineKeyboardDoubleArrowUp className="text-2xl ml-1" />
-            </>
-          )}
-        </div>
-        <div className={`w-full ${!filtersOpen && 'hidden'} ${isFetching && 'opacity-50 pointer-events-none'} mt-1`}>
-          <div
-            className={`flex flex-row items-center h-8 w-3/5 px-4 hover:bg-secondary`}
-            onClick={() => {
-              if (isFetching) return;
-              setStatusFilter({ ...statusFilter, TO_DO: !statusFilter.TO_DO });
-            }}
-          >
-            <p className={`cursor-pointer w-full rounded`}>To Do</p>
-            {!statusFilter.TO_DO ? <BiCheckbox className="mr-3 justify-self-end text-3xl" /> : <BiCheckboxChecked className="mr-3 justify-self-end text-3xl" />}
-          </div>
-
-          <div
-            className={`flex flex-row items-center h-8 w-3/5 px-4 hover:bg-secondary`}
-            onClick={() => {
-              if (isFetching) return;
-              setStatusFilter({ ...statusFilter, COMPLETE: !statusFilter.COMPLETE });
-            }}
-          >
-            <p className={`cursor-pointer w-full rounded`}>Complete</p>
-            {!statusFilter.COMPLETE ? <BiCheckbox className="mr-3 justify-self-end text-3xl" /> : <BiCheckboxChecked className="mr-3 justify-self-end text-3xl" />}
-          </div>
-        </div>
-      </div>
       <div className={`${isFetching && 'opacity-50'}`}>
         {workOrders.length > 0
           ? workOrders?.map((workOrder, index) => {

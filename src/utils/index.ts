@@ -4,7 +4,6 @@ import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
 import { toast } from 'react-toastify';
 import { ChatCompletionRequestMessage } from 'openai';
-import { IProperty } from '@/database/entities/property';
 
 export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;

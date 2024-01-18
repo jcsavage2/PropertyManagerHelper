@@ -14,11 +14,13 @@ import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@
 import * as Sentry from '@sentry/react';
 import MobileCard from '@/components/mobile-card';
 import Modal from '@/components/modal';
+import { useDocument } from '@/hooks/use-document';
 
 export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
   const { user, sessionStatus, accessToken } = useSessionUser();
   const { isMobile } = useDevice();
+  const {clientDocument} = useDocument();
 
   const [platform, setPlatform] = useState<'Desktop' | 'iOS' | 'Android'>();
 
@@ -66,9 +68,10 @@ export default function WorkOrderChatbot() {
   }, [user?.addresses]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const isDesktop = window.innerWidth >= 800;
     setPlatform(isDesktop ? 'Desktop' : window.navigator.userAgent.toLowerCase().includes('android') ? 'Android' : 'iOS');
-  }, []);
+  }, [typeof window]);
 
   useEffect(() => {
     //TODO: test me again
@@ -96,21 +99,20 @@ export default function WorkOrderChatbot() {
   useEffect(() => {
     if (!addressesOptions || selectedAddress) return;
     if (addressesOptions.length === 1) {
-      setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(true);
     } else {
-      setSelectedAddress(addressesOptions[0]);
       setAddressHasBeenSelected(false);
     }
+    setSelectedAddress(addressesOptions[0]);
   }, [addressesOptions, selectedAddress]);
 
   // Scroll to bottom when new message added
   useEffect(() => {
-    var element = document.getElementById('chatbox');
+    var element = clientDocument?.getElementById('chatbox');
     if (element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages, permissionToEnter, submitAnywaysSkip, selectedAddress, isTyping]);
+  }, [messages, permissionToEnter, submitAnywaysSkip, selectedAddress, isTyping, clientDocument]);
 
   const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
@@ -443,7 +445,7 @@ export default function WorkOrderChatbot() {
                 <p>{'2. Tap "Add to Home screen".'}</p>
               </>
             ) : (
-              <p>Your device is not recognized. Please refer to its documentation for instructions.</p>
+              <p>Your device is not recognized. Please refer to its clientDocumentation for instructions.</p>
             )}
           </div>
 

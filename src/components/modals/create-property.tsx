@@ -14,15 +14,17 @@ import { USER_PERMISSION_ERROR, DEFAULT_PROPERTY } from '@/constants';
 import { CreatePropertySchema } from '@/types/customschemas';
 import Modal from '../modal';
 import { CreateProperty, Option } from '@/types';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'create-property-modal';
 
 export const CreatePropertyModal = ({ onSuccess }: { onSuccess: () => Promise<void> }) => {
   const { user } = useSessionUser();
   const { userType, altName } = useUserContext();
+  const {clientDocument} = useDocument();
 
   function closeModal() {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
   }
 

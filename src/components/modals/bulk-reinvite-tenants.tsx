@@ -9,6 +9,7 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { MdClear } from 'react-icons/md';
 import { LoadingSpinner } from '../loading-spinner';
 import MobileCard from '../mobile-card';
+import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'bulk-reinvite-tenants';
 
@@ -17,6 +18,7 @@ export type BulkReinviteTenantsModalProps = {};
 export const BulkReinviteTenantsModal = ({}: BulkReinviteTenantsModalProps) => {
   const { user } = useSessionUser();
   const { userType, altName } = useUserContext();
+  const {clientDocument} = useDocument();
 
   const [loading, setLoading] = useState(false);
   const [tenantsToReinvite, setTenantsToReinvite] = useState<IUser[]>([]);
@@ -92,7 +94,7 @@ export const BulkReinviteTenantsModal = ({}: BulkReinviteTenantsModalProps) => {
   }, [user, altName, tenantsToReinvite, modalId]);
 
   function closeModal() {
-    (document.getElementById(modalId) as HTMLFormElement)?.close();
+    (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
   }
 
   return (
