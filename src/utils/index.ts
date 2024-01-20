@@ -105,10 +105,6 @@ export function createdToFormattedDateTime(created: string) {
   return [formattedDate, formattedTime];
 }
 
-export function getPageLayout(isMobile: boolean) {
-  return isMobile ? {} : { display: 'grid', gridTemplateColumns: '2fr 9fr', columnGap: '2rem' };
-}
-
 export function getInviteTenantSendgridEmailBody(tenantName: string, authLink: string, pmName: string): string {
   const displayPmName = toTitleCase(pmName);
   const displayTenantName = toTitleCase(tenantName);

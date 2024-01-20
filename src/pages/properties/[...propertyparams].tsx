@@ -1,9 +1,8 @@
 import ConfirmationModal from '@/components/modals/confirmation';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { StateSelect } from '@/components/state-select';
 import { TenantSelect } from '@/components/tenant-select';
-import { DEFAULT_PROPERTY, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
+import { DEFAULT_PROPERTY, USER_PERMISSION_ERROR } from '@/constants';
 import { useUserContext } from '@/context/user';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { IEvent } from '@/database/entities/event';
@@ -13,24 +12,18 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { EditProperty, Option } from '@/types';
 import { EditPropertySchema } from '@/types/customschemas';
-import {
-  createPropertyDisplayString,
-  createdToFormattedDateTime,
-  deconstructKey,
-  getPageLayout,
-  getTenantDisplayEmail,
-  renderToastError,
-  renderToastSuccess,
-  toTitleCase,
-} from '@/utils';
+import { createPropertyDisplayString, createdToFormattedDateTime, deconstructKey, getTenantDisplayEmail, renderToastError, renderToastSuccess, toTitleCase } from '@/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { CiLocationOn } from 'react-icons/ci';
 import { SingleValue } from 'react-select';
+import AdminPortal from '@/components/layouts/admin-portal';
+import { IoArrowBackSharp } from 'react-icons/io5';
+import { CiLocationOn } from 'react-icons/ci';
+import PropertyPageSkeleton from '@/components/skeletons/property-page';
 
 const PropertyPageTabs = ['edit', 'tenants', 'history'];
 
@@ -210,298 +203,286 @@ export default function PropertyPage() {
   });
 
   return (
-    <div id="property-info-page" className="md:mx-4 mx-1 md:mt-4" style={getPageLayout(isMobile)}>
-      {!isMobile && <PortalLeftPanel />}
-      <div className="flex flex-col lg:max-w-5xl">
-        {!isMobile ? (
-          <div className="text-sm breadcrumbs">
-            <ul className="mb-4 ml-2">
+    <AdminPortal id={'view-property'} showBottomNav={false}>
+      {!isMobile ? (
+        <div className="text-sm breadcrumbs">
+          <ul className=" ml-2">
+            <li>
+              <Link href="/properties">
+                <CiLocationOn className="inline mr-1 my-auto" />
+                Properties
+              </Link>
+            </li>
+            {!propertyLoading && property && propertyparams ? (
               <li>
-                <Link href="/properties">
-                  <CiLocationOn className="inline mr-1 my-auto" />
-                  Properties
-                </Link>
+                <Link href={`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[0]}`}>{createPropertyDisplayString(property, false)}</Link>
               </li>
-              {!propertyLoading && property ? (
-                <li>
-                  <a> {createPropertyDisplayString(property, false)}</a>
-                </li>
-              ) : null}
+            ) : null}
 
-              {selectedTab === PropertyPageTabs[0] ? (
-                <li>Edit property</li>
-              ) : selectedTab === PropertyPageTabs[1] ? (
-                <li>Add/remove tenants</li>
-              ) : (
-                <li>View property history</li>
-              )}
-            </ul>
-            <hr />
-          </div>
-        ) : (
-          <div className="">
-            <Link href="/properties" className="mt-2 flex flex-row align-middle items-center">
-              <CiLocationOn className="mr-1" fontSize={20} />
-              <p className="">Return to properties</p>
-            </Link>
-          </div>
-        )}
+            {selectedTab === PropertyPageTabs[0] ? <li>Edit property</li> : selectedTab === PropertyPageTabs[1] ? <li>Add/remove tenants</li> : <li>View property history</li>}
+          </ul>
+        </div>
+      ) : (
+        <Link href={'/properties'} className="flex flex-row align-middle items-center text-sm">
+          <IoArrowBackSharp className="mr-2" fontSize={20} />
+          <p className="">Return to properties</p>
+        </Link>
+      )}
 
-        {propertyLoading ? (
-          <div className="flex justify-center">
-            <LoadingSpinner />
-          </div>
-        ) : property && propertyparams ? (
-          <div className="w-full justify-center flex flex-col">
-            <div role="tablist" className="tabs tabs-bordered mt-2 mb-4 text-primary">
-              <div
-                role="tab"
-                className={`tab ${selectedTab === PropertyPageTabs[0] && 'tab-active'}`}
-                onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[0]}`)}
-              >
-                Edit property
-              </div>
-              <div
-                role="tab"
-                className={`tab ${selectedTab === PropertyPageTabs[1] && 'tab-active'}`}
-                onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[1]}`)}
-              >
-                Add/remove tenants
-              </div>
-              <div
-                role="tab"
-                className={`tab ${selectedTab === PropertyPageTabs[2] && 'tab-active'}`}
-                onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[2]}`)}
-              >
-                History
-              </div>
+      {propertyLoading ? (
+        <div className="w-full">
+          <PropertyPageSkeleton />
+        </div>
+      ) : property && propertyparams ? (
+        <div className="w-full justify-center flex flex-col">
+          <div role="tablist" className="tabs tabs-bordered mt-2 mb-2 text-primary">
+            <div
+              role="tab"
+              className={`tab ${selectedTab === PropertyPageTabs[0] && 'tab-active'}`}
+              onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[0]}`)}
+            >
+              Edit property
             </div>
-            {selectedTab === PropertyPageTabs[0] ? (
-              <div className="md:w-2/3 w-full mx-auto">
-                <form className="flex flex-col" onSubmit={handleSubmit(handleEditProperty)}>
+            <div
+              role="tab"
+              className={`tab ${selectedTab === PropertyPageTabs[1] && 'tab-active'}`}
+              onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[1]}`)}
+            >
+              Add/remove tenants
+            </div>
+            <div
+              role="tab"
+              className={`tab ${selectedTab === PropertyPageTabs[2] && 'tab-active'}`}
+              onClick={() => router.push(`/properties/${encodeURIComponent(propertyparams[0])}/${PropertyPageTabs[2]}`)}
+            >
+              History
+            </div>
+          </div>
+          {selectedTab === PropertyPageTabs[0] ? (
+            <div className="md:w-2/3 w-full mx-auto">
+              <form className="flex flex-col" onSubmit={handleSubmit(handleEditProperty)}>
+                <div className="label">
+                  <span className="label-text">Address</span>
+                </div>
+                <input
+                  type="text"
+                  className={`input w-full h-10 ${dirtyFields.address ? 'input-warning' : 'input-bordered'}`}
+                  {...register('address', {
+                    required: true,
+                  })}
+                />
+                {errors.address && <p className="text-error text-xs mt-1 italic">{errors.address.message}</p>}
+
+                <div className="label">
+                  <span className="label-text">Unit</span>
+                </div>
+                <input
+                  type="text"
+                  className={`input w-full h-10 ${dirtyFields.unit ? 'input-warning' : 'input-bordered'}`}
+                  {...register('unit', {
+                    required: true,
+                  })}
+                />
+                {errors.unit && <p className="text-error text-xs mt-1 italic">{errors.unit?.message}</p>}
+
+                <div className="label">
+                  <span className="label-text">City</span>
+                </div>
+                <input
+                  type="text"
+                  className={`input w-full h-10 ${dirtyFields.city ? 'input-warning' : 'input-bordered'}`}
+                  {...register('city', {
+                    required: true,
+                  })}
+                />
+                {errors.city && <p className="text-error text-xs mt-1 italic">{errors.city.message}</p>}
+
+                <div className="mt-1 mb-1">
+                  <Controller
+                    control={control}
+                    name="state"
+                    render={({ field: { onChange, value } }) => (
+                      <StateSelect state={value} setState={onChange} selectClass="select-md" label={'State'} isDirty={dirtyFields.state} />
+                    )}
+                  />
+                  {errors.state && <p className="text-error text-xs mt-1 italic">{errors.state.message}</p>}
+                </div>
+
+                <div className="label">
+                  <span className="label-text">Postal Code</span>
+                </div>
+                <input
+                  type="text"
+                  className={`input w-full h-10 ${dirtyFields.postalCode ? 'input-warning' : 'input-bordered'}`}
+                  {...register('postalCode', {
+                    required: true,
+                  })}
+                />
+                {errors.postalCode && <p className="text-error text-xs mt-1 italic">{errors.postalCode.message}</p>}
+
+                <div className={`flex flex-row w-full mt-4 mb-2 items-center`}>
                   <div className="label">
-                    <span className="label-text">Address</span>
+                    <span className="label-text">Beds</span>
                   </div>
                   <input
-                    type="text"
-                    className={`input w-full h-10 ${dirtyFields.address ? 'input-warning' : 'input-bordered'}`}
-                    {...register('address', {
-                      required: true,
-                    })}
+                    className={`input mr-auto w-20 ${dirtyFields.numBeds ? 'input-warning' : 'input-bordered'}`}
+                    type="number"
+                    id="beds"
+                    step={1}
+                    min={1}
+                    max={10}
+                    {...register('numBeds')}
                   />
-                  {errors.address && <p className="text-error text-xs mt-1 italic">{errors.address.message}</p>}
-
                   <div className="label">
-                    <span className="label-text">Unit</span>
+                    <span className="label-text">Baths</span>
                   </div>
                   <input
-                    type="text"
-                    className={`input w-full h-10 ${dirtyFields.unit ? 'input-warning' : 'input-bordered'}`}
-                    {...register('unit', {
-                      required: true,
-                    })}
+                    className={`input mr-auto w-20 ${dirtyFields.numBaths ? 'input-warning' : 'input-bordered'}`}
+                    type="number"
+                    id="baths"
+                    min={1}
+                    max={10}
+                    step={0.5}
+                    {...register('numBaths')}
                   />
-                  {errors.unit && <p className="text-error text-xs mt-1 italic">{errors.unit?.message}</p>}
+                </div>
+                <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
 
-                  <div className="label">
-                    <span className="label-text">City</span>
-                  </div>
-                  <input
-                    type="text"
-                    className={`input w-full h-10 ${dirtyFields.city ? 'input-warning' : 'input-bordered'}`}
-                    {...register('city', {
-                      required: true,
-                    })}
-                  />
-                  {errors.city && <p className="text-error text-xs mt-1 italic">{errors.city.message}</p>}
-
-                  <div className="mt-1 mb-1">
-                    <Controller
-                      control={control}
-                      name="state"
-                      render={({ field: { onChange, value } }) => (
-                        <StateSelect state={value} setState={onChange} selectClass="select-md" label={'State'} isDirty={dirtyFields.state} />
-                      )}
-                    />
-                    {errors.state && <p className="text-error text-xs mt-1 italic">{errors.state.message}</p>}
-                  </div>
-
-                  <div className="label">
-                    <span className="label-text">Postal Code</span>
-                  </div>
-                  <input
-                    type="text"
-                    className={`input w-full h-10 ${dirtyFields.postalCode ? 'input-warning' : 'input-bordered'}`}
-                    {...register('postalCode', {
-                      required: true,
-                    })}
-                  />
-                  {errors.postalCode && <p className="text-error text-xs mt-1 italic">{errors.postalCode.message}</p>}
-
-                  <div className={`flex flex-row w-full mt-4 mb-2 items-center`}>
-                    <div className="label">
-                      <span className="label-text">Beds</span>
-                    </div>
-                    <input
-                      className={`input mr-auto w-20 ${dirtyFields.numBeds ? 'input-warning' : 'input-bordered'}`}
-                      type="number"
-                      id="beds"
-                      step={1}
-                      min={1}
-                      max={10}
-                      {...register('numBeds')}
-                    />
-                    <div className="label">
-                      <span className="label-text">Baths</span>
-                    </div>
-                    <input
-                      className={`input mr-auto w-20 ${dirtyFields.numBaths ? 'input-warning' : 'input-bordered'}`}
-                      type="number"
-                      id="baths"
-                      min={1}
-                      max={10}
-                      step={0.5}
-                      {...register('numBaths')}
-                    />
-                  </div>
-                  <input type="hidden" {...register('pmName')} value={altName ?? user?.name ?? ''} />
-
-                  <div className="mx-auto md:w-1/2 w-full mt-4 flex flex-row justify-center">
-                    <button className="btn btn-primary mr-3 w-3/4" type="submit" disabled={isSubmitting || !isValid || !isDirty}>
-                      {isSubmitting ? <LoadingSpinner /> : 'Save Changes'}
-                    </button>
-                    <button
-                      className="btn btn-error"
-                      onClick={() => {
-                        reset();
-                      }}
-                      disabled={isSubmitting || !isDirty}
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </form>
-              </div>
-            ) : selectedTab === PropertyPageTabs[1] ? (
-              <div className="md:w-5/6 w-full mx-auto">
-                <div className="mb-2 md:w-4/5 w-full h-14 flex flex-row items-center mx-auto">
-                  <TenantSelect
-                    label={''}
-                    user={user}
-                    userType={userType}
-                    onChange={(e: SingleValue<Option>) => {
-                      if (e) setTenantToAdd(e);
-                    }}
-                  />
+                <div className="mx-auto md:w-1/2 w-full mt-4 flex flex-row justify-center">
+                  <button className="btn btn-primary mr-3 w-3/4" type="submit" disabled={isSubmitting || !isValid || !isDirty}>
+                    {isSubmitting ? <LoadingSpinner /> : 'Save Changes'}
+                  </button>
                   <button
-                    className="btn btn-primary ml-2"
-                    onClick={() => !tenantsLoading && !tenantsReassigning && handleAddRemoveTenantToProperty(tenantToAdd?.value, tenantToAdd?.label, false)}
-                    disabled={tenantsLoading || tenantsReassigning}
+                    className="btn btn-error"
+                    onClick={() => {
+                      reset();
+                    }}
+                    disabled={isSubmitting || !isDirty}
                   >
-                    {tenantsReassigning ? <LoadingSpinner /> : 'Add tenant'}
+                    Reset
                   </button>
                 </div>
+              </form>
+            </div>
+          ) : selectedTab === PropertyPageTabs[1] ? (
+            <div className="md:w-5/6 w-full mx-auto">
+              <div className="mb-2 md:w-4/5 w-full h-14 flex flex-row items-center mx-auto">
+                <TenantSelect
+                  label={''}
+                  user={user}
+                  userType={userType}
+                  onChange={(e: SingleValue<Option>) => {
+                    if (e) setTenantToAdd(e);
+                  }}
+                />
+                <button
+                  className="btn btn-primary ml-2"
+                  onClick={() => !tenantsLoading && !tenantsReassigning && handleAddRemoveTenantToProperty(tenantToAdd?.value, tenantToAdd?.label, false)}
+                  disabled={tenantsLoading || tenantsReassigning}
+                >
+                  {tenantsReassigning ? <LoadingSpinner /> : 'Add tenant'}
+                </button>
+              </div>
 
-                <div className="md:w-full w-5/6 mx-auto" id="property-events">
-                  {tenantsLoading ? (
-                    <LoadingSpinner containerClass="mt-4" />
-                  ) : tenants && tenants.length ? (
-                    <table className="table table-zebra mb-0">
-                      <thead>
-                        <tr>
-                          <th></th>
-                          <th>Name</th>
-                          {!isMobile && <th>Email</th>}
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tenants.map((user: IUser, i: number) => {
-                          const numAddresses = Object.keys(user.addresses).length ?? 0;
-                          const correctedEmail = getTenantDisplayEmail(user.email);
-                          return (
-                            <tr key={`${ENTITIES.USER}-${i}`}>
-                              <th>{i + 1}</th>
-                              <td>{toTitleCase(user.name)}</td>
-                              {!isMobile && <td>{correctedEmail}</td>}
-                              <td>
-                                <div
-                                  className={`${numAddresses === 1 && 'tooltip'}`}
-                                  data-tip={`${numAddresses === 1 ? 'To remove this tenant, please assign them to another address first' : ''}`}
-                                >
-                                  <button
-                                    className="btn btn-error py-1 px-1"
-                                    onClick={() => {
-                                      if (tenantsReassigning) return;
-                                      setTenantToDelete({ name: user.name, email: user.email });
-                                      setTenantRemoveConfirmOpen(true);
-                                    }}
-                                    disabled={tenantsLoading || tenantsReassigning || numAddresses === 1}
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <p className="mt-4 text-center font-bold">Sorry, no tenants found for this property</p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="w-5/6 mx-auto" id="property-events">
-                {events && events.length ? (
-                  events.map((event: IEvent | null, i: number) => {
-                    if (event) {
-                      const formattedDateTime = createdToFormattedDateTime(event.created!);
-                      return (
-                        <div key={`${ENTITIES.EVENT}-${i}`} className="mx-auto text-sm text-slate-800 rounded-md bg-base-300 mt-2 mb-2 py-2 px-3 text-left">
-                          <div className="mb-0.5 flex flex-row">
-                            <p className="font-bold mr-2">{toTitleCase(event.madeByName)} </p>
-                            <p className="text-slate-600">
-                              {formattedDateTime[0]} @ {formattedDateTime[1]}
-                            </p>
-                          </div>
-                          <div className="break-words">{event.message}</div>
-                        </div>
-                      );
-                    }
-                  })
-                ) : !isLoadingEvents ? (
-                  <p className="mt-4 text-center font-bold">Sorry, no property history found</p>
-                ) : null}
-                {isLoadingEvents ? (
+              <div className="md:w-full w-5/6 mx-auto" id="property-events">
+                {tenantsLoading ? (
                   <LoadingSpinner containerClass="mt-4" />
-                ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
-                  <div className="w-full flex items-center justify-center">
-                    <button disabled={isLoadingEvents} onClick={() => getPropertyEvents(eventsStartKey)} className="btn btn-secondary mx-auto">
-                      Load more
-                    </button>
-                  </div>
-                ) : null}
+                ) : tenants && tenants.length ? (
+                  <table className="table table-zebra mb-0">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Name</th>
+                        {!isMobile && <th>Email</th>}
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tenants.map((user: IUser, i: number) => {
+                        const numAddresses = Object.keys(user.addresses).length ?? 0;
+                        const correctedEmail = getTenantDisplayEmail(user.email);
+                        return (
+                          <tr key={`${ENTITIES.USER}-${i}`}>
+                            <th>{i + 1}</th>
+                            <td>{toTitleCase(user.name)}</td>
+                            {!isMobile && <td>{correctedEmail}</td>}
+                            <td>
+                              <div
+                                className={`${numAddresses === 1 && 'tooltip'}`}
+                                data-tip={`${numAddresses === 1 ? 'To remove this tenant, please assign them to another address first' : ''}`}
+                              >
+                                <button
+                                  className="btn btn-error py-1 px-1"
+                                  onClick={() => {
+                                    if (tenantsReassigning) return;
+                                    setTenantToDelete({ name: user.name, email: user.email });
+                                    setTenantRemoveConfirmOpen(true);
+                                  }}
+                                  disabled={tenantsLoading || tenantsReassigning || numAddresses === 1}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="mt-4 text-center font-bold">Sorry, no tenants found for this property</p>
+                )}
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex justify-center font-bold mt-4">Sorry, property not found</div>
-        )}
-        <ConfirmationModal
-          id="confirm-remove-tenant-from-property"
-          confirmationModalIsOpen={tenantRemoveConfirmOpen}
-          setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
-          onConfirm={() => {
-            handleAddRemoveTenantToProperty(tenantToDelete.email, tenantToDelete.name, true);
-            setTenantToDelete({ name: '', email: '' });
-            setTenantRemoveConfirmOpen(false);
-          }}
-          childrenComponents={<div className="text-center">Are you sure you want to remove {toTitleCase(tenantToDelete.name)} from this property?</div>}
-          onCancel={() => setTenantToDelete({ name: '', email: '' })}
-        />
-      </div>
-    </div>
+            </div>
+          ) : (
+            <div className="w-5/6 mx-auto" id="property-events">
+              {events && events.length ? (
+                events.map((event: IEvent | null, i: number) => {
+                  if (event) {
+                    const formattedDateTime = createdToFormattedDateTime(event.created!);
+                    return (
+                      <div key={`${ENTITIES.EVENT}-${i}`} className="mx-auto text-sm text-slate-800 rounded-md bg-base-300 mt-2 mb-2 py-2 px-3 text-left">
+                        <div className="mb-0.5 flex flex-row">
+                          <p className="font-bold mr-2">{toTitleCase(event.madeByName)} </p>
+                          <p className="text-slate-600">
+                            {formattedDateTime[0]} @ {formattedDateTime[1]}
+                          </p>
+                        </div>
+                        <div className="break-words">{event.message}</div>
+                      </div>
+                    );
+                  }
+                })
+              ) : !isLoadingEvents ? (
+                <p className="mt-4 text-center font-bold">Sorry, no property history found</p>
+              ) : null}
+              {isLoadingEvents ? (
+                <LoadingSpinner containerClass="mt-4" />
+              ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
+                <div className="w-full flex items-center justify-center">
+                  <button disabled={isLoadingEvents} onClick={() => getPropertyEvents(eventsStartKey)} className="btn btn-secondary mx-auto">
+                    Load more
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex justify-center font-bold mt-4">Sorry, property not found</div>
+      )}
+      <ConfirmationModal
+        id="confirm-remove-tenant-from-property"
+        confirmationModalIsOpen={tenantRemoveConfirmOpen}
+        setConfirmationModalIsOpen={setTenantRemoveConfirmOpen}
+        onConfirm={() => {
+          handleAddRemoveTenantToProperty(tenantToDelete.email, tenantToDelete.name, true);
+          setTenantToDelete({ name: '', email: '' });
+          setTenantRemoveConfirmOpen(false);
+        }}
+        childrenComponents={<div className="text-center">Are you sure you want to remove {toTitleCase(tenantToDelete.name)} from this property?</div>}
+        onCancel={() => setTenantToDelete({ name: '', email: '' })}
+      />
+    </AdminPortal>
   );
 }

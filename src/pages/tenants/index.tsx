@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { AddTenantModal } from '@/components/modals/create-tenant';
-import { PortalLeftPanel } from '@/components/portal-left-panel';
 import { useDevice } from '@/hooks/use-window-size';
-import { BottomNavigationPanel } from '@/components/navigation/bottom-navigation-panel';
 import { ImportTenantsModal } from '@/components/modals/import-tenants';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { IUser, USER_TYPE } from '@/database/entities/user';
-import { createdToFormattedDateTime, getPageLayout, getTenantDisplayEmail, renderToastError, renderToastSuccess, toTitleCase } from '@/utils';
+import { createdToFormattedDateTime, getTenantDisplayEmail, renderToastError, renderToastSuccess, toTitleCase } from '@/utils';
 import ConfirmationModal from '@/components/modals/confirmation';
 import { StartKey } from '@/database/entities';
 import { CiCircleRemove } from 'react-icons/ci';
@@ -22,7 +20,8 @@ import { MdModeEditOutline } from 'react-icons/md';
 import { UpdateUserSchema } from '@/types/customschemas';
 import { BulkReinviteTenantsModal } from '@/components/modals/bulk-reinvite-tenants';
 import MobileCard from '@/components/mobile-card';
-import CheckboxSelect from '@/components/checkbox-select';
+import CheckboxDropdown from '@/components/checkbox-dropdown';
+import AdminPortal from '@/components/layouts/admin-portal';
 
 const Tenants = () => {
   const { user } = useSessionUser();
@@ -165,97 +164,200 @@ const Tenants = () => {
     return <p>You are not authorized to use this page. You must be a property manager in an organization.</p>;
   }
   return (
-    <>
-      <div id="tenants" className="mx-4 mt-4" style={getPageLayout(isMobile)}>
-        {!isMobile && <PortalLeftPanel />}
-        <ConfirmationModal
-          id="confirm-tenant-delete"
-          confirmationModalIsOpen={confirmDeleteModalIsOpen}
-          setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
-          onConfirm={() => handleDeleteTenant(toDelete)}
-          childrenComponents={<div className="text-center">Are you sure you want to delete the tenant record for {toTitleCase(toDelete.name)}?</div>}
-          onCancel={() => setToDelete(DEFAULT_DELETE_USER)}
-        />
-        <div className="lg:max-w-7xl">
-          <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
-            <h1 className="text-4xl">Tenants</h1>
-            <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
-              <AddTenantModal onSuccessfulAdd={() => fetchTenants(true, tenantSearchString)} />
-              <ImportTenantsModal onSuccessfulAdd={() => fetchTenants(true, tenantSearchString)} />
-            </div>
-          </div>
-          <SearchBar
-            placeholder="Search tenants..."
-            searchString={tenantSearchString}
-            setSearchString={setTenantSearchString}
-            resultsLoading={tenantsLoading}
-            onSearch={() => {
-              if (tenantSearchString.length !== 0 && !tenantsLoading) {
-                fetchTenants(true, tenantSearchString);
-              }
-            }}
-            onClear={() => {
-              if (tenantsLoading || !tenantSearchString) return;
-              setTenantSearchString('');
-              fetchTenants(true);
-            }}
+    <AdminPortal id="tenants" isLoading={!user || !userType}>
+      <ConfirmationModal
+        id="confirm-tenant-delete"
+        confirmationModalIsOpen={confirmDeleteModalIsOpen}
+        setConfirmationModalIsOpen={setConfirmDeleteModalIsOpen}
+        onConfirm={() => handleDeleteTenant(toDelete)}
+        childrenComponents={<div className="text-center">Are you sure you want to delete the tenant record for {toTitleCase(toDelete.name)}?</div>}
+        onCancel={() => setToDelete(DEFAULT_DELETE_USER)}
+      />
+      <div className={isMobile ? `w-full flex flex-col justify-center` : `flex flex-row justify-between`}>
+        <h1 className="text-4xl">Tenants</h1>
+        <div className={`justify-self-end ${isMobile && 'mt-2 w-full'}`}>
+          <AddTenantModal onSuccessfulAdd={() => fetchTenants(true, tenantSearchString)} />
+          <ImportTenantsModal onSuccessfulAdd={() => fetchTenants(true, tenantSearchString)} />
+        </div>
+      </div>
+      <SearchBar
+        placeholder="Search tenants..."
+        searchString={tenantSearchString}
+        setSearchString={setTenantSearchString}
+        resultsLoading={tenantsLoading}
+        onSearch={() => {
+          if (tenantSearchString.length !== 0 && !tenantsLoading) {
+            fetchTenants(true, tenantSearchString);
+          }
+        }}
+        onClear={() => {
+          if (tenantsLoading || !tenantSearchString) return;
+          setTenantSearchString('');
+          fetchTenants(true);
+        }}
+      />
+      <div className={`flex flex-row justify-between w-full items-center`}>
+        <div className={`${tenantsLoading && 'pointer-events-none opacity-20'}`}>
+          <CheckboxDropdown
+            dropdownLabel="Status"
+            options={[
+              { label: 'Invited', value: 'INVITED' },
+              { label: 'Joined', value: 'JOINED' },
+              { label: 'Re-Invited', value: 'RE_INVITED' },
+            ]}
+            selectedOptions={statusFilter}
+            setSelectedOptions={setStatusFilter}
           />
-          <div className={`flex flex-row justify-between w-full items-center`}>
-            <div className={`${tenantsLoading && 'pointer-events-none opacity-20'}`}>
-              <CheckboxSelect
-                dropdownLabel="Status"
-                options={[
-                  { label: 'Invited', value: 'INVITED' },
-                  { label: 'Joined', value: 'JOINED' },
-                  { label: 'Re-Invited', value: 'RE_INVITED' },
-                ]}
-                selectedOptions={statusFilter}
-                setSelectedOptions={setStatusFilter}
-              />
-            </div>
+        </div>
 
-            {!isMobile && tenants && tenantsToReinvite && tenantsToReinvite.length > 0 ? <BulkReinviteTenantsModal /> : null}
+        {!isMobile && tenants && tenantsToReinvite && tenantsToReinvite.length > 0 ? <BulkReinviteTenantsModal /> : null}
+      </div>
+      {isMobile ? (
+        <div>
+          <div className={`mt-2 pb-4 min-h-fit`}>
+            <div className="flex flex-col items-center">
+              {tenants.length ? (
+                <p className="text-sm place-self-start font-light italic mb-1 ml-2">
+                  {'Showing ' + tenants.length} {tenants.length === 1 ? ' tenant...' : 'tenants...'}
+                </p>
+              ) : null}
+              {tenants.map((tenant: IUser, index) => {
+                const primaryAddress = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
+                const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
+                const correctedEmail = getTenantDisplayEmail(tenant.email);
+
+                return (
+                  <MobileCard title={toTitleCase(tenant.name)} key={`list-${tenant.pk}-${tenant.sk}-${index}`}>
+                    <div className="flex flex-row justify-between items-center">
+                      <div className="text-sm">
+                        <p className="">{correctedEmail} </p>
+                        <p className="mt-1">{toTitleCase(displayAddress)} </p>
+                        <div className={`mt-2 flex flex-row`}>
+                          <div className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-green-600' : 'text-yellow-500'} my-auto h-max inline-block`}>{tenant.status}</div>{' '}
+                          {tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED ? (
+                            <button
+                              className="ml-2 btn btn-sm btn-secondary"
+                              onClick={() => {
+                                if (resendingInvite) return;
+                                handleReinviteTenant({ email: tenant.email, name: tenant.name });
+                              }}
+                              disabled={resendingInvite}
+                            >
+                              <AiOutlineMail />
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                      <CiCircleRemove
+                        className="text-3xl text-error cursor-pointer -mt-8"
+                        onClick={() => {
+                          if (tenantsLoading) return;
+                          setToDelete({
+                            pk: tenant.pk,
+                            sk: tenant.sk,
+                            name: tenant.name,
+                          });
+                          setConfirmDeleteModalIsOpen(true);
+                        }}
+                      />
+                    </div>
+                  </MobileCard>
+                );
+              })}
+            </div>
           </div>
-          {isMobile ? (
-            <div>
-              <div className={`mt-2 pb-4 min-h-fit`}>
-                <div className="flex flex-col items-center">
-                  {tenants.length ? (
-                    <p className="text-sm place-self-start font-light italic mb-1 ml-2">
-                      {'Showing ' + tenants.length} {tenants.length === 1 ? ' tenant...' : 'tenants...'}
-                    </p>
-                  ) : null}
-                  {tenants.map((tenant: IUser, index) => {
-                    const primaryAddress = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
-                    const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit : ''}`;
+        </div>
+      ) : (
+        <div className={`${tenantsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
+          <div className="overflow-x-auto">
+            {tenants && tenants.length > 0 && (
+              <table className="table table-zebra">
+                <thead className="">
+                  <tr className="">
+                    <th className="">Name</th>
+                    <th className="">Email</th>
+                    <th className="">Status</th>
+                    <th className="hidden lg:table-cell">Primary Address</th>
+                    <th className="hidden lg:table-cell">Created</th>
+                    <th className=""></th>
+                  </tr>
+                </thead>
+                <tbody className="">
+                  {tenants.map((tenant: IUser) => {
+                    const primaryAddress: Property = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
+                    const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''}`;
+
                     const correctedEmail = getTenantDisplayEmail(tenant.email);
 
                     return (
-                      <MobileCard title={toTitleCase(tenant.name)} key={`list-${tenant.pk}-${tenant.sk}-${index}`}>
-                        <div className="flex flex-row justify-between items-center">
-                          <div className="text-sm">
-                            <p className="">{correctedEmail} </p>
-                            <p className="mt-1">{toTitleCase(displayAddress)} </p>
-                            <div className={`mt-2 flex flex-row`}>
-                              <div className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-green-600' : 'text-yellow-500'} my-auto h-max inline-block`}>
-                                {tenant.status}
-                              </div>{' '}
-                              {tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED ? (
-                                <button
-                                  className="ml-2 btn btn-sm btn-secondary"
-                                  onClick={() => {
-                                    if (resendingInvite) return;
-                                    handleReinviteTenant({ email: tenant.email, name: tenant.name });
-                                  }}
-                                  disabled={resendingInvite}
-                                >
-                                  <AiOutlineMail />
-                                </button>
-                              ) : null}
+                      <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-16">
+                        <td className="">
+                          {editingTenant?.email === tenant.email ? (
+                            <div className="flex flex-row align-middle">
+                              <input
+                                onChange={handleEditTenantName}
+                                autoFocus
+                                className="rounded input input-bordered input-sm"
+                                id="name"
+                                value={toTitleCase(tenantNewName)}
+                                type={'text'}
+                              />
+                              <button
+                                className="ml-2"
+                                onClick={() => {
+                                  handleChangeName();
+                                }}
+                              >
+                                <BsCheckCircle className="text-success" fontSize={18} />
+                              </button>
+                              <button
+                                className="ml-1"
+                                onClick={() => {
+                                  setEditingTenant(null);
+                                  setTenantNewName('');
+                                }}
+                              >
+                                <BsXCircle className="text-error" fontSize={18} />
+                              </button>
                             </div>
+                          ) : (
+                            <div className="flex flex-row align-middle">
+                              {`${toTitleCase(tenant.name)}`}{' '}
+                              <button
+                                className="ml-2"
+                                onClick={() => {
+                                  setEditingTenant(tenant);
+                                  setTenantNewName(tenant.name);
+                                }}
+                              >
+                                <MdModeEditOutline fontSize={16} className="text-accent" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                        <td className="">{`${correctedEmail}`}</td>
+                        <td className="">
+                          <div className="flex flex-row items-center justify-start">
+                            <div className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-success' : 'text-warning'} my-auto h-max inline-block`}>{tenant.status}</div>{' '}
+                            {tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED ? (
+                              <button
+                                className="btn btn-secondary btn-sm ml-2"
+                                onClick={() => {
+                                  if (resendingInvite) return;
+                                  handleReinviteTenant({ email: tenant.email, name: tenant.name });
+                                }}
+                                disabled={resendingInvite}
+                              >
+                                <AiOutlineMail />
+                              </button>
+                            ) : null}
                           </div>
+                        </td>
+                        <td className="hidden lg:table-cell">{toTitleCase(displayAddress)}</td>
+                        <td className="hidden lg:table-cell">{createdToFormattedDateTime(tenant.created)[0]}</td>
+                        <td className="">
                           <CiCircleRemove
-                            className="text-3xl text-error cursor-pointer -mt-8"
+                            className="text-3xl text-error cursor-pointer"
                             onClick={() => {
                               if (tenantsLoading) return;
                               setToDelete({
@@ -266,143 +368,32 @@ const Tenants = () => {
                               setConfirmDeleteModalIsOpen(true);
                             }}
                           />
-                        </div>
-                      </MobileCard>
+                        </td>
+                      </tr>
                     );
                   })}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className={`${tenantsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
-              <div className="overflow-x-auto">
-                {tenants && tenants.length > 0 && (
-                  <table className="table table-zebra">
-                    <thead className="">
-                      <tr className="">
-                        <th className="">Name</th>
-                        <th className="">Email</th>
-                        <th className="">Status</th>
-                        <th className="">Primary Address</th>
-                        <th className="">Created</th>
-                        <th className=""></th>
-                      </tr>
-                    </thead>
-                    <tbody className="">
-                      {tenants.map((tenant: IUser) => {
-                        const primaryAddress: Property = Object.values(tenant.addresses ?? []).find((a: any) => !!a.isPrimary);
-                        const displayAddress = `${primaryAddress.address} ${primaryAddress.unit ? ' ' + primaryAddress.unit.toUpperCase() : ''}`;
-
-                        const correctedEmail = getTenantDisplayEmail(tenant.email);
-
-                        return (
-                          <tr key={`altlist-${tenant.pk}-${tenant.sk}`} className="h-16">
-                            <td className="">
-                              {editingTenant?.email === tenant.email ? (
-                                <div className="flex flex-row align-middle">
-                                  <input
-                                    onChange={handleEditTenantName}
-                                    autoFocus
-                                    className="rounded input input-bordered input-sm"
-                                    id="name"
-                                    value={toTitleCase(tenantNewName)}
-                                    type={'text'}
-                                  />
-                                  <button
-                                    className="ml-2"
-                                    onClick={() => {
-                                      handleChangeName();
-                                    }}
-                                  >
-                                    <BsCheckCircle className="text-success" fontSize={18} />
-                                  </button>
-                                  <button
-                                    className="ml-1"
-                                    onClick={() => {
-                                      setEditingTenant(null);
-                                      setTenantNewName('');
-                                    }}
-                                  >
-                                    <BsXCircle className="text-error" fontSize={18} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex flex-row align-middle">
-                                  {`${toTitleCase(tenant.name)}`}{' '}
-                                  <button
-                                    className="ml-2"
-                                    onClick={() => {
-                                      setEditingTenant(tenant);
-                                      setTenantNewName(tenant.name);
-                                    }}
-                                  >
-                                    <MdModeEditOutline fontSize={16} className="text-accent" />
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                            <td className="">{`${correctedEmail}`}</td>
-                            <td className="">
-                              <div className="flex flex-row items-center justify-start">
-                                <div className={`${tenant.status === INVITE_STATUS.JOINED ? 'text-success' : 'text-warning'} my-auto h-max inline-block`}>{tenant.status}</div>{' '}
-                                {tenant.status === INVITE_STATUS.INVITED || tenant.status === INVITE_STATUS.RE_INVITED ? (
-                                  <button
-                                    className="btn btn-secondary btn-sm ml-2"
-                                    onClick={() => {
-                                      if (resendingInvite) return;
-                                      handleReinviteTenant({ email: tenant.email, name: tenant.name });
-                                    }}
-                                    disabled={resendingInvite}
-                                  >
-                                    <AiOutlineMail />
-                                  </button>
-                                ) : null}
-                              </div>
-                            </td>
-                            <td className="">{toTitleCase(displayAddress)}</td>
-                            <td className="">{createdToFormattedDateTime(tenant.created)[0]}</td>
-                            <td className="">
-                              <CiCircleRemove
-                                className="text-3xl text-error cursor-pointer"
-                                onClick={() => {
-                                  if (tenantsLoading) return;
-                                  setToDelete({
-                                    pk: tenant.pk,
-                                    sk: tenant.sk,
-                                    name: tenant.name,
-                                  });
-                                  setConfirmDeleteModalIsOpen(true);
-                                }}
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          )}
-          {!tenantsLoading && tenants.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no tenants found.</div>}
-          {tenantsLoading && (
-            <div className="mt-1">
-              <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
-            </div>
-          )}
-          {tenants.length && startKey && !tenantsLoading ? (
-            <div className="w-full flex items-center justify-center">
-              <button onClick={() => fetchTenants(false, tenantSearchString.length !== 0 ? tenantSearchString : undefined)} className="btn btn-secondary mx-auto">
-                Load more
-              </button>
-            </div>
-          ) : (
-            <div className=""></div>
-          )}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
-      </div>
-      {isMobile && <BottomNavigationPanel />}
-    </>
+      )}
+      {!tenantsLoading && tenants.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no tenants found.</div>}
+      {tenantsLoading && (
+        <div className="mt-1">
+          <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
+        </div>
+      )}
+      {tenants.length && startKey && !tenantsLoading ? (
+        <div className="w-full flex items-center justify-center">
+          <button onClick={() => fetchTenants(false, tenantSearchString.length !== 0 ? tenantSearchString : undefined)} className="btn btn-secondary mx-auto">
+            Load more
+          </button>
+        </div>
+      ) : (
+        <div className=""></div>
+      )}
+    </AdminPortal>
   );
 };
 

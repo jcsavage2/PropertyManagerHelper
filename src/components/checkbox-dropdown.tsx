@@ -2,14 +2,14 @@ import { Option } from '@/types';
 import React, { Dispatch, SetStateAction } from 'react';
 import { BiCheckbox, BiCheckboxChecked } from 'react-icons/bi';
 
-interface CheckboxSelectProps {
+interface CheckboxDropdownProps {
   dropdownLabel: string;
   options: Option[];
   selectedOptions: Record<string, boolean>;
   setSelectedOptions: Dispatch<SetStateAction<Record<string, boolean>>>;
 }
 
-const CheckboxSelect = ({ dropdownLabel, options, selectedOptions, setSelectedOptions }: CheckboxSelectProps) => {
+const CheckboxDropdown = ({ dropdownLabel, options, selectedOptions, setSelectedOptions }: CheckboxDropdownProps) => {
   const handleUpdateSelectedOptions = (option: Option) => {
     setSelectedOptions((prev) => {
       return {
@@ -36,7 +36,6 @@ const CheckboxSelect = ({ dropdownLabel, options, selectedOptions, setSelectedOp
         {options &&
           options.length &&
           options.map((option: Option, index: number) => {
-            console.log(option, selectedOptions[option.value]);
             return (
               <li
                 key={`${index}-${option.value}`}
@@ -47,11 +46,10 @@ const CheckboxSelect = ({ dropdownLabel, options, selectedOptions, setSelectedOp
               >
                 <label className="cursor-pointer label">
                   <div className="flex flex-row">
-                    {/* <input type="checkbox" className="checkbox" /> */}
                     {selectedOptions[option.value] ? (
-                      <BiCheckboxChecked className="justify-self-end my-auto flex-end" size={'1.5em'} />
+                      <BiCheckboxChecked className="justify-self-end my-auto flex-end text-xl" />
                     ) : (
-                      <BiCheckbox className="justify-self-end my-auto flex-end" size={'1.5em'} />
+                      <BiCheckbox className="justify-self-end my-auto flex-end text-xl" />
                     )}
                     <span className="label-text ml-3">{option.label}</span>
                   </div>
@@ -64,4 +62,4 @@ const CheckboxSelect = ({ dropdownLabel, options, selectedOptions, setSelectedOp
   );
 };
 
-export default CheckboxSelect;
+export default CheckboxDropdown;

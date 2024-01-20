@@ -8,7 +8,7 @@ import HamburgerMenu from './hamburger-menu';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { USER_TYPE } from '@/database/entities/user';
 
-const navBarStyles = "navbar bg-base-200 sticky top-0 z-50 border-b border-neutral border-opacity-10"
+const navBarStyles = 'navbar py-3 bg-base-200 sticky top-0 z-50 border-b border-neutral border-opacity-10';
 
 export const NavLinks = () => {
   const { logOut } = useUserContext();
@@ -19,7 +19,6 @@ export const NavLinks = () => {
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = useCallback(() => {
     logOut();
-    router.push('/');
   }, [logOut, router]);
 
   if (isMobile) {
@@ -41,11 +40,12 @@ export const NavLinks = () => {
   return (
     <nav className={navBarStyles}>
       <div className="navbar-start">
-        <div className="flex cursor-pointer mr-6" onClick={() => router.push('/')}>
+        <Link className="flex cursor-pointer mr-2 btn btn-ghost" href={'/'}>
           <p className="pl-4 text-xl my-auto font-sans">PILLAR</p>
           <Image src="/2.png" alt="1" width={30} height={0} />
-        </div>
-        <div className="text-lg child:mr-4">
+        </Link>
+
+        <div className="navbar-center text-lg child:mr-4 child-hover:text-primary-content">
           {user ? (
             <>
               {userType === USER_TYPE.TENANT && (
@@ -54,19 +54,19 @@ export const NavLinks = () => {
                 </Link>
               )}
               {userType === USER_TYPE.TENANT || userType === USER_TYPE.TECHNICIAN ? (
-                <Link className="hover:text-gray-500 text-lg" href={'/work-orders'}>
+                <Link className="" href={'/work-orders'}>
                   Work Orders
                 </Link>
               ) : null}
               {userType === USER_TYPE.PROPERTY_MANAGER && (
-                <Link className="hover:text-gray-500 text-lg" href={'/work-orders'}>
+                <Link className="" href={'/work-orders'}>
                   Admin Portal
                 </Link>
               )}
             </>
           ) : null}
 
-          <Link className={'hover:text-gray-500 text-lg'} href={'/terms-and-conditions'}>
+          <Link className={''} href={'/terms-and-conditions'}>
             {'Terms And Conditions'}
           </Link>
         </div>

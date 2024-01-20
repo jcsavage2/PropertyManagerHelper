@@ -22,10 +22,10 @@ const HamburgerMenu = () => {
 
   return (
     <>
-      <div className="space-y-1 justify-self-end" onClick={() => setIsOpen((s) => !s)}>
-        <span className="block w-8 h-1 bg-gray-600"></span>
-        <span className="block w-8 h-1 bg-gray-600"></span>
-        <span className="block w-8 h-1 bg-gray-600"></span>
+      <div className="space-y-1 justify-self-end cursor-pointer child:w-8 child:h-1 child:block child:bg-gray-600" onClick={() => setIsOpen((s) => !s)}>
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
       {isOpen && (
         <div className="absolute top-16 left-0 bg-secondary text-base-100 mt-0 w-full z-50" style={{ height: '100dvh' }} onClick={() => setIsOpen(false)}>

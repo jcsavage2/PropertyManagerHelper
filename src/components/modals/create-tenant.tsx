@@ -120,7 +120,7 @@ export const AddTenantModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => voi
   const renderSubmitButton = () => {
     return (
       <button className="btn mt-3 btn-primary" type="submit" disabled={propertyForm.formState.isSubmitting || !propertyForm.formState.isValid}>
-        {propertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Add Tenant'}
+        {propertyForm.formState.isSubmitting ? <LoadingSpinner /> : 'Create Tenant'}
       </button>
     );
   };

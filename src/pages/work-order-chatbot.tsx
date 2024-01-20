@@ -20,7 +20,7 @@ export default function WorkOrderChatbot() {
   const [userMessage, setUserMessage] = useState('');
   const { user, sessionStatus, accessToken } = useSessionUser();
   const { isMobile } = useDevice();
-  const {clientDocument} = useDocument();
+  const { clientDocument } = useDocument();
 
   const [platform, setPlatform] = useState<'Desktop' | 'iOS' | 'Android'>();
 
@@ -454,173 +454,170 @@ export default function WorkOrderChatbot() {
           </button>
         </div>
       </Modal>
-      <main style={{ height: '92dvh' }} className="text-center bg-base-200">
-        <div>
-          <div id="container" style={{ margin: '1dvh auto 0 auto ' }} className="w-11/12 lg:w-6/12 md:w-7/12 sm:w-9/12 mx-auto shadow-xl rounded-lg">
-            <div id="chatbox-header" className="text-left bg-primary rounded-t-lg py-2 shadow-sm">
-              <h3 className="text-xl my-auto text-primary-content text-center">PILLAR Chat</h3>
-            </div>
-            <div
-              id="chatbox"
-              style={{
-                height: '73dvh',
-                boxSizing: 'border-box',
-              }}
-              className="md:filter-none m-0 p-3 overflow-y-scroll overflow-x-hidden"
-            >
-              {renderChatHeader()}
-              {!!messages?.length &&
-                messages.map((message, index) => (
-                  <div key={`${message.content?.[0] ?? index}-${index}`} className={`mb-3 break-all ${!!(index % 2) ? 'chat chat-start' : 'chat chat-end'}`}>
-                    <div
-                      className={`w-11/12 rounded-md py-2 px-6 inline-block shadow-md ${
-                        !!(index % 2) ? 'chat-bubble chat-bubble-secondary text-secondary-content text-left' : 'chat-bubble chat-bubble-accent text-accent-content text-right'
-                      }`}
-                    >
-                      {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
-                        <div className="text-left mb-1 ">
-                          <h3 className="text-left font-semibold">
-                            Issue: <span className="font-normal">{`${workOrder.issueDescription}`}</span>
-                          </h3>
-                        </div>
-                      )}
-                      {workOrder.issueLocation && index === lastSystemMessageIndex && !submitAnywaysSkip && (
-                        <div className="text-left mb-1 ">
-                          <h3 className="text-left font-semibold">
-                            Issue Location: <span className="font-normal">{workOrder.issueLocation}</span>
-                          </h3>
-                        </div>
-                      )}
-                      <div data-testid={`response-${index}`} className="whitespace-pre-line break-keep">
-                        <p>{message.content}</p>{' '}
-                        {message.role === 'assistant' && index === lastSystemMessageIndex && isTyping && aiMessageEnded && (
-                          <LoadingSpinner containerClass="mt-2" spinnerClass="spinner-small" />
-                        )}
+      <main className="text-center">
+        <div className="w-11/12 lg:w-6/12 md:w-7/12 sm:w-9/12 mx-auto shadow-xl rounded-lg">
+          <div id="chatbox-header" className="text-left bg-primary rounded-t-lg py-2 shadow-sm">
+            <h3 className="text-xl my-auto text-primary-content text-center">PILLAR Chat</h3>
+          </div>
+          <div
+            id="chatbox"
+            style={{
+              height: '73dvh',
+              boxSizing: 'border-box',
+            }}
+            className="md:filter-none m-0 p-3 overflow-y-scroll overflow-x-hidden bg-gray-100"
+          >
+            {renderChatHeader()}
+            {!!messages?.length &&
+              messages.map((message, index) => (
+                <div key={`${message.content?.[0] ?? index}-${index}`} className={`mb-3 break-all ${!!(index % 2) ? 'chat chat-start' : 'chat chat-end'}`}>
+                  <div
+                    className={`w-11/12 rounded-md py-2 px-6 inline-block shadow-md ${
+                      !!(index % 2) ? 'chat-bubble chat-bubble-secondary text-secondary-content text-left' : 'chat-bubble chat-bubble-accent text-accent-content text-right'
+                    }`}
+                  >
+                    {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
+                      <div className="text-left mb-1 ">
+                        <h3 className="text-left font-semibold">
+                          Issue: <span className="font-normal">{`${workOrder.issueDescription}`}</span>
+                        </h3>
                       </div>
-                      {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
-                        <>
-                          <div
-                            data-testid="final-response"
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr',
-                              rowGap: '0rem',
-                              marginTop: '1rem',
-                            }}
-                          >
-                            {submitAnywaysSkip && (
-                              <>
-                                <label htmlFor="issueDescription">{isMobile ? 'Issue*' : 'Issue Details*'}</label>
-                                <input className="rounded px-1" id="issueDescription" type={'text'} value={issueDescription} onChange={handleIssueDescriptionChange} />
-                                <label htmlFor="issueLocation">{isMobile ? 'Location*' : 'Issue Location*'}</label>
-                                <input className="rounded px-1" id="issueLocation" type={'text'} value={issueLocation} onChange={handleIssueLocationChange} />
-                              </>
-                            )}
-                            <label htmlFor="additionalDetails">{isMobile ? 'Details' : 'Additional Details'}</label>
-                            <input className="rounded px-1" id="additionalDetails" type={'text'} value={additionalDetails} onChange={handleAdditionalDetailsChange} />
-                          </div>
-                          <form className="mt-2" onSubmit={() => {}}>
-                            <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />
-                          </form>
-                          <p className="mt-2">Permission To Enter {selectedAddress ? toTitleCase(selectedAddress.label) : 'Property'}* </p>
-                          <div>
-                            <input
-                              className="rounded px-1"
-                              id="permission-yes"
-                              name={'permission'}
-                              type={'radio'}
-                              value={PTE.YES}
-                              checked={permissionToEnter === PTE.YES}
-                              onChange={handlePermissionChange}
-                            />
-                            <label htmlFor="permission-yes">{PTE.YES}</label>
-                            <input
-                              className="rounded px-1 ml-4"
-                              id="permission-no"
-                              name={'permission'}
-                              type={'radio'}
-                              value={PTE.NO}
-                              checked={permissionToEnter === PTE.NO}
-                              onChange={handlePermissionChange}
-                            />
-                            <label htmlFor="permission-no">{PTE.NO}</label>
-                          </div>
-                        </>
+                    )}
+                    {workOrder.issueLocation && index === lastSystemMessageIndex && !submitAnywaysSkip && (
+                      <div className="text-left mb-1 ">
+                        <h3 className="text-left font-semibold">
+                          Issue Location: <span className="font-normal">{workOrder.issueLocation}</span>
+                        </h3>
+                      </div>
+                    )}
+                    <div data-testid={`response-${index}`} className="whitespace-pre-line break-keep">
+                      <p>{message.content}</p>{' '}
+                      {message.role === 'assistant' && index === lastSystemMessageIndex && isTyping && aiMessageEnded && (
+                        <LoadingSpinner containerClass="mt-2" spinnerClass="spinner-small" />
                       )}
                     </div>
-                  </div>
-                ))}
-              {isResponding && (
-                <div className="chat chat-start">
-                  <div className="chat-bubble chat-bubble-accent">
-                    <div className="dot animate-loader"></div>
-                    <div className="dot animate-loader animation-delay-200"></div>
-                    <div className="dot animate-loader animation-delay-400"></div>
+                    {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
+                      <div className='py-2'>
+                        <div data-testid="final-response" className="text-secondary-content w-full">
+                          {submitAnywaysSkip && (
+                            <div className="child:w-11/12">
+                              <div className="label">
+                                <span className="label-text text-secondary-content">{isMobile ? 'Issue*' : 'Issue Details*'}</span>
+                              </div>
+                              <input
+                                className="input input-sm input-bordered"
+                                id="issueDescription"
+                                type={'text'}
+                                value={issueDescription}
+                                onChange={handleIssueDescriptionChange}
+                              />
+                              <div className="label">
+                                <span className="label-text text-secondary-content">{isMobile ? 'Location*' : 'Issue Location*'}</span>
+                              </div>
+                              <input className="input input-sm input-bordered" id="issueLocation" type={'text'} value={issueLocation} onChange={handleIssueLocationChange} />
+                            </div>
+                          )}
+                          <div className="label">
+                            <span className="label-text text-secondary-content">{isMobile ? 'Details' : 'Additional Details'}</span>
+                          </div>
+                          <input
+                            className="input input-sm input-bordered w-11/12"
+                            id="additionalDetails"
+                            type={'text'}
+                            value={additionalDetails}
+                            onChange={handleAdditionalDetailsChange}
+                          />
+                        </div>
+                        <form className="mt-4" onSubmit={() => {}}>
+                          <input type="file" multiple name="image" accept="image/*" onChange={handleFileChange} />
+                        </form>
+                        <div className="label">
+                          <span className="label-text text-secondary-content mt-2 flex flex-row">
+                            Permission To Enter: <p className="ml-2">{selectedAddress ? toTitleCase(selectedAddress.label) : 'Property'}* </p>
+                          </span>
+                        </div>
+
+                        <div className="flex flex-row -mt-3">
+                          <label className="label cursor-pointer">
+                            <span className="label-text text-secondary-content">Yes</span>
+                            <input className="radio ml-3" type={'radio'} checked={permissionToEnter === PTE.YES} value={PTE.YES} onChange={handlePermissionChange} />
+                          </label>
+                          <label className="label cursor-pointer ml-4">
+                            <span className="label-text text-secondary-content">No</span>
+                            <input className="radio ml-3" type={'radio'} checked={permissionToEnter === PTE.NO} value={PTE.NO} onChange={handlePermissionChange} />
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-              {!isResponding && !isTyping && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
+              ))}
+
+            {isResponding && (
+              <div className="chat chat-start">
+                <div className="chat-bubble chat-bubble-secondary text-secondary-content flex flex-row">
+                  <div className="dot animate-loader"></div>
+                  <div className="dot animate-loader animation-delay-200"></div>
+                  <div className="dot animate-loader animation-delay-400"></div>
+                </div>
+              </div>
+            )}
+            {!isResponding && !isTyping && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
+              <button
+                onClick={() => {
+                  setSubmitAnywaysSkip(true);
+                  setMessages((prev) => {
+                    prev[prev.length - 1] = {
+                      role: 'assistant',
+                      content: 'Please complete the form below. When complete, press submit to send your work order!',
+                      ksuId: generateKSUID(),
+                    };
+                    return prev;
+                  });
+                  if (issueDescription.length === 0) {
+                    setIssueDescription(userMessage);
+                  }
+                }}
+                className="btn btn-accent"
+              >
+                {'Submit Anyways?'}
+              </button>
+            )}
+          </div>
+          <div id="chatbox-footer" className="p-3 rounded-b-lg flex items-center justify-center h-24">
+            {(hasAllIssueInfo(workOrder) || submitAnywaysSkip) && messages.length > 1 ? (
+              <button onClick={handleSubmitWorkOrder} disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles} className="btn btn-primary">
+                {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? 'Files Uploading...' : 'Submit Work Order'}
+              </button>
+            ) : (
+              <form
+                onSubmit={handleSubmitText}
+                className="w-full flex flex-row items-center justify-center"
+                onKeyDown={(e) => {
+                  //Users can press enter to submit the form, enter + shift to add a new line
+                  if (e.key === 'Enter' && !e.shiftKey && !isResponding && addressHasBeenSelected) {
+                    e.preventDefault();
+                    handleSubmitText(e);
+                  }
+                }}
+              >
+                <textarea
+                  value={userMessage}
+                  data-testid="userMessageInput"
+                  className={`p-2 textarea textarea-bordered resize-none w-5/6`}
+                  placeholder={messages.length ? (hasAllIssueInfo(workOrder) ? '' : '') : 'Tell us about your issue.'}
+                  onChange={handleChange}
+                />
                 <button
-                  onClick={() => {
-                    setSubmitAnywaysSkip(true);
-                    setMessages((prev) => {
-                      prev[prev.length - 1] = {
-                        role: 'assistant',
-                        content: 'Please complete the form below. When complete, press submit to send your work order!',
-                        ksuId: generateKSUID(),
-                      };
-                      return prev;
-                    });
-                    if (issueDescription.length === 0) {
-                      setIssueDescription(userMessage);
-                    }
-                  }}
-                  className="btn btn-accent"
+                  data-testid="send"
+                  type="submit"
+                  className="ml-2 btn btn-primary my-auto w-1/6"
+                  disabled={isResponding || isTyping || !userMessage || userMessage.length === 0 || !addressHasBeenSelected}
                 >
-                  {'Submit Anyways?'}
+                  Send
                 </button>
-              )}
-            </div>
-            <div id="chatbox-footer" className="p-3 bg-slate-100 rounded-b-lg flex items-center justify-center" style={{ height: '12dvh' }}>
-              {(hasAllIssueInfo(workOrder) || submitAnywaysSkip) && messages.length > 1 ? (
-                <button
-                  onClick={handleSubmitWorkOrder}
-                  disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles}
-                  className="btn btn-primary"
-                >
-                  {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? 'Files Uploading...' : 'Submit Work Order'}
-                </button>
-              ) : (
-                <form
-                  onSubmit={handleSubmitText}
-                  style={{ display: 'grid', gridTemplateColumns: '9fr 1fr' }}
-                  className='w-full'
-                  onKeyDown={(e) => {
-                    //Users can press enter to submit the form, enter + shift to add a new line
-                    if (e.key === 'Enter' && !e.shiftKey && !isResponding && addressHasBeenSelected) {
-                      e.preventDefault();
-                      handleSubmitText(e);
-                    }
-                  }}
-                >
-                  <textarea
-                    value={userMessage}
-                    data-testid="userMessageInput"
-                    className={`p-2 textarea textarea-bordered resize-none`}
-                    placeholder={messages.length ? (hasAllIssueInfo(workOrder) ? '' : '') : 'Tell us about your issue.'}
-                    onChange={handleChange}
-                  />
-                  <button
-                    data-testid="send"
-                    type="submit"
-                    className="ml-2 btn btn-primary my-auto"
-                    disabled={isResponding || isTyping || !userMessage || userMessage.length === 0 || !addressHasBeenSelected}
-                  >
-                    Send
-                  </button>
-                </form>
-              )}
-            </div>
+              </form>
+            )}
           </div>
         </div>
       </main>

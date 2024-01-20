@@ -12,7 +12,6 @@ export const BottomNavigationPanel = () => {
   const router = useRouter();
 
   if (userType !== ENTITIES.PROPERTY_MANAGER) return null;
-  console.log(router.pathname.includes('/work-orders'));
   return (
     <>
       {/* Allows us to use fixed and prevent content from being hidden by bottom nav */}

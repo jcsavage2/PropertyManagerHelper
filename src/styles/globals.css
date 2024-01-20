@@ -37,7 +37,7 @@ a {
 }
 
 .dot {
-  @apply w-2 h-2 my-2 mx-1 bg-gray-400 rounded-full;
+  @apply w-2 h-2 my-4 mx-1 bg-secondary-content rounded-full;
 }
 
 .tenantRow:hover {

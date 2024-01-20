@@ -2,9 +2,9 @@ import Link from 'next/link';
 
 const TermsAndCondittions = () => {
   return (
-    <div className="terms-and-conditions bg-white p-8 shadow-lg rounded-lg">
+    <div className="p-8 shadow-lg rounded-lg">
       <h1 className="text-2xl font-bold mb-4">Terms and Conditions for Using Pillar</h1>
-      <p className="mb-4 text-gray-600">
+      <p className="mb-4 ">
         <span className="font-semibold">Last Updated:</span> September 16, 2023
       </p>
 
@@ -21,7 +21,7 @@ const TermsAndCondittions = () => {
       <p className="mb-4">
         Your name, address, and email is provided by the Property Management team. We use this data to process maintenance requests and facilitate communication between
         tenants and the property management team for resolution. For more details on how we handle your data, please refer to our{' '}
-        <Link href="/privacy-policy" className="text-blue-500 hover:underline">
+        <Link href="/privacy-policy" className="text-accent hover:underline">
           Privacy Policy
         </Link>
         .
@@ -60,7 +60,7 @@ const TermsAndCondittions = () => {
       <h2 className="text-xl font-semibold mt-6 mb-2">Contact Information</h2>
       <p>
         For any questions about these terms, please contact{' '}
-        <a href="mailto:pillar@pillarhq.co" className="text-blue-500 hover:underline">
+        <a href="mailto:pillar@pillarhq.co" className="text-accent hover:underline">
           pillar@pillarhq.co
         </a>
         .

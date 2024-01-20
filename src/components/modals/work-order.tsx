@@ -22,7 +22,7 @@ import { USER_TYPE } from '@/database/entities/user';
 import { UpdateWorkOrderSchema } from '@/types/customschemas';
 import { useDevice } from '@/hooks/use-window-size';
 import Modal from '../modal';
-import LargeModalSkeleton from '../skeletons/large-modal-skeleton';
+import LargeModalSkeleton from '../skeletons/large-modal';
 import MobileCard from '../mobile-card';
 import { useDocument } from '@/hooks/use-document';
 

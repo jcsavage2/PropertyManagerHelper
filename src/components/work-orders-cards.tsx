@@ -61,8 +61,13 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
   };
 
   return (
-    <div className={`mt-4 pb-24 min-h-screen`}>
+    <div className={`mt-1 pb-24 min-h-screen`}>
       <div className={`${isFetching && 'opacity-50'}`}>
+        {workOrders.length ? (
+          <p className="text-sm place-self-start font-light italic mb-1 ml-2 mt-1">
+            {'Showing ' + workOrders.length} {workOrders.length === 1 ? ' work order...' : ' work orders...'}
+          </p>
+        ) : null}
         {workOrders.length > 0
           ? workOrders?.map((workOrder, index) => {
               const { assignedTo } = workOrder;

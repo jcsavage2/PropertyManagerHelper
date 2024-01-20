@@ -1,8 +1,8 @@
 const PrivacyPolicy = () => {
   return (
-    <div className="privacy-policy bg-white p-8 shadow-lg rounded-lg">
+    <div className="p-8 shadow-lg rounded-lg">
       <h1 className="text-2xl font-bold mb-4">Privacy Policy</h1>
-      <p className="mb-4 text-gray-600">
+      <p className="mb-4">
         <span className="font-semibold">Last Updated:</span> September 16, 2023
       </p>
 
@@ -24,12 +24,12 @@ const PrivacyPolicy = () => {
       <h2 className="text-xl font-semibold mt-6 mb-2">Automatically Collected Information</h2>
       <p>
         We automatically collect data on how our users visit{' '}
-        <a href="https://pillarhq.co" className="text-blue-500 hover:underline">
+        <a href="https://pillarhq.co" className="text-accent hover:underline">
           https://pillarhq.co
         </a>
         , such as your IP address, location, browser, browser language, operating system, device identifiers, and cookies. Our website currently uses cookies to enhance its
         functionality. You may disable cookies in your web browser, but this may limit your ability to access{' '}
-        <a href="https://pillarhq.co" className="text-blue-500 hover:underline">
+        <a href="https://pillarhq.co" className="text-accent hover:underline">
           https://pillarhq.co
         </a>
         .
@@ -82,7 +82,7 @@ const PrivacyPolicy = () => {
       <h2 className="text-xl font-semibold mt-6 mb-2">Contacting Us</h2>
       <p>
         If you have questions about this policy, please feel free to contact us at:{' '}
-        <a href="mailto:pillar@pillarhq.co" className="text-blue-500 hover:underline">
+        <a href="mailto:pillar@pillarhq.co" className="text-accent hover:underline">
           pillar@pillarhq.co
         </a>
       </p>

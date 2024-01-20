@@ -62,7 +62,7 @@ export const CreateTechnicianModal = ({ onSuccessfulAdd }: CreateTechnicianModal
   return (
     <Modal
       id={modalId}
-      openButtonText="Create Technician"
+      openButtonText="+ Technician"
       title="Create Technician"
       onClose={closeModal}
     >
