@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateTechnician } from '@/types';
 import { CreateTechnicianSchema } from '@/types/customschemas';
 import { LoadingSpinner } from '../loading-spinner';
-import Modal from '../modal';
+import Modal from './modal';
 import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'create-technician-modal';

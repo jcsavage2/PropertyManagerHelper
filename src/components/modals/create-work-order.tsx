@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { v4 as uuidv4 } from 'uuid';
 import { AddWorkOrderModalSchema, CreateWorkOrderSchema } from '@/types/customschemas';
 import * as amplitude from '@amplitude/analytics-browser';
-import Modal from '../modal';
+import Modal from './modal';
 import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'create-work-order';

@@ -17,7 +17,7 @@ import { USER_PERMISSION_ERROR } from '@/constants';
 import { ImportTenantSchema } from '@/types/customschemas';
 import { CreateTenant, ImportTenant } from '@/types';
 import { CiWarning } from 'react-icons/ci';
-import Modal from '../modal';
+import Modal from './modal';
 import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'import-tenants-modal';

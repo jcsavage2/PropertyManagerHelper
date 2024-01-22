@@ -10,7 +10,7 @@ import { renderToastError, renderToastSuccess } from '@/utils';
 import { CreatePMSchema } from '@/types/customschemas';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { CreatePMSchemaType } from '@/types';
-import Modal from '../modal';
+import Modal from './modal';
 import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'create-pm-modal';

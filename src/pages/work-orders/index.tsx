@@ -16,6 +16,7 @@ import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
 import CheckboxDropdown from '@/components/checkbox-dropdown';
 import AdminPortal from '@/components/layouts/admin-portal';
+import LoadMore from '@/components/load-more';
 
 export type HandleUpdateStatusProps = {
   val: SingleValue<StatusOption>;
@@ -171,15 +172,9 @@ const WorkOrders = () => {
       ) : (
         <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} handleUpdateStatus={handleUpdateStatus} formattedStatusOptions={formattedStatusOptions} />
       )}
-      {workOrders.length && startKey && !isFetching ? (
-        <div className="w-full flex items-center justify-center mb-8">
-          <button disabled={isFetching} onClick={() => fetchWorkOrders(false)} className="btn mx-auto w-1/4 mb-24">
-            Load more
-          </button>
-        </div>
-      ) : (
-        <div className="mb-8"></div>
-      )}
+      <div className="w-full mb-10 flex items-center justify-center">
+        <LoadMore isDisabled={isFetching} isVisible={workOrders.length && startKey && !isFetching} onClick={() => fetchWorkOrders(false)} />
+      </div>
     </AdminPortal>
   );
 };

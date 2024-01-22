@@ -17,6 +17,7 @@ import { useRouter } from 'next/router';
 import { SearchBar } from '@/components/search-bar';
 import MobileCard from '@/components/mobile-card';
 import AdminPortal from '@/components/layouts/admin-portal';
+import LoadMore from '@/components/load-more';
 
 const Properties = () => {
   const router = useRouter();
@@ -85,7 +86,7 @@ const Properties = () => {
         }}
       />
       {isMobile ? (
-        <div className={`${propertiesLoading && 'opacity-50 pointer-events-none'} mt-4 pb-4 min-h-screen`}>
+        <div className={`${propertiesLoading && 'opacity-50 pointer-events-none'} mt-4 pb-4`}>
           <div className="flex flex-col items-center">
             {properties.length ? (
               <p className="text-sm place-self-start font-light italic mb-1 ml-2">
@@ -154,24 +155,14 @@ const Properties = () => {
         </div>
       )}
       {!propertiesLoading && properties.length === 0 && <div className="mt-6 font-bold text-center">Sorry, no properties found.</div>}
-      {propertiesLoading && (
-        <div className="mt-8">
+      {propertiesLoading ? (
+        <div className="mt-4">
           <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
         </div>
-      )}
-      {properties.length && startKey && !propertiesLoading ? (
-        <div className="w-full flex items-center justify-center mb-24">
-          <button
-            onClick={() => {
-              fetchProperties(false);
-            }}
-            className="btn btn-secondary mx-auto mb-24"
-          >
-            Load more
-          </button>
-        </div>
       ) : (
-        <div className="mb-24"></div>
+        <div className="w-full flex items-center justify-center">
+          <LoadMore isDisabled={propertiesLoading} isVisible={properties && properties.length && startKey} onClick={() => fetchProperties(false)} />
+        </div>
       )}
     </AdminPortal>
   );

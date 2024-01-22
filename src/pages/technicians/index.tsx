@@ -15,6 +15,7 @@ import { DeleteUser, DeleteUserBody } from '@/types';
 import { SearchBar } from '@/components/search-bar';
 import MobileCard from '@/components/mobile-card';
 import AdminPortal from '@/components/layouts/admin-portal';
+import LoadMore from '@/components/load-more';
 
 const Technicians = () => {
   const { user } = useSessionUser();
@@ -122,7 +123,7 @@ const Technicians = () => {
         placeholder={'Search Technicians...'}
       />
       {isMobile ? (
-        <div className={`mt-4 pb-4 min-h-screen ${techsLoading && 'opacity-50 pointer-events-none'}`}>
+        <div className={`mt-4 pb-4 ${techsLoading && 'opacity-50 pointer-events-none'}`}>
           <div className="flex flex-col items-center">
             {techs.length ? (
               <p className="text-sm place-self-start font-light italic mb-1 ml-2">
@@ -196,19 +197,18 @@ const Technicians = () => {
         </div>
       )}
       {!techsLoading && techs.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no technicians found.</div>}
-      {techsLoading && (
+      {techsLoading ? (
         <div className="mt-8">
           <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
         </div>
-      )}
-      {techs.length && startKey && !techsLoading ? (
-        <div className="w-full flex items-center justify-center mb-24">
-          <button onClick={() => fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)} className="btn btn-secondary mx-auto mb-24">
-            Load more
-          </button>
-        </div>
       ) : (
-        <div className="mb-8"></div>
+        <div className="w-full flex items-center justify-center">
+          <LoadMore
+            isDisabled={techsLoading}
+            isVisible={techs && techs.length && startKey}
+            onClick={() => fetchTechs(false, techSearchString.length !== 0 ? techSearchString : undefined)}
+          />
+        </div>
       )}
     </AdminPortal>
   );

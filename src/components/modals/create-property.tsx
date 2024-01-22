@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { USER_PERMISSION_ERROR, DEFAULT_PROPERTY } from '@/constants';
 import { CreatePropertySchema } from '@/types/customschemas';
-import Modal from '../modal';
+import Modal from './modal';
 import { CreateProperty, Option } from '@/types';
 import { useDocument } from '@/hooks/use-document';
 

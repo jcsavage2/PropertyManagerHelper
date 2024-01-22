@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useDevice } from '@/hooks/use-window-size';
-import { BottomNavigationPanel } from '@/components/navigation/bottom-navigation-panel';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
 import { LoadingSpinner } from '@/components/loading-spinner';
@@ -12,6 +11,7 @@ import { CreatePropertyManagerModal } from '@/components/modals/create-property-
 import { USER_PERMISSION_ERROR } from '@/constants';
 import AdminPortal from '@/components/layouts/admin-portal';
 import MobileCard from '@/components/mobile-card';
+import LoadMore from '@/components/load-more';
 
 const PropertyManagers = () => {
   const { user } = useSessionUser();
@@ -115,18 +115,15 @@ const PropertyManagers = () => {
         </div>
       )}
       {!pmsLoading && pms.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no property managers found.</div>}
-      {pmsLoading && (
-        <div className="md:mt-8">
+      {pmsLoading ? (
+        <div className="mt-4">
           <LoadingSpinner spinnerClass="spinner-large" />
         </div>
-      )}
-      {pms.length && startKey && !pmsLoading ? (
+      ) : (
         <div className="w-full flex items-center justify-center">
-          <button onClick={() => fetchPMs(false)} className="btn btn-secondary mx-auto mb-24">
-            Load more
-          </button>
+          <LoadMore isDisabled={pmsLoading} isVisible={pms && pms.length && startKey} onClick={() => fetchPMs(false)} />
         </div>
-      ) : null}
+      )}
     </AdminPortal>
   );
 };

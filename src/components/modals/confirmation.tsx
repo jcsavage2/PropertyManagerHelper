@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import Modal from '../modal';
+import Modal from './modal';
 import { useDocument } from '@/hooks/use-document';
 
 const modalIdPrefix = 'confirmation-modal';

@@ -10,7 +10,7 @@ import { USER_TYPE } from '@/database/entities/user';
 import { USER_PERMISSION_ERROR } from '@/constants';
 import { CreateComment } from '@/types';
 import { CreateCommentSchema } from '@/types/customschemas';
-import Modal from '../modal';
+import Modal from './modal';
 import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'add-comment-modal';

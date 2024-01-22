@@ -4,7 +4,7 @@ import { getTenantDisplayEmail, renderToastError, renderToastSuccess, toTitleCas
 import { useUserContext } from '@/context/user';
 import { IUser, USER_TYPE } from '@/database/entities/user';
 import { INVITE_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR } from '@/constants';
-import Modal from '../modal';
+import Modal from './modal';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { MdClear } from 'react-icons/md';
 import { LoadingSpinner } from '../loading-spinner';

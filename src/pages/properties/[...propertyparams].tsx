@@ -24,6 +24,7 @@ import AdminPortal from '@/components/layouts/admin-portal';
 import { IoArrowBackSharp } from 'react-icons/io5';
 import { CiLocationOn } from 'react-icons/ci';
 import PropertyPageSkeleton from '@/components/skeletons/property-page';
+import LoadMore from '@/components/load-more';
 
 const PropertyPageTabs = ['edit', 'tenants', 'history'];
 
@@ -435,7 +436,7 @@ export default function PropertyPage() {
               </div>
             </div>
           ) : (
-            <div className="w-5/6 mx-auto" id="property-events">
+            <div className="w-5/6 mb-4 mx-auto" id="property-events">
               {events && events.length ? (
                 events.map((event: IEvent | null, i: number) => {
                   if (event) {
@@ -454,17 +455,15 @@ export default function PropertyPage() {
                   }
                 })
               ) : !isLoadingEvents ? (
-                <p className="mt-4 text-center font-bold">Sorry, no property history found</p>
+                <p className=" text-center font-bold">Sorry, no property history found</p>
               ) : null}
               {isLoadingEvents ? (
-                <LoadingSpinner containerClass="mt-4" />
-              ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
+                <LoadingSpinner containerClass="" />
+              ) : (
                 <div className="w-full flex items-center justify-center">
-                  <button disabled={isLoadingEvents} onClick={() => getPropertyEvents(eventsStartKey)} className="btn btn-secondary mx-auto">
-                    Load more
-                  </button>
+                  <LoadMore isVisible={events && events.length && eventsStartKey} isDisabled={isLoadingEvents} onClick={() => getPropertyEvents(eventsStartKey)} />
                 </div>
-              ) : null}
+              )}
             </div>
           )}
         </div>

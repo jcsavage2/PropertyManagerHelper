@@ -61,7 +61,7 @@ export const WorkOrdersCards = ({ workOrders, isFetching, handleUpdateStatus, fo
   };
 
   return (
-    <div className={`mt-1 pb-24 min-h-screen`}>
+    <div className={`mt-1 mb-4`}>
       <div className={`${isFetching && 'opacity-50'}`}>
         {workOrders.length ? (
           <p className="text-sm place-self-start font-light italic mb-1 ml-2 mt-1">

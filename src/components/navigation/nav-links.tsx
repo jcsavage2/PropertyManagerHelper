@@ -49,7 +49,7 @@ export const NavLinks = () => {
           {user ? (
             <>
               {userType === USER_TYPE.TENANT && (
-                <Link className=" t" href={'/work-order-chatbot'}>
+                <Link className="" href={'/work-order-chatbot'}>
                   New Work Order
                 </Link>
               )}

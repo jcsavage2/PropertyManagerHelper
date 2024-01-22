@@ -14,7 +14,7 @@ import { USER_PERMISSION_ERROR, DEFAULT_PROPERTY_WITH_ID } from '@/constants';
 import { CreateTenant_Address, CreateTenant_TenantInfo, Property } from '@/types';
 import { CreateTenant_AddressSchema, CreateTenantSchema, CreateTenant_TenantInfoSchema } from '@/types/customschemas';
 import { v4 as uuidv4 } from 'uuid';
-import Modal from '../modal';
+import Modal from './modal';
 import { useDocument } from '@/hooks/use-document';
 
 const modalId = 'add-tenant-modal';

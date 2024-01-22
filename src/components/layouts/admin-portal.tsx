@@ -13,6 +13,10 @@ import Select, { SingleValue } from 'react-select';
 import { useDevice } from '@/hooks/use-window-size';
 import { BottomNavigationPanel } from '../navigation/bottom-navigation-panel';
 import DrawerSkeleton from '../skeletons/drawer';
+import { RiFilePaper2Fill } from 'react-icons/ri';
+import { BsFillPersonFill, BsPersonLinesFill } from 'react-icons/bs';
+import { MdEngineering } from 'react-icons/md';
+import { CiLocationOn } from 'react-icons/ci';
 
 type AdminPortalProps = {
   id: string;
@@ -48,7 +52,7 @@ const AdminPortal = ({ id, children, isLoading = false, showBottomNav = true }: 
   }
 
   return (
-    <div id={id} className="drawer drawer-open">
+    <div id={id} className="drawer drawer-open pb-6">
       <input id="my-drawer-2" type="checkbox" className="drawer-toggle" />
       <div className="drawer-content pl-6 pt-6">{children}</div>
       {userType === USER_TYPE.TENANT ? null : (
@@ -83,27 +87,30 @@ const AdminPortal = ({ id, children, isLoading = false, showBottomNav = true }: 
                   <hr className="h-0.5 bg-base-300" />
                 </div>
               )}
-              <ul className="menu text-base-content child:mb-4 child-hover:bg-secondary child-hover:text-secondary-content child:rounded-md">
-                {/* Sidebar content here */}
-
-                <li className={` ${router.pathname.includes('/work-orders') && selectedListItem}`}>
-                  <Link href={'/work-orders'}>Work Orders</Link>
-                </li>
+              <ul className="menu text-base-content child:py-2 child:px-2 child:flex child:flex-row child:items-center child child:mb-4 child-hover:bg-secondary child-hover:text-secondary-content child:rounded-md">
+                <Link href={'/work-orders'} className={`${router.pathname.includes('/work-orders') && selectedListItem}`}>
+                  <RiFilePaper2Fill className="mr-2" />
+                  <p>Work Orders</p>
+                </Link>
 
                 {userType === ENTITIES.PROPERTY_MANAGER && (
                   <>
-                    <li className={` ${router.pathname.includes('/property-managers') && selectedListItem}`}>
-                      <Link href={'/property-managers'}>Property Managers</Link>
-                    </li>
-                    <li className={` ${router.pathname.includes('/tenants') && selectedListItem}`}>
-                      <Link href={'/tenants'}>Tenants</Link>
-                    </li>
-                    <li className={` ${router.pathname.includes('/technicians') && selectedListItem}`}>
-                      <Link href={'/technicians'}>Technicians</Link>
-                    </li>
-                    <li className={` ${router.pathname.includes('/properties') && selectedListItem}`}>
-                      <Link href={'/properties'}>Properties</Link>
-                    </li>
+                    <Link href={'/property-managers'} className={`${router.pathname.includes('/property-managers') && selectedListItem}`}>
+                      <BsPersonLinesFill className={`mr-2`} />
+                      <p>Property Managers</p>
+                    </Link>
+                    <Link href={'/tenants'} className={`${router.pathname.includes('/tenants') && selectedListItem}`}>
+                      <BsFillPersonFill className={`mr-2`} />
+                      <p>Tenants</p>
+                    </Link>
+                    <Link href={'/technicians'} className={`${router.pathname.includes('/technicians') && selectedListItem}`}>
+                      <MdEngineering className={`mr-2`} />
+                      <p>Technicians</p>
+                    </Link>
+                    <Link href={'/properties'} className={`${router.pathname.includes('/properties') && selectedListItem}`}>
+                      <CiLocationOn className="mr-2" />
+                      <p>Properties</p>
+                    </Link>
                   </>
                 )}
               </ul>

@@ -22,6 +22,7 @@ import { BulkReinviteTenantsModal } from '@/components/modals/bulk-reinvite-tena
 import MobileCard from '@/components/mobile-card';
 import CheckboxDropdown from '@/components/checkbox-dropdown';
 import AdminPortal from '@/components/layouts/admin-portal';
+import LoadMore from '@/components/load-more';
 
 const Tenants = () => {
   const { user } = useSessionUser();
@@ -379,19 +380,18 @@ const Tenants = () => {
         </div>
       )}
       {!tenantsLoading && tenants.length === 0 && <div className="font-bold text-center md:mt-6">Sorry, no tenants found.</div>}
-      {tenantsLoading && (
+      {tenantsLoading ? (
         <div className="mt-1">
           <LoadingSpinner containerClass="h-20" spinnerClass="spinner-large" />
         </div>
-      )}
-      {tenants.length && startKey && !tenantsLoading ? (
-        <div className="w-full flex items-center justify-center">
-          <button onClick={() => fetchTenants(false, tenantSearchString.length !== 0 ? tenantSearchString : undefined)} className="btn btn-secondary mx-auto">
-            Load more
-          </button>
-        </div>
       ) : (
-        <div className=""></div>
+        <div className="w-full flex items-center justify-center">
+          <LoadMore
+            isDisabled={tenantsLoading}
+            isVisible={tenants && tenants.length && startKey && !tenantsLoading}
+            onClick={() => fetchTenants(false, tenantSearchString.length !== 0 ? tenantSearchString : undefined)}
+          />
+        </div>
       )}
     </AdminPortal>
   );

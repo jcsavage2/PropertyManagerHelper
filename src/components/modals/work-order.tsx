@@ -21,10 +21,11 @@ import { ENTITIES, StartKey } from '@/database/entities';
 import { USER_TYPE } from '@/database/entities/user';
 import { UpdateWorkOrderSchema } from '@/types/customschemas';
 import { useDevice } from '@/hooks/use-window-size';
-import Modal from '../modal';
+import Modal from './modal';
 import LargeModalSkeleton from '../skeletons/large-modal';
 import MobileCard from '../mobile-card';
 import { useDocument } from '@/hooks/use-document';
+import LoadMore from '../load-more';
 
 const modalId = 'work-order-modal';
 
@@ -551,13 +552,10 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
                   ) : null}
                   {isLoadingEvents ? (
                     <LoadingSpinner containerClass="mt-4" />
-                  ) : events && events.length && eventsStartKey && !isLoadingEvents ? (
-                    <div className="w-full flex items-center justify-center">
-                      <button disabled={isLoadingEvents} onClick={() => getWorkOrderEvents(false, eventsStartKey)} className="btn btn-secondary mx-auto">
-                        Load more
-                      </button>
-                    </div>
-                  ) : null}
+                  ) :  (
+                    <LoadMore isVisible={events && events.length && eventsStartKey} isDisabled={isLoadingEvents} onClick={() => getWorkOrderEvents(false, eventsStartKey)} />
+                  ) }
+
                 </div>
               </>
             ) : null}

@@ -13,7 +13,7 @@ import * as amplitude from '@amplitude/analytics-browser';
 import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@/types/customschemas';
 import * as Sentry from '@sentry/react';
 import MobileCard from '@/components/mobile-card';
-import Modal from '@/components/modal';
+import Modal from '@/components/modals/modal';
 import { useDocument } from '@/hooks/use-document';
 
 export default function WorkOrderChatbot() {
@@ -383,11 +383,10 @@ export default function WorkOrderChatbot() {
   const renderChatHeader = () => {
     if (addressHasBeenSelected) {
       return (
-        <MobileCard shadow="shadow-md">
-          <div className="text-left"></div>
+        <div className="w-11/12 rounded-md text-primary-content py-2 px-6 shadow-md text-left bg-base-300 mb-4 ">
           <p className="mb-4 ">Tell me about the issue you are experiencing and I'll generate a work order.</p>
           <p className="">For example: "Toilet is leaking from the tank, and the toilet is located in the upstairs bathroom on the right."</p>
-        </MobileCard>
+        </div>
       );
     } else {
       return (
@@ -465,25 +464,21 @@ export default function WorkOrderChatbot() {
               height: '73dvh',
               boxSizing: 'border-box',
             }}
-            className="md:filter-none m-0 p-3 overflow-y-scroll overflow-x-hidden bg-gray-100"
+            className="md:filter-none m-0 p-3 bg-gray-100 overflow-y-scroll overflow-x-hidden"
           >
             {renderChatHeader()}
             {!!messages?.length &&
               messages.map((message, index) => (
-                <div key={`${message.content?.[0] ?? index}-${index}`} className={`mb-3 break-all ${!!(index % 2) ? 'chat chat-start' : 'chat chat-end'}`}>
-                  <div
-                    className={`w-11/12 rounded-md py-2 px-6 inline-block shadow-md ${
-                      !!(index % 2) ? 'chat-bubble chat-bubble-secondary text-secondary-content text-left' : 'chat-bubble chat-bubble-accent text-accent-content text-right'
-                    }`}
-                  >
-                    {workOrder.issueDescription && index === lastSystemMessageIndex && !submitAnywaysSkip && (
+                <div key={`${message.content?.[0] ?? index}-${index}`} className={`mb-3 break-all text-primary-content ${!!(index % 2) ? 'text-left' : 'text-right'}`}>
+                  <div className={`w-11/12 rounded-md py-2 px-6 inline-block shadow-md ${!!(index % 2) ? 'bg-base-300 text-left' : 'bg-secondary text-right'}`}>
+                    {workOrder.issueDescription && !isResponding && !isTyping && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                       <div className="text-left mb-1 ">
                         <h3 className="text-left font-semibold">
                           Issue: <span className="font-normal">{`${workOrder.issueDescription}`}</span>
                         </h3>
                       </div>
                     )}
-                    {workOrder.issueLocation && index === lastSystemMessageIndex && !submitAnywaysSkip && (
+                    {workOrder.issueLocation && !isResponding && !isTyping && index === lastSystemMessageIndex && !submitAnywaysSkip && (
                       <div className="text-left mb-1 ">
                         <h3 className="text-left font-semibold">
                           Issue Location: <span className="font-normal">{workOrder.issueLocation}</span>
@@ -497,7 +492,7 @@ export default function WorkOrderChatbot() {
                       )}
                     </div>
                     {index === lastSystemMessageIndex && (hasAllIssueInfo(workOrder) || submitAnywaysSkip) && (
-                      <div className='py-2'>
+                      <div className="py-2">
                         <div data-testid="final-response" className="text-secondary-content w-full">
                           {submitAnywaysSkip && (
                             <div className="child:w-11/12">
@@ -540,11 +535,11 @@ export default function WorkOrderChatbot() {
                         <div className="flex flex-row -mt-3">
                           <label className="label cursor-pointer">
                             <span className="label-text text-secondary-content">Yes</span>
-                            <input className="radio ml-3" type={'radio'} checked={permissionToEnter === PTE.YES} value={PTE.YES} onChange={handlePermissionChange} />
+                            <input className="radio ml-3 bg-base-100" type={'radio'} checked={permissionToEnter === PTE.YES} value={PTE.YES} onChange={handlePermissionChange} />
                           </label>
                           <label className="label cursor-pointer ml-4">
                             <span className="label-text text-secondary-content">No</span>
-                            <input className="radio ml-3" type={'radio'} checked={permissionToEnter === PTE.NO} value={PTE.NO} onChange={handlePermissionChange} />
+                            <input className="radio ml-3 bg-base-100" type={'radio'} checked={permissionToEnter === PTE.NO} value={PTE.NO} onChange={handlePermissionChange} />
                           </label>
                         </div>
                       </div>
@@ -554,14 +549,15 @@ export default function WorkOrderChatbot() {
               ))}
 
             {isResponding && (
-              <div className="chat chat-start">
-                <div className="chat-bubble chat-bubble-secondary text-secondary-content flex flex-row">
+              <div className="text-left bg-base-300 w-1/6 rounded-md py-2 px-6 shadow-md">
+                <div className="flex flex-row">
                   <div className="dot animate-loader"></div>
                   <div className="dot animate-loader animation-delay-200"></div>
                   <div className="dot animate-loader animation-delay-400"></div>
                 </div>
               </div>
             )}
+
             {!isResponding && !isTyping && !submitAnywaysSkip && !hasAllIssueInfo(workOrder) && (issueDescription.length > 0 || errorCount > 0) && (
               <button
                 onClick={() => {
@@ -578,13 +574,13 @@ export default function WorkOrderChatbot() {
                     setIssueDescription(userMessage);
                   }
                 }}
-                className="btn btn-accent"
+                className="btn btn-primary"
               >
                 {'Submit Anyways?'}
               </button>
             )}
           </div>
-          <div id="chatbox-footer" className="p-3 rounded-b-lg flex items-center justify-center h-24">
+          <div id="chatbox-footer" className="p-3 rounded-b-lg border-t border-base-300 flex items-center justify-center h-24">
             {(hasAllIssueInfo(workOrder) || submitAnywaysSkip) && messages.length > 1 ? (
               <button onClick={handleSubmitWorkOrder} disabled={issueDescription.length === 0 || submittingWorkOrderLoading || uploadingFiles} className="btn btn-primary">
                 {submittingWorkOrderLoading ? <LoadingSpinner /> : uploadingFiles ? 'Files Uploading...' : 'Submit Work Order'}
