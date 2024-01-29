@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { useCallback } from 'react';
 import { SingleValue } from 'react-select';
-import { StateSelect } from '../state-select';
+import { StateSelect } from '../dropdowns/state-select';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useUserContext } from '@/context/user';
 import { USER_TYPE } from '@/database/entities/user';
-import { TenantSelect } from '../tenant-select';
+import { TenantSelect } from '../dropdowns/tenant-select';
 import { LoadingSpinner } from '../loading-spinner';
 import { renderToastError, renderToastSuccess } from '@/utils';
 import { zodResolver } from '@hookform/resolvers/zod';

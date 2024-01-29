@@ -45,7 +45,7 @@ const AdminPortal = ({ id, children, isLoading = false, showBottomNav = true }: 
   if (isMobile) {
     return (
       <div id={id} className="p-4">
-        {children}
+        {children && children}
         {showBottomNav && <BottomNavigationPanel />}
       </div>
     );

@@ -20,7 +20,7 @@ import { MdModeEditOutline } from 'react-icons/md';
 import { UpdateUserSchema } from '@/types/customschemas';
 import { BulkReinviteTenantsModal } from '@/components/modals/bulk-reinvite-tenants';
 import MobileCard from '@/components/mobile-card';
-import CheckboxDropdown from '@/components/checkbox-dropdown';
+import CheckboxDropdown from '@/components/dropdowns/checkbox-dropdown';
 import AdminPortal from '@/components/layouts/admin-portal';
 import LoadMore from '@/components/load-more';
 

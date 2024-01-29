@@ -6,7 +6,7 @@ import { LoadingSpinner } from './loading-spinner';
 import { deconstructKey } from '@/utils';
 import { PropertyWithId } from '@/types';
 
-const PropertySelector = ({
+const PropertyListSelector = ({
   selectedProperty,
   setSelectedProperty,
   organization,
@@ -212,4 +212,4 @@ const PropertySelector = ({
   );
 };
 
-export default PropertySelector;
+export default PropertyListSelector;

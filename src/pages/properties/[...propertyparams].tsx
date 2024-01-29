@@ -1,7 +1,7 @@
 import ConfirmationModal from '@/components/modals/confirmation';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { StateSelect } from '@/components/state-select';
-import { TenantSelect } from '@/components/tenant-select';
+import { StateSelect } from '@/components/dropdowns/state-select';
+import { TenantSelect } from '@/components/dropdowns/tenant-select';
 import { DEFAULT_PROPERTY, USER_PERMISSION_ERROR } from '@/constants';
 import { useUserContext } from '@/context/user';
 import { ENTITIES, StartKey } from '@/database/entities';

@@ -1,4 +1,4 @@
-import { STATE_OPTIONS } from '@/components/state-select';
+import { STATE_OPTIONS } from '@/components/dropdowns/state-select';
 import { DeleteUser, Property } from '@/types';
 
 //NOTE: Needs to maintain parity with pillar-edge constant of the same name!
@@ -13,7 +13,7 @@ export const WO_STATUS = {
 export const PTE = {
   YES: 'Yes',
   NO: 'No',
-} as const;
+};
 
 export const PAGE_SIZE = 60;
 export const TECHNICIAN_DELIM = '##NAME##';
@@ -31,12 +31,40 @@ export const DEFAULT_PROPERTY_WITH_ID = { ...DEFAULT_PROPERTY, propertyUUId: '' 
 
 export const DEFAULT_DELETE_USER: DeleteUser = { pk: '', sk: '', name: '' };
 
+export const WORK_ORDER_TYPE = {
+  MAINTENANCE_REQUEST: 'Maintenance Request',
+  APPLIANCE_REPAIR: 'Appliance Repair',
+  PAINT_JOB: 'Paint Job',
+  CARPET_JOB: 'Carpet Job',
+};
+
+export const WORK_ORDER_TYPE_OPTIONS = [
+  { label: WORK_ORDER_TYPE.MAINTENANCE_REQUEST, value: WORK_ORDER_TYPE.MAINTENANCE_REQUEST },
+  { label: WORK_ORDER_TYPE.APPLIANCE_REPAIR, value: WORK_ORDER_TYPE.APPLIANCE_REPAIR },
+  { label: WORK_ORDER_TYPE.PAINT_JOB, value: WORK_ORDER_TYPE.PAINT_JOB },
+  { label: WORK_ORDER_TYPE.CARPET_JOB, value: WORK_ORDER_TYPE.CARPET_JOB },
+];
+
+export const DEFAULT_ADD_WORK_ORDER = {
+  workOrderType: WORK_ORDER_TYPE.MAINTENANCE_REQUEST,
+  issueDescription: undefined,
+  tenantEmail: undefined,
+  propertyUUID: undefined,
+  permissionToEnter: PTE.YES,
+  issueLocation: undefined,
+  additionalDetails: undefined,
+  apartmentSize: undefined,
+  areasForCarpeting: [],
+  areasForPadding: [],
+  moveInDate: undefined,
+};
+
 export const INVITE_STATUS = {
   JOINED: 'JOINED',
   INVITED: 'INVITED',
   CREATED: 'CREATED',
   RE_INVITED: 'RE_INVITED',
-} as const;
+};
 
 export const ALL_TENANTS_FILTER = {
   JOINED: true,
@@ -56,3 +84,11 @@ export const API_STATUS = {
 export const USER_PERMISSION_ERROR = 'User does not have permission to perform this action.';
 
 export const NO_EMAIL_PREFIX = 'testsimco+';
+
+export const DEFAULT_CARPETING_PADDING_OPTIONS = [
+  { label: 'Upstairs bedroom', value: 'upstairs bedroom' },
+  { label: 'Upstairs hallway', value: 'upstairs hallway' },
+  { label: 'Downstairs bedroom', value: 'downstairs bedroom' },
+  { label: 'Living room (large)', value: 'living room (large)' },
+  { label: 'Stairs', value: 'stairs' },
+];

@@ -9,9 +9,10 @@ import { ApiError } from '@/pages/api/_types';
 
 type CreateWorkOrderProps = {
   uuid: string;
+  workType: string;
   address: string;
-  tenantEmail: string;
-  tenantName: string;
+  tenantEmail?: string;
+  tenantName?: string;
   unit?: string;
   images: string[];
   createdBy: string;
@@ -24,9 +25,13 @@ type CreateWorkOrderProps = {
   postalCode: string;
   pmEmail: string;
   status: WoStatus;
-  issue: string;
-  location: string;
-  additionalDetails: string;
+  issue?: string;
+  location?: string;
+  additionalDetails?: string;
+  apartmentSize?: string;
+  areasForCarpeting?: string[];
+  areasForPadding?: string[];
+  moveInDate?: string;
 };
 
 export interface IWorkOrder {
@@ -42,19 +47,24 @@ export interface IWorkOrder {
   /** Work Order ID */
   GSI3SK: string;
   pmEmail: string;
+  workType: string;
   issue: string;
   location: string;
   images: string[];
   additionalDetails: string;
   permissionToEnter: PTE_Type;
-  tenantEmail: string;
+  tenantEmail?: string;
   createdBy: string;
   createdByType: UserType;
-  tenantName: string;
+  tenantName?: string;
   address: Property;
   status: WoStatus;
   assignedTo: Set<string>;
   viewedWO: string[];
+  apartmentSize?: string;
+  areasForCarpeting?: string[];
+  areasForPadding?: string[];
+  moveInDate?: string;
 }
 
 export class WorkOrderEntity {
@@ -71,6 +81,7 @@ export class WorkOrderEntity {
       GSI3SK: { type: 'string' },
       GSI4PK: { type: 'string' }, //Org Id
       GSI4SK: { type: 'string' },
+      workType: { type: 'string' },
       permissionToEnter: { type: 'string' },
       pmEmail: { type: 'string' },
       organization: { type: 'string' },
@@ -86,6 +97,10 @@ export class WorkOrderEntity {
       createdByType: { type: 'string' },
       assignedTo: { type: 'set' }, //List of concatenated strings like: technicianEmail##NAME##technicianName
       viewedWO: { type: 'set' }, //List of assigned tech emails who have opened the WO
+      apartmentSize: { type: 'string' },
+      areasForCarpeting: { type: 'set' },
+      areasForPadding: { type: 'set' },
+      moveInDate: { type: 'string' },
     },
     table: PillarDynamoTable,
   } as const);
@@ -95,6 +110,7 @@ export class WorkOrderEntity {
    */
   public async create({
     uuid,
+    workType,
     address,
     country = 'US',
     city,
@@ -113,6 +129,10 @@ export class WorkOrderEntity {
     additionalDetails,
     tenantName,
     tenantEmail,
+    apartmentSize,
+    areasForCarpeting,
+    areasForPadding,
+    moveInDate,
   }: CreateWorkOrderProps) {
     const workOrderIdKey = generateKey(ENTITY_KEY.WORK_ORDER, uuid);
 
@@ -123,10 +143,11 @@ export class WorkOrderEntity {
         sk: workOrderIdKey,
         GSI1PK: generateKey(ENTITY_KEY.PROPERTY_MANAGER + ENTITY_KEY.WORK_ORDER, pmEmail),
         GSI1SK: ksuID,
-        GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail),
-        GSI2SK: ksuID,
+        ...(tenantEmail && { GSI2PK: generateKey(ENTITY_KEY.TENANT + ENTITY_KEY.WORK_ORDER, tenantEmail) }),
+        ...(tenantEmail && { GSI2SK: ksuID, }),
         GSI4PK: generateKey(ENTITY_KEY.ORGANIZATION + ENTITY_KEY.WORK_ORDER, organization),
         GSI4SK: ksuID,
+        workType,
         permissionToEnter,
         pmEmail,
         createdBy,
@@ -147,6 +168,10 @@ export class WorkOrderEntity {
         organization,
         location,
         additionalDetails,
+        apartmentSize,
+        areasForCarpeting,
+        areasForPadding,
+        moveInDate,
       },
       { returnValues: 'ALL_NEW' }
     );

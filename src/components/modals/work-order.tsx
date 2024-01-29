@@ -39,7 +39,7 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
   const { userType, altName } = useUserContext();
   const router = useRouter();
   const { isMobile } = useDevice();
-  const {clientDocument} = useDocument();
+  const { clientDocument } = useDocument();
 
   const [workOrder, setWorkOrder] = useState<IWorkOrder | null>(null);
 
@@ -295,16 +295,17 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
   const handleAssignTechnician = async (_assignedTechnicians: MultiValue<Option>, actionMeta: ActionMeta<Option>) => {
     setIsUpdatingAssignedTechnicians(true);
     try {
-      if (!user || !workOrder || userType !== USER_TYPE.PROPERTY_MANAGER) {
+      if (!user || !workOrder || userType === USER_TYPE.TENANT) {
         throw new Error(USER_PERMISSION_ERROR);
       }
+      const assignerName = userType === USER_TYPE.PROPERTY_MANAGER ? altName ?? user.name : user.name;
       const actionType = actionMeta.action;
       if (actionType === 'select-option') {
         const selectedTechnician = actionMeta.option as Option;
         await axios.post('/api/update/work-order/assign-technician', {
           pk: workOrderId,
-          pmEmail: user.email,
-          pmName: altName ?? user.name,
+          assignerEmail: user.email,
+          assignerName,
           technicianEmail: selectedTechnician.value,
           technicianName: selectedTechnician.label,
         } as AssignRemoveTechnician);
@@ -314,8 +315,8 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
 
         await axios.post('/api/update/work-order/remove-technician', {
           pk: workOrderId,
-          pmEmail: user.email,
-          pmName: altName ?? user.name,
+          assignerEmail: user.email,
+          assignerName,
           technicianEmail: removedTechnician.value,
           technicianName,
         } as AssignRemoveTechnician);
@@ -441,7 +442,7 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
             <div className="w-full mt-0.5">
               <AsyncSelect
                 placeholder={isUpdatingAssignedTechnicians || fetchingTechnicians ? 'Loading...' : assignedTechnicians.length === 0 ? 'Unassigned' : 'Assign technicians...'}
-                isDisabled={isUpdatingAssignedTechnicians || userType !== ENTITIES.PROPERTY_MANAGER} // potentially could have logic for technicians to "self assign"
+                isDisabled={isUpdatingAssignedTechnicians || userType === USER_TYPE.TENANT} // potentially could have logic for technicians to "self assign"
                 className={'w-11/12 md:w-10/12 mt-1'}
                 closeMenuOnSelect={true}
                 isMulti
@@ -502,10 +503,43 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
             <div className="mt-0.5">
               {workOrder.address?.unit ? toTitleCase(workOrder.address.address + ' ' + workOrder.address.unit) : toTitleCase(workOrder.address.address)}
             </div>
-            <div className="mt-4 font-bold">Tenant</div>
-            <div className="mt-0.5">{toTitleCase(workOrder.tenantName)}</div>
-            <div className="font-bold mt-4">Location</div>
-            <div className="mt-0.5">{workOrder.location && workOrder.location.length ? workOrder.location : 'None provided'}</div>
+            {workOrder.apartmentSize && workOrder.apartmentSize.length > 0 ? (
+              <>
+                <div className="font-bold mt-4">Apartment Size</div>
+                <div className="mt-0.5">{workOrder.apartmentSize}</div>
+              </>
+            ) : null}
+            {workOrder.areasForCarpeting && workOrder.areasForCarpeting.length > 0 ? (
+              <>
+                <div className="font-bold mt-4">Areas for Carpeting</div>
+                <div className="mt-0.5">{workOrder.areasForCarpeting.join(", ")}</div>
+              </>
+            ) : null}
+            {workOrder.areasForPadding && workOrder.areasForPadding.length > 0 ? (
+              <>
+                <div className="font-bold mt-4">Areas for Padding</div>
+                <div className="mt-0.5">{workOrder.areasForPadding.join(", ")}</div>
+              </>
+            ) : null}
+            {workOrder.moveInDate && workOrder.moveInDate.length > 0 ? (
+              <>
+                <div className="font-bold mt-4">Move In Date</div>
+                <div className="mt-0.5">{workOrder.moveInDate}</div>
+              </>
+            ) : null}
+            {workOrder.tenantName && workOrder.tenantName.length > 0 ? (
+              <>
+                <div className="mt-4 font-bold">Tenant</div>
+                <div className="mt-0.5">{toTitleCase(workOrder.tenantName)}</div>
+              </>
+            ) : null}
+            {workOrder.location && workOrder.location.length > 0 ? (
+              <>
+                <div className="font-bold mt-4">Location</div>
+                <div className="mt-0.5">{workOrder.location}</div>
+              </>
+            ) : null}
+
             {workOrder.additionalDetails && workOrder.additionalDetails.length > 0 ? (
               <>
                 <div className="font-bold mt-4">Additional Info</div>
@@ -552,10 +586,9 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
                   ) : null}
                   {isLoadingEvents ? (
                     <LoadingSpinner containerClass="mt-4" />
-                  ) :  (
+                  ) : (
                     <LoadMore isVisible={events && events.length && eventsStartKey} isDisabled={isLoadingEvents} onClick={() => getWorkOrderEvents(false, eventsStartKey)} />
-                  ) }
-
+                  )}
                 </div>
               </>
             ) : null}

@@ -1,9 +1,9 @@
 import { useUserContext } from '@/context/user';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
-import { StateSelect } from '../state-select';
+import { StateSelect } from '../dropdowns/state-select';
 import { useDevice } from '@/hooks/use-window-size';
-import PropertySelector from '../property-selector';
+import PropertyListSelector from '../property-list-selector';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { LoadingSpinner } from '../loading-spinner';
 import { deconstructKey,  renderToastError, renderToastSuccess } from '@/utils';
@@ -281,7 +281,7 @@ export const AddTenantModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => voi
                   control={propertyForm.control}
                   name="property"
                   render={({ field: { onChange, value } }) => (
-                    <PropertySelector selectedProperty={value} setSelectedProperty={onChange} organization={user?.organization ?? ''} />
+                    <PropertyListSelector selectedProperty={value} setSelectedProperty={onChange} organization={user?.organization ?? ''} />
                   )}
                 />
                 {renderPreviousButton()}

@@ -14,7 +14,7 @@ import { SingleValue } from 'react-select';
 import { StatusOption, UpdateWorkOrder, WoStatus } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
-import CheckboxDropdown from '@/components/checkbox-dropdown';
+import CheckboxDropdown from '@/components/dropdowns/checkbox-dropdown';
 import AdminPortal from '@/components/layouts/admin-portal';
 import LoadMore from '@/components/load-more';
 

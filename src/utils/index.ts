@@ -4,6 +4,8 @@ import ksuid from 'ksuid';
 import { EntityTypeValues } from '@/database/entities';
 import { toast } from 'react-toastify';
 import { ChatCompletionRequestMessage } from 'openai';
+import { USER_TYPE, UserType } from '@/database/entities/user';
+import { IProperty } from '@/database/entities/property';
 
 export const hasAllIssueInfo = (workOrder: IssueInformation) => {
   return !!workOrder.issueDescription && !!workOrder.issueLocation;
@@ -46,6 +48,14 @@ export function deconstructKey(key: string | undefined): string {
 }
 
 /**
+ * @returns Splits a key into its n parts; [firstIdentifier, secondIdentifier, ...]
+ */
+export function deconstructAllKeyValues(key: string | undefined): string[] {
+  if (!key || key.length === 0) return [];
+  return key.split('#');
+}
+
+/**
  * @returns string[] [Email, Name]
  */
 export function deconstructNameEmailString(key: string): string[] {
@@ -76,7 +86,7 @@ export function setToShortenedString(set: Set<string> | string[]): string {
   const arr = set ? Array.from(set) : [];
   if (arr.length === 0) return 'Unassigned';
   //TODO: need to handle for the no email tenants
-  let firstVal = toTitleCase(getTenantDisplayEmail(arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0], "No email tenant"));
+  let firstVal = toTitleCase(getTenantDisplayEmail(arr[0].includes(TECHNICIAN_DELIM) ? deconstructNameEmailString(arr[0])[1] : arr[0], 'No email tenant'));
   return arr.length > 1 ? firstVal + ', +' + (arr.length - 1) : firstVal;
 }
 
@@ -87,6 +97,12 @@ export function createPropertyDisplayString(property: Property, includeBedBath: 
     property.city
   )}, ${property.state.toUpperCase()} ${property.postalCode}`;
   return includeBedBath ? baseString + ` ${property.numBeds} Bed ${property.numBaths} Bath` : baseString;
+}
+
+//Create a uuid##apartment_size key for property selector
+export function createPropertySelectKey(property: IProperty) {
+  if (!property) return '';
+  return `${deconstructKey(property.pk)}#${property.numBeds} Bed, ${property.numBaths} Bath`;
 }
 
 /**
@@ -194,4 +210,15 @@ export function convertChatMessagesToOpenAI(messages: ChatMessage[]): ChatComple
 export function getTenantDisplayEmail(email: string | undefined | null, replacementString: string = 'No email') {
   if (!email) return '';
   return email.startsWith(NO_EMAIL_PREFIX) ? replacementString : email;
+}
+
+export function getWorkOrdersName(userType: UserType | null, isPlural: boolean = false, isCaps: boolean = true): string {
+  if (!userType) return isPlural ? 'work orders' : 'work order';
+  let str = undefined
+  if (userType === USER_TYPE.TENANT) {
+    str = isPlural ? 'work orders' : 'work order';
+  } else {
+    str = isPlural ? 'task' : 'tasks';
+  }
+  return isCaps ? toTitleCase(str) : str;
 }
