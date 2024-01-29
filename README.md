@@ -11,7 +11,7 @@ yarn dev
 
 ```
 
-Build the env with:
+Build the env with...
 ```bash
 yarn build
 
