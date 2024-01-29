@@ -11,6 +11,12 @@ yarn dev
 
 ```
 
+Build the env with:
+```bash
+yarn build
+
+```
+
 ### Future Improvements
 
 - Add Organizations with multiple property managers.
