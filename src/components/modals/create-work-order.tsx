@@ -55,6 +55,8 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
   function closeModal() {
     (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
     reset();
+    setAreasForCarpeting([]);
+    setAreasForPadding([]);
     setShowAdditionalOptions(false);
   }
 
@@ -142,8 +144,8 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
           createdByType: userType,
           tenantName: tenant?.name,
           property: _property!,
-          areasForCarpeting,
-          areasForPadding,
+          areasForCarpeting: areasForCarpeting.length ? areasForCarpeting : undefined,
+          areasForPadding: areasForPadding.length ? areasForPadding : undefined,
         });
         await axios.post('/api/create-work-order', validatedBody);
 
