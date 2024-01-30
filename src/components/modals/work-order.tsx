@@ -601,7 +601,6 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
           </div>
 
           {/* Other modals */}
-          {/* TODO:: this is appearing behind daisyUI Modals */}
           <Modal id="fullscreen-image-modal" isOpen={!!fullScreenImage} onClose={() => setFullScreenImage('')}>
             <div className="overflow-y-scroll" style={{ width: '100%', height: '100%' }}>
               {fullScreenImage && (

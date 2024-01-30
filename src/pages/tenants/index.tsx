@@ -202,9 +202,9 @@ const Tenants = () => {
           <CheckboxDropdown
             dropdownLabel="Status"
             options={[
-              { label: 'Invited', value: 'INVITED' },
-              { label: 'Joined', value: 'JOINED' },
-              { label: 'Re-Invited', value: 'RE_INVITED' },
+              { label: 'Invited', value: INVITE_STATUS.INVITED },
+              { label: 'Joined', value: INVITE_STATUS.JOINED },
+              { label: 'Re-Invited', value: INVITE_STATUS.RE_INVITED },
             ]}
             selectedOptions={statusFilter}
             setSelectedOptions={setStatusFilter}

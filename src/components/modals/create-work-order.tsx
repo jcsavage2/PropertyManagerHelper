@@ -96,8 +96,6 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
     getUserProperty();
   }, [formValues.tenantEmail]);
 
-  console.log(areasForCarpeting, areasForPadding);
-
   const handleCreateWorkOrder: SubmitHandler<AddWorkOrder> = useCallback(
     async (params) => {
       const woId = uuidv4();
@@ -131,21 +129,6 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
             numBaths: property.numBaths,
           };
         }
-
-        console.log({
-          ...params,
-          organization: user.organization,
-          pmEmail: user.email,
-          pmName: altName ?? user.name,
-          creatorEmail: user.email,
-          creatorName: altName ?? user.name,
-          woId,
-          createdByType: userType,
-          tenantName: tenant?.name,
-          property: _property!,
-          areasForCarpeting,
-          areasForPadding,
-        });
         const validatedBody = CreateWorkOrderSchema.parse({
           ...params,
           organization: user.organization,

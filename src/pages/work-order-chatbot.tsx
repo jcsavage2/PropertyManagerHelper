@@ -74,7 +74,6 @@ export default function WorkOrderChatbot() {
   }, [typeof window]);
 
   useEffect(() => {
-    //TODO: test me again
     const hasSeenDownloadModal = localStorage.getItem('Pillar::HAS_SEEN');
     if ((platform === 'iOS' || platform === 'Android') && user && !user?.hasSeenDownloadPrompt && !hasSeenDownloadModal) {
       async function updateUserHasSeenDownloadPrompt() {

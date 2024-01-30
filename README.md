@@ -9,7 +9,7 @@ Start the dev environment with:
 ```bash
 yarn dev
 
-```test......
+```
 
 ### Future Improvements
 
