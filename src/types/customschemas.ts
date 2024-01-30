@@ -139,7 +139,7 @@ export const AddWorkOrderModalSchema = z
   .refine((data) => data.tenantEmail || data.propertyUUID, {
     message: 'Please select a value',
     path: ['tenantEmail', 'propertyUUID'],
-  }).refine((data) => (data.workOrderType === WORK_ORDER_TYPE.CARPET_JOB || data.workOrderType === WORK_ORDER_TYPE.PAINT_JOB) && data.moveInDate, {
+  }).refine((data) => (data.workOrderType !== WORK_ORDER_TYPE.CARPET_JOB && data.workOrderType !== WORK_ORDER_TYPE.PAINT_JOB) || data.moveInDate, {
     message: 'Please select a move in date',
     path: ['moveInDate'],
   });

@@ -49,10 +49,12 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
     defaultValues: DEFAULT_ADD_WORK_ORDER,
   });
   const formValues = getValues();
+  console.log(formValues)
+  console.log(errors)
 
   function closeModal() {
     (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
-    reset(DEFAULT_ADD_WORK_ORDER);
+    reset();
     setShowAdditionalOptions(false);
   }
 
