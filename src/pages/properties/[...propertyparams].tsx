@@ -389,7 +389,7 @@ export default function PropertyPage() {
                 {tenantsLoading ? (
                   <LoadingSpinner containerClass="mt-4" />
                 ) : tenants && tenants.length ? (
-                  <table className="table table-zebra mb-0">
+                  <table className="table table mb-0">
                     <thead>
                       <tr>
                         <th></th>

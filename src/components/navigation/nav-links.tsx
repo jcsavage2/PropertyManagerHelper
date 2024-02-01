@@ -74,7 +74,7 @@ export const NavLinks = () => {
 
       {user?.email && (
         <div className="navbar-end">
-          <Link onClick={handleClick} className="btn btn-secondary" href={'/'}>
+          <Link onClick={handleClick} className="" href={'/'}>
             {'Sign Out'}
           </Link>
         </div>

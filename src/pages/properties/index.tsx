@@ -121,7 +121,7 @@ const Properties = () => {
         <div className={`${propertiesLoading && 'opacity-50 pointer-events-none'} mb-2 mt-2`}>
           <div className="overflow-x-auto">
             {properties && properties.length > 0 && (
-              <table className="table table-zebra">
+              <table className="table table">
                 <thead className="">
                   <tr className="">
                     <th className="">Address</th>

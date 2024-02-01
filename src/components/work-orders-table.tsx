@@ -133,7 +133,7 @@ export const WorkOrdersTable = ({ workOrders, isFetching, handleUpdateStatus, fo
     <div className="mb-2">
       <div className="border-collapse">
         {remappedWorkOrders.length > 0 ? (
-          <table className={`table table-zebra ${isFetching && 'opacity-50 pointer-events-none'}`}>
+          <table className={`table table${isFetching && 'opacity-50 pointer-events-none'}`}>
             <thead className="">
               <tr className="text-left">
                 {columns.map(({ label, accessor }) => {

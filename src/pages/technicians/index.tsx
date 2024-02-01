@@ -157,7 +157,7 @@ const Technicians = () => {
         <div className={`${techsLoading && 'opacity-50 pointer-events-none'} mb-2 mt-1`}>
           <div className="overflow-x-auto">
             {techs && techs.length > 0 && (
-              <table className="table table-zebra">
+              <table className="table table">
                 <thead className="">
                   <tr className="">
                     <th className="">Name</th>
