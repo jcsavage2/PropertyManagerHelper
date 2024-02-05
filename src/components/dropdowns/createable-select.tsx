@@ -6,30 +6,26 @@ import CreatableSelect from 'react-select/creatable';
 type CreatableSelectProps = {
   modalTarget?: string;
   defaultOptions: Option[];
-  setOptions: React.Dispatch<React.SetStateAction<string[]>>;
+  selected: readonly Option[];
+  setSelected: React.Dispatch<React.SetStateAction<readonly Option[]>>
   placeholder?: string;
   label?: string;
 };
 
-export const CreateableSelect = ({ defaultOptions, setOptions, modalTarget, placeholder, label }: CreatableSelectProps) => {
+export const CreateableSelect = ({ defaultOptions, setSelected, selected, modalTarget, placeholder, label }: CreatableSelectProps) => {
   const [inputValue, setInputValue] = useState('');
   const { clientDocument } = useDocument();
-  const [createdOptions, setCreatedOptions] = useState<readonly Option[]>([]);
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (!inputValue) return;
     switch (event.key) {
       case 'Enter':
       case 'Tab':
-        setCreatedOptions((prev) => [...prev, { label: inputValue, value: inputValue }]);
+        setSelected((prev) => [...prev, { label: inputValue, value: inputValue }]);
         setInputValue('');
         event.preventDefault();
     }
   };
-
-  useEffect(() => {
-    setOptions(createdOptions.map((option) => option.value));
-  }, [createdOptions]);
 
   return (
     <div>
@@ -44,11 +40,11 @@ export const CreateableSelect = ({ defaultOptions, setOptions, modalTarget, plac
         inputValue={inputValue}
         isClearable
         isMulti
-        onChange={(newValue) => setCreatedOptions(newValue)}
+        onChange={(newValue) => setSelected(newValue)}
         onInputChange={(newValue) => setInputValue(newValue)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder ?? 'Start typing to create an option...'}
-        value={createdOptions}
+        value={selected}
         menuPortalTarget={modalTarget ? clientDocument?.getElementById(modalTarget) ?? clientDocument?.body : clientDocument?.body}
       />
     </div>

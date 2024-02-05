@@ -45,7 +45,7 @@ export const CreatePropertyManagerModal = ({
 
         const res = await axios.post('api/create-pm', params);
 
-        renderToastSuccess('Successfully Created PM!', modalId);
+        renderToastSuccess('Successfully Created PM!');
         onSuccessfulAdd();
         closeModal();
       } catch (err: any) {

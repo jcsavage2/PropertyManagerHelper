@@ -77,7 +77,7 @@ export const BulkReinviteTenantsModal = ({}: BulkReinviteTenantsModalProps) => {
       const successfulResponses = allResponses.map((r) => r.status === 200);
 
       if (successfulResponses.length === allResponses.length) {
-        renderToastSuccess(`${allResponses.length === 1 ? 'Re-invitation' : 'All Re-invitations'} successfully sent`, modalId);
+        renderToastSuccess(`${allResponses.length === 1 ? 'Re-invitation' : 'All Re-invitations'} successfully sent`);
         closeModal();
       }
       if (successfulResponses.length !== allResponses.length && successfulResponses.length > 0) {

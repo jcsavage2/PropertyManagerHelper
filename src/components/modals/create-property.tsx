@@ -54,7 +54,7 @@ export const CreatePropertyModal = ({ onSuccess }: { onSuccess: () => Promise<vo
 
         await axios.post('/api/create-property', params);
 
-        renderToastSuccess('Property Created!', modalId);
+        renderToastSuccess('Property Created!');
         closeModal();
         onSuccess();
       } catch (err: any) {

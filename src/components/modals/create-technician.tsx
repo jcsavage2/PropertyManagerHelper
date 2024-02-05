@@ -40,7 +40,7 @@ export const CreateTechnicianModal = ({ onSuccessfulAdd }: CreateTechnicianModal
 
         const parsedUser = JSON.parse(res.data.response);
         if (parsedUser.modified) {
-          renderToastSuccess('Technician Created!', modalId);
+          renderToastSuccess('Technician Created!');
           onSuccessfulAdd();
           closeModal();
         }

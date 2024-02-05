@@ -31,8 +31,8 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
   const [tenant, setTenant] = useState<IUser>();
   const [property, setProperty] = useState<Property>();
   const [userLoading, setUserLoading] = useState(false);
-  const [areasForCarpeting, setAreasForCarpeting] = useState<string[]>([]);
-  const [areasForPadding, setAreasForPadding] = useState<string[]>([]);
+  const [areasForCarpeting, setAreasForCarpeting] = useState<readonly Option[]>([]);
+  const [areasForPadding, setAreasForPadding] = useState<readonly Option[]>([]);
 
   const {
     register,
@@ -49,15 +49,14 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
     defaultValues: DEFAULT_ADD_WORK_ORDER,
   });
   const formValues = getValues();
-  console.log(formValues)
-  console.log(errors)
 
   function closeModal() {
     (clientDocument?.getElementById(modalId) as HTMLFormElement)?.close();
-    reset();
+    reset(DEFAULT_ADD_WORK_ORDER);
     setAreasForCarpeting([]);
     setAreasForPadding([]);
     setShowAdditionalOptions(false);
+    console.log('reset');
   }
 
   //Fetch user name and property info when pm selects tenantEmail
@@ -100,85 +99,99 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
     getUserProperty();
   }, [formValues.tenantEmail]);
 
-  const handleCreateWorkOrder: SubmitHandler<AddWorkOrder> = useCallback(
-    async (params) => {
-      const woId = uuidv4();
-      try {
-        amplitude.track('Submit Work Order', {
-          status: 'attempt',
-          issueDescription: params.issueDescription,
-          issueLocation: params.issueLocation ?? 'None',
-          additionalDetails: params.additionalDetails ?? 'None',
-          createdByType: USER_TYPE.PROPERTY_MANAGER,
-          organization: user?.organization ?? 'None',
-          permissionToEnter: params.permissionToEnter,
-          workOrderId: woId,
-        });
-        if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
+  const handleCreateWorkOrder: SubmitHandler<AddWorkOrder> = async (params) => {
+    const woId = uuidv4();
+    try {
+      amplitude.track('Submit Work Order', {
+        status: 'attempt',
+        issueDescription: params.issueDescription,
+        issueLocation: params.issueLocation ?? 'None',
+        additionalDetails: params.additionalDetails ?? 'None',
+        createdByType: USER_TYPE.PROPERTY_MANAGER,
+        organization: user?.organization ?? 'None',
+        permissionToEnter: params.permissionToEnter,
+        workOrderId: woId,
+      });
+      if (!user || userType !== USER_TYPE.PROPERTY_MANAGER || !user?.roles?.includes(USER_TYPE.PROPERTY_MANAGER)) throw new Error(USER_PERMISSION_ERROR);
 
-        let _property: Property | undefined = property;
-        if (!params.tenantEmail) {
-          const { data } = await axios.post('/api/get-property-by-id', {
-            propertyId: params.propertyUUID,
-          });
-          const { property } = JSON.parse(data.response);
-          _property = {
-            address: property.address,
-            unit: property.unit,
-            state: property.state,
-            city: property.city,
-            postalCode: property.postalCode,
-            country: property.country,
-            numBeds: property.numBeds,
-            numBaths: property.numBaths,
-          };
-        }
-        const validatedBody = CreateWorkOrderSchema.parse({
-          ...params,
-          organization: user.organization,
-          pmEmail: user.email,
-          pmName: altName ?? user.name,
-          creatorEmail: user.email,
-          creatorName: altName ?? user.name,
-          woId,
-          createdByType: userType,
-          tenantName: tenant?.name,
-          property: _property!,
-          areasForCarpeting: areasForCarpeting.length ? areasForCarpeting : undefined,
-          areasForPadding: areasForPadding.length ? areasForPadding : undefined,
+      let _property: Property | undefined = property;
+      if (!params.tenantEmail) {
+        const { data } = await axios.post('/api/get-property-by-id', {
+          propertyId: params.propertyUUID,
         });
-        await axios.post('/api/create-work-order', validatedBody);
-
-        amplitude.track('Submit Work Order', {
-          status: 'success',
-          issueDescription: params.issueDescription,
-          issueLocation: params.issueLocation ?? 'None',
-          additionalDetails: params.additionalDetails ?? 'None',
-          createdByType: USER_TYPE.PROPERTY_MANAGER,
-          organization: user?.organization ?? 'None',
-          permissionToEnter: params.permissionToEnter,
-          workOrderId: woId,
-        });
-        renderToastSuccess('Successfully Submitted Work Order!', modalId);
-        onSuccessfulAdd();
-        closeModal();
-      } catch (err: any) {
-        amplitude.track('Submit Work Order', {
-          status: 'failure',
-          issueDescription: params.issueDescription,
-          issueLocation: params.issueLocation ?? 'None',
-          additionalDetails: params.additionalDetails ?? 'None',
-          createdByType: USER_TYPE.PROPERTY_MANAGER,
-          organization: user?.organization ?? 'None',
-          permissionToEnter: params.permissionToEnter,
-          workOrderId: woId,
-        });
-        console.log({ err });
-        renderToastError(err, 'Error Creating Work Order', modalId);
+        const { property } = JSON.parse(data.response);
+        _property = {
+          address: property.address,
+          unit: property.unit,
+          state: property.state,
+          city: property.city,
+          postalCode: property.postalCode,
+          country: property.country,
+          numBeds: property.numBeds,
+          numBaths: property.numBaths,
+        };
       }
-    },
-    [user, userType, altName, onSuccessfulAdd, tenant, property]
-  );
+      const areasForCarpetingStringArr = areasForCarpeting.map((option) => option.value);
+      const areasForPaddingStringArr = areasForPadding.map((option) => option.value);
+      console.log('Carpet: ', areasForCarpeting);
+      console.log(areasForCarpetingStringArr);
+      console.log('Padding: ', areasForPadding);
+      console.log(areasForPaddingStringArr);
+      const validatedBody = CreateWorkOrderSchema.parse({
+        ...params,
+        organization: user.organization,
+        pmEmail: user.email,
+        pmName: altName ?? user.name,
+        creatorEmail: user.email,
+        creatorName: altName ?? user.name,
+        woId,
+        createdByType: userType,
+        tenantName: tenant?.name,
+        property: _property!,
+        areasForCarpeting: areasForCarpetingStringArr.length ? areasForCarpetingStringArr : undefined,
+        areasForPadding: areasForPaddingStringArr.length ? areasForPaddingStringArr : undefined,
+      });
+      console.log(validatedBody);
+
+       await axios.post('/api/create-work-order', validatedBody);
+
+      amplitude.track('Submit Work Order', {
+        status: 'success',
+        issueDescription: params.issueDescription,
+        issueLocation: params.issueLocation ?? 'None',
+        additionalDetails: params.additionalDetails ?? 'None',
+        createdByType: USER_TYPE.PROPERTY_MANAGER,
+        organization: user?.organization ?? 'None',
+        permissionToEnter: params.permissionToEnter,
+        workOrderId: woId,
+      });
+      onSuccessfulAdd();
+      closeModal();
+      renderToastSuccess('Successfully Submitted Work Order!');
+    } catch (err: any) {
+      amplitude.track('Submit Work Order', {
+        status: 'failure',
+        issueDescription: params.issueDescription,
+        issueLocation: params.issueLocation ?? 'None',
+        additionalDetails: params.additionalDetails ?? 'None',
+        createdByType: USER_TYPE.PROPERTY_MANAGER,
+        organization: user?.organization ?? 'None',
+        permissionToEnter: params.permissionToEnter,
+        workOrderId: woId,
+      });
+      console.log({ err });
+      renderToastError(err, 'Error Creating Work Order', modalId);
+    }
+  };
+
+  useEffect(() => {
+    const areasForCarpetingStringArr = areasForCarpeting.map((option) => option.value);
+    const areasForPaddingStringArr = areasForPadding.map((option) => option.value);
+    console.log('Carpet: ', areasForCarpeting);
+    console.log(areasForCarpetingStringArr);
+    console.log('Padding: ', areasForPadding);
+    console.log(areasForPaddingStringArr);
+  }, [areasForCarpeting, areasForPadding]);
 
   return (
     <Modal id={modalId} onClose={closeModal} openButtonText={'+ Work Order'} bodyClasses={'pt-3 p-6 w-11/12 max-w-2xl'}>
@@ -206,6 +219,8 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
                   onChange={(option: SingleValue<Option>) => {
                     reset({ ...DEFAULT_ADD_WORK_ORDER, workOrderType: option?.value.trim() ?? undefined });
                     setShowAdditionalOptions(false);
+                    setAreasForPadding([]);
+                    setAreasForCarpeting([]);
                   }}
                   name="work-order-type"
                   options={WORK_ORDER_TYPE_OPTIONS}
@@ -285,14 +300,16 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
                 label={'Areas for carpeting*'}
                 placeholder="Start typing to add an area for carpeting..."
                 defaultOptions={DEFAULT_CARPETING_PADDING_OPTIONS}
-                setOptions={setAreasForCarpeting}
+                selected={areasForCarpeting}
+                setSelected={setAreasForCarpeting}
                 modalTarget={modalId}
               />
               <CreateableSelect
                 label={'Areas for padding*'}
                 placeholder="Start typing to add an area for padding..."
                 defaultOptions={DEFAULT_CARPETING_PADDING_OPTIONS}
-                setOptions={setAreasForPadding}
+                selected={areasForPadding}
+                setSelected={setAreasForPadding}
                 modalTarget={modalId}
               />
             </>
@@ -341,7 +358,9 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
         <button
           className="btn mt-3 btn-primary"
           type="submit"
-          disabled={isSubmitting || !isValid || userLoading || (watch('workOrderType') === WORK_ORDER_TYPE.CARPET_JOB && (!areasForCarpeting.length || !areasForPadding.length))}
+          disabled={
+            isSubmitting || !isValid || userLoading || (watch('workOrderType') === WORK_ORDER_TYPE.CARPET_JOB && (!areasForCarpeting.length || !areasForPadding.length))
+          }
         >
           {isSubmitting ? <LoadingSpinner /> : userLoading ? 'Loading...' : 'Create Work Order'}
         </button>

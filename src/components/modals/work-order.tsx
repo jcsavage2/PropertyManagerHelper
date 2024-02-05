@@ -512,13 +512,13 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
             {workOrder.areasForCarpeting && workOrder.areasForCarpeting.length > 0 ? (
               <>
                 <div className="font-bold mt-4">Areas for Carpeting</div>
-                <div className="mt-0.5">{workOrder.areasForCarpeting.join(", ")}</div>
+                <div className="mt-0.5">{toTitleCase(workOrder.areasForCarpeting.join(", "))}</div>
               </>
             ) : null}
             {workOrder.areasForPadding && workOrder.areasForPadding.length > 0 ? (
               <>
                 <div className="font-bold mt-4">Areas for Padding</div>
-                <div className="mt-0.5">{workOrder.areasForPadding.join(", ")}</div>
+                <div className="mt-0.5">{toTitleCase(workOrder.areasForPadding.join(", "))}</div>
               </>
             ) : null}
             {workOrder.moveInDate && workOrder.moveInDate.length > 0 ? (

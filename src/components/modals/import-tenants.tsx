@@ -288,7 +288,7 @@ export const ImportTenantsModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () =>
 
     if (!errorList.length) {
       closeModal();
-      renderToastSuccess(`${uploadList.length} tenants successfully created!`, modalId);
+      renderToastSuccess(`${uploadList.length} tenants successfully created!`);
     } else {
       renderToastError(undefined, `Error uploading ${errorList.length} tenants. Please try again`, modalId);
     }

@@ -46,6 +46,7 @@ export const AddTenantModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => voi
   };
 
   const handleValidateTenantInfo: SubmitHandler<CreateTenant_TenantInfo> = async () => {
+    propertyForm.setValue('property.propertyUUId', uuidv4());
     setStage(1);
   };
 
@@ -82,7 +83,7 @@ export const AddTenantModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => voi
         }
 
         const body = CreateTenantSchema.parse({
-          property: duplicateExists ? property : { ...property, propertyUUId: uuidv4() },
+          property,
           ...tenantInfoForm.getValues(),
           createNewProperty: duplicateExists ? false : createNewProperty,
         });
@@ -93,7 +94,7 @@ export const AddTenantModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () => voi
         if (parsedUser) {
           closeModal();
           onSuccessfulAdd();
-          renderToastSuccess('Tenant Created!', modalId);
+          renderToastSuccess('Tenant Created!');
         }
       } catch (err: any) {
         console.log({ err });
