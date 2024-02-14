@@ -86,9 +86,9 @@ export const USER_PERMISSION_ERROR = 'User does not have permission to perform t
 export const NO_EMAIL_PREFIX = 'testsimco+';
 
 export const DEFAULT_CARPETING_PADDING_OPTIONS = [
-  { label: 'Upstairs bedroom', value: 'upstairs bedroom' },
-  { label: 'Upstairs hallway', value: 'upstairs hallway' },
-  { label: 'Downstairs bedroom', value: 'downstairs bedroom' },
-  { label: 'Living room (large)', value: 'living room (large)' },
+  { label: 'Upstairs Bedroom', value: 'upstairs bedroom' },
+  { label: 'Upstairs Hallway', value: 'upstairs hallway' },
+  { label: 'Downstairs Bedroom', value: 'downstairs bedroom' },
+  { label: 'Living Room', value: 'living room' },
   { label: 'Stairs', value: 'stairs' },
 ];

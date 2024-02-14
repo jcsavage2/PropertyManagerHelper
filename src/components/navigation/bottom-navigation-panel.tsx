@@ -16,7 +16,7 @@ export const BottomNavigationPanel = () => {
     <>
       {/* Allows us to use fixed and prevent content from being hidden by bottom nav */}
       <div className="btm-nav h-24 sticky opacity-0 pointer-events-none"></div>
-      <div className="btm-nav z-30 h-20 bg-base-300 fixed bottom-0 left-0 text-neutral text-sm border-t-2 border-neutral border-opacity-10">
+      <div className="btm-nav z-30 h-20 bg-base-300 fixed bottom-0 left-0 text-black text-md border-t-2 border-neutral border-opacity-10">
         <Link
           href={'work-orders'}
           type="button"

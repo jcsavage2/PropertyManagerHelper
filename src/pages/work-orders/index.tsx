@@ -132,7 +132,7 @@ const WorkOrders = () => {
         <ul className={`w-max menu menu-horizontal bg-base-200 rounded-box ${isFetching && 'pointer-events-none opacity-20'}`}>
           <li>
             <a
-              className={`tooltip ${!orgMode ? ' bg-secondary' : 'bg-primary'}`}
+              className={`tooltip ${!orgMode ? 'bg-primary' : 'bg-secondary'}`}
               data-tip="Load work orders created by or assigned to me"
               onClick={() => {
                 if (isFetching) return;
@@ -144,7 +144,7 @@ const WorkOrders = () => {
           </li>
           <li>
             <a
-              className={`tooltip ${orgMode ? 'bg-secondary' : 'bg-primary]'}`}
+              className={`tooltip ${orgMode ? 'bg-primary' : 'bg-secondary'}`}
               data-tip={`Load work orders for ${user?.organizationName || 'my org'}`}
               onClick={() => {
                 if (isFetching) return;

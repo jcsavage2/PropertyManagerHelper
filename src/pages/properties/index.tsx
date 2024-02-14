@@ -142,7 +142,7 @@ const Properties = () => {
                         <td className="">{toTitleCase(property.unit)}</td>
                         <td className="">
                           <Link href={`/properties/${encodeURIComponent(deconstructKey(property.pk))}/edit`}>
-                            <FaEdit className="text-secondary hover:text-primary cursor-pointer" fontSize={25} />
+                            <FaEdit className="text-primary hover:text-primary cursor-pointer" fontSize={25} />
                           </Link>
                         </td>
                       </tr>

@@ -411,11 +411,11 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
             <div className="font-bold">Status</div>
             <div className="mt-0.5">
               {workOrder.status !== WO_STATUS.DELETED ? (
-                <div className="child:border child:border-neutral child:border-opacity-25 flex flex-row">
+                <div className="border border-neutral border-opacity-100 flex flex-row">
                   <button
                     disabled={isUpdatingStatus}
                     onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.TO_DO)}
-                    className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-secondary' : 'bg-white'} ${
+                    className={`${workOrder.status === WO_STATUS.TO_DO ? 'bg-primary' : 'bg-secondary'} ${
                       userType === USER_TYPE.TENANT ? 'pointer-events-none' : 'hover:bg-base-200 cursor-pointer'
                     } rounded px-5 py-3 mr-4 border-2 flex flex-col items-center disabled:opacity-25`}
                   >
@@ -425,7 +425,7 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
                   <button
                     disabled={isUpdatingStatus}
                     onClick={(e) => !isUpdatingStatus && userType !== USER_TYPE.TENANT && handleUpdateStatus(e, WO_STATUS.COMPLETE)}
-                    className={`${workOrder.status === WO_STATUS.COMPLETE ? 'bg-secondary' : 'bg-white'} ${
+                    className={`${workOrder.status === WO_STATUS.COMPLETE ? 'bg-primary' : 'bg-secondary'} ${
                       userType === USER_TYPE.TENANT ? 'pointer-events-none' : 'hover:bg-base-200 cursor-pointer'
                     } rounded px-2 py-3 border-2 flex flex-col items-center disabled:opacity-25`}
                   >
