@@ -56,7 +56,6 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
     setAreasForCarpeting([]);
     setAreasForPadding([]);
     setShowAdditionalOptions(false);
-    console.log('reset');
   }
 
   //Fetch user name and property info when pm selects tenantEmail
@@ -133,10 +132,7 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
       }
       const areasForCarpetingStringArr = areasForCarpeting.map((option) => option.value);
       const areasForPaddingStringArr = areasForPadding.map((option) => option.value);
-      console.log('Carpet: ', areasForCarpeting);
-      console.log(areasForCarpetingStringArr);
-      console.log('Padding: ', areasForPadding);
-      console.log(areasForPaddingStringArr);
+
       const validatedBody = CreateWorkOrderSchema.parse({
         ...params,
         organization: user.organization,
@@ -151,7 +147,6 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
         areasForCarpeting: areasForCarpetingStringArr.length ? areasForCarpetingStringArr : undefined,
         areasForPadding: areasForPaddingStringArr.length ? areasForPaddingStringArr : undefined,
       });
-      console.log(validatedBody);
 
        await axios.post('/api/create-work-order', validatedBody);
 
@@ -183,15 +178,6 @@ export const CreateWorkOrderModal = ({ onSuccessfulAdd }: { onSuccessfulAdd: () 
       renderToastError(err, 'Error Creating Work Order', modalId);
     }
   };
-
-  useEffect(() => {
-    const areasForCarpetingStringArr = areasForCarpeting.map((option) => option.value);
-    const areasForPaddingStringArr = areasForPadding.map((option) => option.value);
-    console.log('Carpet: ', areasForCarpeting);
-    console.log(areasForCarpetingStringArr);
-    console.log('Padding: ', areasForPadding);
-    console.log(areasForPaddingStringArr);
-  }, [areasForCarpeting, areasForPadding]);
 
   return (
     <Modal id={modalId} onClose={closeModal} openButtonText={'+ Work Order'} bodyClasses={'pt-3 p-6 w-11/12 max-w-2xl'}>

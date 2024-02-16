@@ -7,7 +7,7 @@ import { useSessionUser } from '@/hooks/auth/use-session-user';
 import { useDevice } from '@/hooks/use-window-size';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { USER_TYPE } from '@/database/entities/user';
-import { AI_MESSAGE_START, API_STATUS, PTE } from '@/constants';
+import { AI_MESSAGE_START, API_STATUS, PTE, WORK_ORDER_TYPE } from '@/constants';
 import { v4 as uuidv4 } from 'uuid';
 import * as amplitude from '@amplitude/analytics-browser';
 import { ChatbotRequestSchema, CreateWorkOrderSchema, UpdateUserSchema } from '@/types/customschemas';
@@ -166,6 +166,7 @@ export default function WorkOrderChatbot() {
 
       const parsedAddress = selectedAddress?.value;
       const params: CreateWorkOrder = CreateWorkOrderSchema.parse({
+        workOrderType: WORK_ORDER_TYPE.MAINTENANCE_REQUEST,
         issueDescription,
         issueLocation,
         additionalDetails,
