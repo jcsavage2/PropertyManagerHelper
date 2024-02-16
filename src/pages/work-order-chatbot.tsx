@@ -600,7 +600,7 @@ export default function WorkOrderChatbot() {
                 <textarea
                   value={userMessage}
                   data-testid="userMessageInput"
-                  className={`p-2 textarea textarea-bordered resize-none w-5/6`}
+                  className={`p-2 textarea textarea-bordered resize-none w-5/6 text-base md:text-lg`}
                   placeholder={messages.length ? (hasAllIssueInfo(workOrder) ? '' : '') : 'Tell us about your issue.'}
                   onChange={handleChange}
                 />

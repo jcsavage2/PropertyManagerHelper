@@ -570,7 +570,7 @@ const WorkOrderModal = ({ isOpen, workOrderId, afterDelete, onClose }: { isOpen:
                             <div className="text-sm">
                               <div className="mb-0.5 flex flex-row">
                                 <p className="font-bold mr-2">{toTitleCase(event.madeByName)} </p>
-                                <p className="text-neutral">
+                                <p className="text-black">
                                   {formattedDateTime[0]}
                                   {!isMobile ? ` @ ${formattedDateTime[1]}` : null}
                                 </p>

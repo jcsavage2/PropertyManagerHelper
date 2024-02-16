@@ -18,7 +18,7 @@ const HamburgerMenu = () => {
     router.push('/');
   }, [logOut, router]);
 
-  const linkStyle = 'hover:text-base-300 text-black my-auto text-3xl text-white cursor-pointer mt-12';
+  const linkStyle = 'hover:text-base-300 text-black my-auto text-3xl cursor-pointer mt-12';
 
   return (
     <>
