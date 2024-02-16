@@ -1,5 +1,4 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
 import Email from 'next-auth/providers/email';
 import { DynamoDBAdapter } from '@next-auth/dynamodb-adapter';
 import { DynamoDBClientConfig } from '@/database';
@@ -10,8 +9,6 @@ import { InviteStatus } from '@/types';
 import { INVITE_STATUS } from '@/constants';
 import * as jwt from 'jsonwebtoken';
 
-const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-const clientSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;
 const region = process.env.NEXT_PUBLIC_REGION;
 const secret = process.env.NEXT_PUBLIC_JWT_SECRET;
 
@@ -20,7 +17,7 @@ const emailUsername = 'apikey'; // <- don't replace "apikey" it's the actual use
 const smtpPort = 'apikey'; // <- don't replace "apikey" it's the actual username
 const emailPassword = process.env.NEXT_PUBLIC_SMTP_PASSWORD;
 
-if (!clientId || !clientSecret || !region || !secret) {
+if (!region || !secret) {
   throw new Error('Missing Auth Credentials!');
 }
 
@@ -37,10 +34,6 @@ export const options: NextAuthOptions = {
     Email({
       server: `smtp://${emailUsername}:${emailPassword}@${emailHost}:${smtpPort}`,
       from: 'pillar@pillarhq.co',
-    }),
-    GoogleProvider({
-      clientId,
-      clientSecret,
     }),
   ],
   callbacks: {
