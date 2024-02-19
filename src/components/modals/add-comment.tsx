@@ -47,16 +47,16 @@ export const AddCommentModal = ({ workOrderId, onSuccessfulAdd }: AddCommentModa
 
         const parsedResponse = JSON.parse(res.data.response);
         if (parsedResponse.modified) {
-          renderToastSuccess('Comment Successfully Added', modalId);
+          renderToastSuccess('Comment Successfully Added', 'work-order-modal');
           onSuccessfulAdd();
+          closeModal();
         }
-        closeModal();
       } catch (err) {
         console.log({ err });
-        renderToastError(err, 'Error creating comment', modalId);
+        renderToastError(err, 'Error creating comment', 'work-ordermodal');
       }
     },
-    [userType]
+    [userType, onSuccessfulAdd, closeModal]
   );
 
   return (
