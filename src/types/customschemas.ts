@@ -18,6 +18,7 @@ import {
   validatePropertyWithId,
   upperCaseOptionalString,
 } from './basevalidators';
+import { WORK_ORDER_TYPE } from '@/constants';
 
 export const GetSchema = z.object({
   pk: requiredString,
@@ -52,8 +53,8 @@ export const AssignRemoveTechnicianSchema = z.object({
   pk: requiredString,
   technicianEmail: lowerCaseRequiredEmail,
   technicianName: lowerCaseRequiredString,
-  pmEmail: lowerCaseRequiredEmail,
-  pmName: lowerCaseRequiredString,
+  assignerEmail: lowerCaseRequiredEmail,
+  assignerName: lowerCaseRequiredString,
 });
 
 export const IssueInformationSchema = z.object({
@@ -91,25 +92,6 @@ export const FinishFormRequestSchema = IssueInformationSchema.merge(
   })
 );
 
-export const CreateWorkOrderSchema = z.object({
-  issueDescription: requiredString,
-  issueLocation: optionalString,
-  additionalDetails: optionalString,
-  permissionToEnter: validatePTE,
-  tenantEmail: lowerCaseOptionalEmail,
-  tenantName: lowerCaseOptionalString,
-  pmEmail: lowerCaseRequiredEmail,
-  pmName: lowerCaseOptionalString,
-  messages: z.array(z.any()).default([]).optional(),
-  creatorEmail: lowerCaseRequiredEmail,
-  creatorName: lowerCaseRequiredString,
-  createdByType: validateUserType,
-  property: validateProperty,
-  woId: requiredString,
-  images: z.array(requiredString).default([]).optional(),
-  organization: requiredString,
-});
-
 export const CreatePropertySchema = validateProperty.merge(
   z.object({
     tenantEmail: lowerCaseOptionalEmail,
@@ -142,12 +124,48 @@ export const DeleteUserSchema = z.object({
   roleToDelete: requiredString,
 });
 
-export const AddWorkOrderModalSchema = z.object({
-  issueDescription: requiredString,
-  tenantEmail: lowerCaseRequiredEmail,
-  permissionToEnter: validatePTE,
+export const AddWorkOrderModalSchema = z
+  .object({
+    workOrderType: requiredString,
+    issueDescription: optionalString,
+    tenantEmail: lowerCaseOptionalEmail,
+    propertyUUID: optionalString,
+    permissionToEnter: validatePTE,
+    issueLocation: optionalString,
+    additionalDetails: optionalString,
+    apartmentSize: optionalString,
+    moveInDate: optionalString,
+  })
+  .refine((data) => data.tenantEmail || data.propertyUUID, {
+    message: 'Please select a value',
+    path: ['tenantEmail', 'propertyUUID'],
+  }).refine((data) => (data.workOrderType !== WORK_ORDER_TYPE.CARPET_JOB && data.workOrderType !== WORK_ORDER_TYPE.PAINT_JOB) || data.moveInDate, {
+    message: 'Please select a move in date',
+    path: ['moveInDate'],
+  });
+
+export const CreateWorkOrderSchema = z.object({
+  workOrderType: requiredString,
+  issueDescription: optionalString,
   issueLocation: optionalString,
   additionalDetails: optionalString,
+  permissionToEnter: validatePTE,
+  tenantEmail: lowerCaseOptionalEmail,
+  tenantName: lowerCaseOptionalString,
+  pmEmail: lowerCaseRequiredEmail,
+  pmName: lowerCaseOptionalString,
+  messages: z.array(z.any()).default([]).optional(),
+  creatorEmail: lowerCaseRequiredEmail,
+  creatorName: lowerCaseRequiredString,
+  createdByType: validateUserType,
+  property: validateProperty,
+  woId: requiredString,
+  images: z.array(requiredString).default([]).optional(),
+  organization: requiredString,
+  apartmentSize: optionalString,
+  areasForCarpeting: z.array(lowerCaseRequiredString).default([]).optional(),
+  areasForPadding: z.array(lowerCaseRequiredString).default([]).optional(),
+  moveInDate: optionalString,
 });
 
 export const GetPMSchema = z.object({

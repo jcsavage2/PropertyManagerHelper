@@ -17,11 +17,11 @@ export const SearchBar = ({
   placeholder?: string;
 }) => {
   return (
-    <div className={`flex flex-row items-center justify-start h-10 text-gray-600 mt-4 mb-2 ${resultsLoading && 'opacity-50 pointer-events-none'}`}>
+    <div className={`flex flex-row items-center justify-start h-10 mt-4 mb-2 ${resultsLoading && 'opacity-50 pointer-events-none'}`}>
       <input
         type="text"
         placeholder={placeholder ?? 'Search...'}
-        className="text-black pl-3 h-full pr-9 w-80 input input-bordered border-blue-200"
+        className="pl-3 h-full pr-9 w-80 input input-bordered bg-white"
         value={searchString}
         onChange={(e) => {
           setSearchString(e.target.value);
@@ -34,13 +34,13 @@ export const SearchBar = ({
       />
       <MdClear
         fontSize={24}
-        className={`cursor-pointer text-red-500 hover:text-red-600 relative -left-7 ${!searchString && 'opacity-0 pointer-events-none'}}`}
+        className={`cursor-pointer text-error hover:text-red-600 relative -left-7 ${!searchString && 'opacity-0 pointer-events-none'}}`}
         onClick={() => {
           onClear();
         }}
       />
       <div
-        className="relative -left-3 px-3 py-1 btn btn-sm hover:bg-blue-300 bg-blue-200"
+        className="relative -left-3 px-3 py-1 btn btn-sm btn-secondary"
         onClick={() => {
           onSearch();
         }}

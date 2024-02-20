@@ -1,4 +1,4 @@
-import { API_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR, WO_STATUS } from '@/constants';
+import { API_STATUS, NO_EMAIL_PREFIX, USER_PERMISSION_ERROR, WORK_ORDER_TYPE, WO_STATUS } from '@/constants';
 import { ENTITY_KEY } from '@/database/entities';
 import { EventEntity } from '@/database/entities/event';
 import { WorkOrderEntity } from '@/database/entities/work-order';
@@ -26,14 +26,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const workOrderEntity = new WorkOrderEntity();
     const eventEntity = new EventEntity();
 
-    const { property, permissionToEnter, creatorEmail, creatorName, images, createdByType, tenantEmail, organization, tenantName, pmEmail, pmName, woId } = body;
+    const {
+      workOrderType,
+      property,
+      permissionToEnter,
+      creatorEmail,
+      creatorName,
+      images,
+      createdByType,
+      tenantEmail,
+      organization,
+      tenantName,
+      pmEmail,
+      pmName,
+      woId,
+      apartmentSize,
+      areasForCarpeting,
+      areasForPadding,
+      moveInDate,
+    } = body;
 
-    if (createdByType !== USER_TYPE.TENANT && (!tenantEmail || !tenantName || !pmName)) {
-      throw new ApiError(API_STATUS.BAD_REQUEST, "Missing tenant email, name, or pmName when creating a WO on a tenant's behalf.");
+    if (createdByType !== USER_TYPE.TENANT && !pmName) {
+      throw new ApiError(API_STATUS.BAD_REQUEST, "Must be a pm to create a work order on a tenant's behalf", true);
     }
 
-    const derivedTenantEmail = createdByType === USER_TYPE.TENANT ? creatorEmail : tenantEmail!;
-    const derivedTenantName = createdByType === USER_TYPE.TENANT ? creatorName : tenantName!;
+    const derivedTenantEmail = createdByType === USER_TYPE.TENANT ? creatorEmail : tenantEmail;
+    const derivedTenantName = createdByType === USER_TYPE.TENANT ? creatorName : tenantName;
 
     const workOrderId = generateKey(ENTITY_KEY.WORK_ORDER, woId);
 
@@ -46,13 +64,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     /** CREATE THE WORK ORDER */
     const workOrder = await workOrderEntity.create({
       uuid: woId,
+      workType: workOrderType,
       address: property.address,
       city: property.city,
       permissionToEnter,
       country: property.country,
-      issue: body.issueDescription || 'No Issue Description',
-      location: body.issueLocation || 'No Issue Location',
-      additionalDetails: body.additionalDetails || '',
+      issue: body.issueDescription || workOrderType,
+      location: body.issueLocation,
+      additionalDetails: body.additionalDetails,
       postalCode: property.postalCode,
       pmEmail,
       state: property.state,
@@ -64,6 +83,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       tenantEmail: derivedTenantEmail,
       tenantName: derivedTenantName,
       unit: property.unit,
+      apartmentSize: apartmentSize,
+      areasForCarpeting,
+      areasForPadding,
+      moveInDate,
     });
 
     const workOrderLink = `https://pillarhq.co/work-orders?workOrderId=${encodeURIComponent(generateKey(ENTITY_KEY.WORK_ORDER, woId))}`;
@@ -79,8 +102,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           workOrderId: woId,
           message: message.content ?? '',
           ksuId: message.ksuId,
-          madeByEmail: message.role === 'user' ? derivedTenantEmail : 'pillar assistant',
-          madeByName: message.role === 'user' ? derivedTenantName : 'pillar assistant',
+          madeByEmail: message.role === 'user' ? derivedTenantEmail! : 'pillar assistant',
+          madeByName: message.role === 'user' ? derivedTenantName! : 'pillar assistant',
         });
       }
     }
@@ -90,11 +113,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const shortenedWorkOrderIdString = woId.substring(woId.length - 4);
 
+    const displayAreasForCarpeting = areasForCarpeting ? areasForCarpeting.join(', ') : 'None provided';
+    const displayAreasForPadding = areasForPadding ? areasForPadding.join(', ') : 'None provided';
+
     await sendgrid.send({
       to: body.pmEmail, // The Property Manager
       ...(!!ccString && { cc: ccString }),
       from: 'pillar@pillarhq.co',
-      subject: `Work Order ${shortenedWorkOrderIdString} Requested for ${toTitleCase(body.property.address) ?? ''} ${toTitleCase(body.property.unit) ?? ''}`,
+      subject: `${workOrderType} ${shortenedWorkOrderIdString} Requested for ${toTitleCase(body.property.address) ?? ''} ${toTitleCase(body.property.unit) ?? ''}`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -142,12 +168,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h1>New Work Order Request</h1>
-          <a href="${workOrderLink}">View Work Order in PILLAR</a>
+          <h1>New ${workOrderType} Request</h1>
+          <a href="${workOrderLink}">View ${workOrderType} in PILLAR</a>
           <table>
-            <tr>
-              <td>Issue</td>
-              <td>${body.issueDescription}</td>
+            ${
+              workOrderType === WORK_ORDER_TYPE.MAINTENANCE_REQUEST || workOrderType === WORK_ORDER_TYPE.APPLIANCE_REPAIR
+                ? `<tr>
+            <td>Issue</td>
+            <td>${body.issueDescription}</td>
             </tr>
             <tr>
               <td>Issue Location</td>
@@ -160,7 +188,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             <tr>
               <td>Permission To Enter</td>
               <td>${body.permissionToEnter}</td>
-            </tr>
+            </tr>`
+                : ``
+            }
+            
             <tr>
               <td>Address</td>
               <td>${toTitleCase(body.property.address)}</td>
@@ -181,15 +212,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
               <td>Postal Code</td>
               <td>${body.property.postalCode}</td>
             </tr>
-          </table>
-          <h2 style="font-size: 20px;">Chat History:</p>
-          <div style="font-size: 14px;">
             ${
-              body.messages
-                ?.map((m: ChatCompletionRequestMessage) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(m.role)}: </span>${m.content}</p>`)
-                .join(' ') ?? 'No user chat history'
+              workOrderType === WORK_ORDER_TYPE.PAINT_JOB || workOrderType === WORK_ORDER_TYPE.CARPET_JOB
+                ? `<tr>
+            <td>Apartment Size</td>
+            <td>${body.apartmentSize ?? 'None provided'}</td>
+            </tr> 
+            ${
+              workOrderType === WORK_ORDER_TYPE.CARPET_JOB
+                ? `<tr>
+                <td>Areas for Carpeting</td>
+                <td>${displayAreasForCarpeting}</td>
+              </tr>
+              <tr>
+                <td>Areas for Padding</td>
+                <td>${displayAreasForPadding}</td>
+              </tr>`
+                : ``
             }
-          </div>
+            
+            <tr>
+              <td>Move in date</td>
+              <td>${body.moveInDate ?? 'None provided'}</td>
+            </tr>`
+                : ``
+            }
+          </table>
+          ${
+            workOrderType === WORK_ORDER_TYPE.MAINTENANCE_REQUEST
+              ? `<h2 style="font-size: 20px;">Chat History:</p>
+            <div style="font-size: 14px;">
+              ${
+                body.messages
+                  ?.map(
+                    (m: ChatCompletionRequestMessage) => `<p style="font-weight: normal;"><span style="font-weight: bold;" >${toTitleCase(m.role)}: </span>${m.content}</p>`
+                  )
+                  .join(' ') ?? 'No user chat history'
+              }
+            </div>`
+              : ``
+          }
+          
           <br/>
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
@@ -199,9 +262,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       </html>`,
     });
 
-    // If the tenant didn't create the work order, make sure they are notified.
+    // If the tenant didn't create the work order, make sure they are notified if a tenant email is provided.
     // Also, don't send them an email if they don't have one on their account.
-    if (body.createdByType !== USER_TYPE.TENANT && !tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
+    if (body.createdByType !== USER_TYPE.TENANT && tenantEmail && !tenantEmail?.startsWith(NO_EMAIL_PREFIX)) {
       await sendgrid.send({
         to: derivedTenantEmail,
         from: 'pillar@pillarhq.co',
@@ -275,7 +338,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       workOrderId: woId,
       madeByEmail: creatorEmail, //If the user is a pm then they created it, otherwise this is a system message
       madeByName: creatorName,
-      message: `Work Order Created!`,
+      message: `${workOrderType} Created!`,
     });
 
     return res.status(API_STATUS.SUCCESS).json({ response: 'Successfully sent email' });

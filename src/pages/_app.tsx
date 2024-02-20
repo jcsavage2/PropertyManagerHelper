@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Head from 'next/head';
 import React from 'react';
 import { UserContextProvider } from '@/context/user';
-import { NavLinks } from '@/components/nav-links';
+import { NavLinks } from '@/components/navigation/nav-links';
 
 export default function App({ Component, pageProps, session }: AppProps & { session: SessionProviderProps['session'] }) {
   return (
@@ -29,7 +29,7 @@ export default function App({ Component, pageProps, session }: AppProps & { sess
           <meta name="theme-color" content="#ffffff" />
         </Head>
         <NavLinks />
-        <ToastContainer />
+        <ToastContainer enableMultiContainer />
         <Component {...pageProps} />
       </UserContextProvider>
     </SessionProvider>

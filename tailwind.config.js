@@ -16,9 +16,37 @@ module.exports = {
       },
     },
   },
-  plugins: [require('daisyui')],
+  plugins: [
+    require('daisyui'),
+    function ({ addVariant }) {
+      addVariant('child', '& > *');
+      addVariant('child-hover', '& > *:hover');
+    },
+  ],
   daisyui: {
-    themes: false,
-    darkTheme: 'light',
-  },
+      themes: [
+        {
+          mytheme: {
+          
+ "primary": "#c7d2fe",
+          
+ "secondary": "#F9F9F9",
+          
+ "accent": "#000000",
+          
+ "neutral": "#F9F9F9",
+          
+ "base-100": "#ffffff",
+          
+ "info": "#989898",
+          
+ "success": "#15803d",
+          
+ "warning": "#eab308",
+          
+ "error": "#e11d48",
+          },
+        },
+      ],
+    },
 };

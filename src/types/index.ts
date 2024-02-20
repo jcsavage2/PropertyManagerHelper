@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { validatePropertyWithId, validateProperty } from './basevalidators';
-import { INVITE_STATUS, PTE, WO_STATUS } from '../constants';
+import { INVITE_STATUS, PTE, WORK_ORDER_TYPE, WO_STATUS } from '../constants';
 import {
   CreateTenant_AddressSchema,
   AiJSONResponseSchema,
@@ -70,6 +70,8 @@ export type ChatMessage = ChatCompletionRequestMessage & {
 export type WoStatus = (typeof WO_STATUS)[keyof typeof WO_STATUS];
 
 export type InviteStatus = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];
+
+export type WorkOrderType = (typeof WORK_ORDER_TYPE)[keyof typeof WORK_ORDER_TYPE];
 
 export type DeleteUser = { pk: string; sk: string; name: string };
 

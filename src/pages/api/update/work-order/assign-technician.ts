@@ -6,8 +6,8 @@ import { getServerSession } from 'next-auth';
 import { options } from '../../auth/[...nextauth]';
 import { deconstructKey, toTitleCase } from '@/utils';
 import twilio from 'twilio';
-import { UserEntity } from '@/database/entities/user';
-import { API_STATUS, USER_PERMISSION_ERROR } from '@/constants';
+import { USER_TYPE, UserEntity } from '@/database/entities/user';
+import { API_STATUS, USER_PERMISSION_ERROR, WORK_ORDER_TYPE } from '@/constants';
 import { ApiError, ApiResponse } from '../../_types';
 import { MISSING_ENV, errorToResponse, initializeSendgrid } from '../../_utils';
 import { AssignRemoveTechnician } from '@/types';
@@ -18,12 +18,15 @@ import { AssignRemoveTechnicianSchema } from '@/types/customschemas';
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
     const session = await getServerSession(req, res, options);
-    if (!session) {
+    //@ts-ignore
+    const sessionUser: IUser = session?.user;
+
+    if (!session || (!sessionUser?.roles?.includes(USER_TYPE.PROPERTY_MANAGER) && !sessionUser?.roles?.includes(USER_TYPE.TECHNICIAN))) {
       throw new ApiError(API_STATUS.UNAUTHORIZED, USER_PERMISSION_ERROR);
     }
 
     const body: AssignRemoveTechnician = AssignRemoveTechnicianSchema.parse(req.body);
-    const { pk, pmEmail, technicianEmail, technicianName, pmName } = body;
+    const { pk, assignerEmail, technicianEmail, technicianName, assignerName } = body;
 
     const eventEntity = new EventEntity();
     const workOrderEntity = new WorkOrderEntity();
@@ -39,11 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       throw new ApiError(API_STATUS.INTERNAL_SERVER_ERROR, 'Error assigning technician, updating work order partition failed');
     }
 
+    const workOrderType = updatedWO.workType || WORK_ORDER_TYPE.MAINTENANCE_REQUEST;
+
     await eventEntity.createWOEvent({
       workOrderId: deconstructKey(pk),
-      madeByEmail: pmEmail,
-      madeByName: pmName,
-      message: `Assigned ${toTitleCase(technicianName)} to the work order`,
+      madeByEmail: assignerEmail,
+      madeByName: assignerName,
+      message: `Assigned ${toTitleCase(technicianName)} to the ${workOrderType}`,
     });
 
     initializeSendgrid(sendgrid, process.env.NEXT_PUBLIC_SENDGRID_API_KEY);
@@ -54,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
      * Send SMS message to the technician if they have a phone number.
      */
     const technicianUser = await userEntity.get({ email: technicianEmail });
-    if (technicianUser?.phone) {
+    if ((!updatedWO.workType || updatedWO.workType === WORK_ORDER_TYPE.MAINTENANCE_REQUEST) && technicianUser?.phone) {
       try {
         await init('ff368b4943b9a03a49b2c3b925e62021').promise;
         track(
@@ -62,9 +67,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           {
             status: 'attempt',
             assignedTo: technicianEmail,
-            assignedBy: pmEmail,
+            assignedBy: assignerEmail,
           },
-          { user_id: pmEmail }
+          { user_id: assignerEmail }
         );
         const smsApiKey = process.env.NEXT_PUBLIC_SMS_API_KEY;
         const smsAuthToken = process.env.NEXT_PUBLIC_SMS_AUTH_TOKEN;
@@ -76,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         twilioClient.messages.create({
           to: technicianUser.phone,
           from: '+18449092150',
-          body: `You've been assigned a work order in Pillar by ${toTitleCase(pmName)}!\n\nIssue: ${updatedWO?.issue}\n\nAddress: ${toTitleCase(
+          body: `You've been assigned a work order in Pillar by ${toTitleCase(assignerName)}!\n\nIssue: ${updatedWO?.issue}\n\nAddress: ${toTitleCase(
             updatedWO.address?.address
           )}\n\n${!!updatedWO.address?.unit ? `${`Unit: ${toTitleCase(updatedWO.address.unit)}`}\n\n` : ``}${
             updatedWO.tenantName && `Tenant: ${toTitleCase(updatedWO.tenantName)}`
@@ -90,9 +95,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           {
             status: 'success',
             assignedTo: technicianEmail,
-            assignedBy: pmEmail,
+            assignedBy: assignerEmail,
           },
-          { user_id: pmEmail }
+          { user_id: assignerEmail }
         );
       } catch (err) {
         track(
@@ -100,21 +105,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           {
             status: 'failed',
             assignedTo: technicianEmail,
-            assignedBy: pmEmail,
+            assignedBy: assignerEmail,
           },
-          { user_id: pmEmail }
+          { user_id: assignerEmail }
         );
         console.log({ err });
       }
     }
 
     const shortenedWorkOrderIdString = pk.substring(pk.length - 4);
+    const displayAreasForCarpeting = updatedWO.areasForCarpeting ? updatedWO.areasForCarpeting.join(', ') : 'None provided';
+    const displayAreasForPadding = updatedWO.areasForPadding ? updatedWO.areasForPadding.join(', ') : 'None provided';
 
     /** SEND THE EMAIL TO THE TECHNICIAN */
     await sendgrid.send({
       to: technicianEmail,
       from: 'pillar@pillarhq.co',
-      subject: `Work Order ${shortenedWorkOrderIdString} Assigned To You`,
+      subject: `${workOrderType} ${shortenedWorkOrderIdString} Assigned To You`,
       html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html lang="en">
       <head>
@@ -162,12 +169,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       <body>
         <div class="container" style="margin-left: 20px;margin-right: 20px;">
-          <h1>You've Been Assigned To A Work Order by ${toTitleCase(pmName)}</h1>
-          <a href="${workOrderLink}">View Work Order in PILLAR</a>
-          <p>Issue: ${updatedWO.issue}</p>
+          <h1>You've Been Assigned To A ${workOrderType} by ${toTitleCase(assignerName)}</h1>
+          <a href="${workOrderLink}">View ${workOrderType} in PILLAR</a>
+          ${updatedWO.issue && `<p>Issue: ${toTitleCase(updatedWO.issue)}</p>`}
           <p>Address: ${toTitleCase(updatedWO.address?.address)}</p>
           ${updatedWO.address?.unit ? `<p>Unit: ${toTitleCase(updatedWO.address.unit)}</p>` : ``}
           ${updatedWO.tenantName && `<p>Tenant: ${toTitleCase(updatedWO.tenantName)}</p>`}
+          ${
+            workOrderType === WORK_ORDER_TYPE.PAINT_JOB || workOrderType === WORK_ORDER_TYPE.CARPET_JOB
+              ? `
+          <p>Apartment Size: ${updatedWO.apartmentSize ?? 'None provided'}</p>
+          ${
+            workOrderType === WORK_ORDER_TYPE.CARPET_JOB
+              ? `
+              <p>Areas for carpeting: ${displayAreasForCarpeting}</p>
+              <p>Areas for padding: ${displayAreasForPadding}</p>`
+              : ``
+          }
+        
+            <p>Move In Date: ${updatedWO.moveInDate ?? 'None provided'}</p>`
+              : ``
+          }
           <p class="footer" style="font-size: 16px;font-weight: normal;padding-bottom: 20px;border-bottom: 1px solid #D1D5DB;">
             Regards,<br> Pillar Team
           </p>

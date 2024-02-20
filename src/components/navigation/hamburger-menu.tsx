@@ -18,18 +18,18 @@ const HamburgerMenu = () => {
     router.push('/');
   }, [logOut, router]);
 
-  const linkStyle = 'hover:text-gray-500 my-auto text-3xl text-white cursor-pointer mt-12';
+  const linkStyle = 'hover:text-base-300 text-black my-auto text-3xl cursor-pointer mt-12';
 
   return (
     <>
-      <div className="space-y-1 justify-self-end" onClick={() => setIsOpen((s) => !s)}>
-        <span className="block w-8 h-1 bg-gray-600"></span>
-        <span className="block w-8 h-1 bg-gray-600"></span>
-        <span className="block w-8 h-1 bg-gray-600"></span>
+      <div className="space-y-1 justify-self-end cursor-pointer child:w-8 child:h-1 child:block child:bg-gray-600" onClick={() => setIsOpen((s) => !s)}>
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
       {isOpen && (
-        <div className="absolute left-0 bg-blue-300 mt-0 w-full grid z-10" style={{ top: '7dvh', height: '93dvh' }} onClick={() => setIsOpen(false)}>
-          <div className="flex flex-col h-12">
+        <div className="absolute top-16 left-0 bg-gray-100 text-black mt-0 w-full z-50" style={{ height: '100dvh' }} onClick={() => setIsOpen(false)}>
+          <div className="flex flex-col text-primary child:mb-4">
             {user ? (
               <>
                 {userType === USER_TYPE.TENANT && (

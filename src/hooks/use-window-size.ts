@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
-
+import { useState } from 'react';
 import { useEventListener, useIsomorphicLayoutEffect } from 'usehooks-ts';
 
 interface WindowSize {

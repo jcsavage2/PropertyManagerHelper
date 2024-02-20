@@ -1,30 +1,22 @@
 // External dependencies
 import axios from 'axios';
-import Modal from 'react-modal';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-
-// Local components
-import { PortalLeftPanel } from '@/components/portal-left-panel';
-import WorkOrder from '@/components/work-order';
-import { BottomNavigationPanel } from '@/components/bottom-navigation-panel';
-import { AddWorkOrderModal } from '@/components/add-work-order-modal';
-
-// Hooks and context
+import WorkOrderModal from '@/components/modals/work-order';
+import { CreateWorkOrderModal } from '@/components/modals/create-work-order';
 import { useDevice } from '@/hooks/use-window-size';
 import { useUserContext } from '@/context/user';
 import { useSessionUser } from '@/hooks/auth/use-session-user';
-
-// Types
 import { IWorkOrder } from '@/database/entities/work-order';
-import { getPageLayout, renderToastError, toggleBodyScroll } from '@/utils';
+import { renderToastError } from '@/utils';
 import { ENTITIES, StartKey } from '@/database/entities';
 import { SingleValue } from 'react-select';
 import { StatusOption, UpdateWorkOrder, WoStatus } from '@/types';
 import WorkOrdersCards from '@/components/work-orders-cards';
 import WorkOrdersTable from '@/components/work-orders-table';
-import { UpdateWorkOrderSchema } from '@/types/customschemas';
-import { toast } from 'react-toastify';
+import CheckboxDropdown from '@/components/dropdowns/checkbox-dropdown';
+import AdminPortal from '@/components/layouts/admin-portal';
+import LoadMore from '@/components/load-more';
 
 export type HandleUpdateStatusProps = {
   val: SingleValue<StatusOption>;
@@ -33,8 +25,6 @@ export type HandleUpdateStatusProps = {
 };
 
 const WorkOrders = () => {
-  const [isBrowser, setIsBrowser] = useState(false);
-  const [addWorkOrderModalIsOpen, setAddWorkOrderModalIsOpen] = useState(false);
   const { isMobile } = useDevice();
   const { userType, altName } = useUserContext();
   const router = useRouter();
@@ -48,34 +38,6 @@ const WorkOrders = () => {
     TO_DO: true,
     COMPLETE: true,
   });
-
-  const customStyles = {
-    content: {
-      top: isMobile ? '46%' : '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      transform: 'translate(-50%, -50%)',
-      width: isMobile ? '90%' : '50%',
-      height: isMobile ? '87%' : '90%',
-      backgroundColor: 'rgba(255, 255, 255)',
-      padding: '0px',
-    },
-    overLay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(25, 255, 255, 0.75)',
-    },
-  };
-
-  /** Work Order Modal Logic */
-  isBrowser && Modal.setAppElement('#workOrder');
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
 
   /** Update db and cached WO status */
   const handleUpdateStatus = async ({ val, pk, sk }: HandleUpdateStatusProps) => {
@@ -121,7 +83,7 @@ const WorkOrders = () => {
           sessionStorage.setItem('WORK_ORDERS', JSON.stringify({ orders, time: Date.now() }));
         }
       } catch (error) {
-        toast.error((error as any)?.response?.data?.response ?? 'Failed to get work orders for user', { position: toast.POSITION.TOP_CENTER });
+        renderToastError(error, 'Failed to get work orders for user');
       }
       setIsFetching(false);
     },
@@ -149,103 +111,71 @@ const WorkOrders = () => {
   );
 
   return (
-    <>
-      <Modal
+    <AdminPortal id="workOrders" isLoading={!user || !userType}>
+      <WorkOrderModal
         isOpen={!!router.query.workOrderId}
-        onRequestClose={closeWOModalRefetch}
-        contentLabel="Post modal"
-        closeTimeoutMS={200}
-        preventScroll={true}
-        style={customStyles}
-        onAfterOpen={() => toggleBodyScroll(true)}
-        onAfterClose={() => toggleBodyScroll(false)}
-      >
-        <WorkOrder
-          workOrderId={router.query.workOrderId as string}
-          afterDelete={() => fetchWorkOrders(true)}
-          handleCloseWorkOrderModal={closeWOModalRefetch}
-          isMobile={isMobile}
-        />
-      </Modal>
-      <div id="workOrder" style={getPageLayout(isMobile)} className={`mx-4 mt-4`}>
-        {!isMobile && <PortalLeftPanel />}
-        <div className={`lg:max-w-5xl`}>
-          <div className="flex flex-row justify-between items-center mb-2">
-            <h1 className="text-4xl">{`Work Orders`}</h1>
-            {userType === ENTITIES.PROPERTY_MANAGER ? (
-              <button
-                className={` bg-blue-200 p-2 mb-2 mt-2 md:mt-0 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 h-full md:w-56 w-32 text-center ${
-                  isFetching && 'opacity-50 pointer-events-none'
-                }'}`}
-                onClick={() => {
-                  if (isFetching) return;
-                  setAddWorkOrderModalIsOpen(true);
-                }}
-              >
-                + Work Order
-              </button>
-            ) : null}
-          </div>
-          {userType !== ENTITIES.TENANT && (
-            <div className={`flex flex-row cursor-pointer mb-2 text-slate-700 ${isFetching && 'opacity-50 pointer-events-none '}`}>
-              <div
-                className={`p-2 px-3 rounded-l border border-slate-300 hover:bg-blue-100 ${!orgMode ? 'bg-blue-300' : 'bg-blue-200'}`}
-                onClick={() => {
-                  if (isFetching) return;
-                  setOrgMode(false);
-                }}
-              >
-                {userType === ENTITIES.TECHNICIAN ? 'Assigned to me' : 'My work orders'}
-              </div>
-              <div className={`p-2 px-3 rounded-r border border-l-0 hover:bg-blue-100 ${orgMode ? 'bg-blue-300' : 'bg-blue-200'}`} onClick={() => setOrgMode(true)}>
-                All {user?.organizationName || 'org'} work orders
-              </div>
-            </div>
-          )}
-          {isMobile ? (
-            <WorkOrdersCards
-              workOrders={workOrders}
-              isFetching={isFetching}
-              handleUpdateStatus={handleUpdateStatus}
-              formattedStatusOptions={formattedStatusOptions}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-            />
-          ) : (
-            <WorkOrdersTable
-              workOrders={workOrders}
-              isFetching={isFetching}
-              handleUpdateStatus={handleUpdateStatus}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              formattedStatusOptions={formattedStatusOptions}
-            />
-          )}
-          {workOrders.length && startKey && !isFetching ? (
-            <div className="w-full flex items-center justify-center mb-8">
-              <button
-                disabled={isFetching}
-                onClick={() => fetchWorkOrders(false)}
-                className="bg-blue-200 mx-auto py-1 w-1/4 text-gray-600 hover:bg-blue-300 rounded disabled:opacity-25 mb-24"
-              >
-                Load more
-              </button>
-            </div>
-          ) : (
-            <div className="mb-8"></div>
-          )}
-          <AddWorkOrderModal
-            addWorkOrderModalIsOpen={addWorkOrderModalIsOpen}
-            setAddWorkOrderModalIsOpen={setAddWorkOrderModalIsOpen}
+        workOrderId={router.query.workOrderId as string}
+        afterDelete={() => fetchWorkOrders(true)}
+        onClose={closeWOModalRefetch}
+      />
+      <div className="flex flex-row justify-between items-center mb-2">
+        <h1 className="text-4xl">{`Work Orders`}</h1>
+        {userType === ENTITIES.PROPERTY_MANAGER ? (
+          <CreateWorkOrderModal
             onSuccessfulAdd={() => {
-              setAddWorkOrderModalIsOpen(false);
               fetchWorkOrders(true);
             }}
           />
-          {isMobile && <BottomNavigationPanel />}
-        </div>
+        ) : null}
       </div>
-    </>
+      {user && userType !== ENTITIES.TENANT && (
+        <ul className={`w-max menu menu-horizontal bg-base-200 rounded-box ${isFetching && 'pointer-events-none opacity-20'}`}>
+          <li>
+            <a
+              className={`tooltip ${!orgMode ? 'bg-primary' : 'bg-secondary'}`}
+              data-tip="Load work orders created by or assigned to me"
+              onClick={() => {
+                if (isFetching) return;
+                setOrgMode(false);
+              }}
+            >
+              {userType === ENTITIES.TECHNICIAN ? 'Assigned to me' : 'My work orders'}
+            </a>
+          </li>
+          <li>
+            <a
+              className={`tooltip ${orgMode ? 'bg-primary' : 'bg-secondary'}`}
+              data-tip={`Load work orders for ${user?.organizationName || 'my org'}`}
+              onClick={() => {
+                if (isFetching) return;
+                setOrgMode(true);
+              }}
+            >
+              {isMobile ? `All work orders` : `All ${user?.organizationName || 'org'} work orders`}
+            </a>
+          </li>
+        </ul>
+      )}
+      <div className={`${isFetching ? 'pointer-events-none opacity-20' : ''}`}>
+        <CheckboxDropdown
+          dropdownLabel="Status"
+          options={[
+            { label: 'To Do', value: 'TO_DO' },
+            { label: 'Complete', value: 'COMPLETE' },
+          ]}
+          selectedOptions={statusFilter}
+          setSelectedOptions={setStatusFilter}
+        />
+      </div>
+      {isMobile ? (
+        <WorkOrdersCards workOrders={workOrders} isFetching={isFetching} handleUpdateStatus={handleUpdateStatus} formattedStatusOptions={formattedStatusOptions} />
+      ) : (
+        <WorkOrdersTable workOrders={workOrders} isFetching={isFetching} handleUpdateStatus={handleUpdateStatus} formattedStatusOptions={formattedStatusOptions} />
+      )}
+      <div className="w-full mb-10 flex items-center justify-center">
+        <LoadMore isDisabled={isFetching} isVisible={workOrders.length && startKey && !isFetching} onClick={() => fetchWorkOrders(false)} />
+      </div>
+    </AdminPortal>
   );
 };
 
